@@ -24,9 +24,9 @@ export default function MarketingLayout({ children, title, description }: Market
 
             <nav className="fixed top-0 left-0 right-0 bg-bone/95 backdrop-blur-sm z-50 border-b border-grey-warm">
                 <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-                    <Link to="/" className="flex items-center gap-3">
-                        <Logo size={32} className="text-charcoal" />
-                        <h1 className="text-2xl font-serif font-bold pt-1">Bústaðurinn.is</h1>
+                    <Link to="/" className="flex items-center gap-2">
+                        <Logo size={28} className="text-charcoal" />
+                        <span className="text-xl font-serif font-bold">Bústaðurinn.is</span>
                     </Link>
 
                     <div className="hidden md:flex items-center gap-8">
