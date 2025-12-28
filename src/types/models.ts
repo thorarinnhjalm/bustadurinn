@@ -22,6 +22,7 @@ export interface House {
     manager_uid: string; // The designated administrator (Bústaðastjóri)
     owner_ids: string[]; // All members (including manager)
     holiday_mode: 'fairness' | 'first_come'; // Booking logic
+    invite_code?: string;
     created_at: Date;
     updated_at: Date;
 }

@@ -4,7 +4,8 @@ import {
     CheckSquare,
     Plus,
     ArrowLeft,
-    List
+    List,
+    Layout
 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { db } from '@/lib/firebase';
@@ -22,6 +23,7 @@ import {
 import type { Task, TaskStatus } from '@/types/models';
 import TaskForm from '@/components/tasks/TaskForm';
 import TaskList from '@/components/tasks/TaskList';
+import TaskBoard from '@/components/tasks/TaskBoard';
 
 export default function TasksPage() {
     const navigate = useNavigate();
@@ -40,8 +42,6 @@ export default function TasksPage() {
         const q = query(
             collection(db, 'tasks'),
             where('house_id', '==', houseId)
-            // Note: orderBy requires an index if combined with where filter on different field
-            // We'll sort in client for now to avoid index creation delay
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -106,7 +106,6 @@ export default function TasksPage() {
         return true;
     });
 
-    // Members for assignment (Just current user for now, until we handle member fetching)
     const members = currentUser ? [{ uid: currentUser.uid, name: currentUser.name }] : [];
 
     return (
@@ -160,18 +159,22 @@ export default function TasksPage() {
                     <button
                         onClick={() => setView('list')}
                         className={`p-1.5 rounded transition-colors ${view === 'list' ? 'bg-bone text-charcoal' : 'text-grey-mid'}`}
+                        title="List view"
                     >
                         <List className="w-4 h-4" />
                     </button>
-                    {/* Placeholder for Board View Toggle */}
-                    {/* <button className="p-1.5 rounded text-grey-mid">
+                    <button
+                        onClick={() => setView('board')}
+                        className={`p-1.5 rounded transition-colors ${view === 'board' ? 'bg-bone text-charcoal' : 'text-grey-mid'}`}
+                        title="Board view"
+                    >
                         <Layout className="w-4 h-4" />
-                    </button> */}
+                    </button>
                 </div>
             </div>
 
             {/* Content  */}
-            <div className="max-w-5xl mx-auto">
+            <div className={`max-w-5xl mx-auto ${view === 'board' ? 'overflow-x-hidden' : ''}`}>
                 {showForm && (
                     <div className="mb-8 animate-fade-in">
                         <TaskForm
@@ -184,15 +187,7 @@ export default function TasksPage() {
 
                 {loading ? (
                     <div className="text-center py-12 text-grey-mid">Hleð verkefnum...</div>
-                ) : (
-                    <TaskList
-                        tasks={filteredTasks}
-                        onStatusChange={handleUpdateStatus}
-                        onDelete={handleDeleteTask}
-                    />
-                )}
-
-                {!loading && filteredTasks.length === 0 && !showForm && (
+                ) : filteredTasks.length === 0 && !showForm ? (
                     <div className="text-center py-24 text-grey-mid border-2 border-dashed border-grey-warm rounded-xl">
                         <CheckSquare className="w-12 h-12 mx-auto mb-4 opacity-20" />
                         <h3 className="text-lg font-medium text-charcoal mb-2">Engin verkefni fundust</h3>
@@ -201,6 +196,22 @@ export default function TasksPage() {
                             Búa til verkefni
                         </button>
                     </div>
+                ) : (
+                    <>
+                        {view === 'list' ? (
+                            <TaskList
+                                tasks={filteredTasks}
+                                onStatusChange={handleUpdateStatus}
+                                onDelete={handleDeleteTask}
+                            />
+                        ) : (
+                            <TaskBoard
+                                tasks={filteredTasks}
+                                onStatusChange={handleUpdateStatus}
+                                onDelete={handleDeleteTask}
+                            />
+                        )}
+                    </>
                 )}
             </div>
         </div>

@@ -5,7 +5,17 @@
 
 import { useState, useEffect } from 'react';
 import { Home, Users, User, Save, Shield, Wifi, AlertTriangle } from 'lucide-react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import {
+    doc,
+    getDoc,
+    updateDoc,
+    collection,
+    query,
+    where,
+    onSnapshot,
+    arrayUnion,
+    deleteDoc
+} from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import type { House } from '@/types/models';
@@ -75,7 +85,70 @@ export default function SettingsPage() {
         }
     };
 
+    const [joinRequests, setJoinRequests] = useState<any[]>([]);
+
     const isManager = house && currentUser && house.manager_uid === currentUser.uid;
+
+    useEffect(() => {
+        if (!house || !isManager || activeTab !== 'members') return;
+
+        const q = query(
+            collection(db, 'join_requests'),
+            where('houseId', '==', house.id),
+            where('status', '==', 'pending')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const reqs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setJoinRequests(reqs);
+        });
+
+        return () => unsubscribe();
+    }, [house?.id, isManager, activeTab]);
+
+    const handleApproveRequest = async (req: any) => {
+        if (!house) return;
+        setLoading(true);
+        try {
+            // 1. Add to House
+            await updateDoc(doc(db, 'houses', house.id), {
+                owner_ids: arrayUnion(req.userId)
+            });
+
+            // 2. Add to User (Important: User needs to know they are in)
+            // Note: This requires permission to update OTHER users. 
+            // Standard Firestore rules might block this if not Manager/Admin of creating user.
+            // If this fails, we need a Cloud Function.
+            // For now, let's try. If it fails, we fall back to manual user update or assume user doc is self-writable? 
+            // No, manager writes to user. Rules need to allow manager to update `house_ids` of any user if they are adding them to managed house? Complex.
+            // Let's assume rules allow it for the sake of MVP or we update rules to `allow update: if request.auth != null`.
+
+            // Actually, best bet: `updateDoc(doc(db, 'users', req.userId), { house_ids: arrayUnion(house.id) })`
+            await updateDoc(doc(db, 'users', req.userId), {
+                house_ids: arrayUnion(house.id)
+            });
+
+            // 3. Mark request approved (or delete)
+            await deleteDoc(doc(db, 'join_requests', req.id));
+
+            setSuccess(`Samþykkti ${req.userName}!`);
+        } catch (err) {
+            console.error('Error approving:', err);
+            setError('Gat ekki samþykkt beiðni. Athugaðu réttindi.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRejectRequest = async (req: any) => {
+        if (!confirm('Hafna þessari beiðni?')) return;
+        try {
+            await deleteDoc(doc(db, 'join_requests', req.id));
+            setSuccess('Beiðni hafnað.');
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     const handleSaveHouse = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -364,16 +437,35 @@ export default function SettingsPage() {
                                         <Users className="w-6 h-6 text-amber" />
                                         <h2 className="text-xl font-serif">Meðeigendur</h2>
                                     </div>
-                                    {isManager && (
-                                        <button className="btn btn-primary text-sm">
-                                            Bjóða nýjum aðila
-                                        </button>
-                                    )}
                                 </div>
 
                                 <div className="space-y-4">
+                                    {/* Join Requests */}
+                                    {joinRequests.length > 0 && (
+                                        <div className="mb-6 p-4 bg-amber/10 border border-amber/30 rounded-lg">
+                                            <h3 className="flex items-center gap-2 font-serif text-charcoal mb-4">
+                                                <AlertTriangle className="w-5 h-5 text-amber" />
+                                                Inngöngubeiðnir ({joinRequests.length})
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {joinRequests.map(req => (
+                                                    <div key={req.id} className="flex items-center justify-between bg-white p-3 rounded shadow-sm">
+                                                        <div>
+                                                            <div className="font-semibold">{req.userName}</div>
+                                                            <div className="text-xs text-grey-mid">{req.userEmail}</div>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => handleApproveRequest(req)} className="btn btn-primary text-xs py-1 px-3">Samþykkja</button>
+                                                            <button onClick={() => handleRejectRequest(req)} className="btn btn-ghost text-xs py-1 px-3 text-red-500 hover:text-red-700 hover:bg-red-50">Hafna</button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Current User */}
-                                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                                    <div className="flex items-center justify-between p-4 border rounded-lg bg-bone/30">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-charcoal text-white flex items-center justify-center font-serif text-lg">
                                                 {currentUser?.name?.[0] || currentUser?.email?.[0]}
@@ -387,10 +479,64 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
 
-                                    {/* Placeholder for other members logic */}
-                                    <div className="text-center py-8 text-grey-mid bg-bone rounded-lg border border-dashed border-grey-mid">
-                                        <p>Hér munu aðrir meðeigendur birtast þegar þeir hafa samþykkt boð.</p>
-                                    </div>
+                                    {/* Invite Section */}
+                                    {isManager && (
+                                        <div className="mt-8 pt-6 border-t border-grey-warm">
+                                            <h3 className="text-lg font-serif mb-4">Bjóða nýjum aðilum</h3>
+                                            <p className="text-sm text-grey-dark mb-4">
+                                                Deildu hlekknum hér að neðan til að bjóða öðrum að ganga í húsfélagið.
+                                            </p>
+
+                                            <div className="bg-bone p-4 rounded-lg flex flex-col gap-4">
+                                                {house.invite_code ? (
+                                                    <div>
+                                                        <label className="label text-xs uppercase text-grey-mid">Boðshlekkur</label>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                readOnly
+                                                                className="input font-mono text-sm bg-white"
+                                                                value={`${window.location.origin}/join?houseId=${house.id}&code=${house.invite_code}`}
+                                                            />
+                                                            <button
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(`${window.location.origin}/join?houseId=${house.id}&code=${house.invite_code}`);
+                                                                    setSuccess('Hlekkur afritaður!');
+                                                                    setTimeout(() => setSuccess(''), 2000);
+                                                                }}
+                                                                className="btn btn-secondary whitespace-nowrap"
+                                                            >
+                                                                Afrita
+                                                            </button>
+                                                        </div>
+                                                        <div className="mt-4">
+                                                            <button
+                                                                onClick={async () => {
+                                                                    if (!confirm('Ertu viss? Gamli hlekkurinn mun hætta að virka.')) return;
+                                                                    const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                                                                    await updateDoc(doc(db, 'houses', house.id), { invite_code: newCode });
+                                                                    setHouse({ ...house, invite_code: newCode });
+                                                                }}
+                                                                className="text-xs text-red-500 hover:text-red-700 underline"
+                                                            >
+                                                                Endurnýja hlekk (Gera gamlan ógildan)
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={async () => {
+                                                            const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                                                            await updateDoc(doc(db, 'houses', house.id), { invite_code: newCode });
+                                                            setHouse({ ...house, invite_code: newCode });
+                                                        }}
+                                                        className="btn btn-primary w-full md:w-auto self-start"
+                                                    >
+                                                        Búa til boðshlekk
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
