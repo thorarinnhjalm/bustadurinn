@@ -200,15 +200,111 @@
    ============================================================================= */
 
 @media (max-width: 768px) {
+
+  /* Typography adjustments for mobile */
   h1 {
-    @apply text-3xl;
+    @apply text-3xl mb-4;
   }
 
   h2 {
+    @apply text-2xl mb-3;
+  }
+
+  h3 {
+    @apply text-xl mb-2;
+  }
+
+  /* Spacing adjustments */
+  .section {
+    @apply py-12 px-4;
+  }
+
+  /* Button touch targets (min 44px height) */
+  .btn {
+    @apply px-6 py-3 text-sm;
+    min-height: 44px;
+  }
+
+  /* Card padding for mobile */
+  .card {
+    @apply p-6 rounded-lg;
+  }
+
+  /* Form inputs */
+  .input {
+    @apply px-4 py-3 text-base;
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+  }
+
+  /* Container spacing */
+  .container {
+    @apply px-4;
+  }
+
+  /* Grid adjustments */
+  .grid {
+    @apply gap-4;
+  }
+
+  /* Hide desktop-only elements */
+  .hidden-mobile {
+    display: none !important;
+  }
+
+  /* Full width on mobile */
+  .mobile-full {
+    width: 100% !important;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 375px) {
+  h1 {
     @apply text-2xl;
   }
 
-  .section {
-    @apply py-16;
+  .btn {
+    @apply px-4 py-2.5 text-sm;
+  }
+
+  .card {
+    @apply p-4;
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .min-h-screen {
+    min-height: auto !important;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+
+  /* Larger touch targets */
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Remove hover states on touch */
+  .btn:hover,
+  .card:hover {
+    transform: none;
+  }
+
+  /* Add active states instead */
+  .btn:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  .card:active {
+    transform: scale(0.99);
   }
 }
