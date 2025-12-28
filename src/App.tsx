@@ -21,6 +21,7 @@ import FinancePage from '@/pages/FinancePage';
 import TasksPage from '@/pages/TasksPage';
 import SuperAdminPage from '@/pages/SuperAdminPage';
 import JoinPage from '@/pages/JoinPage';
+import GuestPage from '@/pages/GuestPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -81,6 +82,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/join" element={<JoinPage />} />
+          <Route path="/guest/:token" element={<GuestPage />} />
 
           {/* Protected Routes */}
           <Route

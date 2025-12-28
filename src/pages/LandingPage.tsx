@@ -111,7 +111,7 @@ export default function LandingPage() {
                 <div className="container mx-auto px-6 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <Logo size={32} className="text-charcoal" />
-                        <h1 className="text-2xl font-serif font-bold">Bústaðurinn.is</h1>
+                        <h1 className="text-2xl font-serif font-bold pt-1">Bústaðurinn.is</h1>
                     </div>
                     <div className="flex gap-4">
                         <button

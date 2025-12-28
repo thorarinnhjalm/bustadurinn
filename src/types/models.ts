@@ -23,6 +23,16 @@ export interface House {
     owner_ids: string[]; // All members (including manager)
     holiday_mode: 'fairness' | 'first_come'; // Booking logic
     invite_code?: string;
+    guest_token?: string; // Read-only access for guests
+
+    // Guest Info (Digital Guestbook)
+    house_rules?: string;
+    check_in_time?: string;
+    check_out_time?: string;
+    directions?: string;
+    access_instructions?: string;
+    emergency_contact?: string;
+
     created_at: Date;
     updated_at: Date;
 }

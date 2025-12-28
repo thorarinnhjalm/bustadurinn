@@ -4,9 +4,10 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Home, Users, User, Save, Shield, Wifi, AlertTriangle } from 'lucide-react';
+import { Home, Users, User, Save, Shield, Wifi, AlertTriangle, BookOpen } from 'lucide-react';
 import {
     doc,
+    setDoc,
     getDoc,
     updateDoc,
     collection,
@@ -20,7 +21,7 @@ import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import type { House } from '@/types/models';
 
-type Tab = 'house' | 'members' | 'profile';
+type Tab = 'house' | 'members' | 'profile' | 'guests';
 
 export default function SettingsPage() {
     const currentUser = useAppStore((state) => state.currentUser);
@@ -37,7 +38,13 @@ export default function SettingsPage() {
         address: '',
         wifi_ssid: '',
         wifi_password: '',
-        holiday_mode: 'first_come' as 'fairness' | 'first_come'
+        holiday_mode: 'first_come' as 'fairness' | 'first_come',
+        house_rules: '',
+        check_in_time: '',
+        check_out_time: '',
+        directions: '',
+        access_instructions: '',
+        emergency_contact: ''
     });
 
     // User State
@@ -66,7 +73,13 @@ export default function SettingsPage() {
                     address: houseData.address || '',
                     wifi_ssid: houseData.wifi_ssid || '',
                     wifi_password: houseData.wifi_password || '',
-                    holiday_mode: houseData.holiday_mode || 'first_come'
+                    holiday_mode: houseData.holiday_mode || 'first_come',
+                    house_rules: houseData.house_rules || '',
+                    check_in_time: houseData.check_in_time || '',
+                    check_out_time: houseData.check_out_time || '',
+                    directions: houseData.directions || '',
+                    access_instructions: houseData.access_instructions || '',
+                    emergency_contact: houseData.emergency_contact || ''
                 });
 
                 // Load members
@@ -165,8 +178,32 @@ export default function SettingsPage() {
                 wifi_ssid: houseForm.wifi_ssid,
                 wifi_password: houseForm.wifi_password,
                 holiday_mode: houseForm.holiday_mode,
+                house_rules: houseForm.house_rules,
+                check_in_time: houseForm.check_in_time,
+                check_out_time: houseForm.check_out_time,
+                directions: houseForm.directions,
+                access_instructions: houseForm.access_instructions,
+                emergency_contact: houseForm.emergency_contact,
                 updated_at: new Date()
             });
+
+            // Sync Guest View
+            if (house.guest_token) {
+                await setDoc(doc(db, 'guest_views', house.guest_token), {
+                    houseId: house.id,
+                    name: houseForm.name,
+                    address: houseForm.address,
+                    wifi_ssid: houseForm.wifi_ssid,
+                    wifi_password: houseForm.wifi_password,
+                    house_rules: houseForm.house_rules,
+                    check_in_time: houseForm.check_in_time,
+                    check_out_time: houseForm.check_out_time,
+                    directions: houseForm.directions,
+                    access_instructions: houseForm.access_instructions,
+                    emergency_contact: houseForm.emergency_contact,
+                    updated_at: new Date()
+                }, { merge: true });
+            }
 
             setHouse(prev => prev ? { ...prev, ...houseForm } : null);
             setSuccess('Breytingar vistaðar!');
@@ -176,6 +213,46 @@ export default function SettingsPage() {
         } catch (err) {
             console.error('Error updating house:', err);
             setError('Villa kom upp við vistun.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGenerateGuestToken = async (replace = false) => {
+        if (replace && !confirm('Ertu viss? Gamli hlekkurinn mun hætta að virka.')) return;
+        if (!house) return;
+
+        setLoading(true);
+        try {
+            // Delete old if exists
+            if (house.guest_token) {
+                await deleteDoc(doc(db, 'guest_views', house.guest_token));
+            }
+
+            const newToken = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+
+            // Create new view
+            await setDoc(doc(db, 'guest_views', newToken), {
+                houseId: house.id,
+                name: houseForm.name,
+                address: houseForm.address,
+                wifi_ssid: houseForm.wifi_ssid,
+                wifi_password: houseForm.wifi_password,
+                house_rules: houseForm.house_rules,
+                check_in_time: houseForm.check_in_time,
+                check_out_time: houseForm.check_out_time,
+                directions: houseForm.directions,
+                access_instructions: houseForm.access_instructions,
+                emergency_contact: houseForm.emergency_contact,
+                updated_at: new Date()
+            });
+
+            await updateDoc(doc(db, 'houses', house.id), { guest_token: newToken });
+            setHouse({ ...house, guest_token: newToken });
+            setSuccess('Nýr gestahlekkur búinn til!');
+        } catch (err) {
+            console.error(err);
+            setError('Villa við að búa til hlekk.');
         } finally {
             setLoading(false);
         }
@@ -239,6 +316,17 @@ export default function SettingsPage() {
                             >
                                 <Users className="w-5 h-5" />
                                 <span>Meðeigendur</span>
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab('guests')}
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'guests'
+                                    ? 'bg-charcoal text-white'
+                                    : 'text-grey-dark hover:bg-bone'
+                                    }`}
+                            >
+                                <BookOpen className="w-5 h-5" />
+                                <span>Gestabók (Renters)</span>
                             </button>
 
                             <button
@@ -537,6 +625,138 @@ export default function SettingsPage() {
                                             </div>
                                         </div>
                                     )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB: GUESTS */}
+                        {activeTab === 'guests' && house && (
+                            <div className="space-y-6">
+                                {/* Link Section */}
+                                <div className="bg-white p-6 rounded-lg shadow-sm">
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <BookOpen className="w-6 h-6 text-amber" />
+                                        <h2 className="text-xl font-serif">Gestabók (Digital Guestbook)</h2>
+                                    </div>
+                                    <p className="text-grey-dark mb-4">
+                                        Þú getur búið til hlekk fyrir leigjendur/gesti til að sjá upplýsingar um bústaðinn (Reglur, WiFi, leiðarlýsingu) án innskráningar.
+                                    </p>
+
+                                    <div className="bg-bone p-4 rounded-lg flex flex-col gap-4">
+                                        {house.guest_token ? (
+                                            <div>
+                                                <label className="label text-xs uppercase text-grey-mid">Gestahlekkur</label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        readOnly
+                                                        className="input font-mono text-sm bg-white"
+                                                        value={`${window.location.origin}/guest/${house.guest_token}`}
+                                                    />
+                                                    <button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(`${window.location.origin}/guest/${house.guest_token}`);
+                                                            setSuccess('Hlekkur afritaður!');
+                                                            setTimeout(() => setSuccess(''), 2000);
+                                                        }}
+                                                        className="btn btn-secondary whitespace-nowrap"
+                                                    >
+                                                        Afrita
+                                                    </button>
+                                                </div>
+                                                <div className="mt-4">
+                                                    <button
+                                                        onClick={() => handleGenerateGuestToken(true)}
+                                                        className="text-xs text-red-500 hover:text-red-700 underline"
+                                                    >
+                                                        Búa til nýjan hlekk (Ógilda gamlan)
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleGenerateGuestToken(false)}
+                                                className="btn btn-primary"
+                                            >
+                                                Virkja Gestabók
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Content Editor */}
+                                <div className="bg-white p-6 rounded-lg shadow-sm">
+                                    <h3 className="text-lg font-medium mb-4">Upplýsingar fyrir gesti</h3>
+                                    <form onSubmit={handleSaveHouse} className="space-y-4">
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="label">Innritun (kl.)</label>
+                                                <input
+                                                    type="text"
+                                                    className="input"
+                                                    value={houseForm.check_in_time}
+                                                    onChange={(e) => setHouseForm({ ...houseForm, check_in_time: e.target.value })}
+                                                    placeholder="16:00"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="label">Útritun (kl.)</label>
+                                                <input
+                                                    type="text"
+                                                    className="input"
+                                                    value={houseForm.check_out_time}
+                                                    onChange={(e) => setHouseForm({ ...houseForm, check_out_time: e.target.value })}
+                                                    placeholder="12:00"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="label">Húsreglur</label>
+                                            <textarea
+                                                className="input min-h-[100px]"
+                                                value={houseForm.house_rules}
+                                                onChange={(e) => setHouseForm({ ...houseForm, house_rules: e.target.value })}
+                                                placeholder="t.d. Reykingar bannaðar. Þrífa eftir sig..."
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="label">Leiðarlýsing (eða hlekkur á kort)</label>
+                                            <textarea
+                                                className="input"
+                                                value={houseForm.directions}
+                                                onChange={(e) => setHouseForm({ ...houseForm, directions: e.target.value })}
+                                                placeholder="t.d. Keyrt er í gegnum..."
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="label">Aðgangsleiðbeiningar (Lykilbox ofl.)</label>
+                                            <textarea
+                                                className="input"
+                                                value={houseForm.access_instructions}
+                                                onChange={(e) => setHouseForm({ ...houseForm, access_instructions: e.target.value })}
+                                                placeholder="t.d. Kóði í lykilbox er 1234..."
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="label">Neyðarnúmer / Tengiliður</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={houseForm.emergency_contact}
+                                                onChange={(e) => setHouseForm({ ...houseForm, emergency_contact: e.target.value })}
+                                                placeholder="Sími 555-1234"
+                                            />
+                                        </div>
+
+                                        <div className="pt-4">
+                                            <button type="submit" className="btn btn-primary" disabled={loading}>
+                                                Vista upplýsingar
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         )}
