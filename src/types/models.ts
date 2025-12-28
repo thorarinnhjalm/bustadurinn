@@ -19,6 +19,15 @@ export interface House {
     wifi_ssid?: string;
     wifi_password?: string;
     seo_slug?: string;
+
+    // Guest Information
+    house_rules?: string;
+    check_in_time?: string;
+    check_out_time?: string;
+    directions?: string;
+    access_instructions?: string;
+    emergency_contact?: string;
+
     manager_id: string; // The designated administrator (Bústaðastjóri)
     owner_ids: string[]; // All members
 

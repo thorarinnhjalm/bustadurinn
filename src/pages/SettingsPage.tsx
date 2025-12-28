@@ -811,7 +811,7 @@ export default function SettingsPage() {
                         {activeTab === 'profile' && (
                             <div className="bg-white p-6 rounded-lg shadow-sm">
                                 <div className="flex items-center gap-2 mb-6">
-                                    <User className="w-6 h-6 text-amber" />
+                                    <UserIcon className="w-6 h-6 text-amber" />
                                     <h2 className="text-xl font-serif">Mínar stillingar</h2>
                                 </div>
 
