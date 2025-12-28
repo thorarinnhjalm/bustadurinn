@@ -30,7 +30,7 @@ export default function OnboardingPage() {
 
     const [inviteEmails, setInviteEmails] = useState('');
     const addressInputRef = useRef<HTMLInputElement>(null);
-    const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+    const autocompleteRef = useRef<any>(null);
 
     const steps = [
         { id: 'welcome', label: 'Velkomin' },

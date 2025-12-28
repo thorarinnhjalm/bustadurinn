@@ -3,7 +3,7 @@
  * Includes both fixed and movable holidays
  */
 
-import { addDays, getYear, startOfYear, differenceInDays } from 'date-fns';
+import { addDays, getYear } from 'date-fns';
 
 export interface Holiday {
     name: string;

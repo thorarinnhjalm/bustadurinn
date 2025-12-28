@@ -8,7 +8,7 @@ import { Home, Users, User, Save, Shield, Wifi, AlertTriangle } from 'lucide-rea
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
-import type { House, User as UserType } from '@/types/models';
+import type { House } from '@/types/models';
 
 type Tab = 'house' | 'members' | 'profile';
 
@@ -31,7 +31,7 @@ export default function SettingsPage() {
     });
 
     // User State
-    const [members, setMembers] = useState<UserType[]>([]);
+
 
     useEffect(() => {
         if (currentUser?.house_ids?.length) {
@@ -149,8 +149,8 @@ export default function SettingsPage() {
                             <button
                                 onClick={() => setActiveTab('house')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'house'
-                                        ? 'bg-charcoal text-white'
-                                        : 'text-grey-dark hover:bg-bone'
+                                    ? 'bg-charcoal text-white'
+                                    : 'text-grey-dark hover:bg-bone'
                                     }`}
                             >
                                 <Home className="w-5 h-5" />
@@ -160,8 +160,8 @@ export default function SettingsPage() {
                             <button
                                 onClick={() => setActiveTab('members')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'members'
-                                        ? 'bg-charcoal text-white'
-                                        : 'text-grey-dark hover:bg-bone'
+                                    ? 'bg-charcoal text-white'
+                                    : 'text-grey-dark hover:bg-bone'
                                     }`}
                             >
                                 <Users className="w-5 h-5" />
@@ -171,8 +171,8 @@ export default function SettingsPage() {
                             <button
                                 onClick={() => setActiveTab('profile')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'profile'
-                                        ? 'bg-charcoal text-white'
-                                        : 'text-grey-dark hover:bg-bone'
+                                    ? 'bg-charcoal text-white'
+                                    : 'text-grey-dark hover:bg-bone'
                                     }`}
                             >
                                 <User className="w-5 h-5" />

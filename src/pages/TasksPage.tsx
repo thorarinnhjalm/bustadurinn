@@ -4,8 +4,6 @@ import {
     CheckSquare,
     Plus,
     ArrowLeft,
-    Filter,
-    Layout,
     List
 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
@@ -19,8 +17,7 @@ import {
     updateDoc,
     deleteDoc,
     doc,
-    serverTimestamp,
-    orderBy
+    serverTimestamp
 } from 'firebase/firestore';
 import type { Task, TaskStatus } from '@/types/models';
 import TaskForm from '@/components/tasks/TaskForm';
@@ -192,7 +189,6 @@ export default function TasksPage() {
                         tasks={filteredTasks}
                         onStatusChange={handleUpdateStatus}
                         onDelete={handleDeleteTask}
-                        currentUserId={currentUser?.uid || ''}
                     />
                 )}
 

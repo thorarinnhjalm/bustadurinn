@@ -14,10 +14,10 @@ interface TaskListProps {
     tasks: Task[];
     onStatusChange: (task: Task, newStatus: TaskStatus) => void;
     onDelete: (task: Task) => void;
-    currentUserId: string;
+
 }
 
-export default function TaskList({ tasks, onStatusChange, onDelete, currentUserId }: TaskListProps) {
+export default function TaskList({ tasks, onStatusChange, onDelete }: TaskListProps) {
     if (tasks.length === 0) {
         return (
             <div className="text-center py-12 text-grey-mid">
@@ -83,8 +83,8 @@ export default function TaskList({ tasks, onStatusChange, onDelete, currentUserI
                         <div className="flex items-center gap-4 mt-1 text-xs text-grey-mid">
                             {task.due_date && (
                                 <div className={`flex items-center gap-1 ${new Date(task.due_date) < new Date() && task.status !== 'completed'
-                                        ? 'text-red-500 font-medium'
-                                        : ''
+                                    ? 'text-red-500 font-medium'
+                                    : ''
                                     }`}>
                                     <CalendarIcon className="w-3 h-3" />
                                     {format(new Date(task.due_date), 'd. MMM', { locale: is })}

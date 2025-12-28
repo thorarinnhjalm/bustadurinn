@@ -3,7 +3,7 @@
  */
 
 import { create } from 'zustand';
-import { User, House } from '@/types/models';
+import type { User, House } from '@/types/models';
 
 interface AppState {
     // Auth state

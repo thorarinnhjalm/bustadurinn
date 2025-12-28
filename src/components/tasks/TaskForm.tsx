@@ -13,7 +13,7 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
     const [description, setDescription] = useState('');
     const [assignedTo, setAssignedTo] = useState('');
     const [dueDate, setDueDate] = useState('');
-    const [status, setStatus] = useState<TaskStatus>('pending');
+    const [status] = useState<TaskStatus>('pending');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

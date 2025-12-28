@@ -5,20 +5,25 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Calendar as BigCalendar, dateFnsLocalizer, Event } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, isSameDay } from 'date-fns';
+import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { Plus, X, AlertCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import type { Booking, BookingType } from '@/types/models';
-import { dateLocales, calendarMessages, bookingTypeLabels, getDefaultLanguage, type SupportedLanguage } from '@/utils/i18n';
+import { dateLocales, calendarMessages, bookingTypeLabels, type SupportedLanguage } from '@/utils/i18n';
 import { getIcelandicHolidays, isHoliday, includesMajorHoliday } from '@/utils/icelandicHolidays';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
-interface BookingEvent extends Event {
+interface BookingEvent {
     id: string;
     booking: Booking;
+    title: string;
+    start: Date;
+    end: Date;
+    allDay?: boolean;
+    resource?: any;
 }
 
 export default function CalendarPage() {
@@ -65,9 +70,9 @@ export default function CalendarPage() {
     const localizer = useMemo(() => {
         const locale = dateLocales[language];
         return dateFnsLocalizer({
-            format: (date, formatStr) => format(date, formatStr, { locale }),
-            parse: (str, formatStr) => parse(str, formatStr, new Date(), { locale }),
-            startOfWeek: (date) => startOfWeek(date, { locale }),
+            format: (date: Date, formatStr: string) => format(date, formatStr, { locale }),
+            parse: (str: string, formatStr: string) => parse(str, formatStr, new Date(), { locale }),
+            startOfWeek: (date: Date) => startOfWeek(date, { locale }),
             getDay,
             locales: { [language]: locale },
         });
