@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Plus, X, Calendar } from 'lucide-react';
-import type { FinanceEntry, FinanceType } from '@/types/models';
+import type { LedgerEntry, LedgerType } from '@/types/models';
 
 interface LedgerFormProps {
-    onSave: (entry: Partial<FinanceEntry>) => void;
+    onSave: (entry: Partial<LedgerEntry>) => void;
     onCancel: () => void;
 }
 
 export default function LedgerForm({ onSave, onCancel }: LedgerFormProps) {
-    const [type, setType] = useState<FinanceType>('expense');
+    const [type, setType] = useState<LedgerType>('expense');
     const [amount, setAmount] = useState('');
     const [category, setCategory] = useState('');
     const [description, setDescription] = useState('');
@@ -43,18 +43,18 @@ export default function LedgerForm({ onSave, onCancel }: LedgerFormProps) {
                     type="button"
                     onClick={() => setType('expense')}
                     className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${type === 'expense'
-                            ? 'bg-charcoal text-white shadow-sm'
-                            : 'text-grey-mid hover:text-charcoal'
+                        ? 'bg-charcoal text-white shadow-sm'
+                        : 'text-grey-mid hover:text-charcoal'
                         }`}
                 >
                     Útgjöld
                 </button>
                 <button
                     type="button"
-                    onClick={() => setType('contribution')}
+                    onClick={() => setType('income')}
                     className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${type !== 'expense'
-                            ? 'bg-green-600 text-white shadow-sm'
-                            : 'text-grey-mid hover:text-charcoal'
+                        ? 'bg-green-600 text-white shadow-sm'
+                        : 'text-grey-mid hover:text-charcoal'
                         }`}
                 >
                     Innborgun / Tekjur

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Home, Users, User, Save, Shield, Wifi, AlertTriangle, BookOpen } from 'lucide-react';
+import { Home, Users, User as UserIcon, Save, Shield, Wifi, AlertTriangle, BookOpen } from 'lucide-react';
 import {
     doc,
     setDoc,
@@ -19,7 +19,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
-import type { House } from '@/types/models';
+import type { House, User } from '@/types/models';
 
 type Tab = 'house' | 'members' | 'profile' | 'guests';
 
@@ -48,6 +48,7 @@ export default function SettingsPage() {
     });
 
     // User State
+    const [members, setMembers] = useState<User[]>([]);
 
 
     useEffect(() => {
@@ -100,7 +101,7 @@ export default function SettingsPage() {
 
     const [joinRequests, setJoinRequests] = useState<any[]>([]);
 
-    const isManager = house && currentUser && house.manager_uid === currentUser.uid;
+    const isManager = house?.manager_id === currentUser?.uid;
 
     useEffect(() => {
         if (!house || !isManager || activeTab !== 'members') return;
@@ -118,6 +119,24 @@ export default function SettingsPage() {
 
         return () => unsubscribe();
     }, [house?.id, isManager, activeTab]);
+
+    // Fetch Members
+    useEffect(() => {
+        if (activeTab === 'members' && house?.owner_ids?.length) {
+            const fetchMembers = async () => {
+                try {
+                    // Note: Firestore 'in' query supports max 10. Using Promise.all for robustness.
+                    const promises = house.owner_ids.map(uid => getDoc(doc(db, 'users', uid)));
+                    const docs = await Promise.all(promises);
+                    const users = docs.map(d => ({ uid: d.id, ...d.data() } as User)).filter(u => u.uid);
+                    setMembers(users);
+                } catch (err) {
+                    console.error("Error fetching members", err);
+                }
+            };
+            fetchMembers();
+        }
+    }, [activeTab, house?.owner_ids]);
 
     const handleApproveRequest = async (req: any) => {
         if (!house) return;
@@ -336,7 +355,7 @@ export default function SettingsPage() {
                                     : 'text-grey-dark hover:bg-bone'
                                     }`}
                             >
-                                <User className="w-5 h-5" />
+                                <UserIcon className="w-5 h-5" />
                                 <span>Mínar stillingar</span>
                             </button>
                         </div>
@@ -552,20 +571,47 @@ export default function SettingsPage() {
                                         </div>
                                     )}
 
-                                    {/* Current User */}
-                                    <div className="flex items-center justify-between p-4 border rounded-lg bg-bone/30">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-charcoal text-white flex items-center justify-center font-serif text-lg">
-                                                {currentUser?.name?.[0] || currentUser?.email?.[0]}
-                                            </div>
-                                            <div>
-                                                <div className="font-semibold">{currentUser?.name || currentUser?.email} (Þú)</div>
-                                                <div className="text-sm text-grey-mid">
-                                                    {house.manager_uid === currentUser?.uid ? 'Bústaðastjóri (Manager)' : 'Meðeigandi (Member)'}
+                                    {/* Members List */}
+                                    {members.length === 0 ? (
+                                        <div className="text-center text-grey-mid py-4">Hleð meðeigendum...</div>
+                                    ) : (
+                                        members.map(member => (
+                                            <div key={member.uid} className="flex items-center justify-between p-4 border rounded-lg bg-white mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-serif text-lg ${member.uid === currentUser?.uid ? 'bg-charcoal text-white' : 'bg-bone text-charcoal'}`}>
+                                                        {member.name?.[0] || member.email?.[0]}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold flex items-center gap-2">
+                                                            {member.name || member.email}
+                                                            {member.uid === currentUser?.uid && <span className="text-xs bg-grey-light px-2 py-0.5 rounded text-charcoal">Þú</span>}
+                                                        </div>
+                                                        <div className="text-sm text-grey-mid">
+                                                            {house.manager_id === member.uid ? 'Bústaðastjóri (Manager)' : 'Meðeigandi (Member)'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Action Buttons */}
+                                                <div>
+                                                    {isManager && house.manager_id !== member.uid && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (!confirm(`Ertu viss um að þú viljir gera ${member.name || member.email} að Bústaðastjóra? Þú missir stjórnenda-réttindi.`)) return;
+                                                                try {
+                                                                    await updateDoc(doc(db, 'houses', house.id), { manager_id: member.uid });
+                                                                    setHouse({ ...house, manager_id: member.uid });
+                                                                } catch (e) { console.error(e); }
+                                                            }}
+                                                            className="text-xs text-amber hover:text-amber-dark font-medium"
+                                                        >
+                                                            Gera að stjórnanda
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
+                                        ))
+                                    )}
 
                                     {/* Invite Section */}
                                     {isManager && (

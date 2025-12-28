@@ -30,7 +30,7 @@ import {
     serverTimestamp,
     arrayRemove
 } from 'firebase/firestore';
-import type { BudgetPlan, BudgetItem, FinanceEntry, House } from '@/types/models';
+import type { BudgetPlan, BudgetItem, LedgerEntry, House } from '@/types/models';
 import BudgetForm from '@/components/finance/BudgetForm';
 import LedgerForm from '@/components/finance/LedgerForm';
 import TransactionList from '@/components/finance/TransactionList';
@@ -56,7 +56,7 @@ export default function FinancePage() {
         fetchHouse();
     }, [currentUser]);
 
-    const isManager = house?.manager_uid === currentUser?.uid;
+    const isManager = house?.manager_id === currentUser?.uid;
 
     return (
         <div className="min-h-screen bg-bone p-6 pb-24">
@@ -134,7 +134,7 @@ export default function FinancePage() {
 
 function BudgetView({ houseId, currentUserId }: { houseId?: string, currentUserId?: string }) {
     const [plan, setPlan] = useState<BudgetPlan | null>(null);
-    const [entries, setEntries] = useState<FinanceEntry[]>([]);
+    const [entries, setEntries] = useState<LedgerEntry[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -177,7 +177,7 @@ function BudgetView({ houseId, currentUserId }: { houseId?: string, currentUserI
                 id: doc.id,
                 ...doc.data(),
                 date: doc.data().date?.toDate() || new Date()
-            })) as FinanceEntry[];
+            })) as LedgerEntry[];
 
             // Filter entries for current year (or filter within widget)
             // Filtering here is better for clean props
@@ -344,7 +344,7 @@ interface LedgerViewProps {
 }
 
 function LedgerView({ houseId, currentUserId, isManager, currentUserName }: LedgerViewProps) {
-    const [entries, setEntries] = useState<FinanceEntry[]>([]);
+    const [entries, setEntries] = useState<LedgerEntry[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -361,7 +361,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
                 id: doc.id,
                 ...doc.data(),
                 date: doc.data().date?.toDate() || new Date()
-            })) as FinanceEntry[];
+            })) as LedgerEntry[];
             setEntries(data);
             setLoading(false);
         });
@@ -369,7 +369,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
         return () => unsubscribe();
     }, [houseId]);
 
-    const handleSaveEntry = async (entryData: Partial<FinanceEntry>) => {
+    const handleSaveEntry = async (entryData: Partial<LedgerEntry>) => {
         if (!houseId || !currentUserId) return;
 
         try {
@@ -386,7 +386,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
         }
     };
 
-    const handleDeleteEntry = async (entry: FinanceEntry) => {
+    const handleDeleteEntry = async (entry: LedgerEntry) => {
         try {
             await deleteDoc(doc(db, 'finance_entries', entry.id));
         } catch (error) {

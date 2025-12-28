@@ -22,6 +22,9 @@ import TasksPage from '@/pages/TasksPage';
 import SuperAdminPage from '@/pages/SuperAdminPage';
 import JoinPage from '@/pages/JoinPage';
 import GuestPage from '@/pages/GuestPage';
+import FeaturesPage from '@/pages/FeaturesPage';
+import FAQPage from '@/pages/FAQPage';
+import AboutPage from '@/pages/AboutPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -83,6 +86,9 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/join" element={<JoinPage />} />
           <Route path="/guest/:token" element={<GuestPage />} />
+          <Route path="/eiginleikar" element={<FeaturesPage />} />
+          <Route path="/spurt-og-svarad" element={<FAQPage />} />
+          <Route path="/um-okkur" element={<AboutPage />} />
 
           {/* Protected Routes */}
           <Route

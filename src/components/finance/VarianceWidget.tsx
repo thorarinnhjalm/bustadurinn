@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
-import type { BudgetItem, FinanceEntry } from '@/types/models';
+import type { BudgetItem, LedgerEntry } from '@/types/models';
 import { AlertCircle } from 'lucide-react';
 
 interface VarianceWidgetProps {
     budgetItems: BudgetItem[];
-    entries: FinanceEntry[];
+    entries: LedgerEntry[];
 }
 
 export default function VarianceWidget({ budgetItems, entries }: VarianceWidgetProps) {
@@ -90,7 +90,7 @@ export default function VarianceWidget({ budgetItems, entries }: VarianceWidgetP
                         <div className="h-2 bg-bone rounded-full overflow-hidden">
                             <div
                                 className={`h-full transition-all duration-500 ${row.status === 'over' ? 'bg-red-400' :
-                                        row.status === 'warning' ? 'bg-amber' : 'bg-green-500'
+                                    row.status === 'warning' ? 'bg-amber' : 'bg-green-500'
                                     }`}
                                 style={{ width: `${Math.min(row.percent, 100)}%` }}
                             />

@@ -19,19 +19,13 @@ export interface House {
     wifi_ssid?: string;
     wifi_password?: string;
     seo_slug?: string;
-    manager_uid: string; // The designated administrator (Bústaðastjóri)
-    owner_ids: string[]; // All members (including manager)
-    holiday_mode: 'fairness' | 'first_come'; // Booking logic
-    invite_code?: string;
-    guest_token?: string; // Read-only access for guests
+    manager_id: string; // The designated administrator (Bústaðastjóri)
+    owner_ids: string[]; // All members
 
-    // Guest Info (Digital Guestbook)
-    house_rules?: string;
-    check_in_time?: string;
-    check_out_time?: string;
-    directions?: string;
-    access_instructions?: string;
-    emergency_contact?: string;
+    // Settings
+    holiday_mode: 'fairness' | 'first_come';
+    invite_code?: string;
+    guest_token?: string;
 
     created_at: Date;
     updated_at: Date;
@@ -97,19 +91,19 @@ export interface BudgetPlan {
     updated_at: Date;
 }
 
-// Finance Ledger (Bókhald) - Actual Entries
-export type FinanceType = 'expense' | 'rental_income' | 'contribution';
+// Finance Ledger (Bókhald) - Internal Only
+export type LedgerType = 'expense' | 'income';
 
-export interface FinanceEntry {
+export interface LedgerEntry {
     id: string;
     house_id: string;
-    amount: number;
-    type: FinanceType;
-    category: string; // Should match BudgetItem category for variance analysis
+    date: Date; // ISO YYYY-MM-DD or Date object
+    category: string;
     description: string;
-    date: Date;
-    user_uid: string; // Who recorded this entry
-    paid_by?: string;
+    amount: number;
+    type: LedgerType;
+    paid_by_user_id: string; // Who paid / received
+    user_uid?: string; // Creator ID (optional for backward compact)
     paid_by_name?: string;
     created_at: Date;
 }

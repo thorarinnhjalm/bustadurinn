@@ -1,11 +1,11 @@
 import { Trash2, TrendingDown, TrendingUp } from 'lucide-react';
-import type { FinanceEntry } from '@/types/models';
+import type { LedgerEntry } from '@/types/models';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
 
 interface TransactionListProps {
-    entries: FinanceEntry[];
-    onDelete: (entry: FinanceEntry) => void;
+    entries: LedgerEntry[];
+    onDelete: (entry: LedgerEntry) => void;
     currentUserId: string;
     isManager: boolean;
 }
