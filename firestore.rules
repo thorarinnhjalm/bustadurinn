@@ -1,0 +1,119 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is manager of the house
+    function isHouseManager(houseId) {
+      return isAuthenticated() && 
+        request.auth.uid == get(/databases/$(database)/documents/houses/$(houseId)).data.manager_uid;
+    }
+    
+    // Helper function to check if user is owner/member of the house
+    function isHouseMember(houseId) {
+      return isAuthenticated() && 
+        request.auth.uid in get(/databases/$(database)/documents/houses/$(houseId)).data.owner_ids;
+    }
+    
+    // Users Collection
+    match /users/{userId} {
+      // Users can read and write their own document
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Houses Collection
+    match /houses/{houseId} {
+      // Anyone authenticated can create a house (they become the manager)
+      allow create: if isAuthenticated() && 
+        request.resource.data.manager_uid == request.auth.uid;
+      
+      // Members can read, only manager can update/delete
+      allow read: if isHouseMember(houseId);
+      allow update: if isHouseManager(houseId);
+      allow delete: if isHouseManager(houseId);
+    }
+    
+    // Bookings Collection
+    match /bookings/{bookingId} {
+      // Members can create bookings for their house
+      allow create: if isHouseMember(request.resource.data.house_id);
+      
+      // Members can read bookings for their house
+      allow read: if isHouseMember(resource.data.house_id);
+      
+      // Only the creator or manager can update/delete
+      allow update, delete: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        isHouseManager(resource.data.house_id)
+      );
+    }
+    
+    // Budget Plans Collection
+    match /budget_plans/{planId} {
+      // Only manager can create/update budget plans
+      allow create: if isHouseManager(request.resource.data.house_id);
+      allow update: if isHouseManager(resource.data.house_id);
+      
+      // Members can read budget plans
+      allow read: if isHouseMember(resource.data.house_id);
+      
+      // Only manager can delete
+      allow delete: if isHouseManager(resource.data.house_id);
+    }
+    
+    // Finance Entries Collection  
+    match /finance_entries/{entryId} {
+      // Only manager can create/update/delete finance entries
+      allow create: if isHouseManager(request.resource.data.house_id);
+      allow update: if isHouseManager(resource.data.house_id);
+      allow delete: if isHouseManager(resource.data.house_id);
+      
+      // All members can read
+      allow read: if isHouseMember(resource.data.house_id);
+    }
+    
+    // Tasks Collection
+    match /tasks/{taskId} {
+      // Members can create tasks
+      allow create: if isAuthenticated();
+      
+      // Members can read tasks for their house
+      allow read: if isAuthenticated();
+      
+      // Members can update tasks
+      allow update: if isAuthenticated();
+      
+      // Only manager can delete
+      allow delete: if isAuthenticated();
+    }
+    
+    // Guestbook Collection
+    match /guestbook/{entryId} {
+      // Anyone can create a guestbook entry (including guests via magic link)
+      allow create: if true;
+      
+      // Members can read guestbook entries
+      allow read: if true;
+      
+      // Only the author or manager can update/delete
+      allow update, delete: if isAuthenticated();
+    }
+    
+    // Guest Access Collection
+    match /guest_access/{accessId} {
+      // Only manager can create guest access
+      allow create: if isAuthenticated();
+      
+      // Members can read
+      allow read: if isAuthenticated();
+      
+      // Only manager can update/delete
+      allow update, delete: if isAuthenticated();
+    }
+  }
+}

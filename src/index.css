@@ -1,0 +1,214 @@
+/* Typography - Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================================================================
+   BÚSTAÐURINN.IS - SCANDI-MINIMALIST DESIGN SYSTEM
+   ============================================================================= */
+
+/* =============================================================================
+   BASE LAYER - Custom base styles
+   ============================================================================= */
+
+@layer base {
+  body {
+    @apply font-sans text-charcoal bg-bone;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif font-semibold text-charcoal;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    @apply text-5xl mb-8;
+  }
+
+  h2 {
+    @apply text-4xl mb-6;
+  }
+
+  h3 {
+    @apply text-3xl mb-4;
+  }
+
+  h4 {
+    @apply text-2xl mb-4;
+  }
+}
+
+/* =============================================================================
+   COMPONENTS LAYER - Reusable components
+   ============================================================================= */
+
+@layer components {
+
+  /* Buttons - Scandi Style */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-8 py-4 font-sans text-base font-medium border-none cursor-pointer transition-all;
+    border-radius: 2px;
+    white-space: nowrap;
+    transition-duration: 250ms;
+  }
+
+  .btn-primary {
+    @apply bg-charcoal text-bone;
+  }
+
+  .btn-primary:hover {
+    @apply bg-amber text-charcoal -translate-y-0.5;
+    box-shadow: 0 10px 15px rgba(26, 26, 26, 0.1);
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-charcoal border-2 border-charcoal;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-charcoal text-bone;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-charcoal px-6 py-3;
+  }
+
+  .btn-ghost:hover {
+    background-color: rgba(26, 26, 26, 0.05);
+  }
+
+  .btn:disabled {
+    @apply opacity-50 cursor-not-allowed;
+    transform: none;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white rounded p-10 transition-all;
+    box-shadow: 0 4px 6px rgba(26, 26, 26, 0.07);
+    transition-duration: 250ms;
+  }
+
+  .card:hover {
+    box-shadow: 0 20px 25px rgba(26, 26, 26, 0.12);
+    @apply -translate-y-0.5;
+  }
+
+  /* Form Inputs */
+  .input {
+    @apply w-full px-5 py-4 font-sans text-base text-charcoal bg-white border-2 border-grey-warm transition-all outline-none;
+    border-radius: 2px;
+    transition-duration: 250ms;
+  }
+
+  .input:focus {
+    @apply border-charcoal;
+    box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
+  }
+
+  .input::placeholder {
+    @apply text-grey-mid;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-charcoal mb-2;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-3 py-1.5 text-sm font-medium bg-amber text-charcoal rounded-lg;
+  }
+
+  /* Layout Helpers */
+  .section {
+    @apply py-24;
+  }
+
+  .split-screen {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-0 min-h-screen;
+  }
+}
+
+/* =============================================================================
+   UTILITIES LAYER - Custom utilities
+   ============================================================================= */
+
+@layer utilities {
+  .text-grey-warm {
+    color: #e8e4df;
+  }
+
+  .text-grey-mid {
+    color: #8a8580;
+  }
+
+  .text-grey-dark {
+    color: #4a4642;
+  }
+
+  .bg-bone\/95 {
+    background-color: rgba(253, 252, 248, 0.95);
+  }
+
+  .bg-amber\/10 {
+    background-color: rgba(232, 176, 88, 0.1);
+  }
+
+  .border-grey-warm {
+    border-color: #e8e4df;
+  }
+
+  .border-amber\/30 {
+    border-color: rgba(232, 176, 88, 0.3);
+  }
+
+  .hover\:bg-amber-dark:hover {
+    background-color: #d49b3d;
+  }
+
+  .bg-gradient-charcoal {
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 350ms ease-out;
+  }
+}
+
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  h1 {
+    @apply text-3xl;
+  }
+
+  h2 {
+    @apply text-2xl;
+  }
+
+  .section {
+    @apply py-16;
+  }
+}
