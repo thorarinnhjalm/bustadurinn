@@ -9,6 +9,12 @@ import { auth, googleProvider, db } from '@/lib/firebase';
 import { LogIn } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
+// Admin emails whitelist (same as App.tsx)
+const ADMIN_EMAILS = [
+    'thorarinnhjalmarsson@gmail.com',
+    // Add more admin emails here
+];
+
 export default function LoginPage() {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
@@ -22,8 +28,15 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            navigate('/dashboard');
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Check if admin email
+            if (user.email && ADMIN_EMAILS.includes(user.email)) {
+                navigate('/super-admin');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (err: any) {
             setError('Rangt netfang eða lykilorð');
             console.error('Login error:', err);
@@ -54,13 +67,25 @@ export default function LoginPage() {
                     created_at: serverTimestamp(),
                     last_login: serverTimestamp()
                 });
-                navigate('/onboarding');
+
+                // Check if admin email
+                if (user.email && ADMIN_EMAILS.includes(user.email)) {
+                    navigate('/super-admin');
+                } else {
+                    navigate('/onboarding');
+                }
             } else {
                 // Update last login
                 await setDoc(doc(db, 'users', user.uid), {
                     last_login: serverTimestamp()
                 }, { merge: true });
-                navigate('/dashboard');
+
+                // Check if admin email
+                if (user.email && ADMIN_EMAILS.includes(user.email)) {
+                    navigate('/super-admin');
+                } else {
+                    navigate('/dashboard');
+                }
             }
         } catch (err: any) {
             setError('Villa við innskráningu með Google');
