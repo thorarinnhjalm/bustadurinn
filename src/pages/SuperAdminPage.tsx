@@ -5,11 +5,14 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Home, Users, BarChart2, TrendingUp, Activity, ArrowLeft } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, ArrowLeft, UserCog, Database, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useAppStore } from '@/store/appStore';
 import type { House, User } from '@/types/models';
+import { seedDemoData } from '@/utils/seedDemoData';
 
 interface Stats {
     totalHouses: number;
@@ -91,6 +94,36 @@ export default function SuperAdminPage() {
         fetchStats();
     }, []);
 
+    // Seed demo data
+    const handleSeedDemo = async () => {
+        if (!confirm('This will create a demo house with 3 users, bookings, tasks, and finance data. Continue?')) {
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const result = await seedDemoData();
+            alert(`✅ Demo data created!\n\nHouse: Sumarbústaður við Þingvallavatn\n\nDemo Users:\n${result.users.map(u => `• ${u.name} - ${u.email}`).join('\n')}\n\nPassword for all: Demo123!`);
+            // Reload stats
+            window.location.reload();
+        } catch (error: any) {
+            alert(`❌ Error: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Impersonate user (admin debugging tool)
+    const handleImpersonate = async (user: User) => {
+        if (!confirm(`Impersonate ${user.name}?\n\nYou will be logged in as this user. Use this for testing only.`)) {
+            return;
+        }
+
+        // Note: Real impersonation would require special backend logic or admin SDK
+        // For now, we'll show their data
+        alert(`🎭 Impersonation feature coming soon!\n\nFor now, you can:\n1. Note their email: ${user.email}\n2. Logout\n3. Login as them\n\nOr use Firebase Auth admin SDK for true impersonation.`);
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-bone">
@@ -120,9 +153,18 @@ export default function SuperAdminPage() {
                                 <p className="text-grey-warm text-sm">Kerfisstjórnun og greining</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-amber/20 text-amber rounded">
-                            <Activity className="w-4 h-4" />
-                            <span className="text-sm font-medium">Admin Access</span>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleSeedDemo}
+                                className="btn btn-secondary text-bone border-white/20 hover:bg-white/10 flex items-center gap-2"
+                            >
+                                <Database className="w-4 h-4" />
+                                Seed Demo Data
+                            </button>
+                            <div className="flex items-center gap-2 px-4 py-2 bg-amber/20 text-amber rounded">
+                                <Activity className="w-4 h-4" />
+                                <span className="text-sm font-medium">Admin Access</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -319,8 +361,15 @@ export default function SuperAdminPage() {
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div className="text-right text-sm text-grey-mid">
-                                                <p>UID: {user.uid?.slice(0, 8)}...</p>
+                                            <div className="flex flex-col items-end gap-3">
+                                                <p className="text-sm text-grey-mid">UID: {user.uid?.slice(0, 8)}...</p>
+                                                <button
+                                                    onClick={() => handleImpersonate(user)}
+                                                    className="btn btn-ghost text-sm px-3 py-1 border border-stone-300 hover:bg-amber/10 hover:text-amber hover:border-amber flex items-center gap-1"
+                                                >
+                                                    <UserCog className="w-4 h-4" />
+                                                    Impersonate
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
