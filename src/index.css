@@ -51,37 +51,44 @@
 
 @layer components {
 
-  /* Buttons - Scandi Style */
+  /* Buttons - Premium Scandi Style */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-8 py-4 font-sans text-base font-medium border-none cursor-pointer transition-all;
-    border-radius: 2px;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-sans text-sm font-medium border-none cursor-pointer transition-all;
+    border-radius: 6px;
     white-space: nowrap;
-    transition-duration: 250ms;
+    transition-duration: 200ms;
   }
 
   .btn-primary {
-    @apply bg-charcoal text-bone;
+    @apply bg-charcoal text-bone border border-charcoal;
   }
 
   .btn-primary:hover {
-    @apply bg-amber text-charcoal -translate-y-0.5;
-    box-shadow: 0 10px 15px rgba(26, 26, 26, 0.1);
+    @apply bg-amber text-charcoal border-amber;
+  }
+
+  .btn-primary:active {
+    transform: scale(0.95);
   }
 
   .btn-secondary {
-    @apply bg-transparent text-charcoal border-2 border-charcoal;
+    @apply bg-transparent text-charcoal border border-stone-300;
   }
 
   .btn-secondary:hover {
-    @apply bg-charcoal text-bone;
+    @apply bg-stone-50 border-stone-400;
+  }
+
+  .btn-secondary:active {
+    transform: scale(0.95);
   }
 
   .btn-ghost {
-    @apply bg-transparent text-charcoal px-6 py-3;
+    @apply bg-transparent text-charcoal px-4 py-2 border border-transparent;
   }
 
   .btn-ghost:hover {
-    background-color: rgba(26, 26, 26, 0.05);
+    @apply bg-stone-50;
   }
 
   .btn:disabled {
@@ -89,50 +96,84 @@
     transform: none;
   }
 
-  /* Cards */
+  /* Cards - Borders over Shadows */
   .card {
-    @apply bg-white rounded p-10 transition-all;
-    box-shadow: 0 4px 6px rgba(26, 26, 26, 0.07);
-    transition-duration: 250ms;
+    @apply bg-white rounded-lg p-8 transition-all border border-stone-200;
+    transition-duration: 200ms;
   }
 
   .card:hover {
-    box-shadow: 0 20px 25px rgba(26, 26, 26, 0.12);
-    @apply -translate-y-0.5;
+    @apply border-stone-300 shadow-sm;
+    transform: translateY(-1px);
   }
 
-  /* Form Inputs */
+  /* Form Inputs - Clean and Minimal */
   .input {
-    @apply w-full px-5 py-4 font-sans text-base text-charcoal bg-white border-2 border-grey-warm transition-all outline-none;
-    border-radius: 2px;
-    transition-duration: 250ms;
+    @apply w-full px-4 py-3 font-sans text-base text-stone-900 bg-white border border-stone-300 transition-all outline-none;
+    border-radius: 6px;
+    transition-duration: 200ms;
+    font-size: 16px;
+    /* Prevents iOS zoom */
+    line-height: 1.5;
   }
 
   .input:focus {
-    @apply border-charcoal;
-    box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
+    @apply border-charcoal ring-2 ring-charcoal/10;
   }
 
   .input::placeholder {
-    @apply text-grey-mid;
+    @apply text-stone-400;
   }
 
   .label {
-    @apply block text-sm font-medium text-charcoal mb-2;
+    @apply block text-sm font-medium text-stone-700 mb-2;
+    letter-spacing: -0.01em;
   }
 
-  /* Badge */
+  /* Badge - Subtle and Refined */
   .badge {
-    @apply inline-flex items-center px-3 py-1.5 text-sm font-medium bg-amber text-charcoal rounded-lg;
+    @apply inline-flex items-center px-3 py-1 text-xs font-medium bg-amber/10 text-amber border border-amber/20 rounded-md;
   }
 
   /* Layout Helpers */
   .section {
-    @apply py-24;
+    @apply py-24 px-6;
   }
 
   .split-screen {
     @apply grid grid-cols-1 md:grid-cols-2 gap-0 min-h-screen;
+  }
+
+  /* Toast Notification */
+  .toast {
+    @apply fixed bottom-6 right-6 bg-white border border-stone-200 rounded-lg p-4 shadow-lg;
+    animation: slideInUp 200ms ease-out;
+    z-index: 9999;
+  }
+
+  .toast-success {
+    @apply border-green-200 bg-green-50;
+  }
+
+  .toast-error {
+    @apply border-red-200 bg-red-50;
+  }
+
+  /* Skeleton Loader */
+  .skeleton {
+    @apply bg-stone-200 animate-pulse rounded;
+  }
+
+  /* Premium Link Style */
+  a,
+  .link {
+    @apply text-charcoal transition-colors duration-200;
+    text-decoration: none;
+  }
+
+  a:hover,
+  .link:hover {
+    @apply text-amber;
   }
 }
 
@@ -181,6 +222,18 @@
   @keyframes fadeIn {
     from {
       opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
       transform: translateY(20px);
     }
 
@@ -191,7 +244,7 @@
   }
 
   .animate-fade-in {
-    animation: fadeIn 350ms ease-out;
+    animation: fadeIn 300ms ease-out;
   }
 }
 
