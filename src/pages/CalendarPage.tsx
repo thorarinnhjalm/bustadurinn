@@ -28,6 +28,8 @@ interface BookingEvent {
 
 export default function CalendarPage() {
     const currentUser = useAppStore((state) => state.currentUser);
+    const currentHouse = useAppStore((state) => state.currentHouse);
+    const houseId = currentHouse?.id || currentUser?.house_ids?.[0];
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [events, setEvents] = useState<BookingEvent[]>([]);
     const [showModal, setShowModal] = useState(false);
@@ -37,13 +39,13 @@ export default function CalendarPage() {
     // Language preference (default to Icelandic, but can be changed)
     const [language, setLanguage] = useState<SupportedLanguage>('is');
 
-    // Hardcoded house ID for now (TODO: Get from context/route)
-    const houseId = 'demo-house-id';
 
     // House Settings for Booking Rules
     const [houseSettings, setHouseSettings] = useState<any>(null);
 
     useEffect(() => {
+        if (!houseId) return;
+
         const fetchSettings = async () => {
             try {
                 const docRef = doc(db, 'houses', houseId);

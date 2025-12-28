@@ -153,7 +153,8 @@ export default function OnboardingPage() {
 
     const handleSendInvites = async () => {
         // For now, just skip to finish
-        // TODO: Implement email invites via Cloud Functions
+        // Manual invite system - members share invite link
+        // Future: Automated email invites via Cloud Functions
         nextStep();
     };
 
