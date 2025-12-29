@@ -5,7 +5,9 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, User as UserIcon, Save, Shield, Wifi, AlertTriangle, BookOpen } from 'lucide-react';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { Home, Users, User as UserIcon, Save, Shield, Wifi, AlertTriangle, BookOpen, LogOut } from 'lucide-react';
 import {
     doc,
     setDoc,
@@ -58,6 +60,15 @@ export default function SettingsPage() {
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [debounceTimer, setDebounceTimer] = useState<any>(null);
     const [members, setMembers] = useState<User[]>([]);
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            navigate('/login');
+        } catch (err) {
+            console.error('Logout error:', err);
+        }
+    };
 
     useEffect(() => {
         if (!currentUser?.house_ids?.[0]) return;
@@ -418,6 +429,14 @@ export default function SettingsPage() {
                             >
                                 <UserIcon className="w-5 h-5" />
                                 <span>Mínar stillingar</span>
+                            </button>
+
+                            <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left border-t border-grey-warm text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                                <LogOut className="w-5 h-5" />
+                                <span>Skrá út</span>
                             </button>
                         </div>
                     </div>
@@ -957,6 +976,16 @@ export default function SettingsPage() {
                                             disabled
                                         />
                                         <p className="text-xs text-grey-mid mt-1">Hafðu samband við þjónustuver til að breyta nafni.</p>
+                                    </div>
+
+                                    <div className="pt-8 border-t border-grey-warm flex justify-end">
+                                        <button
+                                            onClick={handleLogout}
+                                            className="btn btn-ghost text-red-500 hover:bg-red-50"
+                                        >
+                                            <LogOut className="w-4 h-4 mr-2" />
+                                            Skrá út
+                                        </button>
                                     </div>
                                 </div>
                             </div>

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import {
     Calendar, CheckSquare, Sun, Wind,
     Plus, Users, Wallet, Menu, Bell,
-    ChevronRight, Loader2, Home
+    ChevronRight, Loader2, Home, Shield
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
@@ -12,6 +12,10 @@ import { is } from 'date-fns/locale';
 import { collection, query, where, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Booking, Task } from '@/types/models';
+
+const ADMIN_EMAILS = [
+    'thorarinnhjalmarsson@gmail.com',
+];
 
 // A-Frame Lógóið okkar
 const CabinLogo = ({ size = 24, className = "" }: { size?: number, className?: string }) => (
@@ -154,6 +158,16 @@ const UserDashboard = () => {
                     <span className="font-serif font-bold text-lg tracking-tight">{currentHouse.name}</span>
                 </div>
                 <div className="flex items-center gap-4 relative">
+                    {currentUser?.email && ADMIN_EMAILS.includes(currentUser.email) && (
+                        <button
+                            onClick={() => navigate('/super-admin')}
+                            className="flex items-center gap-1 text-stone-400 hover:text-amber transition-colors text-xs font-bold uppercase tracking-wider"
+                            title="Admin Mission Control"
+                        >
+                            <Shield size={16} />
+                            <span className="hidden sm:inline">Admin</span>
+                        </button>
+                    )}
                     <button
                         onClick={() => setShowNotifications(!showNotifications)}
                         className="relative text-stone-400 hover:text-[#1a1a1a] transition-colors"

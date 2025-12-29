@@ -7,9 +7,10 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
-import { Plus, X, AlertCircle, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft } from 'lucide-react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import type { Booking, BookingType } from '@/types/models';
@@ -29,6 +30,7 @@ interface BookingEvent {
 }
 
 export default function CalendarPage() {
+    const navigate = useNavigate();
     const { user: currentUser } = useEffectiveUser();
     const currentHouse = useAppStore((state) => state.currentHouse);
     const houseId = currentHouse?.id || currentUser?.house_ids?.[0];
@@ -319,6 +321,13 @@ export default function CalendarPage() {
                 <div className="container mx-auto px-6 py-6">
                     <div className="flex justify-between items-center">
                         <div>
+                            <button
+                                onClick={() => navigate('/dashboard')}
+                                className="flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
+                            >
+                                <ArrowLeft className="w-4 h-4 mr-2" />
+                                Til baka
+                            </button>
                             <h1 className="text-3xl font-serif mb-2">Bókunardagatal</h1>
                             <p className="text-grey-mid">Skipulagðu dvöl í sumarhúsinu</p>
                         </div>

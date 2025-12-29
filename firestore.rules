@@ -150,5 +150,41 @@ service cloud.firestore {
       // Only manager can update/delete
       allow update, delete: if isAuthenticated();
     }
+    
+    // Shopping List Collection
+    match /shopping_list/{itemId} {
+      // Super admin has full access
+      allow read, write: if isSuperAdmin();
+      
+      // Members can create shopping items
+      allow create: if isHouseMember(request.resource.data.house_id);
+      
+      // Members can read items for their house
+      allow read: if isHouseMember(resource.data.house_id);
+      
+      // Members can update (toggle checked status)
+      allow update: if isHouseMember(resource.data.house_id);
+      
+      // Anyone can delete items from their house
+      allow delete: if isHouseMember(resource.data.house_id);
+    }
+    
+    // Internal Logs Collection (Owner Communication)
+    match /internal_logs/{logId} {
+      // Super admin has full access
+      allow read, write: if isSuperAdmin();
+      
+      // Members can create logs
+      allow create: if isHouseMember(request.resource.data.house_id);
+      
+      // Members can read logs for their house
+      allow read: if isHouseMember(resource.data.house_id);
+      
+      // Only creator or manager can delete
+      allow delete: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        isHouseManager(resource.data.house_id)
+      );
+    }
   }
 }

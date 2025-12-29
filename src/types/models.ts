@@ -167,3 +167,28 @@ export interface Coupon {
     active: boolean;
     created_at: Date;
 }
+
+// Shopping List
+export interface ShoppingItem {
+    id: string;
+    house_id: string;
+    item: string;
+    checked: boolean;
+    added_by: string;
+    added_by_name: string;
+    checked_by?: string;
+    checked_by_name?: string;
+    checked_at?: Date;
+    created_at: Date;
+}
+
+// Logbook (Internal Communication between owners)
+export interface InternalLog {
+    id: string;
+    house_id: string;
+    user_id: string;
+    user_name: string;
+    text: string;
+    created_at: Date;
+}
+
