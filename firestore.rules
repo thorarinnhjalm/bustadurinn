@@ -186,5 +186,32 @@ service cloud.firestore {
         isHouseManager(resource.data.house_id)
       );
     }
+    
+    // Contact Submissions Collection (from website contact form)
+    match /contact_submissions/{submissionId} {
+      // Super admin has full access
+      allow read, write: if isSuperAdmin();
+      
+      // Anyone can create (public contact form)
+      allow create: if true;
+    }
+    
+    // Coupons Collection (discount codes)
+    match /coupons/{couponId} {
+      // Super admin has full access
+      allow read, write: if isSuperAdmin();
+      
+      // Users can read active coupons to validate them
+      allow read: if isAuthenticated();
+    }
+    
+    // Email Templates Collection
+    match /email_templates/{templateId} {
+      // Super admin has full access
+      allow read, write: if isSuperAdmin();
+      
+      // System can read templates for sending (via Cloud Functions)
+      allow read: if true;
+    }
   }
 }
