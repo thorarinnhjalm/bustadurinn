@@ -5,6 +5,8 @@
 
 import { X, AlertTriangle } from 'lucide-react';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useAppStore } from '@/store/appStore';
+import type { House } from '@/types/models';
 
 export default function ImpersonationBanner() {
     const { impersonatedUser, stopImpersonation, isImpersonating } = useImpersonation();
@@ -14,6 +16,18 @@ export default function ImpersonationBanner() {
     }
 
     const handleExit = () => {
+        // Restore admin's original house
+        const storedHouse = localStorage.getItem('admin_original_house');
+        if (storedHouse) {
+            try {
+                const adminHouse = JSON.parse(storedHouse) as House;
+                useAppStore.getState().setCurrentHouse(adminHouse);
+                localStorage.removeItem('admin_original_house');
+            } catch (error) {
+                console.error('Failed to restore admin house:', error);
+            }
+        }
+
         // Get the return URL from localStorage (set when impersonation started)
         const returnUrl = localStorage.getItem('admin_return_url') || '/super-admin';
         stopImpersonation();

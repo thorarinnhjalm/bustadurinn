@@ -9,6 +9,7 @@ import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit }
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
 import AdminLayout from '@/components/AdminLayout';
 import DataTable from '@/components/DataTable';
@@ -119,15 +120,46 @@ export default function SuperAdminPage() {
     };
 
     // Impersonate user
-    const handleImpersonate = (user: User) => {
+    const handleImpersonate = async (user: User) => {
         if (!confirm(`View as ${user.name}?\n\nYou'll see exactly what they see. Click "Exit God Mode" to return.`)) {
             return;
         }
-        // Save current URL to return to later
-        localStorage.setItem('admin_return_url', window.location.pathname);
-        startImpersonation(user);
-        // Navigate to their dashboard
-        window.location.href = '/dashboard';
+
+        try {
+            setActionLoading(`impersonate-${user.uid}`);
+
+            // Save admin's current house to restore later
+            const adminHouse = useAppStore.getState().currentHouse;
+            if (adminHouse) {
+                localStorage.setItem('admin_original_house', JSON.stringify(adminHouse));
+            }
+
+            // Fetch the impersonated user's houses
+            if (user.house_ids && user.house_ids.length > 0) {
+                const firstHouseId = user.house_ids[0];
+                const houseDoc = await getDocs(collection(db, 'houses'));
+                const userHouse = houseDoc.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() } as House))
+                    .find(h => h.id === firstHouseId);
+
+                if (userHouse) {
+                    // Set the impersonated user's house as current
+                    useAppStore.getState().setCurrentHouse(userHouse);
+                    useAppStore.getState().setUserHouses([userHouse]);
+                }
+            }
+
+            // Save current URL to return to later
+            localStorage.setItem('admin_return_url', window.location.pathname);
+            startImpersonation(user);
+            // Navigate to their dashboard
+            window.location.href = '/dashboard';
+        } catch (error: any) {
+            console.error('Impersonation error:', error);
+            alert('Failed to impersonate user: ' + error.message);
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     if (loading) {
