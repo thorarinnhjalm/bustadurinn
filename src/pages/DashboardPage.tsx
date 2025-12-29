@@ -35,6 +35,8 @@ const UserDashboard = () => {
     const weather = { temp: "--", wind: 0, condition: "—" };
     const finances = { balance: 0, lastAction: "—" };
 
+    const [showNotifications, setShowNotifications] = useState(false);
+
     useEffect(() => {
         if (currentUser && (!currentUser.house_ids || currentUser.house_ids.length === 0)) {
             navigate('/onboarding');
@@ -43,8 +45,6 @@ const UserDashboard = () => {
 
         const fetchData = async () => {
             if (!currentHouse) {
-                // If we have house_ids but no currentHouse yet, the store is syncing. 
-                // Don't disable loading yet.
                 return;
             }
 
@@ -52,11 +52,11 @@ const UserDashboard = () => {
                 const now = new Date();
                 const todayStart = new Date(now.setHours(0, 0, 0, 0));
 
-                // 1. Fetch Next Booking
-                const bookingsRef = collection(db, 'houses', currentHouse.id, 'bookings');
-                // Future bookings
+                // 1. Fetch Next Booking (using top-level collection)
+                const bookingsRef = collection(db, 'bookings');
                 const qNext = query(
                     bookingsRef,
+                    where('house_id', '==', currentHouse.id),
                     where('start', '>=', Timestamp.fromDate(todayStart)),
                     orderBy('start', 'asc'),
                     limit(1)
@@ -69,13 +69,14 @@ const UserDashboard = () => {
                         ...bData,
                         start: bData.start.toDate(),
                         end: bData.end.toDate(),
-                        created_at: bData.created_at.toDate()
+                        created_at: bData.created_at?.toDate() || new Date()
                     } as Booking);
                 }
 
                 // 2. Check Occupancy (Current Booking)
                 const qActive = query(
                     bookingsRef,
+                    where('house_id', '==', currentHouse.id),
                     where('end', '>=', Timestamp.fromDate(now)),
                     orderBy('end', 'asc')
                 );
@@ -86,10 +87,11 @@ const UserDashboard = () => {
                 });
                 setIsOccupied(!!active);
 
-                // 3. Fetch Top 3 Tasks (Pending/In Progress)
-                const tasksRef = collection(db, 'houses', currentHouse.id, 'tasks');
+                // 3. Fetch Top 3 Tasks (Pending/In Progress) - using top-level collection
+                const tasksRef = collection(db, 'tasks');
                 const qTasks = query(
                     tasksRef,
+                    where('house_id', '==', currentHouse.id),
                     where('status', 'in', ['pending', 'in_progress']),
                     orderBy('created_at', 'desc'),
                     limit(3)
@@ -113,7 +115,7 @@ const UserDashboard = () => {
         };
 
         fetchData();
-    }, [currentHouse]);
+    }, [currentHouse, currentUser, navigate]);
 
     if (!currentHouse || loading) {
         return (
@@ -137,8 +139,6 @@ const UserDashboard = () => {
         if (diff === 1) return 'Á morgun';
         return `Eftir ${diff} daga`;
     };
-
-    const [showNotifications, setShowNotifications] = useState(false);
 
     // ... (rest of component)
 

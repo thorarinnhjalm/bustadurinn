@@ -183,7 +183,7 @@ export default function OnboardingPage() {
                 name: houseData.name,
                 address: houseData.address,
                 location: houseData.location,
-                manager_uid: currentUser.uid,
+                manager_id: currentUser.uid,
                 owner_ids: [currentUser.uid],
                 seo_slug: houseData.name.toLowerCase().replace(/\s+/g, '-'),
                 subscription_status: 'trial',

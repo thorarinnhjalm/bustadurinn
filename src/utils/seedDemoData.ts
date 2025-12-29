@@ -234,7 +234,7 @@ export async function seedDemoData() {
             ...DEMO_HOUSE,
             id: houseId,
             owner_ids: userIds,
-            manager_uid: userIds[0] // Jón is the manager
+            manager_id: userIds[0] // Jón is the manager
         });
 
         console.log(`✅ Created demo house: ${DEMO_HOUSE.name}`);
