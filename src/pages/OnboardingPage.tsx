@@ -253,7 +253,7 @@ export default function OnboardingPage() {
                                         required
                                     />
                                     <p className="text-sm text-grey-mid mt-2">
-                                        Byrjaðu að skrifa og velja úr tillögum fyrir nákvæma staðsetningu
+                                        Ef leit virkar ekki, skrifaðu heimilisfangið og smelltu á Áfram.
                                     </p>
                                 </div>
 
