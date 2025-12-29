@@ -49,44 +49,75 @@ export default function LandingPage() {
         >
             <SEO structuredData={softwareAppSchema} />
 
-            {/* Hero Section */}
-            <section className="bg-charcoal text-bone relative overflow-hidden">
-                <div className="container mx-auto px-6 py-20 md:py-32 flex flex-col md:flex-row items-center">
-                    <div className="md:w-1/2 z-10 animate-fade-in">
-                        <div className="badge bg-amber/10 text-amber border-amber/20 mb-6">Frítt í 14 daga</div>
-                        <h1 className="text-4xl md:text-6xl font-serif font-medium leading-tight mb-6">
-                            Betra skipulag fyrir sumarhúsið.
+            {/* Hero Section - Full-bleed with Image */}
+            <section className="relative min-h-screen flex items-center overflow-hidden">
+                {/* Background Image */}
+                <div className="absolute inset-0 z-0">
+                    <img
+                        src="/hero_summer_house.webp"
+                        alt="Beautiful Icelandic summer house"
+                        className="w-full h-full object-cover"
+                    />
+                    {/* Gradient Overlays */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-charcoal via-charcoal/95 to-charcoal/60"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-transparent to-transparent"></div>
+                </div>
+
+                {/* Content */}
+                <div className="container mx-auto px-6 py-20 md:py-32 relative z-10">
+                    <div className="max-w-3xl">
+                        {/* Badge */}
+                        <div className="inline-flex items-center gap-2 bg-amber/20 text-amber border border-amber/30 px-4 py-2 rounded-full text-sm font-medium mb-8 backdrop-blur-sm">
+                            <span className="w-2 h-2 bg-amber rounded-full animate-pulse"></span>
+                            Frítt í 14 daga • Engin kreditkort
+                        </div>
+
+                        {/* Headline */}
+                        <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-6 text-bone animate-fade-in">
+                            Betra skipulag fyrir{' '}
+                            <span className="text-amber">sumarhúsið</span>
                         </h1>
-                        <p className="text-xl text-grey-warm leading-relaxed mb-8 max-w-lg">
+
+                        {/* Subheadline */}
+                        <p className="text-xl md:text-2xl text-stone-300 leading-relaxed mb-10 max-w-2xl">
                             Við færum utanumhald sameignarinnar úr flóknum Excel skjölum og Facebook hópum
                             yfir í fágað viðmót sem hæfir nútíma sumarhúsum.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4">
+
+                        {/* CTAs */}
+                        <div className="flex flex-col sm:flex-row gap-4 mb-12">
                             <button
                                 onClick={() => navigate('/signup')}
-                                className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-8"
+                                className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-10 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
                             >
-                                Byrja núna
+                                Byrja núna →
                             </button>
                             <button
                                 onClick={() => navigate('/eiginleikar')}
-                                className="btn btn-secondary border-bone text-bone hover:bg-bone hover:text-charcoal flex items-center gap-2"
+                                className="btn btn-ghost border-2 border-white/20 text-bone hover:bg-white/10 backdrop-blur-sm text-lg px-10 py-4"
                             >
-                                Sjá eiginleika <ArrowRight className="w-4 h-4" />
+                                Sjá eiginleika
                             </button>
                         </div>
-                    </div>
-                    {/* Illustration / Image */}
-                    <div className="md:w-1/2 mt-12 md:mt-0 relative">
-                        <div className="relative z-10 rounded-lg overflow-hidden shadow-2xl border border-white/10 transform rotate-1 hover:rotate-0 transition-transform duration-500">
-                            <img
-                                src="https://images.unsplash.com/photo-1542718610-a1d656d1884c?w=800&q=80"
-                                alt="Sumarbústaður"
-                                className="w-full h-auto"
-                            />
+
+                        {/* Social Proof */}
+                        <div className="flex items-center gap-8 text-sm text-stone-400">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle className="w-5 h-5 text-green-400" />
+                                <span>Engin bindandi samningar</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <CheckCircle className="w-5 h-5 text-green-400" />
+                                <span>14 daga endurgreiðslu</span>
+                            </div>
                         </div>
-                        {/* Decorative blob */}
-                        <div className="absolute -top-10 -right-10 w-64 h-64 bg-amber/20 rounded-full blur-3xl"></div>
+                    </div>
+                </div>
+
+                {/* Scroll Indicator */}
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-bounce">
+                    <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
+                        <div className="w-1 h-3 bg-white/50 rounded-full mt-2"></div>
                     </div>
                 </div>
             </section>
