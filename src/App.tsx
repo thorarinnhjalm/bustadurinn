@@ -8,6 +8,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { HelmetProvider } from 'react-helmet-async';
 import { auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
+import { ImpersonationProvider } from '@/contexts/ImpersonationContext';
+import ImpersonationBanner from '@/components/ImpersonationBanner';
 
 // Pages
 import LandingPage from '@/pages/LandingPage';
@@ -126,82 +128,85 @@ function App() {
   }, [setCurrentUser, setAuthenticated, setLoading]);
 
   return (
-    <HelmetProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/join" element={<JoinPage />} />
-          <Route path="/guest/:token" element={<GuestPage />} />
-          <Route path="/eiginleikar" element={<FeaturesPage />} />
-          <Route path="/spurt-og-svarad" element={<FAQPage />} />
-          <Route path="/um-okkur" element={<AboutPage />} />
+    <ImpersonationProvider>
+      <HelmetProvider>
+        <ImpersonationBanner />
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/join" element={<JoinPage />} />
+            <Route path="/guest/:token" element={<GuestPage />} />
+            <Route path="/eiginleikar" element={<FeaturesPage />} />
+            <Route path="/spurt-og-svarad" element={<FAQPage />} />
+            <Route path="/um-okkur" element={<AboutPage />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/onboarding"
-            element={
-              <ProtectedRoute>
-                <OnboardingPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <SettingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/finance"
-            element={
-              <ProtectedRoute>
-                <FinancePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/tasks"
-            element={
-              <ProtectedRoute>
-                <TasksPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/calendar"
-            element={
-              <ProtectedRoute>
-                <CalendarPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/super-admin"
-            element={
-              <AdminRoute>
-                <SuperAdminPage />
-              </AdminRoute>
-            }
-          />
+            {/* Protected Routes */}
+            <Route
+              path="/onboarding"
+              element={
+                <ProtectedRoute>
+                  <OnboardingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <SettingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/finance"
+              element={
+                <ProtectedRoute>
+                  <FinancePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tasks"
+              element={
+                <ProtectedRoute>
+                  <TasksPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute>
+                  <CalendarPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/super-admin"
+              element={
+                <AdminRoute>
+                  <SuperAdminPage />
+                </AdminRoute>
+              }
+            />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </HelmetProvider>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </HelmetProvider>
+    </ImpersonationProvider>
   );
 }
 

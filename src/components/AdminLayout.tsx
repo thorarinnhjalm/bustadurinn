@@ -3,7 +3,7 @@
  * Desktop-first, high-density professional interface
  */
 
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
     Home,
