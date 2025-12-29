@@ -33,8 +33,8 @@ export default function SandboxPage() {
                         ))}
                         {[...Array(31)].map((_, i) => (
                             <div key={i} className={`p-2 rounded ${i === 10 || i === 11 ? 'bg-amber/20 text-amber font-semibold' :
-                                    i === 24 ? 'bg-green-100 text-green-700' :
-                                        'hover:bg-stone-50'
+                                i === 24 ? 'bg-green-100 text-green-700' :
+                                    'hover:bg-stone-50'
                                 }`}>
                                 {i + 1}
                             </div>
@@ -58,14 +58,14 @@ export default function SandboxPage() {
                     {/* Balance Card */}
                     <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-6 mb-6">
                         <p className="text-sm opacity-90 mb-2">Staða hússjóðs</p>
-                        <p className="text-4xl font-bold font-mono">342,500 kr</p>
+                        <p className="text-4xl font-bold font-mono">342.500 kr</p>
                     </div>
                     {/* Transactions */}
                     <div className="space-y-3">
                         {[
-                            { label: 'Rafmagn - des', amount: '-45,000', type: 'expense' },
-                            { label: 'Leigjutekjur', amount: '+150,000', type: 'income' },
-                            { label: 'Viðhald', amount: '-12,500', type: 'expense' }
+                            { label: 'Rafmagn - des', amount: '−45.000', type: 'expense' },
+                            { label: 'Leigjutekjur', amount: '+150.000', type: 'income' },
+                            { label: 'Viðhald', amount: '−12.500', type: 'expense' }
                         ].map((tx, i) => (
                             <div key={i} className="flex items-center justify-between p-3 border border-stone-200 rounded">
                                 <span className="text-sm">{tx.label}</span>
