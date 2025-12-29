@@ -727,12 +727,12 @@ export default function SuperAdminPage() {
                                             <Home className="w-5 h-5 text-amber" />
                                         </div>
                                     </div>
-                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Total Houses</p>
+                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Heildarfjöldi Húsa</p>
                                     <p className="text-3xl font-bold font-mono text-charcoal">{stats.totalHouses}</p>
                                     <div className="mt-3 pt-3 border-t border-stone-100">
                                         <div className="flex items-center justify-between text-xs">
-                                            <span className="text-green-600 font-medium">↗ Active: {activeHouses}</span>
-                                            <span className="text-amber font-medium">Trial: {trialHouses.length}</span>
+                                            <span className="text-green-600 font-medium">↗ Virk: {activeHouses}</span>
+                                            <span className="text-amber font-medium">Prufa: {trialHouses.length}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -744,11 +744,11 @@ export default function SuperAdminPage() {
                                             <Users className="w-5 h-5 text-blue-500" />
                                         </div>
                                     </div>
-                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Total Users</p>
+                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Heildarfjöldi Notenda</p>
                                     <p className="text-3xl font-bold font-mono text-charcoal">{stats.totalUsers}</p>
                                     <div className="mt-3 pt-3 border-t border-stone-100">
                                         <p className="text-xs text-stone-600">
-                                            Avg {stats.totalHouses > 0 ? (stats.totalUsers / stats.totalHouses).toFixed(1) : 0} per house
+                                            Meðaltal {stats.totalHouses > 0 ? (stats.totalUsers / stats.totalHouses).toFixed(1) : 0} á hús
                                         </p>
                                     </div>
                                 </div>
@@ -760,11 +760,11 @@ export default function SuperAdminPage() {
                                             <Activity className="w-5 h-5 text-orange-500" />
                                         </div>
                                     </div>
-                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Expiring Soon</p>
+                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Rennur út fljótlega</p>
                                     <p className="text-3xl font-bold font-mono text-charcoal">{expiringTrials.length}</p>
                                     <div className="mt-3 pt-3 border-t border-stone-100">
                                         <p className="text-xs text-orange-600">
-                                            {expiringTrials.length > 0 ? '⚠️ Action needed' : '✓ All clear'}
+                                            {expiringTrials.length > 0 ? '⚠️ Aðgerð nauðsynleg' : '✓ Allt í lagi'}
                                         </p>
                                     </div>
                                 </div>
@@ -776,13 +776,13 @@ export default function SuperAdminPage() {
                                             <TrendingUp className="w-5 h-5 text-green-500" />
                                         </div>
                                     </div>
-                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Est. MRR</p>
+                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Áætlaðar MRR</p>
                                     <p className="text-3xl font-bold font-mono text-charcoal">
                                         {estimatedMRR.toLocaleString('is-IS')} kr
                                     </p>
                                     <div className="mt-3 pt-3 border-t border-stone-100">
                                         <p className="text-xs text-stone-600">
-                                            {paidHouses.length} paying {paidHouses.length === 1 ? 'house' : 'houses'}
+                                            {paidHouses.length} greið. {paidHouses.length === 1 ? 'hús' : 'hús'}
                                         </p>
                                     </div>
                                 </div>
@@ -790,7 +790,7 @@ export default function SuperAdminPage() {
 
                             {/* System Health Panel */}
                             <div className="bg-white border border-stone-200 rounded-lg p-6">
-                                <h3 className="text-lg font-serif font-semibold mb-6">System Health</h3>
+                                <h3 className="text-lg font-serif font-semibold mb-6">Ástand Kerfis</h3>
                                 <div className="grid grid-cols-3 gap-6">
                                     <div>
                                         <div className="flex items-center gap-2 mb-2">
