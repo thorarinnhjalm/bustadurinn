@@ -93,7 +93,7 @@ export default function LandingPage() {
                                 Byrja núna →
                             </button>
                             <button
-                                onClick={() => navigate('/demo')}
+                                onClick={() => navigate('/prufa')}
                                 className="btn btn-secondary border-2 border-amber/30 text-amber hover:bg-amber/10 backdrop-blur-sm text-lg px-10 py-4"
                             >
                                 Prufa kerfið

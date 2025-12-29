@@ -143,7 +143,7 @@ function App() {
             <Route path="/eiginleikar" element={<FeaturesPage />} />
             <Route path="/spurt-og-svarad" element={<FAQPage />} />
             <Route path="/um-okkur" element={<AboutPage />} />
-            <Route path="/demo" element={<SandboxPage />} />
+            <Route path="/prufa" element={<SandboxPage />} />
 
             {/* Protected Routes */}
             <Route
