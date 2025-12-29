@@ -570,8 +570,8 @@ export default function SuperAdminPage() {
                 <div className="px-8 py-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-serif font-bold text-charcoal">Mission Control</h1>
-                            <p className="text-sm text-stone-500 mt-1">System operations & analytics</p>
+                            <h1 className="text-2xl font-serif font-bold text-charcoal">Stjórnborð</h1>
+                            <p className="text-sm text-stone-500 mt-1">Kerfisstjórn & greining</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
@@ -580,7 +580,7 @@ export default function SuperAdminPage() {
                                 className="btn btn-secondary text-sm flex items-center gap-2"
                             >
                                 <Database className="w-4 h-4" />
-                                {seeding ? 'Seeding...' : 'Seed Demo Data'}
+                                {seeding ? 'Hleður...' : 'Fylla prufugögn'}
                             </button>
                             <div className="px-3 py-2 bg-amber/10 text-amber border border-amber/20 rounded text-xs font-medium font-mono">
                                 ADMIN MODE

@@ -22,10 +22,10 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, activeTab = 'overview', onTabChange, onBackClick }: AdminLayoutProps) {
     const navigation = [
-        { name: 'Overview', id: 'overview', icon: BarChart2 },
-        { name: 'Houses', id: 'houses', icon: Home },
-        { name: 'Users', id: 'users', icon: Users },
-        { name: 'Contact', id: 'contacts', icon: Mail },
+        { name: 'Yfirlit', id: 'overview', icon: BarChart2 },
+        { name: 'Hús', id: 'houses', icon: Home },
+        { name: 'Notendur', id: 'users', icon: Users },
+        { name: 'Samskipti', id: 'contacts', icon: Mail },
     ];
 
     return (
@@ -34,8 +34,8 @@ export default function AdminLayout({ children, activeTab = 'overview', onTabCha
             <aside className="w-64 bg-charcoal text-bone flex flex-col border-r border-stone-800">
                 {/* Logo / Header */}
                 <div className="p-6 border-b border-stone-800">
-                    <h1 className="text-lg font-mono font-bold text-amber">ADMIN</h1>
-                    <p className="text-xs text-stone-400 mt-1">Neðri Hóll Hugmyndahús</p>
+                    <h1 className="text-lg font-mono font-bold text-amber">STJÓRNBORÐ</h1>
+                    <p className="text-xs text-stone-400 mt-1">Bústaðurinn Kerfisstjórn</p>
                 </div>
 
                 {/* Back Button */}
@@ -46,7 +46,7 @@ export default function AdminLayout({ children, activeTab = 'overview', onTabCha
                             className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors text-sm"
                         >
                             <ArrowLeft className="w-4 h-4" />
-                            Back to Dashboard
+                            Til baka
                         </button>
                     </div>
                 )}
