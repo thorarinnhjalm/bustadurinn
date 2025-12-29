@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react';
 import {
     Calendar, CheckSquare, Sun, Wind,
-    Plus, Users, Wallet, Menu, Bell,
-    ChevronRight, Loader2, Home, Shield, ShoppingCart
+    Plus, Users, Wallet, Bell,
+    ChevronRight, Loader2, Shield
 } from 'lucide-react';
+import MobileNav from '@/components/MobileNav';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { format } from 'date-fns';
@@ -522,35 +523,9 @@ const UserDashboard = () => {
             </div>
 
             {/* --- MOBILE BOTTOM NAV --- */}
-            <div className="md:hidden fixed bottom-0 w-full bg-white border-t border-stone-200 pb-safe z-50 px-6 py-3 flex justify-between items-center text-stone-400">
-                <button onClick={() => navigate('/dashboard')} className="flex flex-col items-center gap-1 text-[#1a1a1a]">
-                    <Home size={24} fill="currentColor" className="text-[#e8b058]" />
-                    <span className="text-[10px] font-bold">Heim</span>
-                </button>
-                <button onClick={() => navigate('/calendar')} className="flex flex-col items-center gap-1 hover:text-[#1a1a1a]">
-                    <Calendar size={24} />
-                    <span className="text-[10px] font-bold">Dagatal</span>
-                </button>
-                <div className="relative -top-5">
-                    <button
-                        onClick={() => navigate('/calendar')}
-                        className="w-14 h-14 bg-[#1a1a1a] rounded-full text-white flex items-center justify-center shadow-lg shadow-[#1a1a1a]/20 border-4 border-[#FDFCF8]"
-                    >
-                        <Plus size={24} />
-                    </button>
-                </div>
-                <button onClick={() => navigate('/tasks')} className="flex flex-col items-center gap-1 hover:text-[#1a1a1a]">
-                    <ShoppingCart size={24} />
-                    <span className="text-[10px] font-bold">Vantar</span>
-                </button>
-                <button onClick={() => navigate('/settings')} className="flex flex-col items-center gap-1 hover:text-[#1a1a1a]">
-                    <Menu size={24} />
-                    <span className="text-[10px] font-bold">Meira</span>
-                </button>
-            </div>
+            <MobileNav />
 
         </div>
     );
 };
-
 export default UserDashboard;

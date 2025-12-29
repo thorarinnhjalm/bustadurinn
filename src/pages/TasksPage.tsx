@@ -24,6 +24,7 @@ import type { Task, TaskStatus } from '@/types/models';
 import TaskForm from '@/components/tasks/TaskForm';
 import TaskList from '@/components/tasks/TaskList';
 import TaskBoard from '@/components/tasks/TaskBoard';
+import MobileNav from '@/components/MobileNav';
 
 export default function TasksPage() {
     const navigate = useNavigate();
@@ -214,6 +215,7 @@ export default function TasksPage() {
                     </>
                 )}
             </div>
+            <MobileNav />
         </div>
     );
 }

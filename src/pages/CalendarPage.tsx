@@ -17,6 +17,7 @@ import type { Booking, BookingType } from '@/types/models';
 import { dateLocales, calendarMessages, bookingTypeLabels, type SupportedLanguage } from '@/utils/i18n';
 import { getIcelandicHolidays, isHoliday, includesMajorHoliday } from '@/utils/icelandicHolidays';
 import { analytics } from '@/utils/analytics';
+import MobileNav from '@/components/MobileNav';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 interface BookingEvent {
@@ -358,14 +359,14 @@ export default function CalendarPage() {
             </div>
 
             {/* Calendar */}
-            <div className="container mx-auto px-6 py-8">
+            <div className="container mx-auto px-4 py-4 md:px-6 md:py-8 pb-24 md:pb-8">
                 <div className="bg-white rounded-lg shadow-sm p-6">
                     <BigCalendar
                         localizer={localizer}
                         events={events}
                         startAccessor="start"
                         endAccessor="end"
-                        style={{ height: 700 }}
+                        className="h-[500px] md:h-[700px]"
                         onSelectSlot={handleSelectSlot}
                         onSelectEvent={handleSelectEvent}
                         selectable
@@ -521,6 +522,7 @@ export default function CalendarPage() {
                     </div>
                 </div>
             )}
+            <MobileNav />
         </div>
     );
 }

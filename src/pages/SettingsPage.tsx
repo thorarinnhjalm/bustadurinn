@@ -29,6 +29,7 @@ import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import type { House, User } from '@/types/models';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { MapPin, CheckCircle } from 'lucide-react';
+import MobileNav from '@/components/MobileNav';
 
 type Tab = 'house' | 'members' | 'profile' | 'guests';
 
@@ -450,7 +451,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-bone">
+        <div className="min-h-screen bg-bone pb-24">
             {/* Header */}
             <div className="bg-white border-b border-grey-warm">
                 <div className="container mx-auto px-6 py-6">
@@ -1171,6 +1172,7 @@ export default function SettingsPage() {
                     </div>
                 </div>
             )}
+            <MobileNav />
         </div>
     );
 }
