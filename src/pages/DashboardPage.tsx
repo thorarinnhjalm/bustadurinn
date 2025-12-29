@@ -138,6 +138,10 @@ const UserDashboard = () => {
         return `Eftir ${diff} daga`;
     };
 
+    const [showNotifications, setShowNotifications] = useState(false);
+
+    // ... (rest of component)
+
     return (
         <div className="min-h-screen bg-[#FDFCF8] text-[#1a1a1a] font-sans pb-24 md:pb-0">
 
@@ -149,11 +153,27 @@ const UserDashboard = () => {
                     </div>
                     <span className="font-serif font-bold text-lg tracking-tight">{currentHouse.name}</span>
                 </div>
-                <div className="flex items-center gap-4">
-                    <button className="relative text-stone-400 hover:text-[#1a1a1a]">
+                <div className="flex items-center gap-4 relative">
+                    <button
+                        onClick={() => setShowNotifications(!showNotifications)}
+                        className="relative text-stone-400 hover:text-[#1a1a1a] transition-colors"
+                    >
                         <Bell size={20} />
-                        <span className="absolute top-0 right-0 w-2 h-2 bg-[#e8b058] rounded-full"></span>
+                        {/* Only show dot if we actually had notifications (commented out for now) */}
+                        {/* <span className="absolute top-0 right-0 w-2 h-2 bg-[#e8b058] rounded-full"></span> */}
                     </button>
+
+                    {/* Notification Dropdown */}
+                    {showNotifications && (
+                        <div className="absolute top-12 right-0 w-64 bg-white border border-stone-100 rounded-xl shadow-xl p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+                            <h4 className="font-bold text-sm mb-2 text-[#1a1a1a]">Tilkynningar</h4>
+                            <div className="text-center py-4 text-stone-400 text-xs">
+                                <Bell size={16} className="mx-auto mb-2 opacity-50" />
+                                <p>Engar nýjar tilkynningar</p>
+                            </div>
+                        </div>
+                    )}
+
                     <div
                         className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:bg-stone-800"
                         onClick={() => navigate('/settings')}
