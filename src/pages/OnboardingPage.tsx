@@ -1,7 +1,3 @@
-/**
- * Onboarding Wizard Page - FUNCTIONAL with Google Maps
- * Multi-step flow: Welcome → House Info → Invite Co-owners → Finish
- */
 
 // Declare Google Maps types
 declare var google: any;
@@ -29,8 +25,11 @@ export default function OnboardingPage() {
     });
 
     const [inviteEmails, setInviteEmails] = useState('');
-    const addressInputRef = useRef<HTMLInputElement>(null);
-    const autocompleteRef = useRef<any>(null);
+    const [scriptLoaded, setScriptLoaded] = useState(false);
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+
+    const autocompleteService = useRef<any>(null);
+    const placesService = useRef<any>(null);
 
     const steps = [
         { id: 'welcome', label: 'Velkomin' },
@@ -41,65 +40,90 @@ export default function OnboardingPage() {
 
     const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
-    // Initialize Google Places Autocomplete
+    // Initialize Google Maps API
     useEffect(() => {
-        if (currentStep === 'house' && addressInputRef.current && !autocompleteRef.current) {
-            const initAutocomplete = async () => {
+        if (currentStep === 'house' && !scriptLoaded) {
+            const loadMaps = async () => {
                 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-                // Skip if no API key
                 if (!apiKey) {
-                    console.warn('Google Maps API key not found. Autocomplete disabled.');
+                    console.warn('Google Maps API key not found.');
                     return;
                 }
 
-                try {
-                    // Check if Google Maps is already loaded
-                    if (typeof google === 'undefined' || !google.maps) {
-                        // Load Google Maps script
-                        const script = document.createElement('script');
-                        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async&v=weekly`;
-                        script.async = true;
-                        script.defer = true;
-
-                        await new Promise<void>((resolve, reject) => {
-                            script.onload = () => resolve();
-                            script.onerror = () => reject(new Error('Failed to load Google Maps'));
-                            document.head.appendChild(script);
-                        });
-                    }
-
-                    // Initialize autocomplete
-                    autocompleteRef.current = new google.maps.places.Autocomplete(
-                        addressInputRef.current!,
-                        {
-                            componentRestrictions: { country: 'is' }, // Iceland only
-                            fields: ['formatted_address', 'geometry', 'name']
-                        }
-                    );
-
-                    autocompleteRef.current.addListener('place_changed', () => {
-                        const place = autocompleteRef.current!.getPlace();
-                        if (place.geometry && place.geometry.location) {
-                            setHouseData(prev => ({
-                                ...prev,
-                                address: place.formatted_address || '',
-                                location: {
-                                    lat: place.geometry!.location!.lat(),
-                                    lng: place.geometry!.location!.lng()
-                                }
-                            }));
-                        }
-                    });
-                } catch (err) {
-                    console.error('Google Maps API error:', err);
-                    // Continue without autocomplete if Maps API fails
+                if (typeof google === 'undefined' || !google.maps) {
+                    const script = document.createElement('script');
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async&v=weekly`;
+                    script.async = true;
+                    script.defer = true;
+                    script.onload = () => setScriptLoaded(true);
+                    script.onerror = () => console.error('Failed to load Maps');
+                    document.head.appendChild(script);
+                } else {
+                    setScriptLoaded(true);
                 }
             };
-
-            initAutocomplete();
+            loadMaps();
         }
-    }, [currentStep]);
+    }, [currentStep, scriptLoaded]);
+
+    // Initialize Services
+    useEffect(() => {
+        if (scriptLoaded && google && google.maps && google.maps.places) {
+            if (!autocompleteService.current) {
+                autocompleteService.current = new google.maps.places.AutocompleteService();
+            }
+            if (!placesService.current) {
+                placesService.current = new google.maps.places.PlacesService(document.createElement('div'));
+            }
+        }
+    }, [scriptLoaded]);
+
+    const handleAddressChange = (val: string) => {
+        setHouseData(prev => ({ ...prev, address: val }));
+
+        if (val.length > 2 && autocompleteService.current) {
+            try {
+                autocompleteService.current.getPlacePredictions({
+                    input: val,
+                    componentRestrictions: { country: 'is' }
+                }, (predictions: any[], status: any) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+                        setSuggestions(predictions);
+                    } else {
+                        setSuggestions([]);
+                    }
+                });
+            } catch (e) {
+                console.error("Autocomplete error:", e);
+                setSuggestions([]);
+            }
+        } else {
+            setSuggestions([]);
+        }
+    };
+
+    const handleSelectPrediction = (placeId: string, description: string) => {
+        setSuggestions([]);
+        setHouseData(prev => ({ ...prev, address: description }));
+
+        if (placesService.current) {
+            placesService.current.getDetails({
+                placeId: placeId,
+                fields: ['geometry', 'formatted_address']
+            }, (place: any, status: any) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && place && place.geometry) {
+                    setHouseData(prev => ({
+                        ...prev,
+                        address: place.formatted_address || description,
+                        location: {
+                            lat: place.geometry.location.lat(),
+                            lng: place.geometry.location.lng()
+                        }
+                    }));
+                }
+            });
+        }
+    };
 
     const nextStep = () => {
         const nextIndex = currentStepIndex + 1;
@@ -130,24 +154,19 @@ export default function OnboardingPage() {
         setError('');
 
         try {
-            // Create house in Firestore
             await addDoc(collection(db, 'houses'), {
                 name: houseData.name,
                 address: houseData.address,
                 location: houseData.location,
-                manager_uid: currentUser.uid, // Creator is the Manager
-                owner_ids: [currentUser.uid], // Start with just the creator
+                manager_uid: currentUser.uid,
+                owner_ids: [currentUser.uid],
                 seo_slug: houseData.name.toLowerCase().replace(/\s+/g, '-'),
-
-                // Subscription Defaults (14-day trial)
                 subscription_status: 'trial',
-                subscription_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
-
+                subscription_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
                 created_at: serverTimestamp(),
                 updated_at: serverTimestamp()
             });
-
-            nextStep(); // Go to invite step
+            nextStep();
         } catch (err: any) {
             console.error('Error creating house:', err);
             setError('Villa kom upp við að búa til hús: ' + err.message);
@@ -157,9 +176,6 @@ export default function OnboardingPage() {
     };
 
     const handleSendInvites = async () => {
-        // For now, just skip to finish
-        // Manual invite system - members share invite link
-        // Future: Automated email invites via Cloud Functions
         nextStep();
     };
 
@@ -241,17 +257,30 @@ export default function OnboardingPage() {
                                     />
                                 </div>
 
-                                <div>
+                                <div className="relative">
                                     <label className="label">Heimilisfang *</label>
                                     <input
-                                        ref={addressInputRef}
                                         type="text"
                                         className="input"
                                         value={houseData.address}
-                                        onChange={(e) => setHouseData({ ...houseData, address: e.target.value })}
+                                        onChange={(e) => handleAddressChange(e.target.value)}
                                         placeholder="t.d. Sumarhúsabyggð 12, 800 Selfoss"
                                         required
+                                        autoComplete="off"
                                     />
+                                    {suggestions.length > 0 && (
+                                        <ul className="absolute z-10 w-full bg-white border border-stone-200 mt-1 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                            {suggestions.map((suggestion) => (
+                                                <li
+                                                    key={suggestion.place_id}
+                                                    onClick={() => handleSelectPrediction(suggestion.place_id, suggestion.description)}
+                                                    className="px-4 py-2 hover:bg-stone-50 cursor-pointer text-sm"
+                                                >
+                                                    {suggestion.description}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                     <p className="text-sm text-grey-mid mt-2">
                                         Ef leit virkar ekki, skrifaðu heimilisfangið og smelltu á Áfram.
                                     </p>
