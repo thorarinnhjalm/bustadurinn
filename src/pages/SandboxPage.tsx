@@ -190,8 +190,8 @@ export default function SandboxPage() {
                 <div className="text-center mb-12">
                     <h1 className="text-5xl font-serif font-bold mb-6">Sjáðu kerfið í vinnslu</h1>
                     <p className="text-xl text-grey-dark max-w-3xl mx-auto leading-relaxed">
-                        Þetta er alvöru viðmótið frá <strong>Sumarbústaður við Þingvallavatn</strong>.
-                        Fágað, einfallt, og hannað fyrir íslenskar þarfir.
+                        Þetta er alvöru viðmótið frá <strong>Sumarbústaðnum við Þingvallavatn</strong>.
+                        Fágað, einfalt, og hannað fyrir íslenskar þarfir.
                     </p>
                 </div>
 
