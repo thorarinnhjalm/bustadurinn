@@ -179,12 +179,15 @@ export default function OnboardingPage() {
 
         try {
             // 1. Create House
+            const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             const houseRef = await addDoc(collection(db, 'houses'), {
                 name: houseData.name,
                 address: houseData.address,
                 location: houseData.location,
                 manager_id: currentUser.uid,
                 owner_ids: [currentUser.uid],
+                invite_code: inviteCode,
+                holiday_mode: 'fairness' as const,
                 seo_slug: houseData.name.toLowerCase().replace(/\s+/g, '-'),
                 subscription_status: 'trial',
                 subscription_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),

@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { Home, Users, User as UserIcon, Save, Shield, Wifi, AlertTriangle, BookOpen, LogOut } from 'lucide-react';
+import { Home, Users, User as UserIcon, Save, Shield, Wifi, AlertTriangle, BookOpen, LogOut, Edit2, X } from 'lucide-react';
 import {
     doc,
     setDoc,
@@ -60,6 +60,7 @@ export default function SettingsPage() {
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [debounceTimer, setDebounceTimer] = useState<any>(null);
     const [members, setMembers] = useState<User[]>([]);
+    const [isEditingLocation, setIsEditingLocation] = useState(false);
 
     const handleLogout = async () => {
         try {
@@ -479,16 +480,32 @@ export default function SettingsPage() {
                                         </div>
 
                                         <div className="relative">
-                                            <label className="label">Heimilisfang</label>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <label className="label">Heimilisfang & Staðsetning</label>
+                                                {isManager && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsEditingLocation(!isEditingLocation)}
+                                                        className="text-xs flex items-center gap-1 text-stone-600 hover:text-[#e8b058] transition-colors"
+                                                    >
+                                                        {isEditingLocation ? (
+                                                            <><X size={14} /> Hætta við</>
+                                                        ) : (
+                                                            <><Edit2 size={14} /> Breyta staðsetningu</>
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </div>
                                             <input
                                                 type="text"
                                                 className="input"
                                                 value={houseForm.address}
                                                 onChange={(e) => handleAddressChange(e.target.value)}
-                                                disabled={!isManager}
+                                                disabled={!isManager || !isEditingLocation}
                                                 autoComplete="off"
+                                                placeholder="Leitaðu að heimilisfangi..."
                                             />
-                                            {suggestions.length > 0 && (
+                                            {suggestions.length > 0 && isEditingLocation && (
                                                 <ul className="absolute z-20 w-full bg-white border border-stone-200 mt-1 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                                     {suggestions.map((suggestion) => (
                                                         <li
@@ -522,7 +539,7 @@ export default function SettingsPage() {
                                                     className="input"
                                                     value={houseForm.lat}
                                                     onChange={(e) => setHouseForm({ ...houseForm, lat: parseFloat(e.target.value) })}
-                                                    disabled={!isManager}
+                                                    disabled={!isManager || !isEditingLocation}
                                                     placeholder="64.123456"
                                                 />
                                             </div>
@@ -534,7 +551,7 @@ export default function SettingsPage() {
                                                     className="input"
                                                     value={houseForm.lng}
                                                     onChange={(e) => setHouseForm({ ...houseForm, lng: parseFloat(e.target.value) })}
-                                                    disabled={!isManager}
+                                                    disabled={!isManager || !isEditingLocation}
                                                     placeholder="-21.123456"
                                                 />
                                             </div>
