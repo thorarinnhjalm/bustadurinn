@@ -5,9 +5,9 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, serverTimestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
@@ -15,6 +15,15 @@ import AdminLayout from '@/components/AdminLayout';
 import DataTable from '@/components/DataTable';
 
 import type { House, User, Coupon } from '@/types/models';
+
+interface EmailTemplate {
+    id: string; // 'welcome', 'inactive_engagement'
+    subject: string;
+    html_content: string;
+    active: boolean;
+    variables: string[];
+    description: string;
+}
 
 interface ContactSubmission {
     id: string;
@@ -38,7 +47,9 @@ interface Stats {
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'overview' | 'houses' | 'users' | 'contacts' | 'coupons' | 'integrations'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'houses' | 'users' | 'contacts' | 'coupons' | 'integrations' | 'emails'>('overview');
+    const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+    const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [seeding, setSeeding] = useState(false);
@@ -233,6 +244,82 @@ export default function SuperAdminPage() {
         } finally {
             setActionLoading(null);
         }
+    };
+
+    // Email Templates Logic
+    const fetchTemplates = async () => {
+        try {
+            const snap = await getDocs(collection(db, 'email_templates'));
+            const list = snap.docs.map(d => ({ id: d.id, ...d.data() })) as EmailTemplate[];
+            setTemplates(list);
+        } catch (e) {
+            console.error("Fetch templates error:", e);
+        }
+    };
+
+    const handleSeedTemplates = async () => {
+        if (!confirm('Create default templates?')) return;
+        setLoading(true);
+        try {
+            const welcomeTpl: EmailTemplate = {
+                id: 'welcome',
+                subject: 'Velkomin í Bústaðurinn.is! 🏠',
+                active: true, // Default to true or false as per user preference
+                description: 'Sent when a user creates their first house.',
+                variables: ['name'],
+                html_content: `
+<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1917;">
+    <div style="background-color: #f5f5f4; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: #d97706; margin: 0; font-family: serif;">Bústaðurinn.is</h1>
+    </div>
+    
+    <div style="padding: 32px; border: 1px solid #e7e5e4; border-top: none; border-radius: 0 0 8px 8px;">
+        <h2 style="margin-top: 0; color: #1c1917;">Velkomin/n, {name}! 👋</h2>
+        
+        <p style="font-size: 16px; line-height: 1.6; color: #44403c;">
+            Gaman að sjá þig. Aðgangurinn þinn hefur verið stofnaður.
+        </p>
+
+        <div style="text-align: center; margin: 32px 0;">
+            <a href="https://bustadurinn.is/dashboard" style="background-color: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+                Fara á stjórnborð
+            </a>
+        </div>
+        
+        <p style="font-size: 14px; color: #78716c; text-align: center;">
+            Ef þú hefur einhverjar spurningar, ekki hika við að svara þessum pósti.
+        </p>
+    </div>
+</div>`
+            };
+
+            await setDoc(doc(db, 'email_templates', 'welcome'), welcomeTpl);
+            await fetchTemplates();
+            alert('Templates seeded!');
+        } catch (e) {
+            console.error(e);
+            alert('Error seeding');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSaveTemplate = async (tpl: EmailTemplate) => {
+        setActionLoading('saving-template');
+        try {
+            await setDoc(doc(db, 'email_templates', tpl.id), tpl);
+            setTemplates(prev => prev.map(t => t.id === tpl.id ? tpl : t));
+            setEditingTemplate(null);
+        } catch (e: any) {
+            alert('Error saving: ' + e.message);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleSendTestEmail = async (tpl: EmailTemplate) => {
+        // Placeholder for test functionality
+        alert(`Test feature to send "${tpl.subject}" to yourself coming soon.`);
     };
 
     // Impersonate user
@@ -499,6 +586,16 @@ export default function SuperAdminPage() {
                         >
                             <Tag className="w-4 h-4 inline mr-2" />
                             Coupons ({stats.allCoupons.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('emails')}
+                            className={`pb-3 border-b-2 transition-colors font-medium text-sm ${activeTab === 'emails'
+                                ? 'border-amber text-charcoal'
+                                : 'border-transparent text-stone-500 hover:text-charcoal'
+                                }`}
+                        >
+                            <Mail className="w-4 h-4 inline mr-2" />
+                            Emails
                         </button>
                         <button
                             onClick={() => setActiveTab('integrations')}
@@ -1045,6 +1142,140 @@ export default function SuperAdminPage() {
                                 </div>
                             )}
                         </div>
+                    </div>
+                )}
+                {/* Emails Tab */}
+                {activeTab === 'emails' && (
+                    <div className="max-w-4xl space-y-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-serif">Email Templates</h2>
+                            <button onClick={fetchTemplates} className="btn btn-ghost btn-sm">Refresh</button>
+                        </div>
+
+                        {templates.length === 0 && !loading ? (
+                            <div className="text-center py-12 bg-white rounded-lg border border-stone-200">
+                                <p className="text-stone-500 mb-4">No templates found.</p>
+                                <button onClick={handleSeedTemplates} className="btn btn-secondary">
+                                    Seed Default Templates
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid gap-6">
+                                {templates.map(tpl => (
+                                    <div key={tpl.id} className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="font-bold text-lg">{tpl.id}</h3>
+                                                    {tpl.active ? (
+                                                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                                            <CheckCircle className="w-3 h-3" /> Active
+                                                        </span>
+                                                    ) : (
+                                                        <span className="bg-stone-100 text-stone-500 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                                            <XCircle className="w-3 h-3" /> Inactive
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-stone-500 mt-1">{tpl.description}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => setEditingTemplate(tpl)}
+                                                className="btn btn-secondary btn-sm"
+                                            >
+                                                Edit
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-2 mb-4">
+                                            <div className="text-sm">
+                                                <span className="font-bold text-stone-700">Subject:</span> {tpl.subject}
+                                            </div>
+                                            <div className="text-sm">
+                                                <span className="font-bold text-stone-700">Variables:</span>
+                                                <span className="font-mono text-xs bg-stone-100 px-1 ml-1 rounded text-stone-600">
+                                                    {tpl.variables.join(', ')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Edit Modal / Overlay */}
+                        {editingTemplate && (
+                            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                                <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+                                    <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-stone-50 rounded-t-lg">
+                                        <h3 className="font-bold text-xl">Edit Template: {editingTemplate.id}</h3>
+                                        <button onClick={() => setEditingTemplate(null)} className="text-stone-400 hover:text-stone-600">
+                                            <XCircle className="w-6 h-6" />
+                                        </button>
+                                    </div>
+
+                                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                                        <div className="flex items-center gap-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm">
+                                            <div className="flex-1">
+                                                <strong>Status:</strong> {editingTemplate.active ? 'Ready to Send' : 'Draft (Not sending)'}
+                                            </div>
+                                            <button
+                                                onClick={() => setEditingTemplate({ ...editingTemplate, active: !editingTemplate.active })}
+                                                className={`px-3 py-1 rounded text-xs font-bold transition-colors ${editingTemplate.active ? 'bg-green-600 text-white' : 'bg-stone-300 text-stone-600'}`}
+                                            >
+                                                {editingTemplate.active ? 'Active' : 'Set Active'}
+                                            </button>
+                                        </div>
+
+                                        <div>
+                                            <label className="label">Subject Line</label>
+                                            <input
+                                                type="text"
+                                                className="input font-bold"
+                                                value={editingTemplate.subject}
+                                                onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="flex-1 flex flex-col">
+                                            <label className="label flex justify-between">
+                                                <span>HTML Content</span>
+                                                <span className="text-xs font-normal text-stone-500">Supports standard HTML tags</span>
+                                            </label>
+                                            <textarea
+                                                className="input font-mono text-xs leading-relaxed min-h-[300px]"
+                                                value={editingTemplate.html_content}
+                                                onChange={(e) => setEditingTemplate({ ...editingTemplate, html_content: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="bg-stone-100 p-4 rounded text-xs">
+                                            <strong>Available Variables:</strong> {editingTemplate.variables.map(v => `{${v}}`).join(', ')}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-between items-center">
+                                        <button
+                                            onClick={() => handleSendTestEmail(editingTemplate)}
+                                            disabled={actionLoading === 'sending-test'}
+                                            className="btn btn-ghost text-stone-600"
+                                        >
+                                            {actionLoading === 'sending-test' ? 'Sending...' : 'Send Test to Me'}
+                                        </button>
+                                        <div className="flex gap-3">
+                                            <button onClick={() => setEditingTemplate(null)} className="btn btn-ghost">Cancel</button>
+                                            <button
+                                                onClick={() => handleSaveTemplate(editingTemplate)}
+                                                className="btn btn-primary"
+                                                disabled={actionLoading === 'saving-template'}
+                                            >
+                                                {actionLoading === 'saving-template' ? 'Saving...' : 'Save Changes'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

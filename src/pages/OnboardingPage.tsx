@@ -5,7 +5,7 @@ declare var google: any;
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, MapPin, Users, CheckCircle, Loader2 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, setDoc, doc, arrayUnion } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, setDoc, getDoc, doc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 
@@ -178,6 +178,35 @@ export default function OnboardingPage() {
                 house_ids: [...(currentUser.house_ids || []), houseRef.id]
             });
 
+            // 4. Send Welcome Email (Non-blocking with dynamic template)
+            (async () => {
+                try {
+                    const userName = currentUser.name || currentUser.email?.split('@')[0];
+                    let payload: any = { email: currentUser.email, name: userName };
+
+                    try {
+                        const tplSnap = await getDoc(doc(db, 'email_templates', 'welcome'));
+                        if (tplSnap.exists()) {
+                            const tpl = tplSnap.data();
+                            if (tpl.active) {
+                                payload.subject = tpl.subject;
+                                payload.html = tpl.html_content.replace('{name}', userName);
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('Failed to fetch email template, using default.');
+                    }
+
+                    await fetch('/api/send-welcome', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } catch (e) {
+                    console.error("Failed to send welcome email:", e);
+                }
+            })();
+
             nextStep();
         } catch (err: any) {
             console.error('Error creating house:', err);
@@ -294,7 +323,7 @@ export default function OnboardingPage() {
                                         </ul>
                                     )}
                                     <p className="text-sm text-grey-mid mt-2">
-                                        Ef leit virkar ekki, skrifaðu heimilisfangið og smelltu á Áfram.
+                                        Finnst bústaðurinn ekki? Skrifaðu nafnið eða heimilisfangið hér. Þú getur svo fínstillt staðsetninguna á kortinu í Stillingum.
                                     </p>
                                 </div>
 
