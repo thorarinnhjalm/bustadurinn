@@ -36,6 +36,10 @@ export interface House {
     invite_code?: string;
     guest_token?: string;
 
+    // Subscription
+    subscription_status?: 'trial' | 'active' | 'free' | 'expired';
+    subscription_end?: Date;
+
     created_at: Date;
     updated_at: Date;
 }

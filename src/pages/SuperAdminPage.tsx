@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
@@ -143,16 +143,72 @@ export default function SuperAdminPage() {
 
     // Extend trial for a house
     const handleExtendTrial = async (houseId: string) => {
-        if (!confirm('Extend trial by 14 days?')) {
-            return;
-        }
+        if (!confirm('Extend trial by 14 days?')) return;
 
         setActionLoading(houseId);
         try {
-            // This would update the house's trial_end date
-            // For now, just show success
+            const house = stats.allHouses.find(h => h.id === houseId);
+            if (!house) throw new Error('House not found');
+
+            const currentEnd = house.subscription_end
+                ? (house.subscription_end instanceof Date ? house.subscription_end : new Date(house.subscription_end))
+                : new Date();
+
+            // Add 14 days
+            const newEnd = new Date(currentEnd.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+            await updateDoc(doc(db, 'houses', houseId), {
+                subscription_end: newEnd,
+                subscription_status: house.subscription_status === 'free' ? 'free' : 'trial'
+            });
+
+            // Update local state
+            setStats(prev => ({
+                ...prev,
+                allHouses: prev.allHouses.map(h =>
+                    h.id === houseId
+                        ? { ...h, subscription_end: newEnd, subscription_status: h.subscription_status === 'free' ? 'free' : 'trial' } as House
+                        : h
+                )
+            }));
+
             alert('✅ Trial extended by 14 days!');
         } catch (error: any) {
+            console.error('Error extending trial:', error);
+            alert(`❌ Error: ${error.message}`);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleToggleFree = async (houseId: string) => {
+        const house = stats.allHouses.find(h => h.id === houseId);
+        if (!house) return;
+
+        const isFree = house.subscription_status === 'free';
+        if (!confirm(isFree ? 'Revoke free access?' : 'Grant FREE lifetime access?')) return;
+
+        setActionLoading(houseId);
+        try {
+            const newStatus = isFree ? 'trial' : 'free';
+
+            await updateDoc(doc(db, 'houses', houseId), {
+                subscription_status: newStatus
+            });
+
+            // Update local state
+            setStats(prev => ({
+                ...prev,
+                allHouses: prev.allHouses.map(h =>
+                    h.id === houseId
+                        ? { ...h, subscription_status: newStatus } as House
+                        : h
+                )
+            }));
+
+            alert(isFree ? 'ℹ️ Access revoked (set to trial)' : '✅ Access granted permanently (Free)');
+        } catch (error: any) {
+            console.error('Error toggling status:', error);
             alert(`❌ Error: ${error.message}`);
         } finally {
             setActionLoading(null);
@@ -599,6 +655,24 @@ export default function SuperAdminPage() {
                             columns={[
                                 { key: 'name', label: 'House Name', sortable: true },
                                 {
+                                    key: 'subscription_status',
+                                    label: 'Status',
+                                    render: (row) => {
+                                        const status = row.subscription_status || 'trial';
+                                        const colors = {
+                                            free: 'bg-green-100 text-green-700 border-green-200',
+                                            active: 'bg-blue-100 text-blue-700 border-blue-200',
+                                            trial: 'bg-amber-100 text-amber-700 border-amber-200',
+                                            expired: 'bg-red-100 text-red-700 border-red-200'
+                                        };
+                                        return (
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold border uppercase ${colors[status] || colors.trial}`}>
+                                                {status}
+                                            </span>
+                                        );
+                                    }
+                                },
+                                {
                                     key: 'address',
                                     label: 'Location',
                                     sortable: true,
@@ -642,6 +716,17 @@ export default function SuperAdminPage() {
                                         title="Extend Trial"
                                     >
                                         {actionLoading === row.id ? 'Extending...' : 'Extend Trial'}
+                                    </button>
+                                    <button
+                                        onClick={() => handleToggleFree(row.id!)}
+                                        disabled={actionLoading === row.id}
+                                        className={`px-3 py-1.5 text-xs font-bold border rounded transition-colors disabled:opacity-50 ${row.subscription_status === 'free'
+                                                ? 'border-red-200 text-red-600 hover:bg-red-50'
+                                                : 'border-green-200 text-green-600 hover:bg-green-50'
+                                            }`}
+                                        title={row.subscription_status === 'free' ? 'Revoke Free Access' : 'Grant Free Access'}
+                                    >
+                                        {row.subscription_status === 'free' ? 'Revoke Free' : 'Grant Free'}
                                     </button>
                                     <button className="p-1 hover:bg-stone-100 rounded" title="Edit">
                                         <Edit className="w-4 h-4 text-stone-500" />
