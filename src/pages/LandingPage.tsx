@@ -1,6 +1,5 @@
-```javascript
 import { useNavigate } from 'react-router-dom';
-import { Calendar, DollarSign, Users, CheckCircle } from 'lucide-react';
+import { Calendar, TrendingUp, Key, CheckCircle } from 'lucide-react';
 import SEO from '@/components/SEO';
 import MarketingLayout from '@/components/MarketingLayout';
 
