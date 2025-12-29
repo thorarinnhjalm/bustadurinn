@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Firestore REST API helper (no SDK needed in serverless)
 async function saveToFirestore(data: any) {
-    const projectId = process.env.VITE_FIREBASE_PROJECT_ID || 'bustadurinn-is';
+    const projectId = process.env.VITE_FIREBASE_PROJECT_ID || 'bustadurinn-599f2';
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/contact_submissions`;
 
     const doc = {
