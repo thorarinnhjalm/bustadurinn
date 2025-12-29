@@ -138,29 +138,21 @@
 
 ---
 
-## 📧 PHASE 6: Email Campaigns (Tab 5)
+## 📧 PHASE 6: Contact Form Inbox (Tab 5)
 
-### Email Composer
-- [ ] Rich text editor (TipTap or Quill)
-- [ ] Template variables: `{{manager_name}}`, `{{house_name}}`
-- [ ] Preview mode
-- [ ] Test send
-
-### Audience Segmentation
-- [ ] Segment: All Users
-- [ ] Segment: Managers Only
-- [ ] Segment: Trial Users
-- [ ] Segment: Inactive Users (>30 days)
-
-### Campaign Management
-- [ ] Send history table
-- [ ] Open rates (if available via Resend)
-- [ ] Click rates
-- [ ] Schedule send
+### Contact Submissions
+- [ ] Collection: `contact_submissions`
+- [ ] Inbox UI (table view)
+- [ ] Filter: Unread / Read / Replied
+- [ ] Quick reply via Resend
+- [ ] Mark as resolved
+- [ ] Search by email/name
+- [ ] Export to CSV
 
 ### Backend
-- [ ] Firebase Function: `sendEmailCampaign`
-- [ ] Collection: `email_campaigns`
+- [ ] Firebase Function: `submitContactForm`
+- [ ] Firebase Function: `replyToContact`
+- [ ] Email notification on new submission
 
 ---
 

@@ -100,25 +100,24 @@ await logFunnelStep('complete', userId);
 
 ---
 
-### 📧 TAB 5: TÖLVUPÓSTUR (Email) - **PRIORITY 5**
-**Status**: Basic sending exists  
-**Estimated Time**: 6-8 hours
+### 📧 TAB 5: SAMSKIPTI (Contact Forms) - **PRIORITY 5**
+**Status**: Not started  
+**Estimated Time**: 4-6 hours
 
-**Current State**:
-- ✅ Resend integration working
-- ❌ No composer UI
-- ❌ No segmentation
-- ❌ No campaign history
+**Requirements**:
+- View contact form submissions from website
+- Collection: `contact_submissions`
+- Filter: Unread / Read / Replied
+- Reply directly via Resend
+- Mark as resolved
+- Export submissions
 
 **To Build**:
-- Rich text editor (TipTap or Quill)
-- Template variables: `{{manager_name}}`, `{{house_name}}`
-- Audience segments:
-  - All Users
-  - Managers Only
-  - Trial Users
-  - Inactive Users (>30 days)
-- Send history + open rates
+- Inbox UI (table view)
+- Filter by status
+- Quick reply form
+- Auto-mark as read when viewed
+- Search by email/name
 
 ---
 
