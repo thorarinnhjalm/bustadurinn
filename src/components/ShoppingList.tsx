@@ -7,10 +7,9 @@ interface ShoppingListProps {
     onToggle: (item: ShoppingItem) => void;
     onDelete: (item: ShoppingItem) => void;
     onAdd: (itemName: string) => void;
-    currentUserId: string;
 }
 
-export default function ShoppingList({ items, onToggle, onDelete, onAdd, currentUserId }: ShoppingListProps) {
+export default function ShoppingList({ items, onToggle, onDelete, onAdd }: ShoppingListProps) {
     const [newItem, setNewItem] = useState('');
     const [showInput, setShowInput] = useState(false);
 

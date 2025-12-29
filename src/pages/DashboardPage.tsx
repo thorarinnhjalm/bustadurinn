@@ -488,7 +488,7 @@ const UserDashboard = () => {
                             onToggle={handleToggleShoppingItem}
                             onDelete={handleDeleteShoppingItem}
                             onAdd={handleAddShoppingItem}
-                            currentUserId={currentUser?.uid || ''}
+                            
                         />
                     </section>
 

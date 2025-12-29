@@ -59,7 +59,7 @@ export default function InternalLogbook({ logs, currentUserName, onAddLog }: Int
             {/* Timeline */}
             {logs.length > 0 ? (
                 <div className="relative pl-4 border-l-2 border-stone-100 space-y-6">
-                    {logs.map((log, idx) => (
+                    {logs.map((log) => (
                         <div key={log.id} className="relative">
                             <div className="absolute -left-[21px] top-0 w-3 h-3 bg-stone-200 rounded-full border-2 border-white"></div>
                             <div className="flex justify-between items-start mb-1">
