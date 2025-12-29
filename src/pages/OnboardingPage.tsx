@@ -23,7 +23,9 @@ export default function OnboardingPage() {
     const [houseData, setHouseData] = useState({
         name: '',
         address: '',
-        location: { lat: 0, lng: 0 }
+        location: { lat: 0, lng: 0 },
+        id: '',
+        invite_code: ''
     });
 
     const [inviteEmails, setInviteEmails] = useState('');
@@ -195,6 +197,13 @@ export default function OnboardingPage() {
                 updated_at: serverTimestamp()
             });
 
+            // Update local state with created house metadata
+            setHouseData(prev => ({
+                ...prev,
+                id: houseRef.id,
+                invite_code: inviteCode
+            }));
+
             // 2. Link to User (CRITICAL for Dashboard)
             // Use setDoc with merge: true to CREATE user profile if it doesn't exist
             await setDoc(doc(db, 'users', currentUser.uid), {
@@ -248,7 +257,39 @@ export default function OnboardingPage() {
     };
 
     const handleSendInvites = async () => {
-        nextStep();
+        if (!inviteEmails.trim()) {
+            nextStep();
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            const res = await fetch('/api/send-invite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    emails: inviteEmails,
+                    houseName: houseData.name,
+                    houseId: houseData.id,
+                    inviteCode: houseData.invite_code,
+                    senderName: currentUser?.name || currentUser?.email?.split('@')[0]
+                })
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Gat ekki sent boð');
+            }
+
+            nextStep();
+        } catch (err: any) {
+            console.error('Error sending invites:', err);
+            setError('Villa við að senda boð: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

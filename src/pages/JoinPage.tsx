@@ -83,6 +83,13 @@ export default function JoinPage() {
                 house_ids: arrayUnion(house.id)
             });
 
+            // 3. Update Local Store immediately (otherwise Dashboard redirects to onboarding)
+            useAppStore.getState().setCurrentUser({
+                ...currentUser,
+                house_ids: [...(currentUser.house_ids || []), house.id]
+            });
+            useAppStore.getState().setCurrentHouse(house);
+
             setStatus('joined');
         } catch (err) {
             console.error(err);
@@ -106,9 +113,14 @@ export default function JoinPage() {
                     <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h2 className="text-xl font-serif mb-2">Villa</h2>
                     <p className="text-grey-mid mb-6">{error}</p>
-                    <button onClick={() => navigate('/')} className="btn btn-ghost">
-                        Fara á forsíðu
-                    </button>
+                    <div className="flex flex-col gap-3">
+                        <button onClick={() => window.location.reload()} className="btn btn-primary w-full">
+                            Reyna aftur
+                        </button>
+                        <button onClick={() => navigate('/')} className="btn btn-ghost w-full">
+                            Fara á forsíðu
+                        </button>
+                    </div>
                 </div>
             </div>
         );
