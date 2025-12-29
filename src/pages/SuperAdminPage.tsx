@@ -291,7 +291,7 @@ export default function SuperAdminPage() {
                         !demoHouseNames.includes(h.name || '') &&
                         (h as any).subscription_status === 'active'
                     );
-                    const estimatedMRR = paidHouses.length * 4900; // 4,900 ISK per house
+                    const estimatedMRR = paidHouses.length * 1990; // 1,990 ISK per house/month
 
                     return (
                         <div className="space-y-8">

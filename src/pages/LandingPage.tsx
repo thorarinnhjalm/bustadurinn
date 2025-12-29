@@ -15,7 +15,7 @@ export default function LandingPage() {
         "operatingSystem": "Web",
         "offers": {
             "@type": "Offer",
-            "price": "4900",
+            "price": "1990",
             "priceCurrency": "ISK"
         },
         "description": "Bókunarkerfi og app fyrir sameiginleg sumarhús."
@@ -108,7 +108,7 @@ export default function LandingPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <CheckCircle className="w-5 h-5 text-green-400" />
-                                <span>4.900 kr/mánuði</span>
+                                <span>1.990 kr/mánuði</span>
                             </div>
                         </div>
                     </div>
@@ -159,13 +159,14 @@ export default function LandingPage() {
                 <div className="container max-w-4xl mx-auto px-6 text-center">
                     <h2 className="text-4xl font-serif mb-4">Einföld verðskrá</h2>
                     <p className="text-xl text-grey-mid mb-12">
-                        4.900 kr á mánuði fyrir hvert hús. Óháð fjölda eigenda.
+                        1.990 kr á mánuði eða 14.900 kr á ári. Óháð fjölda eigenda.
                     </p>
 
                     <div className="max-w-md mx-auto card ring-2 ring-amber bg-white">
                         <div className="text-center mb-6">
-                            <div className="text-5xl font-bold font-serif mb-2">4.900 kr</div>
+                            <div className="text-5xl font-bold font-serif mb-2">1.990 kr</div>
                             <p className="text-grey-mid">á mánuði</p>
+                            <p className="text-sm text-stone-500 mt-2">eða 14.900 kr á ári (sparar 3%))</p>
                         </div>
 
                         <ul className="space-y-3 mb-8 text-left">
