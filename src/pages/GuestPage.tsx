@@ -7,6 +7,7 @@ import {
     Sun, Phone, Heart, Share2,
     Tv, Droplets, Flame, ArrowRight, Loader2
 } from 'lucide-react';
+import { fetchWeather } from '@/utils/weather';
 
 // A-Frame Logo
 const CabinLogo = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
@@ -22,6 +23,7 @@ export default function GuestPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [copied, setCopied] = useState('');
+    const [weather, setWeather] = useState<{ temp: number | string, condition: string }>({ temp: '—', condition: 'Hleður...' });
 
     useEffect(() => {
         const fetchView = async () => {
@@ -29,7 +31,20 @@ export default function GuestPage() {
             try {
                 const docSnap = await getDoc(doc(db, 'guest_views', token));
                 if (docSnap.exists()) {
-                    setData(docSnap.data());
+                    const viewData = docSnap.data();
+                    setData(viewData);
+
+                    // Fetch weather
+                    if (viewData.location?.lat && viewData.location?.lng) {
+                        try {
+                            const wData = await fetchWeather(viewData.location.lat, viewData.location.lng);
+                            if (wData) {
+                                setWeather({ temp: `${wData.temp}°C`, condition: wData.condition });
+                            }
+                        } catch (e) {
+                            console.error('Weather fetch error:', e);
+                        }
+                    }
                 } else {
                     setError('Hlekkurinn er útrunninn eða ógildur.');
                 }
@@ -81,7 +96,7 @@ export default function GuestPage() {
 
     if (!data) return null;
 
-    const weather = { temp: '—', condition: 'Óþekkt' };
+
     const houseName = data.house_name || 'Sumarhús';
 
     return (

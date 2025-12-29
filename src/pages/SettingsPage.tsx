@@ -302,6 +302,11 @@ export default function SettingsPage() {
                     directions: houseForm.directions,
                     access_instructions: houseForm.access_instructions,
                     emergency_contact: houseForm.emergency_contact,
+                    location: {
+                        lat: houseForm.lat,
+                        lng: houseForm.lng
+                    },
+                    image_url: house.image_url || '',
                     updated_at: new Date()
                 }, { merge: true });
             }
@@ -396,6 +401,11 @@ export default function SettingsPage() {
                 directions: houseForm.directions,
                 access_instructions: houseForm.access_instructions,
                 emergency_contact: houseForm.emergency_contact,
+                location: {
+                    lat: houseForm.lat,
+                    lng: houseForm.lng
+                },
+                image_url: house.image_url || '',
                 updated_at: new Date()
             });
 
