@@ -150,3 +150,16 @@ export interface PricingPlan {
     features: string[];
     recommended?: boolean;
 }
+
+export interface Coupon {
+    id: string;
+    code: string; // e.g., "SUMAR2025"
+    discount_type: 'percent' | 'fixed'; // 20% off vs. 2000 kr off
+    discount_value: number; // 20 vs 2000
+    description: string;
+    valid_until?: Date;
+    max_uses?: number; // Total usages across system
+    used_count: number;
+    active: boolean;
+    created_at: Date;
+}

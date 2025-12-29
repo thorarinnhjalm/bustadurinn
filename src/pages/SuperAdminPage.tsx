@@ -5,16 +5,16 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
 import AdminLayout from '@/components/AdminLayout';
 import DataTable from '@/components/DataTable';
 
-import type { House, User } from '@/types/models';
+import type { House, User, Coupon } from '@/types/models';
 
 interface ContactSubmission {
     id: string;
@@ -33,16 +33,25 @@ interface Stats {
     allHouses: House[];
     allUsers: User[];
     allContacts: ContactSubmission[];
+    allCoupons: Coupon[];
 }
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'overview' | 'houses' | 'users' | 'contacts'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'houses' | 'users' | 'contacts' | 'coupons'>('overview');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [seeding, setSeeding] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const { startImpersonation } = useImpersonation();
+
+    const [newCoupon, setNewCoupon] = useState({
+        code: '',
+        discount_type: 'percent',
+        discount_value: 0,
+        description: '',
+        max_uses: 0
+    });
 
     const [stats, setStats] = useState<Stats>({
         totalHouses: 0,
@@ -51,7 +60,8 @@ export default function SuperAdminPage() {
         activeTasks: 0,
         allHouses: [],
         allUsers: [],
-        allContacts: []
+        allContacts: [],
+        allCoupons: []
     });
 
     useEffect(() => {
@@ -82,6 +92,15 @@ export default function SuperAdminPage() {
                     created_at: doc.data().created_at?.toDate() || new Date()
                 } as ContactSubmission));
 
+                // Fetch coupons
+                const couponsSnap = await getDocs(collection(db, 'coupons'));
+                const coupons = couponsSnap.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    created_at: (doc.data().created_at as any)?.toDate() || new Date(),
+                    valid_until: (doc.data().valid_until as any)?.toDate() || undefined
+                } as Coupon));
+
                 setStats({
                     totalHouses: houses.length,
                     totalUsers: users.length,
@@ -89,7 +108,8 @@ export default function SuperAdminPage() {
                     activeTasks,
                     allHouses: houses,
                     allUsers: users,
-                    allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
+                    allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
+                    allCoupons: coupons
                 });
             } catch (error: any) {
                 console.error('Error fetching stats:', error);
@@ -179,6 +199,76 @@ export default function SuperAdminPage() {
             alert('Failed to impersonate user: ' + error.message);
         } finally {
             setActionLoading(null);
+        }
+    };
+
+    const handleCreateCoupon = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            setActionLoading('create-coupon');
+            const docRef = await addDoc(collection(db, 'coupons'), {
+                code: newCoupon.code.toUpperCase(),
+                discount_type: newCoupon.discount_type,
+                discount_value: Number(newCoupon.discount_value),
+                description: newCoupon.description,
+                max_uses: Number(newCoupon.max_uses) || null,
+                used_count: 0,
+                active: true,
+                created_at: serverTimestamp(),
+                valid_until: null
+            });
+
+            // Add to local state
+            const createdCoupon: Coupon = {
+                id: docRef.id,
+                code: newCoupon.code.toUpperCase(),
+                discount_type: newCoupon.discount_type as 'percent' | 'fixed',
+                discount_value: Number(newCoupon.discount_value),
+                description: newCoupon.description,
+                max_uses: Number(newCoupon.max_uses) || undefined,
+                used_count: 0,
+                active: true,
+                created_at: new Date()
+            };
+
+            setStats(prev => ({
+                ...prev,
+                allCoupons: [...prev.allCoupons, createdCoupon]
+            }));
+
+            // Reset form
+            setNewCoupon({
+                code: '',
+                discount_type: 'percent',
+                discount_value: 0,
+                description: '',
+                max_uses: 0
+            });
+
+            alert('✅ Coupon created successfully!');
+        } catch (error: any) {
+            console.error('Error creating coupon:', error);
+            alert(`❌ Error creating coupon: ${error.message}`);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleDeleteCoupon = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this coupon?')) return;
+
+        try {
+            await deleteDoc(doc(db, 'coupons', id));
+
+            setStats(prev => ({
+                ...prev,
+                allCoupons: prev.allCoupons.filter(c => c.id !== id)
+            }));
+
+            alert('✅ Coupon deleted.');
+        } catch (error: any) {
+            console.error('Error deleting coupon:', error);
+            alert(`❌ Error: ${error.message}`);
         }
     };
 
@@ -323,6 +413,16 @@ export default function SuperAdminPage() {
                         >
                             <Send className="w-4 h-4 inline mr-2" />
                             Contact ({stats.allContacts.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('coupons')}
+                            className={`pb-3 border-b-2 transition-colors font-medium text-sm ${activeTab === 'coupons'
+                                ? 'border-amber text-charcoal'
+                                : 'border-transparent text-stone-500 hover:text-charcoal'
+                                }`}
+                        >
+                            <Tag className="w-4 h-4 inline mr-2" />
+                            Coupons ({stats.allCoupons.length})
                         </button>
                     </div>
                 </div>
@@ -552,6 +652,125 @@ export default function SuperAdminPage() {
                     </div>
                 )}
 
+                {/* Coupons Tab */}
+                {activeTab === 'coupons' && (
+                    <div className="space-y-8">
+                        {/* Create Coupon Form */}
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                <Tag className="w-5 h-5 text-amber" />
+                                Create New Coupon
+                            </h3>
+                            <form onSubmit={handleCreateCoupon} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                                <div className="md:col-span-1">
+                                    <label className="block text-xs font-bold text-stone-500 mb-1">Code</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="input uppercase"
+                                        placeholder="SUMAR2025"
+                                        value={newCoupon.code}
+                                        onChange={e => setNewCoupon({ ...newCoupon, code: e.target.value })}
+                                    />
+                                </div>
+                                <div className="md:col-span-1">
+                                    <label className="block text-xs font-bold text-stone-500 mb-1">Type</label>
+                                    <select
+                                        className="input"
+                                        value={newCoupon.discount_type}
+                                        onChange={e => setNewCoupon({ ...newCoupon, discount_type: e.target.value as 'percent' | 'fixed' })}
+                                    >
+                                        <option value="percent">Percentage (%)</option>
+                                        <option value="fixed">Fixed Amount (kr)</option>
+                                    </select>
+                                </div>
+                                <div className="md:col-span-1">
+                                    <label className="block text-xs font-bold text-stone-500 mb-1">Value</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        className="input"
+                                        placeholder="20"
+                                        value={newCoupon.discount_value || ''}
+                                        onChange={e => setNewCoupon({ ...newCoupon, discount_value: parseInt(e.target.value) })}
+                                    />
+                                </div>
+                                <div className="md:col-span-1">
+                                    <label className="block text-xs font-bold text-stone-500 mb-1">Max Uses (0 = unlimited)</label>
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        placeholder="0"
+                                        value={newCoupon.max_uses || ''}
+                                        onChange={e => setNewCoupon({ ...newCoupon, max_uses: parseInt(e.target.value) })}
+                                    />
+                                </div>
+                                <div className="md:col-span-1">
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary w-full h-[42px] flex items-center justify-center gap-2"
+                                        disabled={actionLoading === 'create-coupon'}
+                                    >
+                                        {actionLoading === 'create-coupon' ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Create'}
+                                    </button>
+                                </div>
+                                <div className="md:col-span-5">
+                                    <label className="block text-xs font-bold text-stone-500 mb-1">Description (Internal)</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="input"
+                                        placeholder="Summer campaign for Facebook ads"
+                                        value={newCoupon.description}
+                                        onChange={e => setNewCoupon({ ...newCoupon, description: e.target.value })}
+                                    />
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Coupons Table */}
+                        <div>
+                            <h2 className="text-2xl font-serif mb-6">Active Coupons</h2>
+                            <DataTable
+                                columns={[
+                                    { key: 'code', label: 'Code', render: r => <span className="font-mono font-bold">{r.code}</span> },
+                                    {
+                                        key: 'discount',
+                                        label: 'Discount',
+                                        render: r => r.discount_type === 'percent' ? `${r.discount_value}%` : `${r.discount_value} kr`
+                                    },
+                                    { key: 'description', label: 'Description' },
+                                    {
+                                        key: 'usage',
+                                        label: 'Usage',
+                                        render: r => `${r.used_count} / ${r.max_uses || '∞'}`
+                                    },
+                                    {
+                                        key: 'created_at',
+                                        label: 'Created',
+                                        render: (row) => {
+                                            if (!row.created_at) return '—';
+                                            const date = row.created_at instanceof Date ? row.created_at : new Date(row.created_at);
+                                            return date.toLocaleDateString('is-IS');
+                                        }
+                                    }
+                                ]}
+                                data={stats.allCoupons}
+                                searchKeys={['code', 'description']}
+                                actions={(row) => (
+                                    <button
+                                        onClick={() => handleDeleteCoupon(row.id)}
+                                        className="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 rounded hover:bg-red-50"
+                                    >
+                                        Delete
+                                    </button>
+                                )}
+                            />
+                        </div>
+                    </div>
+                )}
+
+
                 {/* Users Tab */}
                 {activeTab === 'users' && (
                     <div className="bg-white border border-stone-200 rounded-lg p-6">
@@ -650,6 +869,6 @@ export default function SuperAdminPage() {
                     </div>
                 )}
             </div>
-        </AdminLayout>
+        </AdminLayout >
     );
 }
