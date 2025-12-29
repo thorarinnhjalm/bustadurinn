@@ -339,8 +339,8 @@ const UserDashboard = () => {
             <div className="pt-16 max-w-5xl mx-auto">
                 <div className="relative h-64 md:h-80 w-full overflow-hidden md:rounded-b-3xl">
                     <img
-                        src="https://images.unsplash.com/photo-1542718610-a1d656d1884c?q=80&w=2670&auto=format&fit=crop"
-                        alt="Cabin"
+                        src={currentHouse?.image_url || "https://images.unsplash.com/photo-1542718610-a1d656d1884c?q=80&w=2670&auto=format&fit=crop"}
+                        alt={currentHouse?.name || "Cabin"}
                         className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/80 to-transparent"></div>

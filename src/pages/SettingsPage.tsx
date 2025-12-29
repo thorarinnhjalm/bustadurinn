@@ -36,6 +36,7 @@ export default function SettingsPage() {
     const navigate = useNavigate();
     const { user: currentUser } = useEffectiveUser();
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
+    const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
     const [activeTab, setActiveTab] = useState<Tab>('house');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
@@ -102,7 +103,9 @@ export default function SettingsPage() {
                 updated_at: serverTimestamp()
             });
 
-            setHouse({ ...house, image_url: downloadURL });
+            const updatedHouse = { ...house, image_url: downloadURL };
+            setHouse(updatedHouse);
+            setCurrentHouse(updatedHouse);
             setShowCropper(false);
             setImageFile(null);
             setSuccess('Mynd vistuð!');
@@ -269,7 +272,7 @@ export default function SettingsPage() {
         setSuccess('');
 
         try {
-            await updateDoc(doc(db, 'houses', house.id), {
+            const updates = {
                 name: houseForm.name,
                 address: houseForm.address,
                 location: {
@@ -278,7 +281,7 @@ export default function SettingsPage() {
                 },
                 wifi_ssid: houseForm.wifi_ssid,
                 wifi_password: houseForm.wifi_password,
-                holiday_mode: houseForm.holiday_mode,
+                holiday_mode: houseForm.holiday_mode as any,
                 house_rules: houseForm.house_rules,
                 check_in_time: houseForm.check_in_time,
                 check_out_time: houseForm.check_out_time,
@@ -286,7 +289,9 @@ export default function SettingsPage() {
                 access_instructions: houseForm.access_instructions,
                 emergency_contact: houseForm.emergency_contact,
                 updated_at: new Date()
-            });
+            };
+
+            await updateDoc(doc(db, 'houses', house.id), updates);
 
             // Sync Guest View
             if (house.guest_token) {
@@ -311,7 +316,9 @@ export default function SettingsPage() {
                 }, { merge: true });
             }
 
-            setHouse(prev => prev ? { ...prev, ...houseForm } : null);
+            const updatedHouse = { ...house, ...updates } as House;
+            setHouse(updatedHouse);
+            setCurrentHouse(updatedHouse);
             setSuccess('Breytingar vistaðar!');
 
             // Clear success message after 3 seconds
