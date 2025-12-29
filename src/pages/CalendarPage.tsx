@@ -15,6 +15,7 @@ import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import type { Booking, BookingType } from '@/types/models';
 import { dateLocales, calendarMessages, bookingTypeLabels, type SupportedLanguage } from '@/utils/i18n';
 import { getIcelandicHolidays, isHoliday, includesMajorHoliday } from '@/utils/icelandicHolidays';
+import { analytics } from '@/utils/analytics';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 interface BookingEvent {
@@ -264,6 +265,9 @@ export default function CalendarPage() {
 
             // Reload bookings
             await loadBookings();
+
+            // Track in Google Analytics
+            analytics.bookingCreated(newBooking.type);
 
             // Close modal
             setShowModal(false);

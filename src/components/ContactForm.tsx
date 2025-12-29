@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { analytics } from '@/utils/analytics';
 
 export default function ContactForm() {
     const [formData, setFormData] = useState({
@@ -32,6 +33,9 @@ export default function ContactForm() {
 
             setStatus('success');
             setFormData({ name: '', email: '', message: '' });
+
+            // Track in Google Analytics
+            analytics.contactFormSubmitted('about_page');
 
             // Reset after 3 seconds
             setTimeout(() => setStatus('idle'), 3000);
