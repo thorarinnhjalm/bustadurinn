@@ -13,6 +13,14 @@ export default function ImpersonationBanner() {
         return null;
     }
 
+    const handleExit = () => {
+        // Get the return URL from localStorage (set when impersonation started)
+        const returnUrl = localStorage.getItem('admin_return_url') || '/super-admin';
+        stopImpersonation();
+        // Navigate back to where admin came from
+        window.location.href = returnUrl;
+    };
+
     return (
         <div className="fixed top-0 left-0 right-0 z-50 bg-red-600 text-white px-6 py-3 shadow-lg">
             <div className="container mx-auto flex items-center justify-between">
@@ -28,7 +36,7 @@ export default function ImpersonationBanner() {
                     </div>
                 </div>
                 <button
-                    onClick={stopImpersonation}
+                    onClick={handleExit}
                     className="flex items-center gap-2 px-4 py-2 bg-white text-red-600 rounded font-medium text-sm hover:bg-red-50 transition-colors"
                 >
                     <X className="w-4 h-4" />

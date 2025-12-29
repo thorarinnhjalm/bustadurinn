@@ -123,6 +123,8 @@ export default function SuperAdminPage() {
         if (!confirm(`View as ${user.name}?\n\nYou'll see exactly what they see. Click "Exit God Mode" to return.`)) {
             return;
         }
+        // Save current URL to return to later
+        localStorage.setItem('admin_return_url', window.location.pathname);
         startImpersonation(user);
         // Navigate to their dashboard
         window.location.href = '/dashboard';
