@@ -5,9 +5,9 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2 } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
@@ -223,6 +223,49 @@ export default function SuperAdminPage() {
         } catch (error: any) {
             console.error('Error toggling status:', error);
             alert(`❌ Error: ${error.message}`);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleDeleteHouse = async (houseId: string) => {
+        const house = stats.allHouses.find(h => h.id === houseId);
+        if (!house) return;
+
+        const confirmText = `EYÐA "${house.name}"?\n\nÞETTA EYÐIR:\n- Húsinu\n- Öllum bókunum\n- Öllum verkefnum\n- Innkaupalistanum\n- Öllum log færslum\n\nÞetta er ÓAFTURKRÆFT!\n\nSkrifaðu nafn hússins til að sta staðfesta:`;
+        const userInput = prompt(confirmText);
+
+        if (userInput !== house.name) {
+            alert('Hætt við - nafnið passaði ekki');
+            return;
+        }
+
+        setActionLoading(houseId);
+        try {
+            // Delete all related data
+            const collections = ['bookings', 'tasks', 'shopping_list', 'internal_logs', 'finance_entries'];
+
+            for (const collectionName of collections) {
+                const q = query(collection(db, collectionName), where('house_id', '==', houseId));
+                const snapshot = await getDocs(q);
+                const deletePromises = snapshot.docs.map(docSnap => deleteDoc(doc(db, collectionName, docSnap.id)));
+                await Promise.all(deletePromises);
+            }
+
+            // Delete the house itself
+            await deleteDoc(doc(db, 'houses', houseId));
+
+            // Update local state
+            setStats(prev => ({
+                ...prev,
+                totalHouses: prev.totalHouses - 1,
+                allHouses: prev.allHouses.filter(h => h.id !== houseId)
+            }));
+
+            alert('✅ Húsinu og öllum gögnum eytt!');
+        } catch (error: any) {
+            console.error('Error deleting house:', error);
+            alert(`❌ Villa: ${error.message}`);
         } finally {
             setActionLoading(null);
         }
@@ -857,6 +900,14 @@ export default function SuperAdminPage() {
                                     </button>
                                     <button className="p-1 hover:bg-stone-100 rounded" title="Edit">
                                         <Edit className="w-4 h-4 text-stone-500" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteHouse(row.id!)}
+                                        disabled={actionLoading === row.id}
+                                        className="p-1 hover:bg-red-100 rounded disabled:opacity-50"
+                                        title="Eyða húsi"
+                                    >
+                                        <Trash2 className="w-4 h-4 text-red-600" />
                                     </button>
                                 </div>
                             )}
