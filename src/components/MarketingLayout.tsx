@@ -33,6 +33,7 @@ export default function MarketingLayout({ children, title, description }: Market
                         <Link to="/eiginleikar" className={`font-medium transition-colors ${isCurrent('/eiginleikar')}`}>Eiginleikar</Link>
                         <Link to="/spurt-og-svarad" className={`font-medium transition-colors ${isCurrent('/spurt-og-svarad')}`}>Spurt & Svarað</Link>
                         <Link to="/um-okkur" className={`font-medium transition-colors ${isCurrent('/um-okkur')}`}>Um Okkur</Link>
+                        <Link to="/hafa-samband" className={`font-medium transition-colors ${isCurrent('/hafa-samband')}`}>Hafa samband</Link>
                     </div>
 
                     <div className="flex gap-4">
@@ -40,7 +41,7 @@ export default function MarketingLayout({ children, title, description }: Market
                         <button onClick={() => navigate('/signup')} className="btn btn-primary">Byrja núna</button>
                     </div>
                 </div>
-            </nav>
+            </nav >
 
             <main className="flex-1 pt-20">
                 {children}
@@ -55,6 +56,7 @@ export default function MarketingLayout({ children, title, description }: Market
                         <Link to="/eiginleikar" className="hover:text-white transition-colors">Eiginleikar</Link>
                         <Link to="/spurt-og-svarad" className="hover:text-white transition-colors">Algengar spurningar</Link>
                         <Link to="/um-okkur" className="hover:text-white transition-colors">Um Okkur</Link>
+                        <Link to="/hafa-samband" className="hover:text-white transition-colors">Hafa samband</Link>
                         <Link to="/personuvernd" className="hover:text-white transition-colors">Persónuvernd</Link>
                         <Link to="/skilmalar" className="hover:text-white transition-colors">Skilmálar</Link>
                     </div>
@@ -65,6 +67,6 @@ export default function MarketingLayout({ children, title, description }: Market
                     </p>
                 </div>
             </footer>
-        </div>
+        </div >
     );
 }

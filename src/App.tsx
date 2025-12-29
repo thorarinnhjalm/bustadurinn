@@ -28,6 +28,7 @@ import GuestPage from '@/pages/GuestPage';
 import FeaturesPage from '@/pages/FeaturesPage';
 import FAQPage from '@/pages/FAQPage';
 import AboutPage from '@/pages/AboutPage';
+import ContactPage from '@/pages/ContactPage';
 import SandboxPage from '@/pages/SandboxPage';
 
 // Admin emails whitelist
@@ -179,6 +180,7 @@ function App() {
             <Route path="/eiginleikar" element={<FeaturesPage />} />
             <Route path="/spurt-og-svarad" element={<FAQPage />} />
             <Route path="/um-okkur" element={<AboutPage />} />
+            <Route path="/hafa-samband" element={<ContactPage />} />
             <Route path="/prufa" element={<SandboxPage />} />
 
             {/* Protected Routes */}
