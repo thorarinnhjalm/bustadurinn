@@ -192,6 +192,11 @@ export default function CalendarPage() {
             return;
         }
 
+        if (!houseId) {
+            setError('Ekkert hús valið. Vinsamlegast veldu hús fyrst.');
+            return;
+        }
+
         // Check for conflicts
         if (checkConflicts(newBooking.start, newBooking.end)) {
             setError('Það er þegar bókun á þessum dagsetningum. Vinsamlegast veldu aðrar dagsetningar.');
