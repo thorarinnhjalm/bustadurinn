@@ -44,6 +44,8 @@ export default function GuestPage() {
                         } catch (e) {
                             console.error('Weather fetch error:', e);
                         }
+                    } else {
+                        setWeather({ temp: '?', condition: 'Vantar staðsetningu' });
                     }
                 } else {
                     setError('Hlekkurinn er útrunninn eða ógildur.');

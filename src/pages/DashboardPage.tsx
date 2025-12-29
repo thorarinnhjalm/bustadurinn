@@ -159,6 +159,8 @@ const UserDashboard = () => {
                             condition: wData.condition
                         });
                     }
+                } else {
+                    setWeather({ temp: "?", wind: 0, condition: "Vantar staðsetningu" });
                 }
 
             } catch (error) {

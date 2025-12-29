@@ -587,7 +587,14 @@ export default function SettingsPage() {
 
                                         <div className="relative">
                                             <div className="flex items-center justify-between mb-3">
-                                                <label className="label">Heimilisfang & Staðsetning</label>
+                                                <label className="label">
+                                                    Heimilisfang & Staðsetning
+                                                    {houseForm.lat === 0 && (
+                                                        <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-sans font-medium uppercase tracking-wide">
+                                                            Vantar GPS
+                                                        </span>
+                                                    )}
+                                                </label>
                                                 {isManager && (
                                                     <button
                                                         type="button"
