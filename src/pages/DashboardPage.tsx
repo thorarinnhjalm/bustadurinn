@@ -8,10 +8,11 @@ import { Calendar, DollarSign, CheckSquare, Settings, LogOut, Home } from 'lucid
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
+import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
-    const currentUser = useAppStore((state) => state.currentUser);
+    const { user: currentUser, isImpersonating } = useEffectiveUser();
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
     const setAuthenticated = useAppStore((state) => state.setAuthenticated);
 
