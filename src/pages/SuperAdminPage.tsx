@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, serverTimestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -38,7 +38,7 @@ interface Stats {
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'overview' | 'houses' | 'users' | 'contacts' | 'coupons'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'houses' | 'users' | 'contacts' | 'coupons' | 'integrations'>('overview');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [seeding, setSeeding] = useState(false);
@@ -52,6 +52,8 @@ export default function SuperAdminPage() {
         description: '',
         max_uses: 0
     });
+
+    const [paydayStatus, setPaydayStatus] = useState<{ success: boolean; message: string } | null>(null);
 
     const [stats, setStats] = useState<Stats>({
         totalHouses: 0,
@@ -210,6 +212,24 @@ export default function SuperAdminPage() {
         } catch (error: any) {
             console.error('Error toggling status:', error);
             alert(`❌ Error: ${error.message}`);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleTestPayday = async () => {
+        setActionLoading('payday-test');
+        setPaydayStatus(null);
+        try {
+            const res = await fetch('/api/payday-test', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                setPaydayStatus({ success: true, message: `Connected to Payday! Token expires in ${Math.round(data.expires_in / 60)} minutes.` });
+            } else {
+                setPaydayStatus({ success: false, message: data.error || 'Failed to connect' });
+            }
+        } catch (err: any) {
+            setPaydayStatus({ success: false, message: err.message });
         } finally {
             setActionLoading(null);
         }
@@ -402,7 +422,7 @@ export default function SuperAdminPage() {
     return (
         <AdminLayout
             activeTab={activeTab}
-            onTabChange={(tab) => setActiveTab(tab as 'overview' | 'houses' | 'users')}
+            onTabChange={(tab) => setActiveTab(tab as any)}
             onBackClick={() => navigate('/dashboard')}
         >
             {/* Header */}
@@ -479,6 +499,16 @@ export default function SuperAdminPage() {
                         >
                             <Tag className="w-4 h-4 inline mr-2" />
                             Coupons ({stats.allCoupons.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('integrations')}
+                            className={`pb-3 border-b-2 transition-colors font-medium text-sm ${activeTab === 'integrations'
+                                ? 'border-amber text-charcoal'
+                                : 'border-transparent text-stone-500 hover:text-charcoal'
+                                }`}
+                        >
+                            <Settings className="w-4 h-4 inline mr-2" />
+                            Integrations
                         </button>
                     </div>
                 </div>
@@ -721,8 +751,8 @@ export default function SuperAdminPage() {
                                         onClick={() => handleToggleFree(row.id!)}
                                         disabled={actionLoading === row.id}
                                         className={`px-3 py-1.5 text-xs font-bold border rounded transition-colors disabled:opacity-50 ${row.subscription_status === 'free'
-                                                ? 'border-red-200 text-red-600 hover:bg-red-50'
-                                                : 'border-green-200 text-green-600 hover:bg-green-50'
+                                            ? 'border-red-200 text-red-600 hover:bg-red-50'
+                                            : 'border-green-200 text-green-600 hover:bg-green-50'
                                             }`}
                                         title={row.subscription_status === 'free' ? 'Revoke Free Access' : 'Grant Free Access'}
                                     >
@@ -951,6 +981,61 @@ export default function SuperAdminPage() {
                             data={stats.allContacts}
                             searchKeys={['name', 'email', 'message']}
                         />
+                    </div>
+                )}
+
+                {/* Integrations Tab */}
+                {activeTab === 'integrations' && (
+                    <div className="max-w-4xl space-y-6">
+                        <h2 className="text-2xl font-serif mb-6">Integrations</h2>
+
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-bold flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded bg-[#101010] flex items-center justify-center text-white font-mono text-xs">P</div>
+                                    Payday.is
+                                </h3>
+                                {paydayStatus?.success && (
+                                    <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                                        <CheckCircle className="w-3 h-3" /> Connected
+                                    </span>
+                                )}
+                            </div>
+
+                            <p className="text-stone-600 mb-6 text-sm">
+                                Connect to Payday to automatically generate invoices. This integration uses Client Credentials flow (Server-to-Server).
+                            </p>
+
+                            <div className="bg-stone-50 p-4 rounded mb-6 font-mono text-xs text-stone-500 border border-stone-100">
+                                <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
+                                    <span className="font-bold">Client ID:</span>
+                                    <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit">
+                                        {import.meta.env.VITE_PAYDAY_CLIENT_ID ? `${import.meta.env.VITE_PAYDAY_CLIENT_ID.substring(0, 10)}...` : 'Missing ❌'}
+                                    </span>
+                                    <span className="font-bold">Auth Method:</span>
+                                    <span className="text-charcoal">Client Credentials (Secret Key)</span>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleTestPayday}
+                                disabled={actionLoading === 'payday-test'}
+                                className="btn btn-secondary flex items-center gap-2"
+                            >
+                                {actionLoading === 'payday-test' ? <div className="w-4 h-4 border-2 border-stone-500/30 border-t-stone-500 rounded-full animate-spin" /> : <Activity className="w-4 h-4" />}
+                                {paydayStatus?.success ? 'Test Connection Again' : 'Test Connection'}
+                            </button>
+
+                            {paydayStatus && (
+                                <div className={`mt-4 p-4 rounded text-sm border ${paydayStatus.success ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                    <div className="flex items-center gap-2 font-bold mb-1">
+                                        {paydayStatus.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                                        {paydayStatus.success ? 'Success' : 'Connection Failed'}
+                                    </div>
+                                    {paydayStatus.message}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
