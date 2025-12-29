@@ -226,6 +226,42 @@ export default function CalendarPage() {
                 created_at: serverTimestamp()
             });
 
+            // Send email notification (don't block on this)
+            try {
+                // Fetch house to get owner emails
+                const houseDoc = await getDoc(doc(db, 'houses', houseId));
+                const house = houseDoc.data();
+
+                if (house && house.owner_ids) {
+                    // Fetch owner emails
+                    const ownerEmails: string[] = [];
+                    for (const ownerId of house.owner_ids) {
+                        const userDoc = await getDoc(doc(db, 'users', ownerId));
+                        const userData = userDoc.data();
+                        if (userData?.email) {
+                            ownerEmails.push(userData.email);
+                        }
+                    }
+
+                    // Send notification
+                    await fetch('/api/booking-notification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            houseName: house.name || 'Sumarhús',
+                            userName: currentUser.name || currentUser.email,
+                            startDate: newBooking.start.toISOString(),
+                            endDate: newBooking.end.toISOString(),
+                            bookingType: newBooking.type,
+                            ownerEmails
+                        })
+                    });
+                }
+            } catch (emailError) {
+                console.error('Failed to send booking notification:', emailError);
+                // Don't fail the booking if email fails
+            }
+
             // Reload bookings
             await loadBookings();
 

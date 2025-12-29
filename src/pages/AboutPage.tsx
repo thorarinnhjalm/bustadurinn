@@ -1,4 +1,5 @@
 import MarketingLayout from '@/components/MarketingLayout';
+import ContactForm from '@/components/ContactForm';
 
 export default function AboutPage() {
     return (
@@ -14,7 +15,7 @@ export default function AboutPage() {
                         <p className="mb-6">
                             Bústaðurinn.is spratt upp úr þörf fyrir betra utanumhald um sameiginlegt fjölskyldusumarhús.
                             Eftir að hafa reynt að halda utan um bókanir í Excel, rætt viðgerðir á Facebook og
-                            reiknað kostnaðarskiptingu á servíettum, ákvaðum við að búa til sérsniðna lausn.
+                            reiknað kostnaðarskiptingu á servíettum, ákváðum við að búa til sérsniðna lausn.
                         </p>
 
                         <p className="mb-6">
@@ -26,11 +27,20 @@ export default function AboutPage() {
                         <p className="mb-6">
                             Við erum stöðugt að bæta kerfið. Ef þú hefur ábendingar eða spurningar, heyrðu endilega í okkur.
                         </p>
-                        <p>
-                            <a href="mailto:hallo@bustadurinn.is" className="text-amber hover:text-amber-dark font-medium underline underline-offset-4">
-                                hallo@bustadurinn.is
-                            </a>
-                        </p>
+
+                        <div className="mb-8">
+                            <p className="mb-4">
+                                <a href="mailto:hallo@bustadurinn.is" className="text-amber hover:text-amber-dark font-medium underline underline-offset-4">
+                                    hallo@bustadurinn.is
+                                </a>
+                            </p>
+                            <p className="text-sm text-grey-mid">Eða fylltu út formið hér að neðan:</p>
+                        </div>
+
+                        {/* Contact Form */}
+                        <div className="not-prose my-12">
+                            <ContactForm />
+                        </div>
 
                         <div className="mt-12 pt-8 border-t border-grey-warm/20">
                             <h3 className="text-lg font-serif mb-4">Systurverkefni</h3>
