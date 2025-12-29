@@ -6,8 +6,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { Home, Users, User as UserIcon, Save, Shield, Wifi, AlertTriangle, BookOpen, LogOut, Edit2, X } from 'lucide-react';
+import { auth, storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { Home, Users, User as UserIcon, Save, Shield, Wifi, AlertTriangle, BookOpen, LogOut, Edit2, X, Upload, Image as ImageIcon } from 'lucide-react';
+import ImageCropper from '@/components/ImageCropper';
 import {
     doc,
     setDoc,
@@ -18,7 +20,8 @@ import {
     where,
     onSnapshot,
     arrayUnion,
-    deleteDoc
+    deleteDoc,
+    serverTimestamp
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
@@ -61,6 +64,9 @@ export default function SettingsPage() {
     const [debounceTimer, setDebounceTimer] = useState<any>(null);
     const [members, setMembers] = useState<User[]>([]);
     const [isEditingLocation, setIsEditingLocation] = useState(false);
+    const [imageFile, setImageFile] = useState<string | null>(null);
+    const [showCropper, setShowCropper] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     const handleLogout = async () => {
         try {
@@ -68,6 +74,43 @@ export default function SettingsPage() {
             navigate('/login');
         } catch (err) {
             console.error('Logout error:', err);
+        }
+    };
+
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setImageFile(reader.result as string);
+                setShowCropper(true);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCroppedImage = async (blob: Blob) => {
+        if (!house) return;
+        try {
+            setUploadingImage(true);
+            const storageRef = ref(storage, `houses/${house.id}/image.jpg`);
+            await uploadBytes(storageRef, blob);
+            const downloadURL = await getDownloadURL(storageRef);
+
+            await updateDoc(doc(db, 'houses', house.id), {
+                image_url: downloadURL,
+                updated_at: serverTimestamp()
+            });
+
+            setHouse({ ...house, image_url: downloadURL });
+            setShowCropper(false);
+            setImageFile(null);
+            setSuccess('Mynd vistuð!');
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            setError('Villa við að vista mynd.');
+        } finally {
+            setUploadingImage(false);
         }
     };
 
@@ -482,6 +525,36 @@ export default function SettingsPage() {
                         {/* TAB: HOUSE INFO */}
                         {activeTab === 'house' && house && (
                             <div className="space-y-6">
+
+                                {/* House Image Upload */}
+                                <div className="bg-white p-6 rounded-lg shadow-sm">
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <ImageIcon className="w-6 h-6 text-amber" />
+                                        <h2 className="text-xl font-serif">Mynd af húsinu</h2>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {house.image_url ? (
+                                            <div className="relative aspect-video rounded-lg overflow-hidden border border-stone-200">
+                                                <img src={house.image_url} alt={house.name} className="w-full h-full object-cover" />
+                                                {isManager && (
+                                                    <label className="absolute top-4 right-4 btn btn-secondary text-sm cursor-pointer">
+                                                        <Upload className="w-4 h-4 mr-2" />
+                                                        Skipta um mynd
+                                                        <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+                                                    </label>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <label className="border-2 border-dashed border-stone-300 rounded-lg p-12 flex flex-col items-center justify-center cursor-pointer hover:border-amber transition-colors">
+                                                <Upload className="w-12 h-12 text-stone-400 mb-4" />
+                                                <p className="text-stone-600 font-medium mb-1">Smelltu hér til að hlaða upp mynd</p>
+                                                <p className="text-stone-400 text-sm">JPG, PNG eða WebP (16:9 hlutfall mælt með)</p>
+                                                <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" disabled={!isManager} />
+                                            </label>
+                                        )}
+                                    </div>
+                                </div>
 
                                 {/* General Info */}
                                 <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -1051,6 +1124,29 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Image Cropper Modal */}
+            {showCropper && imageFile && (
+                <ImageCropper
+                    image={imageFile}
+                    onCropComplete={handleCroppedImage}
+                    onCancel={() => {
+                        setShowCropper(false);
+                        setImageFile(null);
+                    }}
+                    aspectRatio={16 / 9}
+                />
+            )}
+
+            {/* Upload Loading Overlay */}
+            {uploadingImage && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+                    <div className="bg-white p-6 rounded-lg text-center">
+                        <div className="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="font-bold">Vista mynd...</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

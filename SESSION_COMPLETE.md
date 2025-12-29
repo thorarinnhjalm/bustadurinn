@@ -52,11 +52,18 @@
   - No API calls needed (local JSON)
   
 - **Edit Mode Protection:**
-  - Prominent amber "Breyta" button
+  - PROMINENT amber "Breyta" button
   - Visual feedback when editing active
   - Instruction banner
   - Amber border on input fields
-  - Prevents accidental changes
+  - **Permissions Fixed:** All owners can now edit (not just manager)
+
+### 7. House Image Upload ✅
+- **New Feature:**
+  - "Mynd af húsinu" section in Settings
+  - Crop tool (16:9 aspect ratio)
+  - Firebase Storage integration
+  - Loading states and success messages
 
 ### 5. Invite System - Fixed ✅
 - **Auto-generation:**
