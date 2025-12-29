@@ -374,30 +374,39 @@ export default function SuperAdminPage() {
         try {
             setActionLoading(`impersonate-${user.uid}`);
 
-            // Save admin's current house to restore later
-            const adminHouse = useAppStore.getState().currentHouse;
-            if (adminHouse) {
-                localStorage.setItem('admin_original_house', JSON.stringify(adminHouse));
-            }
-
-            // Fetch the impersonated user's houses
+            // Fetch the impersonated user's house
+            let userHouse = null;
             if (user.house_ids && user.house_ids.length > 0) {
                 const firstHouseId = user.house_ids[0];
-                const houseDoc = await getDocs(collection(db, 'houses'));
-                const userHouse = houseDoc.docs
+                const houseSnap = await getDocs(collection(db, 'houses'));
+                const foundHouse = houseSnap.docs
                     .map(doc => ({ id: doc.id, ...doc.data() } as House))
                     .find(h => h.id === firstHouseId);
 
-                if (userHouse) {
-                    // Set the impersonated user's house as current
-                    useAppStore.getState().setCurrentHouse(userHouse);
-                    useAppStore.getState().setUserHouses([userHouse]);
+                if (foundHouse) {
+                    userHouse = foundHouse;
                 }
             }
 
-            // Save current URL to return to later
-            localStorage.setItem('admin_return_url', window.location.pathname);
+            // Set impersonation context FIRST
             startImpersonation(user);
+
+            // Then update store with their house
+            if (userHouse) {
+                useAppStore.getState().setCurrentHouse(userHouse);
+                useAppStore.getState().setUserHouses([userHouse]);
+            } else {
+                // Clear house if they don't have one
+                useAppStore.getState().setCurrentHouse(null);
+                useAppStore.getState().setUserHouses([]);
+            }
+
+            // Save return URL
+            localStorage.setItem('admin_return_url', window.location.pathname);
+
+            // Small delay to ensure store updates are processed
+            await new Promise(resolve => setTimeout(resolve, 100));
+
             // Navigate to their dashboard
             window.location.href = '/dashboard';
         } catch (error: any) {
@@ -407,6 +416,7 @@ export default function SuperAdminPage() {
             setActionLoading(null);
         }
     };
+
 
     const handleCreateCoupon = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -285,6 +285,26 @@ const UserDashboard = () => {
         }
     };
 
+    // Handle missing house (e.g., during impersonation or onboarding incomplete)
+    if (!currentHouse) {
+        return (
+            <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-6">
+                <div className="card max-w-md text-center">
+                    <h2 className="text-2xl font-serif mb-4">Engin hús fundust</h2>
+                    <p className="text-grey-dark mb-6">
+                        Þessi notandi hefur ekki lokið við að setja upp hús.
+                    </p>
+                    <button
+                        onClick={() => window.history.back()}
+                        className="btn btn-primary"
+                    >
+                        Til baka
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     // ... (rest of component)
 
     return (
