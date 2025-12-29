@@ -492,34 +492,36 @@ const UserDashboard = () => {
             </main>
 
             {/* ROW 2: Shopping List & Logbook */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="max-w-5xl mx-auto px-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                {/* SHOPPING LIST */}
-                <section>
-                    <div className="flex justify-between items-center mb-3 px-1">
-                        <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Vantar</h3>
-                    </div>
-                    <ShoppingList
-                        items={shoppingItems}
-                        onToggle={handleToggleShoppingItem}
-                        onDelete={handleDeleteShoppingItem}
-                        onAdd={handleAddShoppingItem}
+                    {/* SHOPPING LIST */}
+                    <section>
+                        <div className="flex justify-between items-center mb-3 px-1">
+                            <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Vantar</h3>
+                        </div>
+                        <ShoppingList
+                            items={shoppingItems}
+                            onToggle={handleToggleShoppingItem}
+                            onDelete={handleDeleteShoppingItem}
+                            onAdd={handleAddShoppingItem}
 
-                    />
-                </section>
+                        />
+                    </section>
 
-                {/* INTERNAL LOGBOOK */}
-                <section>
-                    <div className="flex justify-between items-center mb-3 px-1">
-                        <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Gestapósturinn</h3>
-                    </div>
-                    <InternalLogbook
-                        logs={logs}
-                        currentUserName={currentUser?.name || ''}
-                        onAddLog={handleAddLog}
-                    />
-                </section>
+                    {/* INTERNAL LOGBOOK */}
+                    <section>
+                        <div className="flex justify-between items-center mb-3 px-1">
+                            <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Gestapósturinn</h3>
+                        </div>
+                        <InternalLogbook
+                            logs={logs}
+                            currentUserName={currentUser?.name || ''}
+                            onAddLog={handleAddLog}
+                        />
+                    </section>
 
+                </div>
             </div>
 
             {/* --- MOBILE BOTTOM NAV --- */}
