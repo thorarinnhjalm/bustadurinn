@@ -58,7 +58,7 @@ export default function OnboardingPage() {
                     if (typeof google === 'undefined' || !google.maps) {
                         // Load Google Maps script
                         const script = document.createElement('script');
-                        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+                        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async&v=weekly`;
                         script.async = true;
                         script.defer = true;
 
