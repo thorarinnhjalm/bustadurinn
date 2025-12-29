@@ -132,22 +132,24 @@ function App() {
           console.error("Error fetching user profile:", err);
         }
 
-        setCurrentUser(user);
-        setAuthenticated(true);
-
         // 3. Fetch First House (if exists)
+        let houseData = null;
         if (user.house_ids && user.house_ids.length > 0) {
           try {
             const houseDocRef = doc(db, 'houses', user.house_ids[0]);
             const houseSnap = await getDoc(houseDocRef);
             if (houseSnap.exists()) {
-              const houseData = { id: houseSnap.id, ...houseSnap.data() } as any;
-              setCurrentHouse(houseData);
+              houseData = { id: houseSnap.id, ...houseSnap.data() } as any;
             }
           } catch (e) {
             console.error("Error fetching house:", e);
           }
         }
+
+        // 4. Update Store (All at once to prevent race conditions)
+        setCurrentUser(user);
+        if (houseData) setCurrentHouse(houseData);
+        setAuthenticated(true);
 
       } else {
         // User is signed out
