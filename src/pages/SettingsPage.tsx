@@ -922,6 +922,21 @@ export default function SettingsPage() {
                                                             >
                                                                 Afrita
                                                             </button>
+                                                            {navigator.share && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const inviteUrl = `${window.location.origin}/join?houseId=${house.id}&code=${house.invite_code}`;
+                                                                        navigator.share({
+                                                                            title: `Boð í ${house.name}`,
+                                                                            text: `Má bjóða þér í bústað?`,
+                                                                            url: inviteUrl
+                                                                        });
+                                                                    }}
+                                                                    className="btn btn-primary whitespace-nowrap"
+                                                                >
+                                                                    Deila
+                                                                </button>
+                                                            )}
                                                         </div>
                                                         <div className="mt-4">
                                                             <button
@@ -1151,28 +1166,32 @@ export default function SettingsPage() {
             </div>
 
             {/* Image Cropper Modal */}
-            {showCropper && imageFile && (
-                <ImageCropper
-                    image={imageFile}
-                    onCropComplete={handleCroppedImage}
-                    onCancel={() => {
-                        setShowCropper(false);
-                        setImageFile(null);
-                    }}
-                    aspectRatio={16 / 9}
-                />
-            )}
+            {
+                showCropper && imageFile && (
+                    <ImageCropper
+                        image={imageFile}
+                        onCropComplete={handleCroppedImage}
+                        onCancel={() => {
+                            setShowCropper(false);
+                            setImageFile(null);
+                        }}
+                        aspectRatio={16 / 9}
+                    />
+                )
+            }
 
             {/* Upload Loading Overlay */}
-            {uploadingImage && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-                    <div className="bg-white p-6 rounded-lg text-center">
-                        <div className="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="font-bold">Vista mynd...</p>
+            {
+                uploadingImage && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+                        <div className="bg-white p-6 rounded-lg text-center">
+                            <div className="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="font-bold">Vista mynd...</p>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
             <MobileNav />
-        </div>
+        </div >
     );
 }
