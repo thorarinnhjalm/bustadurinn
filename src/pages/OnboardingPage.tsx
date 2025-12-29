@@ -5,7 +5,7 @@ declare var google: any;
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, MapPin, Users, CheckCircle, Loader2 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, updateDoc, doc, arrayUnion } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, setDoc, doc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 
@@ -165,9 +165,12 @@ export default function OnboardingPage() {
             });
 
             // 2. Link to User (CRITICAL for Dashboard)
-            await updateDoc(doc(db, 'users', currentUser.uid), {
+            // Use setDoc with merge: true to CREATE user profile if it doesn't exist
+            await setDoc(doc(db, 'users', currentUser.uid), {
+                email: currentUser.email,
+                name: currentUser.name || currentUser.email?.split('@')[0],
                 house_ids: arrayUnion(houseRef.id)
-            });
+            }, { merge: true });
 
             // 3. Update Local State (Immediate Reflection)
             setCurrentUser({
