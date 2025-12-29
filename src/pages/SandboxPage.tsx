@@ -90,7 +90,7 @@ export default function SandboxPage() {
                     </button>
                     <div className="space-y-3">
                         {[
-                            { task: 'Laga skemmd ljósaperu', status: 'pending', assignee: 'Jón' },
+                            { task: 'Laga skemmda ljósaperu', status: 'pending', assignee: 'Jón' },
                             { task: 'Mála verönd', status: 'in_progress', assignee: 'Guðrún' },
                             { task: 'Hreinsa flísar', status: 'completed', assignee: 'Ólafur' }
                         ].map((item, i) => (
@@ -145,7 +145,7 @@ export default function SandboxPage() {
                             <textarea
                                 className="w-full px-4 py-2 border border-stone-300 rounded text-sm"
                                 rows={3}
-                                defaultValue="1. Hafðu hvítt sófa hreint&#10;2. Slökkva á ljósum&#10;3. Njóttu vel!"
+                                defaultValue="1. Hafðu hvíta sófann hreinan&#10;2. Slökktu á ljósum&#10;3. Njóttu vel!"
                                 readOnly
                             />
                         </div>
