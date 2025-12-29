@@ -82,6 +82,16 @@ export default function SettingsPage() {
 
                 if (houseSnap.exists()) {
                     const houseData = { id: houseSnap.id, ...houseSnap.data() } as House;
+
+                    // Auto-generate invite code if missing (for legacy houses)
+                    if (!houseData.invite_code && houseData.manager_id === currentUser.uid) {
+                        const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                        await updateDoc(doc(db, 'houses', houseId), {
+                            invite_code: newCode
+                        });
+                        houseData.invite_code = newCode;
+                    }
+
                     setHouse(houseData);
                     setHouseForm({
                         name: houseData.name || '',
@@ -480,30 +490,41 @@ export default function SettingsPage() {
                                         </div>
 
                                         <div className="relative">
-                                            <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center justify-between mb-3">
                                                 <label className="label">Heimilisfang & Staðsetning</label>
                                                 {isManager && (
                                                     <button
                                                         type="button"
                                                         onClick={() => setIsEditingLocation(!isEditingLocation)}
-                                                        className="text-xs flex items-center gap-1 text-stone-600 hover:text-[#e8b058] transition-colors"
+                                                        className={`text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${isEditingLocation
+                                                            ? 'bg-[#e8b058] text-white hover:bg-[#d4a04d]'
+                                                            : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                                                            }`}
                                                     >
                                                         {isEditingLocation ? (
-                                                            <><X size={14} /> Hætta við</>
+                                                            <><X size={14} /> Loka</>
                                                         ) : (
-                                                            <><Edit2 size={14} /> Breyta staðsetningu</>
+                                                            <><Edit2 size={14} /> Breyta</>
                                                         )}
                                                     </button>
                                                 )}
                                             </div>
+                                            {isEditingLocation && (
+                                                <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                                                    <p className="text-xs text-amber-800 flex items-center gap-2">
+                                                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                                                        Breytingarham virkur - Leitaðu að heimilisfangi hér að neðan
+                                                    </p>
+                                                </div>
+                                            )}
                                             <input
                                                 type="text"
-                                                className="input"
+                                                className={`input ${isEditingLocation ? 'border-[#e8b058] border-2' : ''}`}
                                                 value={houseForm.address}
                                                 onChange={(e) => handleAddressChange(e.target.value)}
                                                 disabled={!isManager || !isEditingLocation}
                                                 autoComplete="off"
-                                                placeholder="Leitaðu að heimilisfangi..."
+                                                placeholder={isEditingLocation ? "Leitaðu að heimilisfangi..." : houseForm.address || "Heimilisfang"}
                                             />
                                             {suggestions.length > 0 && isEditingLocation && (
                                                 <ul className="absolute z-20 w-full bg-white border border-stone-200 mt-1 rounded-md shadow-lg max-h-60 overflow-y-auto">
