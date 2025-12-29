@@ -102,9 +102,9 @@ function App() {
   const setCurrentUser = useAppStore((state) => state.setCurrentUser);
   const setAuthenticated = useAppStore((state) => state.setAuthenticated);
   const setLoading = useAppStore((state) => state.setLoading);
+  const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
 
   useEffect(() => {
-    const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
 
     // Listen for auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
