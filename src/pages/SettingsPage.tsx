@@ -135,7 +135,8 @@ export default function SettingsPage() {
 
     const [joinRequests, setJoinRequests] = useState<any[]>([]);
 
-    const isManager = house?.manager_id === currentUser?.uid;
+    // Allow any owner to edit house settings, not just the designated manager
+    const isManager = house && currentUser && house.owner_ids?.includes(currentUser.uid);
 
     useEffect(() => {
         if (!house || !isManager || activeTab !== 'members') return;
