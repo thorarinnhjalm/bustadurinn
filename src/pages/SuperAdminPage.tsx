@@ -122,7 +122,11 @@ export default function SuperAdminPage() {
     }
 
     return (
-        <AdminLayout>
+        <AdminLayout
+            activeTab={activeTab}
+            onTabChange={(tab) => setActiveTab(tab as 'overview' | 'houses' | 'users')}
+            onBackClick={() => navigate('/dashboard')}
+        >
             {/* Header */}
             <div className="border-b border-stone-200 bg-white sticky top-0 z-10">
                 <div className="px-8 py-6">
