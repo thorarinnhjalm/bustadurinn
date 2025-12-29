@@ -93,6 +93,12 @@ export default function LandingPage() {
                                 Byrja núna →
                             </button>
                             <button
+                                onClick={() => navigate('/demo')}
+                                className="btn btn-secondary border-2 border-amber/30 text-amber hover:bg-amber/10 backdrop-blur-sm text-lg px-10 py-4"
+                            >
+                                Prufa kerfið
+                            </button>
+                            <button
                                 onClick={() => navigate('/eiginleikar')}
                                 className="btn btn-ghost border-2 border-white/20 text-bone hover:bg-white/10 backdrop-blur-sm text-lg px-10 py-4"
                             >

@@ -27,6 +27,7 @@ import GuestPage from '@/pages/GuestPage';
 import FeaturesPage from '@/pages/FeaturesPage';
 import FAQPage from '@/pages/FAQPage';
 import AboutPage from '@/pages/AboutPage';
+import SandboxPage from '@/pages/SandboxPage';
 
 // Admin emails whitelist
 const ADMIN_EMAILS = [
@@ -142,6 +143,7 @@ function App() {
             <Route path="/eiginleikar" element={<FeaturesPage />} />
             <Route path="/spurt-og-svarad" element={<FAQPage />} />
             <Route path="/um-okkur" element={<AboutPage />} />
+            <Route path="/demo" element={<SandboxPage />} />
 
             {/* Protected Routes */}
             <Route
