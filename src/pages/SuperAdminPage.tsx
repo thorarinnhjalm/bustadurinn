@@ -721,129 +721,53 @@ export default function SuperAdminPage() {
                             {/* Primary Metrics Grid */}
                             <div className="grid grid-cols-4 gap-6">
                                 {/* Total Houses */}
-                                <div className="bg-white border border-stone-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="w-10 h-10 bg-amber/10 rounded flex items-center justify-center">
-                                            <Home className="w-5 h-5 text-amber" />
-                                        </div>
+                                <div className="bg-white border border-stone-200 rounded-xl p-8 transition-shadow hover:shadow-sm">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <Home className="w-5 h-5 text-stone-400" />
+                                        <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Heildarfjöldi húsa</p>
                                     </div>
-                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Heildarfjöldi Húsa</p>
-                                    <p className="text-3xl font-bold font-mono text-charcoal">{stats.totalHouses}</p>
-                                    <div className="mt-3 pt-3 border-t border-stone-100">
-                                        <div className="flex items-center justify-between text-xs">
-                                            <span className="text-green-600 font-medium">↗ Virk: {activeHouses}</span>
-                                            <span className="text-amber font-medium">Prufa: {trialHouses.length}</span>
-                                        </div>
-                                    </div>
+                                    <p className="text-5xl font-serif font-bold text-charcoal mb-4">{stats.totalHouses}</p>
+                                    <p className="text-xs text-stone-400">
+                                        {activeHouses} virk • {trialHouses.length} prufa
+                                    </p>
                                 </div>
 
                                 {/* Total Users */}
-                                <div className="bg-white border border-stone-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="w-10 h-10 bg-blue-500/10 rounded flex items-center justify-center">
-                                            <Users className="w-5 h-5 text-blue-500" />
-                                        </div>
+                                <div className="bg-white border border-stone-200 rounded-xl p-8 transition-shadow hover:shadow-sm">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <Users className="w-5 h-5 text-stone-400" />
+                                        <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Heildarfjöldi notenda</p>
                                     </div>
-                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Heildarfjöldi Notenda</p>
-                                    <p className="text-3xl font-bold font-mono text-charcoal">{stats.totalUsers}</p>
-                                    <div className="mt-3 pt-3 border-t border-stone-100">
-                                        <p className="text-xs text-stone-600">
-                                            Meðaltal {stats.totalHouses > 0 ? (stats.totalUsers / stats.totalHouses).toFixed(1) : 0} á hús
-                                        </p>
-                                    </div>
+                                    <p className="text-5xl font-serif font-bold text-charcoal mb-4">{stats.totalUsers}</p>
+                                    <p className="text-xs text-stone-400">
+                                        {stats.totalHouses > 0 ? (stats.totalUsers / stats.totalHouses).toFixed(1) : 0} meðaltal
+                                    </p>
                                 </div>
 
                                 {/* Trials Expiring Soon */}
-                                <div className="bg-white border border-stone-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="w-10 h-10 bg-orange-500/10 rounded flex items-center justify-center">
-                                            <Activity className="w-5 h-5 text-orange-500" />
-                                        </div>
+                                <div className="bg-white border border-stone-200 rounded-xl p-8 transition-shadow hover:shadow-sm">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <Activity className="w-5 h-5 text-stone-400" />
+                                        <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Rennur út fljótlega</p>
                                     </div>
-                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Rennur út fljótlega</p>
-                                    <p className="text-3xl font-bold font-mono text-charcoal">{expiringTrials.length}</p>
-                                    <div className="mt-3 pt-3 border-t border-stone-100">
-                                        <p className="text-xs text-orange-600">
-                                            {expiringTrials.length > 0 ? '⚠️ Aðgerð nauðsynleg' : '✓ Allt í lagi'}
-                                        </p>
-                                    </div>
+                                    <p className="text-5xl font-serif font-bold text-charcoal mb-4">{expiringTrials.length}</p>
+                                    <p className="text-xs text-stone-400">
+                                        {expiringTrials.length > 0 ? 'Aðgerð nauðsynleg' : 'Allt í lagi'}
+                                    </p>
                                 </div>
 
                                 {/* Estimated MRR */}
-                                <div className="bg-white border border-stone-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="w-10 h-10 bg-green-500/10 rounded flex items-center justify-center">
-                                            <TrendingUp className="w-5 h-5 text-green-500" />
-                                        </div>
+                                <div className="bg-white border border-stone-200 rounded-xl p-8 transition-shadow hover:shadow-sm">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <TrendingUp className="w-5 h-5 text-stone-400" />
+                                        <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Áætlaðar MRR</p>
                                     </div>
-                                    <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Áætlaðar MRR</p>
-                                    <p className="text-3xl font-bold font-mono text-charcoal">
+                                    <p className="text-5xl font-serif font-bold text-charcoal mb-4">
                                         {estimatedMRR.toLocaleString('is-IS')} kr
                                     </p>
-                                    <div className="mt-3 pt-3 border-t border-stone-100">
-                                        <p className="text-xs text-stone-600">
-                                            {paidHouses.length} greið. {paidHouses.length === 1 ? 'hús' : 'hús'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* System Health Panel */}
-                            <div className="bg-white border border-stone-200 rounded-lg p-6">
-                                <h3 className="text-lg font-serif font-semibold mb-6">Ástand Kerfis</h3>
-                                <div className="grid grid-cols-3 gap-6">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                            <p className="text-sm font-medium text-stone-700">Database</p>
-                                        </div>
-                                        <p className="text-xs text-stone-500">Firestore operational</p>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                            <p className="text-sm font-medium text-stone-700">Authentication</p>
-                                        </div>
-                                        <p className="text-xs text-stone-500">Firebase Auth active</p>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                            <p className="text-sm font-medium text-stone-700">Storage</p>
-                                        </div>
-                                        <p className="text-xs text-stone-500">All systems go</p>
-                                    </div>
-                                </div>
-                                <div className="mt-6 pt-6 border-t border-stone-200">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-stone-700">Version</p>
-                                            <p className="text-xs text-stone-500 font-mono">v1.0.0</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-stone-700">Environment</p>
-                                            <p className="text-xs text-stone-500 font-mono">Production</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-stone-700">Uptime</p>
-                                            <p className="text-xs text-stone-500">99.9%</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Activity Summary */}
-                            <div className="bg-white border border-stone-200 rounded-lg p-6">
-                                <h3 className="text-lg font-serif font-semibold mb-6">Recent Activity</h3>
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div>
-                                        <p className="text-sm text-stone-600 mb-2">Active Bookings</p>
-                                        <p className="text-2xl font-bold font-mono text-charcoal">{stats.totalBookings}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-stone-600 mb-2">Pending Tasks</p>
-                                        <p className="text-2xl font-bold font-mono text-charcoal">{stats.activeTasks}</p>
-                                    </div>
+                                    <p className="text-xs text-stone-400">
+                                        {paidHouses.length} greið. hús
+                                    </p>
                                 </div>
                             </div>
                         </div>

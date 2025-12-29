@@ -68,6 +68,25 @@ export default function AdminLayout({ children, activeTab = 'overview', onTabCha
                     ))}
                 </nav>
 
+                {/* System Status */}
+                <div className="px-4 py-3 border-t border-stone-800">
+                    <p className="text-xs text-stone-400 uppercase tracking-wider mb-3">Ástand Kerfis</p>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-stone-300">Firestore</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-stone-300">Vefþjónn</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-stone-300">Greiðslur</span>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Footer */}
                 <div className="p-4 border-t border-stone-800">
                     <div className="flex items-center gap-2 text-xs text-stone-400">
