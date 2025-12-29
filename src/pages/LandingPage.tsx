@@ -78,10 +78,9 @@ export default function LandingPage() {
                             <span className="text-amber">sumarhúsið</span>
                         </h1>
 
-                        {/* Subheadline */}
-                        <p className="text-xl md:text-2xl text-stone-300 leading-relaxed mb-10 max-w-2xl">
-                            Við færum utanumhald sameignarinnar úr flóknum Excel skjölum og Facebook hópum
-                            yfir í fágað viðmót sem hæfir nútíma sumarhúsum.
+                        {/* Tagline */}
+                        <p className="text-xl md:text-2xl mb-8 text-bone/90 leading-relaxed max-w-3xl mx-auto font-light">
+                            Við færum utanumhald sumarhússins úr Excel skjölum og Facebook spjalli yfir í fágað viðmót sem hæfir nútíma sumarhúsum.
                         </p>
 
                         {/* CTAs */}
