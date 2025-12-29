@@ -15,17 +15,33 @@ interface ImpersonationContextType {
 
 const ImpersonationContext = createContext<ImpersonationContextType | undefined>(undefined);
 
+const IMPERSONATION_KEY = 'admin_impersonation';
+
 export function ImpersonationProvider({ children }: { children: ReactNode }) {
-    const [impersonatedUser, setImpersonatedUser] = useState<User | null>(null);
+    const [impersonatedUser, setImpersonatedUser] = useState<User | null>(() => {
+        // Restore from localStorage on mount
+        const stored = localStorage.getItem(IMPERSONATION_KEY);
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch {
+                localStorage.removeItem(IMPERSONATION_KEY);
+                return null;
+            }
+        }
+        return null;
+    });
 
     const startImpersonation = (user: User) => {
         setImpersonatedUser(user);
+        localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(user));
         console.log('🎭 Started impersonating:', user.name, user.email);
     };
 
     const stopImpersonation = () => {
         console.log('🎭 Stopped impersonation');
         setImpersonatedUser(null);
+        localStorage.removeItem(IMPERSONATION_KEY);
     };
 
     return (
