@@ -14,6 +14,7 @@ import { db } from '@/lib/firebase';
 import type { Booking, Task, ShoppingItem, InternalLog } from '@/types/models';
 import ShoppingList from '@/components/ShoppingList';
 import InternalLogbook from '@/components/InternalLogbook';
+import { fetchWeather } from '@/utils/weather';
 
 const ADMIN_EMAILS = [
     'thorarinnhjalmarsson@gmail.com',
@@ -38,9 +39,9 @@ const UserDashboard = () => {
     const [isOccupied, setIsOccupied] = useState(false);
     const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
     const [logs, setLogs] = useState<InternalLog[]>([]);
+    const [weather, setWeather] = useState({ temp: "--" as string | number, wind: 0, condition: "—" });
 
     // Mock Data (until backend supported)
-    const weather = { temp: "--", wind: 0, condition: "—" };
     const finances = { balance: 0, lastAction: "—" };
 
     const [showNotifications, setShowNotifications] = useState(false);
@@ -147,6 +148,18 @@ const UserDashboard = () => {
                     created_at: doc.data().created_at?.toDate() || new Date()
                 })) as InternalLog[];
                 setLogs(logsData);
+
+                // 6. Fetch Weather
+                if (currentHouse.location?.lat && currentHouse.location?.lng) {
+                    const wData = await fetchWeather(currentHouse.location.lat, currentHouse.location.lng);
+                    if (wData) {
+                        setWeather({
+                            temp: wData.temp,
+                            wind: wData.windSpeed,
+                            condition: wData.condition
+                        });
+                    }
+                }
 
             } catch (error) {
                 console.error("Dashboard data fetch error:", error);
@@ -475,36 +488,36 @@ const UserDashboard = () => {
                 </div>
             </main>
 
-                {/* ROW 2: Shopping List & Logbook */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    {/* SHOPPING LIST */}
-                    <section>
-                        <div className="flex justify-between items-center mb-3 px-1">
-                            <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Vantar</h3>
-                        </div>
-                        <ShoppingList
-                            items={shoppingItems}
-                            onToggle={handleToggleShoppingItem}
-                            onDelete={handleDeleteShoppingItem}
-                            onAdd={handleAddShoppingItem}
-                            
-                        />
-                    </section>
+            {/* ROW 2: Shopping List & Logbook */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    {/* INTERNAL LOGBOOK */}
-                    <section>
-                        <div className="flex justify-between items-center mb-3 px-1">
-                            <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Gestapósturinn</h3>
-                        </div>
-                        <InternalLogbook
-                            logs={logs}
-                            currentUserName={currentUser?.name || ''}
-                            onAddLog={handleAddLog}
-                        />
-                    </section>
+                {/* SHOPPING LIST */}
+                <section>
+                    <div className="flex justify-between items-center mb-3 px-1">
+                        <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Vantar</h3>
+                    </div>
+                    <ShoppingList
+                        items={shoppingItems}
+                        onToggle={handleToggleShoppingItem}
+                        onDelete={handleDeleteShoppingItem}
+                        onAdd={handleAddShoppingItem}
 
-                </div>
+                    />
+                </section>
+
+                {/* INTERNAL LOGBOOK */}
+                <section>
+                    <div className="flex justify-between items-center mb-3 px-1">
+                        <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Gestapósturinn</h3>
+                    </div>
+                    <InternalLogbook
+                        logs={logs}
+                        currentUserName={currentUser?.name || ''}
+                        onAddLog={handleAddLog}
+                    />
+                </section>
+
+            </div>
 
             {/* --- MOBILE BOTTOM NAV --- */}
             <div className="md:hidden fixed bottom-0 w-full bg-white border-t border-stone-200 pb-safe z-50 px-6 py-3 flex justify-between items-center text-stone-400">
