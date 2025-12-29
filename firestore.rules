@@ -49,9 +49,9 @@ service cloud.firestore {
       // Members can read - Use direct resource access to avoid circularity with helper
       allow read: if isAuthenticated() && request.auth.uid in resource.data.owner_ids;
       
-      // Managers can update anything
+      // Managers and Owners can update anything
       // BUT we also allow JOINING if you have the secret code
-      allow update: if isHouseManager(houseId) || (
+      allow update: if isHouseMember(houseId) || (
         isAuthenticated() && 
         request.resource.data.invite_code == resource.data.invite_code &&
         request.resource.data.owner_ids.hasAll(resource.data.owner_ids) &&
