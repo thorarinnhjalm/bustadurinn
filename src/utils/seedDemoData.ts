@@ -9,7 +9,10 @@ import {
     doc,
     setDoc,
     serverTimestamp,
-    Timestamp
+    Timestamp,
+    query,
+    where,
+    getDocs
 } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 
@@ -178,32 +181,49 @@ export async function seedDemoData() {
 
         for (const demoUser of DEMO_USERS) {
             try {
-                const userCred = await createUserWithEmailAndPassword(
-                    auth,
-                    demoUser.email,
-                    demoUser.password
-                );
+                // Check if user already exists in Firestore
+                const usersRef = collection(db, 'users');
+                const q = query(usersRef, where('email', '==', demoUser.email));
+                const existingUsers = await getDocs(q);
 
-                userIds.push(userCred.user.uid);
+                if (!existingUsers.empty) {
+                    // User already exists, use their ID
+                    const existingUserId = existingUsers.docs[0].id;
+                    userIds.push(existingUserId);
+                    console.log(`ℹ️  User ${demoUser.email} already exists, reusing ID`);
+                } else {
+                    // Create new user
+                    const userCred = await createUserWithEmailAndPassword(
+                        auth,
+                        demoUser.email,
+                        demoUser.password
+                    );
 
-                // Create user document
-                await setDoc(doc(db, 'users', userCred.user.uid), {
-                    uid: userCred.user.uid,
-                    email: demoUser.email,
-                    name: demoUser.name,
-                    house_ids: [], // Will update after house creation
-                    created_at: serverTimestamp()
-                });
+                    userIds.push(userCred.user.uid);
 
-                console.log(`✅ Created user: ${demoUser.name}`);
+                    // Create user document
+                    await setDoc(doc(db, 'users', userCred.user.uid), {
+                        uid: userCred.user.uid,
+                        email: demoUser.email,
+                        name: demoUser.name,
+                        house_ids: [], // Will update after house creation
+                        created_at: serverTimestamp()
+                    });
+
+                    console.log(`✅ Created user: ${demoUser.name}`);
+                }
             } catch (error: any) {
                 if (error.code === 'auth/email-already-in-use') {
-                    console.log(`⚠️ User ${demoUser.email} already exists`);
-                    // You'd need to fetch the existing user ID here
+                    console.log(`⚠️ User ${demoUser.email} already exists in Auth but not Firestore - manual cleanup needed`);
+                    throw new Error(`User ${demoUser.email} exists in Auth but not Firestore. Please clean up manually.`);
                 } else {
                     throw error;
                 }
             }
+        }
+
+        if (userIds.length !== DEMO_USERS.length) {
+            throw new Error('Failed to create or find all demo users');
         }
 
         // Create demo house

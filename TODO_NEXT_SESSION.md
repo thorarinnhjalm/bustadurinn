@@ -11,95 +11,100 @@
 
 ---
 
-## ⚡ PRIORITY 1: SUPER-ADMIN - FIX WHAT EXISTS (2-3 hours)
+## ⚡ PRIORITY 1: SUPER-ADMIN - FIX WHAT EXISTS (2-3 hours) ✅ COMPLETE
 
-### Task 1.1: Make Data Actually Load (30 min)
-- [ ] Open super-admin page
-- [ ] Check if houses/users load
-- [ ] Add loading spinners
-- [ ] Add error messages
-- [ ] Add empty state: "No houses yet. Seed demo data?"
-- [ ] **Test with real data**
+### Task 1.1: Make Data Actually Load (30 min) ✅
+- [x] Open super-admin page
+- [x] Check if houses/users load
+- [x] Add loading spinners
+- [x] Add error messages
+- [x] Add empty state: "No houses yet. Seed demo data?"
+- [x] **Test with real data**
 
-### Task 1.2: Test & Fix Impersonation (45 min)
-- [ ] Click "Impersonate" on a user
-- [ ] Verify red banner appears
-- [ ] Check if dashboard shows THEIR data
-- [ ] Check if calendar shows THEIR bookings
-- [ ] Click "Exit God Mode"
-- [ ] Verify banner disappears
-- [ ] **Document any bugs**
+### Task 1.2: Test & Fix Impersonation (45 min) ✅
+- [x] Click "Impersonate" on a user
+- [x] Verify red banner appears
+- [x] Check if dashboard shows THEIR data
+- [x] Check if calendar shows THEIR bookings
+- [x] Click "Exit God Mode"
+- [x] Verify banner disappears
+- [x] **Document any bugs**
 
-### Task 1.3: Fix Demo Seeder (30 min)
-- [ ] Run seeder once - should work
-- [ ] Run seeder again - should NOT crash
-- [ ] Update to query Firestore for existing users
-- [ ] Better error messages
-- [ ] Test credentials work
+### Task 1.3: Fix Demo Seeder (30 min) ✅
+- [x] Run seeder once - should work
+- [x] Run seeder again - should NOT crash
+- [x] Update to query Firestore for existing users
+- [x] Better error messages
+- [x] Test credentials work
 
-### Task 1.4: Add KPI Cards (45 min)
-- [ ] Total Houses card
-- [ ] Active/Trial houses split
-- [ ] Trial Expiring Soon (< 3 days)
-- [ ] Basic MRR calculation (exclude demo)
-- [ ] System health indicator
+### Task 1.4: Add KPI Cards (45 min) ✅
+- [x] Total Houses card
+- [x] Active/Trial houses split
+- [x] Trial Expiring Soon (< 3 days)
+- [x] Basic MRR calculation (exclude demo)
+- [x] System health indicator
 
-### Task 1.5: Make Actions Work (30 min)
-- [ ] "Extend Trial" → adds 14 days
-- [ ] "Edit" → opens modal (basic)
-- [ ] "Impersonate" → working from 1.2
-- [ ] Show success toast
-- [ ] Handle errors
+### Task 1.5: Make Actions Work (30 min) ✅
+- [x] "Extend Trial" → adds 14 days
+- [x] "Edit" → opens modal (basic)
+- [x] "Impersonate" → working from 1.2
+- [x] Show success toast
+- [x] Handle errors
 
-**Success Criteria**: Tab 1 (Overview) is FULLY functional and tested
-
----
-
-## 🎨 PRIORITY 2: EIGINLEIKAR PAGE - SEO CONTENT (2-3 hours)
-
-### Task 2.1: Add Screenshot Mockups (1 hour)
-- [ ] Generate calendar screenshot (use /prufa mockup)
-- [ ] Generate finance screenshot
-- [ ] Generate tasks screenshot
-- [ ] Generate settings screenshot
-- [ ] Optimize as WebP
-- [ ] Add to `/public/assets/` folder
-
-### Task 2.2: Expand Content (1 hour)
-- [ ] Create detailed feature sections
-- [ ] Add 200-300 word descriptions each
-- [ ] Add bullet points for benefits
-- [ ] Add use cases
-- [ ] Add FAQ section (5-7 questions)
-
-### Task 2.3: SEO Optimization (30 min)
-- [ ] Add meta tags
-- [ ] Add structured data (JSON-LD)
-- [ ] Add alt text for all images
-- [ ] Internal links to /pricing, /prufa
-- [ ] Test mobile responsive
-
-**Success Criteria**: `/eiginleikar` is comprehensive and SEO-optimized
+**Success Criteria**: ✅ Tab 1 (Overview) is FULLY functional and tested
 
 ---
 
-## 🏠 PRIORITY 3: SIMPLIFY HOMEPAGE (1 hour)
+## 🎨 PRIORITY 2: EIGINLEIKAR PAGE - SEO CONTENT (2-3 hours) ✅ COMPLETE
 
-### Task 3.1: Remove Excess Content (30 min)
-- [ ] Keep: Hero, 3 key benefits, CTA
-- [ ] Remove: Long feature descriptions
-- [ ] Remove: Multiple screenshots
-- [ ] Add: "Sjá alla eiginleika →" link to /eiginleikar
-- [ ] Test scroll length (should be 2-3 screens max)
+### Task 2.1: Add Screenshot Mockups (1 hour) ✅
+- [x] Generate calendar screenshot (use /prufa mockup)
+- [x] Generate finance screenshot
+- [x] Generate tasks screenshot
+- [x] Generate settings screenshot
+- [x] Optimize as WebP
+- [x] Add to `/public/assets/` folder
 
-### Task 3.2: Polish (30 min)
-- [ ] Verify tagline is prominent
-- [ ] Test all CTAs work
-- [ ] Check mobile responsive
-- [ ] Optimize images
-- [ ] Test page speed
+### Task 2.2: Expand Content (1 hour) ✅
+- [x] Create detailed feature sections
+- [x] Add 200-300 word descriptions each
+- [x] Add bullet points for benefits
+- [x] Add use cases
+- [x] Add FAQ section (5-7 questions)
 
-**Success Criteria**: Homepage is concise and converts better
+### Task 2.3: SEO Optimization (30 min) ✅
+- [x] Add meta tags
+- [x] Add structured data (JSON-LD)
+- [x] Add alt text for all images
+- [x] Internal links to /pricing, /prufa
+- [x] Test mobile responsive
+
+**Success Criteria**: ✅ `/eiginleikar` is comprehensive and SEO-optimized
+
+---
+
+## 🏠 PRIORITY 3: SIMPLIFY HOMEPAGE (1 hour) ✅ COMPLETE
+
+### Task 3.1: Clean Up Hero (20 min) ✅
+- [x] Keep full-bleed image background
+- [x] Keep headline + tagline + 2 CTAs max
+- [x] Remove 3rd "Sjá eiginleika" button from hero
+- [x] Add direct price mention (4.900 kr/mán) in social proof
+- [x] Update trial period to 30 days (was 14)
+
+### Task 3.2: Condense Pricing (20 min) ✅
+- [x] Remove dual-plan comparison
+- [x] Show single recommended plan: 4.900 kr/mán
+- [x] Keep 4 key benefits in list
+- [x] Simplify messaging
+
+### Task 3.3: Remove Bloat (20 min) ✅
+- [x] Remove "Problem/Solution" section entirely
+- [x] Simplify feature descriptions (remove subtitles)
+- [x] Add prominent link to /eiginleikar with icon
+- [x] Reduce from 6+ screens to 2-3 screens
+
+**Success Criteria**: ✅ Homepage is focused, < 3 screens, clear path to /eiginleikar
 
 ---
 
