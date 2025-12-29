@@ -9,8 +9,12 @@ import { auth, googleProvider, db } from '@/lib/firebase';
 import { UserPlus } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
+import { useSearchParams } from 'react-router-dom';
+
 export default function SignupPage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const returnUrl = searchParams.get('returnUrl');
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -48,7 +52,22 @@ export default function SignupPage() {
                 displayName: formData.name
             });
 
-            navigate('/onboarding');
+            // Create user doc if it doesn't exist (it won't for email signup)
+            const user = userCredential.user;
+            await setDoc(doc(db, 'users', user.uid), {
+                uid: user.uid,
+                email: user.email,
+                name: formData.name || '',
+                house_ids: [],
+                created_at: serverTimestamp(),
+                last_login: serverTimestamp()
+            });
+
+            if (returnUrl) {
+                navigate(returnUrl);
+            } else {
+                navigate('/onboarding');
+            }
         } catch (err: any) {
             if (err.code === 'auth/email-already-in-use') {
                 setError('Þetta netfang er þegar í notkun');
@@ -81,12 +100,23 @@ export default function SignupPage() {
                     created_at: serverTimestamp(),
                     last_login: serverTimestamp()
                 });
+
+                if (returnUrl) {
+                    navigate(returnUrl);
+                } else {
+                    navigate('/onboarding');
+                }
             } else {
                 await setDoc(doc(db, 'users', user.uid), {
                     last_login: serverTimestamp()
                 }, { merge: true });
+
+                if (returnUrl) {
+                    navigate(returnUrl);
+                } else {
+                    navigate('/dashboard');
+                }
             }
-            navigate('/onboarding');
         } catch (err: any) {
             setError('Villa við skráningu með Google');
             console.error('Google signup error:', err);

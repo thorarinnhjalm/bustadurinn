@@ -22,6 +22,8 @@ import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import type { House, User } from '@/types/models';
+import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
+import { MapPin, CheckCircle } from 'lucide-react';
 
 type Tab = 'house' | 'members' | 'profile' | 'guests';
 
@@ -39,6 +41,9 @@ export default function SettingsPage() {
     const [houseForm, setHouseForm] = useState({
         name: '',
         address: '',
+        lat: 0,
+        lng: 0,
+        invite_code: '',
         wifi_ssid: '',
         wifi_password: '',
         holiday_mode: 'first_come' as 'fairness' | 'first_come',
@@ -50,57 +55,49 @@ export default function SettingsPage() {
         emergency_contact: ''
     });
 
-    // User State
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [debounceTimer, setDebounceTimer] = useState<any>(null);
     const [members, setMembers] = useState<User[]>([]);
 
-
     useEffect(() => {
-        if (currentUser?.house_ids?.length) {
-            loadHouse(currentUser.house_ids[0]);
-        } else {
-            // Fallback for demo/dev if no house linked yet
-            // In real app, we might redirect to onboarding
-            const demoId = 'demo-house-id'; // Or handle gracefully
-            loadHouse(demoId);
-        }
-    }, [currentUser]);
+        if (!currentUser?.house_ids?.[0]) return;
 
-    const loadHouse = async (houseId: string) => {
-        try {
+        const loadHouse = async () => {
             setLoading(true);
-            const houseDoc = await getDoc(doc(db, 'houses', houseId));
-            if (houseDoc.exists()) {
-                const houseData = { id: houseDoc.id, ...houseDoc.data() } as House;
-                setHouse(houseData);
-                setHouseForm({
-                    name: houseData.name || '',
-                    address: houseData.address || '',
-                    wifi_ssid: houseData.wifi_ssid || '',
-                    wifi_password: houseData.wifi_password || '',
-                    holiday_mode: houseData.holiday_mode || 'first_come',
-                    house_rules: houseData.house_rules || '',
-                    check_in_time: houseData.check_in_time || '',
-                    check_out_time: houseData.check_out_time || '',
-                    directions: houseData.directions || '',
-                    access_instructions: houseData.access_instructions || '',
-                    emergency_contact: houseData.emergency_contact || ''
-                });
+            try {
+                const houseId = currentUser.house_ids[0];
+                const houseSnap = await getDoc(doc(db, 'houses', houseId));
 
-                // Load members
-                if (houseData.owner_ids?.length) {
-                    // In a real app we would query 'users' where 'uid' in owner_ids
-                    // For now let's just mock or skip, as reading all users might require rules update
-                    // or multiple gets.
-                    // Let's implement fetching *this* user at least if they are in the list.
+                if (houseSnap.exists()) {
+                    const houseData = { id: houseSnap.id, ...houseSnap.data() } as House;
+                    setHouse(houseData);
+                    setHouseForm({
+                        name: houseData.name || '',
+                        address: houseData.address || '',
+                        lat: houseData.location?.lat || 0,
+                        lng: houseData.location?.lng || 0,
+                        invite_code: houseData.invite_code || '',
+                        wifi_ssid: houseData.wifi_ssid || '',
+                        wifi_password: houseData.wifi_password || '',
+                        holiday_mode: houseData.holiday_mode || 'first_come',
+                        house_rules: houseData.house_rules || '',
+                        check_in_time: houseData.check_in_time || '',
+                        check_out_time: houseData.check_out_time || '',
+                        directions: houseData.directions || '',
+                        access_instructions: houseData.access_instructions || '',
+                        emergency_contact: houseData.emergency_contact || ''
+                    });
                 }
+            } catch (err) {
+                console.error('Error loading house:', err);
+                setError('Gat ekki sótt upplýsingar um sumarhúsið.');
+            } finally {
+                setLoading(false);
             }
-        } catch (err) {
-            console.error('Error loading house:', err);
-            // setError('Gat ekki sótt upplýsingar um sumarhúsið.');
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
+
+        loadHouse();
+    }, [currentUser?.house_ids]);
 
     const [joinRequests, setJoinRequests] = useState<any[]>([]);
 
@@ -197,6 +194,10 @@ export default function SettingsPage() {
             await updateDoc(doc(db, 'houses', house.id), {
                 name: houseForm.name,
                 address: houseForm.address,
+                location: {
+                    lat: Number(houseForm.lat) || 0,
+                    lng: Number(houseForm.lng) || 0
+                },
                 wifi_ssid: houseForm.wifi_ssid,
                 wifi_password: houseForm.wifi_password,
                 holiday_mode: houseForm.holiday_mode,
@@ -234,10 +235,61 @@ export default function SettingsPage() {
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
             console.error('Error updating house:', err);
-            setError('Villa kom upp við vistun.');
+            setError('Villa kom upp við að vista breytingar.');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleGenerateInvite = async () => {
+        if (!house || !isManager) return;
+        const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        try {
+            await updateDoc(doc(db, 'houses', house.id), {
+                invite_code: newCode
+            });
+            setHouseForm(prev => ({ ...prev, invite_code: newCode }));
+            setHouse(prev => prev ? { ...prev, invite_code: newCode } : null);
+            setSuccess('Nýr boðshlekkur búinn til!');
+        } catch (err) {
+            setError('Gat ekki búið til boðshlekk.');
+        }
+    };
+
+    const handleAddressChange = (val: string) => {
+        setHouseForm(prev => ({ ...prev, address: val }));
+        if (!isManager) return;
+
+        if (debounceTimer) clearTimeout(debounceTimer);
+
+        if (val.length >= 2) {
+            const timer = setTimeout(async () => {
+                try {
+                    const hms = await searchHMSAddresses(val);
+                    setSuggestions(hms.map(item => ({
+                        id: `hms-${item.lat}-${item.lng}-${Math.random()}`,
+                        description: formatHMSAddress(item),
+                        location: { lat: item.lat, lng: item.lng },
+                        source: 'hms'
+                    })));
+                } catch (e) {
+                    console.error("HMS search error in settings", e);
+                }
+            }, 400);
+            setDebounceTimer(timer);
+        } else {
+            setSuggestions([]);
+        }
+    };
+
+    const handleSelectPrediction = (suggestion: any) => {
+        setSuggestions([]);
+        setHouseForm(prev => ({
+            ...prev,
+            address: suggestion.description,
+            lat: suggestion.location.lat,
+            lng: suggestion.location.lng
+        }));
     };
 
     const handleGenerateGuestToken = async (replace = false) => {
@@ -407,15 +459,66 @@ export default function SettingsPage() {
                                             />
                                         </div>
 
-                                        <div>
+                                        <div className="relative">
                                             <label className="label">Heimilisfang</label>
                                             <input
                                                 type="text"
                                                 className="input"
                                                 value={houseForm.address}
-                                                onChange={(e) => setHouseForm({ ...houseForm, address: e.target.value })}
+                                                onChange={(e) => handleAddressChange(e.target.value)}
                                                 disabled={!isManager}
+                                                autoComplete="off"
                                             />
+                                            {suggestions.length > 0 && (
+                                                <ul className="absolute z-20 w-full bg-white border border-stone-200 mt-1 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                                    {suggestions.map((suggestion) => (
+                                                        <li
+                                                            key={suggestion.id}
+                                                            onClick={() => handleSelectPrediction(suggestion)}
+                                                            className="px-4 py-3 hover:bg-stone-50 cursor-pointer text-sm border-b last:border-0 border-stone-100 flex items-center justify-between"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                {suggestion.source === 'hms' ? (
+                                                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                                                ) : (
+                                                                    <MapPin className="w-4 h-4 text-stone-400" />
+                                                                )}
+                                                                <span className="font-medium">{suggestion.description}</span>
+                                                            </div>
+                                                            {suggestion.source === 'hms' && (
+                                                                <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200 font-bold uppercase">HMS</span>
+                                                            )}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="label">Breiddargráða (Lat)</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.000001"
+                                                    className="input"
+                                                    value={houseForm.lat}
+                                                    onChange={(e) => setHouseForm({ ...houseForm, lat: parseFloat(e.target.value) })}
+                                                    disabled={!isManager}
+                                                    placeholder="64.123456"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="label">Lengdargráða (Lng)</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.000001"
+                                                    className="input"
+                                                    value={houseForm.lng}
+                                                    onChange={(e) => setHouseForm({ ...houseForm, lng: parseFloat(e.target.value) })}
+                                                    disabled={!isManager}
+                                                    placeholder="-21.123456"
+                                                />
+                                            </div>
                                         </div>
 
                                         <div className="border-t border-grey-warm pt-4 mt-6">
@@ -623,7 +726,7 @@ export default function SettingsPage() {
                                     )}
 
                                     {/* Invite Section */}
-                                    {isManager && (
+                                    {house.owner_ids?.includes(currentUser?.uid || '') && (
                                         <div className="mt-8 pt-6 border-t border-grey-warm">
                                             <h3 className="text-lg font-serif mb-4">Bjóða nýjum aðilum</h3>
                                             <p className="text-sm text-grey-dark mb-4">
@@ -639,6 +742,7 @@ export default function SettingsPage() {
                                                                 readOnly
                                                                 className="input font-mono text-sm bg-white"
                                                                 value={`${window.location.origin}/join?houseId=${house.id}&code=${house.invite_code}`}
+                                                                onClick={(e) => e.currentTarget.select()}
                                                             />
                                                             <button
                                                                 onClick={() => {
@@ -653,13 +757,8 @@ export default function SettingsPage() {
                                                         </div>
                                                         <div className="mt-4">
                                                             <button
-                                                                onClick={async () => {
-                                                                    if (!confirm('Ertu viss? Gamli hlekkurinn mun hætta að virka.')) return;
-                                                                    const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-                                                                    await updateDoc(doc(db, 'houses', house.id), { invite_code: newCode });
-                                                                    setHouse({ ...house, invite_code: newCode });
-                                                                }}
-                                                                className="text-xs text-red-500 hover:text-red-700 underline"
+                                                                onClick={handleGenerateInvite}
+                                                                className="text-xs text-grey-mid hover:underline"
                                                             >
                                                                 Endurnýja hlekk (Gera gamlan ógildan)
                                                             </button>
@@ -667,11 +766,7 @@ export default function SettingsPage() {
                                                     </div>
                                                 ) : (
                                                     <button
-                                                        onClick={async () => {
-                                                            const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-                                                            await updateDoc(doc(db, 'houses', house.id), { invite_code: newCode });
-                                                            setHouse({ ...house, invite_code: newCode });
-                                                        }}
+                                                        onClick={handleGenerateInvite}
                                                         className="btn btn-primary w-full md:w-auto self-start"
                                                     >
                                                         Búa til boðshlekk

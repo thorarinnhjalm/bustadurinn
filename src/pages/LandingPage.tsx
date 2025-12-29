@@ -1,10 +1,20 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Calendar, TrendingUp, Key, CheckCircle, ArrowRight } from 'lucide-react';
 import SEO from '@/components/SEO';
 import MarketingLayout from '@/components/MarketingLayout';
+import { useAppStore } from '@/store/appStore';
 
 export default function LandingPage() {
     const navigate = useNavigate();
+
+    // Redirect if already logged in and has a house
+    const { isAuthenticated, currentUser, isLoading } = useAppStore();
+    useEffect(() => {
+        if (!isLoading && isAuthenticated && (currentUser?.house_ids?.length ?? 0) > 0) {
+            navigate('/dashboard');
+        }
+    }, [isAuthenticated, currentUser, isLoading, navigate]);
 
     // JSON-LD Structured Data
     const softwareAppSchema = {

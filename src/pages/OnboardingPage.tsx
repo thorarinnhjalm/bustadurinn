@@ -8,6 +8,7 @@ import { Home, MapPin, Users, CheckCircle, Loader2 } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, setDoc, getDoc, doc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
+import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 
 type OnboardingStep = 'welcome' | 'house' | 'invite' | 'finish';
 
@@ -38,6 +39,13 @@ export default function OnboardingPage() {
     ];
 
     const currentStepIndex = steps.findIndex(s => s.id === currentStep);
+
+    // Redirect if already has a house
+    useEffect(() => {
+        if (currentUser && currentUser.house_ids && currentUser.house_ids.length > 0) {
+            navigate('/dashboard');
+        }
+    }, [currentUser, navigate]);
 
     // Initialize Google Maps API Script
     useEffect(() => {
@@ -72,37 +80,55 @@ export default function OnboardingPage() {
         // Debounce Search
         if (debounceTimer) clearTimeout(debounceTimer);
 
-        if (val.length > 3) {
+        if (val.length >= 2) {
             const timer = setTimeout(async () => {
-                if (!scriptLoaded || !google) return;
+                const results: any[] = [];
 
+                // 1. Search HMS (Official Icelandic Registry)
                 try {
-                    // Use modern importLibrary
-                    const { Place } = await google.maps.importLibrary("places");
-
-                    // Use Place.searchByText (New Places API)
-                    // This replaces the deprecated AutocompleteService/PlacesService for new customers
-                    const { places } = await Place.searchByText({
-                        textQuery: val,
-                        fields: ['formattedAddress', 'location'],
+                    const hms = await searchHMSAddresses(val);
+                    hms.forEach(item => {
+                        results.push({
+                            id: `hms-${item.lat}-${item.lng}`,
+                            description: formatHMSAddress(item),
+                            location: { lat: item.lat, lng: item.lng },
+                            source: 'hms'
+                        });
                     });
-
-                    if (places && places.length > 0) {
-                        setSuggestions(places.map((p: any) => ({
-                            place_id: p.id || Math.random(), // id might be missing on some partials? usually there.
-                            description: p.formattedAddress,
-                            location: p.location // This is a LatLng object
-                        })));
-                    } else {
-                        setSuggestions([]);
-                    }
-
                 } catch (e) {
-                    console.error("Search error (New API):", e);
-                    // Fallback or ignore
-                    setSuggestions([]);
+                    console.error("HMS search error:", e);
                 }
-            }, 800); // 800ms wait to reduce API calls
+
+                // 2. Search Google (Google Maps)
+                if (scriptLoaded && typeof google !== 'undefined') {
+                    try {
+                        const { Place } = await google.maps.importLibrary("places");
+                        const { places } = await Place.searchByText({
+                            textQuery: val,
+                            fields: ['formattedAddress', 'location'],
+                        });
+
+                        if (places) {
+                            places.forEach((p: any) => {
+                                // Only add if not already present via HMS (basic string comparison)
+                                const desc = p.formattedAddress;
+                                if (!results.some(r => r.description.includes(desc) || desc.includes(r.description))) {
+                                    results.push({
+                                        id: p.id || Math.random(),
+                                        description: p.formattedAddress,
+                                        location: p.location,
+                                        source: 'google'
+                                    });
+                                }
+                            });
+                        }
+                    } catch (e) {
+                        console.error("Google search error:", e);
+                    }
+                }
+
+                setSuggestions(results);
+            }, 400);
             setDebounceTimer(timer);
         } else {
             setSuggestions([]);
@@ -111,13 +137,15 @@ export default function OnboardingPage() {
 
     const handleSelectPrediction = (suggestion: any) => {
         setSuggestions([]);
+
+        // Extract lat/lng (HMS provides numbers, Google provides functions)
+        const lat = typeof suggestion.location.lat === 'function' ? suggestion.location.lat() : suggestion.location.lat;
+        const lng = typeof suggestion.location.lng === 'function' ? suggestion.location.lng() : suggestion.location.lng;
+
         setHouseData(prev => ({
             ...prev,
             address: suggestion.description,
-            location: {
-                lat: suggestion.location.lat(),
-                lng: suggestion.location.lng()
-            }
+            location: { lat, lng }
         }));
     };
 
@@ -313,11 +341,27 @@ export default function OnboardingPage() {
                                         <ul className="absolute z-10 w-full bg-white border border-stone-200 mt-1 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                             {suggestions.map((suggestion) => (
                                                 <li
-                                                    key={suggestion.place_id}
+                                                    key={suggestion.id}
                                                     onClick={() => handleSelectPrediction(suggestion)}
-                                                    className="px-4 py-2 hover:bg-stone-50 cursor-pointer text-sm"
+                                                    className="px-4 py-3 hover:bg-stone-50 cursor-pointer text-sm border-b last:border-0 border-stone-100 flex items-center justify-between group"
                                                 >
-                                                    {suggestion.description}
+                                                    <div className="flex items-center gap-3">
+                                                        {suggestion.source === 'hms' ? (
+                                                            <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                                                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-6 h-6 bg-stone-100 rounded-full flex items-center justify-center">
+                                                                <MapPin className="w-4 h-4 text-stone-400" />
+                                                            </div>
+                                                        )}
+                                                        <span className="font-medium">{suggestion.description}</span>
+                                                    </div>
+                                                    {suggestion.source === 'hms' && (
+                                                        <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200 font-bold uppercase tracking-wider">
+                                                            HMS
+                                                        </span>
+                                                    )}
                                                 </li>
                                             ))}
                                         </ul>

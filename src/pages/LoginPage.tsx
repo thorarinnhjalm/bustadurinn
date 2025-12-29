@@ -9,6 +9,8 @@ import { auth, googleProvider, db } from '@/lib/firebase';
 import { LogIn } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
+import { useSearchParams } from 'react-router-dom';
+
 // Admin emails whitelist (same as App.tsx)
 const ADMIN_EMAILS = [
     'thorarinnhjalmarsson@gmail.com',
@@ -17,6 +19,8 @@ const ADMIN_EMAILS = [
 
 export default function LoginPage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const returnUrl = searchParams.get('returnUrl');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -34,6 +38,8 @@ export default function LoginPage() {
             // Check if admin email
             if (user.email && ADMIN_EMAILS.includes(user.email)) {
                 navigate('/super-admin');
+            } else if (returnUrl) {
+                navigate(returnUrl);
             } else {
                 navigate('/dashboard');
             }
@@ -71,6 +77,8 @@ export default function LoginPage() {
                 // Check if admin email
                 if (user.email && ADMIN_EMAILS.includes(user.email)) {
                     navigate('/super-admin');
+                } else if (returnUrl) {
+                    navigate(returnUrl);
                 } else {
                     navigate('/onboarding');
                 }
@@ -83,6 +91,8 @@ export default function LoginPage() {
                 // Check if admin email
                 if (user.email && ADMIN_EMAILS.includes(user.email)) {
                     navigate('/super-admin');
+                } else if (returnUrl) {
+                    navigate(returnUrl);
                 } else {
                     navigate('/dashboard');
                 }

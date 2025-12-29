@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { doc, getDoc, addDoc, collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { Home, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
@@ -36,10 +36,10 @@ export default function JoinPage() {
                         setHouse({ ...houseData, id: docSnap.id });
 
                         // Check if already a member
-                        if (currentUser && houseData.owner_ids.includes(currentUser.uid)) {
+                        if (currentUser && houseData.owner_ids?.includes(currentUser.uid)) {
                             setStatus('joined');
                         } else if (currentUser) {
-                            // Check if already requested
+                            // Check if already requested (legacy check, though we now do instant join)
                             const q = query(
                                 collection(db, 'join_requests'),
                                 where('houseId', '==', houseId),
@@ -68,23 +68,25 @@ export default function JoinPage() {
         checkHouse();
     }, [houseId, code, currentUser]);
 
-    const handleRequestAccess = async () => {
+    const handleJoinHouse = async () => {
         if (!currentUser || !house) return;
 
         setStatus('joining');
         try {
-            await addDoc(collection(db, 'join_requests'), {
-                houseId: house.id,
-                userId: currentUser.uid,
-                userName: currentUser.name || currentUser.email,
-                userEmail: currentUser.email,
-                status: 'pending',
-                created_at: serverTimestamp()
+            // 1. Add user to house owner_ids
+            await updateDoc(doc(db, 'houses', house.id), {
+                owner_ids: arrayUnion(currentUser.uid)
             });
-            setStatus('requested');
+
+            // 2. Add house to user house_ids
+            await updateDoc(doc(db, 'users', currentUser.uid), {
+                house_ids: arrayUnion(house.id)
+            });
+
+            setStatus('joined');
         } catch (err) {
             console.error(err);
-            setError('Villa við að senda beiðni.');
+            setError('Villa við að ganga í hús. Mögulega vantar réttindi.');
             setStatus('idle');
         }
     };
@@ -113,27 +115,25 @@ export default function JoinPage() {
     }
 
     if (!currentUser) {
-        // Redirect to login if not authenticated, storing return URL
-        // In a real app we'd pass ?returnUrl=...
         return (
             <div className="min-h-screen bg-bone flex items-center justify-center p-4">
                 <div className="card max-w-md text-center">
                     <Home className="w-12 h-12 text-amber mx-auto mb-4" />
                     <h2 className="text-xl font-serif mb-2">{house?.name}</h2>
                     <p className="text-grey-mid mb-6">
-                        Þú hefur verið boðið að gengast í húsfélagið. <br />
-                        Vinsamlegast skráðu þig inn til að halda áfram.
+                        Þér hefur verið boðið að gerast meðeigandi. <br />
+                        Vinsamlegast skráðu þig inn eða stofnaðu aðgang til að tengjast húsinu.
                     </p>
-                    <button
-                        onClick={() => navigate('/login')}
-                        className="btn btn-primary w-full"
-                    >
-                        Skrá inn
-                    </button>
-                    <div className="mt-4">
+                    <div className="flex flex-col gap-3">
                         <button
-                            onClick={() => navigate('/signup')}
-                            className="text-sm text-grey-dark hover:underline"
+                            onClick={() => navigate(`/login?returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`)}
+                            className="btn btn-primary w-full"
+                        >
+                            Skrá inn
+                        </button>
+                        <button
+                            onClick={() => navigate(`/signup?returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`)}
+                            className="btn btn-ghost w-full"
                         >
                             Búa til aðgang
                         </button>
@@ -150,41 +150,31 @@ export default function JoinPage() {
                 <h1 className="text-2xl font-serif mb-2">{house?.name}</h1>
                 <p className="text-grey-mid mb-2">{house?.address}</p>
 
-                <div className="my-8 border-t border-b border-bone py-4">
-                    <p className="text-sm text-charcoal font-medium">Boð frá stjórnanda</p>
+                <div className="my-8 border-t border-b border-bone py-6">
+                    <p className="text-sm text-charcoal font-medium">Þú ert að ganga í húsfélagið</p>
                 </div>
 
                 {status === 'joined' ? (
                     <div className="animate-fade-in">
                         <div className="bg-green-100 text-green-700 p-4 rounded-lg mb-6 flex items-center justify-center gap-2">
                             <CheckCircle className="w-5 h-5" />
-                            <span>Þú ert nú þegar meðlimur!</span>
+                            <span>Velkomin! Þú ert nú meðlimur.</span>
                         </div>
                         <button onClick={() => navigate('/dashboard')} className="btn btn-primary w-full">
                             Fara á stjórnborð
                         </button>
                     </div>
-                ) : status === 'requested' ? (
-                    <div className="animate-fade-in">
-                        <div className="bg-amber/10 text-amber-900 p-4 rounded-lg mb-6">
-                            <h3 className="font-medium mb-1">Beiðni send!</h3>
-                            <p className="text-sm">Stjórnandi hússins mun samþykkja beiðni þína fljótlega.</p>
-                        </div>
-                        <button onClick={() => navigate('/dashboard')} className="btn btn-ghost w-full">
-                            Fara á forsíðu
-                        </button>
-                    </div>
                 ) : (
                     <div>
                         <button
-                            onClick={handleRequestAccess}
+                            onClick={handleJoinHouse}
                             disabled={status === 'joining'}
                             className="btn btn-primary w-full mb-3"
                         >
-                            {status === 'joining' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Senda inngöngubeiðni'}
+                            {status === 'joining' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Samþykkja boð og ganga í hús'}
                         </button>
                         <button onClick={() => navigate('/')} className="btn btn-ghost w-full">
-                            Hætta við
+                            Ekki núna
                         </button>
                     </div>
                 )}
