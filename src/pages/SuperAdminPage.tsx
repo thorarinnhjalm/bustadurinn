@@ -588,78 +588,101 @@ export default function SuperAdminPage() {
                         </div>
                     </div>
 
-                    {/* Tabs */}
-                    <div className="flex gap-6 mt-6">
-                        <button
-                            onClick={() => setActiveTab('overview')}
-                            className={`pb-3 border-b-2 transition-colors font-medium text-sm ${activeTab === 'overview'
-                                ? 'border-amber text-charcoal'
-                                : 'border-transparent text-stone-500 hover:text-charcoal'
-                                }`}
-                        >
-                            <BarChart2 className="w-4 h-4 inline mr-2" />
-                            Overview
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('houses')}
-                            className={`pb-3 border-b-2 transition-colors font-medium text-sm ${activeTab === 'houses'
-                                ? 'border-amber text-charcoal'
-                                : 'border-transparent text-stone-500 hover:text-charcoal'
-                                }`}
-                        >
-                            <Home className="w-4 h-4 inline mr-2" />
-                            Houses ({stats.totalHouses})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('users')}
-                            className={`pb-3 border-b-2 transition-colors font-medium text-sm ${activeTab === 'users'
-                                ? 'border-amber text-charcoal'
-                                : 'border-transparent text-stone-500 hover:text-charcoal'
-                                }`}
-                        >
-                            <Users className="w-4 h-4 inline mr-2" />
-                            Users ({stats.totalUsers})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('contacts')}
-                            className={`pb-3 border-b-2 transition-colors font-medium text-sm ${activeTab === 'contacts'
-                                ? 'border-amber text-charcoal'
-                                : 'border-transparent text-stone-500 hover:text-charcoal'
-                                }`}
-                        >
-                            <Send className="w-4 h-4 inline mr-2" />
-                            Contact ({stats.allContacts.length})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('coupons')}
-                            className={`pb-3 border-b-2 transition-colors font-medium text-sm ${activeTab === 'coupons'
-                                ? 'border-amber text-charcoal'
-                                : 'border-transparent text-stone-500 hover:text-charcoal'
-                                }`}
-                        >
-                            <Tag className="w-4 h-4 inline mr-2" />
-                            Coupons ({stats.allCoupons.length})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('emails')}
-                            className={`pb-3 border-b-2 transition-colors font-medium text-sm ${activeTab === 'emails'
-                                ? 'border-amber text-charcoal'
-                                : 'border-transparent text-stone-500 hover:text-charcoal'
-                                }`}
-                        >
-                            <Mail className="w-4 h-4 inline mr-2" />
-                            Emails
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('integrations')}
-                            className={`pb-3 border-b-2 transition-colors font-medium text-sm ${activeTab === 'integrations'
-                                ? 'border-amber text-charcoal'
-                                : 'border-transparent text-stone-500 hover:text-charcoal'
-                                }`}
-                        >
-                            <Settings className="w-4 h-4 inline mr-2" />
-                            Integrations
-                        </button>
+                    {/* Tabs - Two-row layout for scalability */}
+                    <div className="mt-6 space-y-3">
+                        {/* Primary Tabs Row - Core Business Data */}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setActiveTab('overview')}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${activeTab === 'overview'
+                                    ? 'bg-amber text-charcoal shadow-sm'
+                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
+                                    }`}
+                            >
+                                <BarChart2 className="w-4 h-4" />
+                                <span>Yfirlit</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('houses')}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${activeTab === 'houses'
+                                    ? 'bg-amber text-charcoal shadow-sm'
+                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
+                                    }`}
+                            >
+                                <Home className="w-4 h-4" />
+                                <span>Hús</span>
+                                <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'houses' ? 'bg-charcoal/10' : 'bg-stone-200 text-stone-600'}`}>
+                                    {stats.totalHouses}
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('users')}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${activeTab === 'users'
+                                    ? 'bg-amber text-charcoal shadow-sm'
+                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
+                                    }`}
+                            >
+                                <Users className="w-4 h-4" />
+                                <span>Notendur</span>
+                                <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'users' ? 'bg-charcoal/10' : 'bg-stone-200 text-stone-600'}`}>
+                                    {stats.totalUsers}
+                                </span>
+                            </button>
+                        </div>
+
+                        {/* Secondary Tabs Row - Tools & Communication */}
+                        <div className="flex gap-2 pb-3 border-b border-stone-200">
+                            <button
+                                onClick={() => setActiveTab('contacts')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${activeTab === 'contacts'
+                                    ? 'bg-stone-800 text-white shadow-sm'
+                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
+                                    }`}
+                            >
+                                <Send className="w-4 h-4" />
+                                <span>Samskipti</span>
+                                {stats.allContacts.length > 0 && (
+                                    <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'contacts' ? 'bg-white/20' : 'bg-stone-200 text-stone-600'}`}>
+                                        {stats.allContacts.length}
+                                    </span>
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('coupons')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${activeTab === 'coupons'
+                                    ? 'bg-stone-800 text-white shadow-sm'
+                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
+                                    }`}
+                            >
+                                <Tag className="w-4 h-4" />
+                                <span>Afsláttarkóðar</span>
+                                {stats.allCoupons.length > 0 && (
+                                    <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'coupons' ? 'bg-white/20' : 'bg-stone-200 text-stone-600'}`}>
+                                        {stats.allCoupons.length}
+                                    </span>
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('emails')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${activeTab === 'emails'
+                                    ? 'bg-stone-800 text-white shadow-sm'
+                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
+                                    }`}
+                            >
+                                <Mail className="w-4 h-4" />
+                                <span>Tölvupóstur</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('integrations')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${activeTab === 'integrations'
+                                    ? 'bg-stone-800 text-white shadow-sm'
+                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
+                                    }`}
+                            >
+                                <Settings className="w-4 h-4" />
+                                <span>Tengingar</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
