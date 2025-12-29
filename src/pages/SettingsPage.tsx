@@ -85,11 +85,23 @@ export default function SettingsPage() {
 
                     // Auto-generate invite code if missing (for legacy houses)
                     if (!houseData.invite_code && houseData.manager_id === currentUser.uid) {
+                        console.log('Auto-generating invite code for house:', houseId);
                         const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-                        await updateDoc(doc(db, 'houses', houseId), {
-                            invite_code: newCode
+                        try {
+                            await updateDoc(doc(db, 'houses', houseId), {
+                                invite_code: newCode
+                            });
+                            houseData.invite_code = newCode;
+                            console.log('Invite code generated:', newCode);
+                        } catch (err) {
+                            console.error('Failed to generate invite code:', err);
+                        }
+                    } else {
+                        console.log('Invite code status:', {
+                            hasCode: !!houseData.invite_code,
+                            isManager: houseData.manager_id === currentUser.uid,
+                            code: houseData.invite_code
                         });
-                        houseData.invite_code = newCode;
                     }
 
                     setHouse(houseData);
