@@ -1014,6 +1014,15 @@ export default function SuperAdminPage() {
                                     </span>
                                     <span className="font-bold">Auth Method:</span>
                                     <span className="text-charcoal">Client Credentials (Secret Key)</span>
+
+                                    <span className="font-bold mt-2">Plan (Monthly):</span>
+                                    <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit mt-2">
+                                        {import.meta.env.VITE_PAYDAY_PLAN_MONTHLY || '004'}
+                                    </span>
+                                    <span className="font-bold mt-2">Plan (Annual):</span>
+                                    <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit mt-2">
+                                        {import.meta.env.VITE_PAYDAY_PLAN_ANNUAL || '005'}
+                                    </span>
                                 </div>
                             </div>
 
