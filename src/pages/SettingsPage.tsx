@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Home, Users, User as UserIcon, Save, Shield, Wifi, AlertTriangle, BookOpen } from 'lucide-react';
 import {
     doc,
@@ -25,6 +26,7 @@ import type { House, User } from '@/types/models';
 type Tab = 'house' | 'members' | 'profile' | 'guests';
 
 export default function SettingsPage() {
+    const navigate = useNavigate();
     const { user: currentUser } = useEffectiveUser();
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
     const [activeTab, setActiveTab] = useState<Tab>('house');
@@ -305,6 +307,12 @@ export default function SettingsPage() {
             {/* Header */}
             <div className="bg-white border-b border-grey-warm">
                 <div className="container mx-auto px-6 py-6">
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="text-stone-500 hover:text-charcoal font-bold text-sm mb-4 flex items-center gap-1 transition-colors"
+                    >
+                        ← Til baka á stjórnborð
+                    </button>
                     <h1 className="text-3xl font-serif mb-2">Stillingar</h1>
                     <p className="text-grey-mid">Stjórnaðu húsinu og þínum aðgangi</p>
                 </div>
