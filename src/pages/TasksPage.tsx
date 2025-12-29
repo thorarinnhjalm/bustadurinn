@@ -7,7 +7,7 @@ import {
     List,
     Layout
 } from 'lucide-react';
-import { useAppStore } from '@/store/appStore';
+import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { db } from '@/lib/firebase';
 import {
     collection,
@@ -28,7 +28,7 @@ import MobileNav from '@/components/MobileNav';
 
 export default function TasksPage() {
     const navigate = useNavigate();
-    const { currentUser } = useAppStore();
+    const { user: currentUser } = useEffectiveUser();
     const [view, setView] = useState<'list' | 'board'>('list');
     const [filter, setFilter] = useState<'all' | 'mine'>('all');
     const [tasks, setTasks] = useState<Task[]>([]);

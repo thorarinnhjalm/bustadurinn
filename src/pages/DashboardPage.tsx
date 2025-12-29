@@ -8,6 +8,7 @@ import {
 import MobileNav from '@/components/MobileNav';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
+import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
 import { collection, query, where, orderBy, limit, getDocs, Timestamp, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
@@ -31,7 +32,8 @@ const CabinLogo = ({ size = 24, className = "" }: { size?: number, className?: s
 
 const UserDashboard = () => {
     const navigate = useNavigate();
-    const { currentHouse, currentUser } = useAppStore();
+    const currentHouse = useAppStore((state) => state.currentHouse);
+    const { user: currentUser } = useEffectiveUser();
 
     // Real Data State
     const [loading, setLoading] = useState(true);
