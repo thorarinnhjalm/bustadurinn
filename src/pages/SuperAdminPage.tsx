@@ -853,15 +853,16 @@ export default function SuperAdminPage() {
                 {/* Houses Tab */}
                 {activeTab === 'houses' && (
                     <div className="bg-white border border-stone-200 rounded-lg p-6">
-                        <h2 className="text-lg font-serif font-semibold mb-6">House Registry</h2>
+                        <h2 className="text-lg font-serif font-semibold mb-6">Húsaskrá</h2>
                         <DataTable
                             columns={[
-                                { key: 'name', label: 'House Name', sortable: true },
+                                { key: 'name', label: 'Nafn hús', sortable: true },
                                 {
                                     key: 'subscription_status',
-                                    label: 'Status',
+                                    label: 'Staða',
                                     render: (row) => {
                                         const status = row.subscription_status || 'trial';
+                                        const statusLabels = { free: 'Frítt', active: 'Virkt', trial: 'Prufa', expired: 'Útrunnið' };
                                         const colors = {
                                             free: 'bg-green-100 text-green-700 border-green-200',
                                             active: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -870,27 +871,27 @@ export default function SuperAdminPage() {
                                         };
                                         return (
                                             <span className={`px-2 py-1 rounded-full text-xs font-bold border uppercase ${colors[status] || colors.trial}`}>
-                                                {status}
+                                                {statusLabels[status] || statusLabels.trial}
                                             </span>
                                         );
                                     }
                                 },
                                 {
                                     key: 'address',
-                                    label: 'Location',
+                                    label: 'Staðsetning',
                                     sortable: true,
                                     render: (row) => row.address || '—'
                                 },
                                 {
                                     key: 'owner_ids',
-                                    label: 'Members',
+                                    label: 'Meðlimir',
                                     render: (row) => (
                                         <span className="font-mono">{row.owner_ids?.length || 0}</span>
                                     )
                                 },
                                 {
                                     key: 'manager_id',
-                                    label: 'Manager',
+                                    label: 'Stjórnandi',
                                     render: (row) => {
                                         const manager = stats.allUsers.find(u => u.uid === row.manager_id);
                                         return <span className="font-mono text-xs">{manager?.email || '—'}</span>;
@@ -898,7 +899,7 @@ export default function SuperAdminPage() {
                                 },
                                 {
                                     key: 'created_at',
-                                    label: 'Created',
+                                    label: 'Búið til',
                                     sortable: true,
                                     render: (row) => {
                                         if (!row.created_at) return '—';
@@ -916,9 +917,9 @@ export default function SuperAdminPage() {
                                         onClick={() => handleExtendTrial(row.id!)}
                                         disabled={actionLoading === row.id}
                                         className="px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors disabled:opacity-50"
-                                        title="Extend Trial"
+                                        title="Lengja prufu"
                                     >
-                                        {actionLoading === row.id ? 'Extending...' : 'Extend Trial'}
+                                        {actionLoading === row.id ? 'Lengja...' : 'Lengja prufu'}
                                     </button>
                                     <button
                                         onClick={() => handleToggleFree(row.id!)}
@@ -927,11 +928,11 @@ export default function SuperAdminPage() {
                                             ? 'border-red-200 text-red-600 hover:bg-red-50'
                                             : 'border-green-200 text-green-600 hover:bg-green-50'
                                             }`}
-                                        title={row.subscription_status === 'free' ? 'Revoke Free Access' : 'Grant Free Access'}
+                                        title={row.subscription_status === 'free' ? 'Afturkalla frítt' : 'Veita frítt'}
                                     >
-                                        {row.subscription_status === 'free' ? 'Revoke Free' : 'Grant Free'}
+                                        {row.subscription_status === 'free' ? 'Afturkalla' : 'Veita frítt'}
                                     </button>
-                                    <button className="p-1 hover:bg-stone-100 rounded" title="Edit">
+                                    <button className="p-1 hover:bg-stone-100 rounded" title="Breyta">
                                         <Edit className="w-4 h-4 text-stone-500" />
                                     </button>
                                     <button
@@ -955,11 +956,11 @@ export default function SuperAdminPage() {
                         <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
                             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                                 <Tag className="w-5 h-5 text-amber" />
-                                Create New Coupon
+                                Búa til nýjan afsláttarkóða
                             </h3>
                             <form onSubmit={handleCreateCoupon} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                                 <div className="md:col-span-1">
-                                    <label className="block text-xs font-bold text-stone-500 mb-1">Code</label>
+                                    <label className="block text-xs font-bold text-stone-500 mb-1">Kóði</label>
                                     <input
                                         type="text"
                                         required
@@ -970,18 +971,18 @@ export default function SuperAdminPage() {
                                     />
                                 </div>
                                 <div className="md:col-span-1">
-                                    <label className="block text-xs font-bold text-stone-500 mb-1">Type</label>
+                                    <label className="block text-xs font-bold text-stone-500 mb-1">Tegund</label>
                                     <select
                                         className="input"
                                         value={newCoupon.discount_type}
                                         onChange={e => setNewCoupon({ ...newCoupon, discount_type: e.target.value as 'percent' | 'fixed' })}
                                     >
-                                        <option value="percent">Percentage (%)</option>
-                                        <option value="fixed">Fixed Amount (kr)</option>
+                                        <option value="percent">Prósenta (%)</option>
+                                        <option value="fixed">Fast upphæð (kr)</option>
                                     </select>
                                 </div>
                                 <div className="md:col-span-1">
-                                    <label className="block text-xs font-bold text-stone-500 mb-1">Value</label>
+                                    <label className="block text-xs font-bold text-stone-500 mb-1">Gildi</label>
                                     <input
                                         type="number"
                                         required
@@ -992,7 +993,7 @@ export default function SuperAdminPage() {
                                     />
                                 </div>
                                 <div className="md:col-span-1">
-                                    <label className="block text-xs font-bold text-stone-500 mb-1">Max Uses (0 = unlimited)</label>
+                                    <label className="block text-xs font-bold text-stone-500 mb-1">Hámarks notkun (0 = ótakmarkað)</label>
                                     <input
                                         type="number"
                                         className="input"
@@ -1007,11 +1008,11 @@ export default function SuperAdminPage() {
                                         className="btn btn-primary w-full h-[42px] flex items-center justify-center gap-2"
                                         disabled={actionLoading === 'create-coupon'}
                                     >
-                                        {actionLoading === 'create-coupon' ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Create'}
+                                        {actionLoading === 'create-coupon' ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Búa til'}
                                     </button>
                                 </div>
                                 <div className="md:col-span-5">
-                                    <label className="block text-xs font-bold text-stone-500 mb-1">Description (Internal)</label>
+                                    <label className="block text-xs font-bold text-stone-500 mb-1">Lýsing (innri)</label>
                                     <input
                                         type="text"
                                         required
@@ -1026,24 +1027,24 @@ export default function SuperAdminPage() {
 
                         {/* Coupons Table */}
                         <div>
-                            <h2 className="text-2xl font-serif mb-6">Active Coupons</h2>
+                            <h2 className="text-2xl font-serif mb-6">Virkir afsláttarkóðar</h2>
                             <DataTable
                                 columns={[
-                                    { key: 'code', label: 'Code', render: r => <span className="font-mono font-bold">{r.code}</span> },
+                                    { key: 'code', label: 'Kóði', render: r => <span className="font-mono font-bold">{r.code}</span> },
                                     {
                                         key: 'discount',
-                                        label: 'Discount',
+                                        label: 'Afsláttur',
                                         render: r => r.discount_type === 'percent' ? `${r.discount_value}%` : `${r.discount_value} kr`
                                     },
-                                    { key: 'description', label: 'Description' },
+                                    { key: 'description', label: 'Lýsing' },
                                     {
                                         key: 'usage',
-                                        label: 'Usage',
+                                        label: 'Notkun',
                                         render: r => `${r.used_count} / ${r.max_uses || '∞'}`
                                     },
                                     {
                                         key: 'created_at',
-                                        label: 'Created',
+                                        label: 'Búið til',
                                         render: (row) => {
                                             if (!row.created_at) return '—';
                                             const date = row.created_at instanceof Date ? row.created_at : new Date(row.created_at);
@@ -1058,7 +1059,7 @@ export default function SuperAdminPage() {
                                         onClick={() => handleDeleteCoupon(row.id)}
                                         className="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 rounded hover:bg-red-50"
                                     >
-                                        Delete
+                                        Eyða
                                     </button>
                                 )}
                             />
@@ -1070,26 +1071,26 @@ export default function SuperAdminPage() {
                 {/* Users Tab */}
                 {activeTab === 'users' && (
                     <div className="bg-white border border-stone-200 rounded-lg p-6">
-                        <h2 className="text-lg font-serif font-semibold mb-6">User Registry</h2>
+                        <h2 className="text-lg font-serif font-semibold mb-6">Notendaskrá</h2>
                         <DataTable
                             columns={[
-                                { key: 'name', label: 'Name', sortable: true },
+                                { key: 'name', label: 'Nafn', sortable: true },
                                 {
                                     key: 'email',
-                                    label: 'Email',
+                                    label: 'Netfang',
                                     sortable: true,
                                     render: (row) => <span className="font-mono text-xs">{row.email}</span>
                                 },
                                 {
                                     key: 'house_ids',
-                                    label: 'Houses',
+                                    label: 'Hús',
                                     render: (row) => (
                                         <span className="font-mono">{row.house_ids?.length || 0}</span>
                                     )
                                 },
                                 {
                                     key: 'created_at',
-                                    label: 'Joined',
+                                    label: 'Skráður',
                                     sortable: true,
                                     render: (row) => {
                                         if (!row.created_at) return '—';
@@ -1107,7 +1108,7 @@ export default function SuperAdminPage() {
                                     className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors"
                                 >
                                     <UserCog className="w-3 h-3" />
-                                    Impersonate
+                                    Líkja eftir
                                 </button>
                             )}
                         />
@@ -1117,14 +1118,14 @@ export default function SuperAdminPage() {
                 {/* Contacts Tab */}
                 {activeTab === 'contacts' && (
                     <div>
-                        <h2 className="text-2xl font-serif mb-6">Contact Submissions</h2>
+                        <h2 className="text-2xl font-serif mb-6">Samskipti frá síðu</h2>
                         <DataTable
                             columns={[
-                                { key: 'name', label: 'Name' },
-                                { key: 'email', label: 'Email' },
+                                { key: 'name', label: 'Nafn' },
+                                { key: 'email', label: 'Netfang' },
                                 {
                                     key: 'message',
-                                    label: 'Message',
+                                    label: 'Skila boð',
                                     render: (row) => {
                                         const msg = row.message || '';
                                         return msg.length > 100 ? msg.substring(0, 100) + '...' : msg;
@@ -1132,7 +1133,7 @@ export default function SuperAdminPage() {
                                 },
                                 {
                                     key: 'created_at',
-                                    label: 'Date',
+                                    label: 'Dagsetning',
                                     render: (row) => {
                                         if (!row.created_at) return '—';
                                         const date = row.created_at instanceof Date
@@ -1143,7 +1144,7 @@ export default function SuperAdminPage() {
                                 },
                                 {
                                     key: 'status',
-                                    label: 'Status',
+                                    label: 'Staða',
                                     render: (row) => {
                                         const status = row.status || 'new';
                                         const colors = {
