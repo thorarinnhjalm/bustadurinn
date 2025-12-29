@@ -36,8 +36,17 @@ const UserDashboard = () => {
     const finances = { balance: 124500, lastAction: "-14.200 kr (Orkusalan)" }; // Finance module needed
 
     useEffect(() => {
+        if (currentUser && (!currentUser.house_ids || currentUser.house_ids.length === 0)) {
+            navigate('/onboarding');
+            return;
+        }
+
         const fetchData = async () => {
-            if (!currentHouse) return;
+            if (!currentHouse) {
+                // If we have house_ids but no currentHouse yet, the store is syncing. 
+                // Don't disable loading yet.
+                return;
+            }
 
             try {
                 const now = new Date();
