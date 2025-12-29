@@ -154,46 +154,78 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Simple Pricing */}
+            {/* Pricing Section */}
             <section className="py-24 bg-white">
-                <div className="container max-w-4xl mx-auto px-6 text-center">
-                    <h2 className="text-4xl font-serif mb-4">Einföld verðskrá</h2>
-                    <p className="text-xl text-grey-mid mb-12">
-                        1.990 kr á mánuði eða 14.900 kr á ári. Óháð fjölda eigenda.
-                    </p>
+                <div className="container max-w-5xl mx-auto px-6">
+                    <h2 className="text-center text-4xl font-serif mb-4">Einföld verðskrá</h2>
+                    <p className="text-center text-grey-mid mb-16">Engin falin gjöld. Greitt fyrir hvert hús, óháð fjölda eigenda.</p>
 
-                    <div className="max-w-md mx-auto card ring-2 ring-amber bg-white">
-                        <div className="text-center mb-6">
-                            <div className="text-5xl font-bold font-serif mb-2">1.990 kr</div>
-                            <p className="text-grey-mid">á mánuði</p>
-                            <p className="text-sm text-stone-500 mt-2">eða 14.900 kr á ári (sparar 3%))</p>
+                    <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                        {/* Annual Plan - Recommended */}
+                        <div className="card relative ring-4 ring-amber transform hover:-translate-y-1 transition-transform">
+                            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                                <span className="bg-amber text-charcoal px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Mælt með</span>
+                            </div>
+                            <div className="text-center mb-8 pt-4">
+                                <h3 className="text-2xl font-serif mb-2">Árlega</h3>
+                                <div className="text-4xl font-bold font-serif mb-2">14.900 kr <span className="text-base font-normal text-grey-mid">/ ári</span></div>
+                                <p className="text-sm text-charcoal/80 bg-amber/10 inline-block px-3 py-1 rounded">
+                                    Sparar 38% (8.980 kr)
+                                </p>
+                                <p className="text-xs text-grey-mid mt-2">Jafngildir 1.242 kr/mán</p>
+                            </div>
+
+                            <ul className="space-y-4 mb-8">
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <span>Allir eiginleikar innifaldir</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <span>Ótakmarkaður fjöldi notenda</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <span>30 daga frí prufa</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <span>Ótakmarkaðir gestir</span>
+                                </li>
+                            </ul>
+
+                            <button onClick={() => navigate('/signup')} className="btn btn-primary bg-amber w-full py-4 text-lg">
+                                Velja Ársáskrift
+                            </button>
                         </div>
 
-                        <ul className="space-y-3 mb-8 text-left">
-                            <li className="flex items-center gap-3">
-                                <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                <span>Allir eiginleikar innifaldir</span>
-                            </li>
-                            <li className="flex items-center gap-3">
-                                <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                <span>Ótakmarkaður fjöldi notenda</span>
-                            </li>
-                            <li className="flex items-center gap-3">
-                                <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                <span>30 daga frí prufa</span>
-                            </li>
-                            <li className="flex items-center gap-3">
-                                <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                <span>Uppsögn hvenær sem er</span>
-                            </li>
-                        </ul>
+                        {/* Monthly Plan */}
+                        <div className="card relative hover:-translate-y-1 transition-transform">
+                            <div className="text-center mb-8 pt-4">
+                                <h3 className="text-2xl font-serif mb-2">Mánaðarlega</h3>
+                                <div className="text-4xl font-bold font-serif mb-2">1.990 kr <span className="text-base font-normal text-grey-mid">/ mánuði</span></div>
+                                <p className="text-sm text-grey-mid mt-2">Uppsögn hvenær sem er</p>
+                            </div>
 
-                        <button
-                            onClick={() => navigate('/signup')}
-                            className="btn btn-primary bg-amber w-full py-4 text-lg"
-                        >
-                            Byrja frítt í 30 daga
-                        </button>
+                            <ul className="space-y-4 mb-8">
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-grey-mid flex-shrink-0" />
+                                    <span className="text-grey-dark">Allir eiginleikar innifaldir</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-grey-mid flex-shrink-0" />
+                                    <span className="text-grey-dark">Ótakmarkaður fjöldi notenda</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-grey-mid flex-shrink-0" />
+                                    <span className="text-grey-dark">30 daga frí prufa</span>
+                                </li>
+                            </ul>
+
+                            <button onClick={() => navigate('/signup')} className="btn btn-secondary w-full py-4 text-lg">
+                                Velja Mánaðaráskrift
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
