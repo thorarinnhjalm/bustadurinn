@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -24,6 +25,7 @@ interface Stats {
 }
 
 export default function SuperAdminPage() {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'overview' | 'houses' | 'users'>('overview');
     const [loading, setLoading] = useState(true);
     const [seeding, setSeeding] = useState(false);
