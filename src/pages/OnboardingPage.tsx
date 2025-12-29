@@ -138,6 +138,11 @@ export default function OnboardingPage() {
                 manager_uid: currentUser.uid, // Creator is the Manager
                 owner_ids: [currentUser.uid], // Start with just the creator
                 seo_slug: houseData.name.toLowerCase().replace(/\s+/g, '-'),
+
+                // Subscription Defaults (14-day trial)
+                subscription_status: 'trial',
+                subscription_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+
                 created_at: serverTimestamp(),
                 updated_at: serverTimestamp()
             });
