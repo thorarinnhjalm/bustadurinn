@@ -104,7 +104,11 @@ export default function SuperAdminPage() {
 
     if (loading) {
         return (
-            <AdminLayout>
+            <AdminLayout
+                activeTab={activeTab}
+                onTabChange={(tab) => setActiveTab(tab as 'overview' | 'houses' | 'users')}
+                onBackClick={() => navigate('/dashboard')}
+            >
                 <div className="flex items-center justify-center h-full">
                     <div className="text-center">
                         <div className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>

@@ -4,27 +4,29 @@
  */
 
 import { type ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
 import {
     Home,
     Users,
     BarChart2,
-    Settings,
     Database,
-    Activity
+    Activity,
+    ArrowLeft
 } from 'lucide-react';
 
 interface AdminLayoutProps {
     children: ReactNode;
+    activeTab?: string;
+    onTabChange?: (tab: string) => void;
+    onBackClick?: () => void;
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export default function AdminLayout({ children, activeTab = 'overview', onTabChange, onBackClick }: AdminLayoutProps) {
     const navigation = [
-        { name: 'Overview', href: '/super-admin', icon: BarChart2, exact: true },
-        { name: 'Houses', href: '/super-admin/houses', icon: Home },
-        { name: 'Users', href: '/super-admin/users', icon: Users },
-        { name: 'Analytics', href: '/super-admin/analytics', icon: Activity },
-        { name: 'System', href: '/super-admin/system', icon: Settings },
+        { name: 'Overview', id: 'overview', icon: BarChart2 },
+        { name: 'Houses', id: 'houses', icon: Home },
+        { name: 'Users', id: 'users', icon: Users },
+        { name: 'Analytics', id: 'analytics', icon: Activity },
+        { name: 'System', id: 'system', icon: Database },
     ];
 
     return (
@@ -37,23 +39,33 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     <p className="text-xs text-stone-400 mt-1">Neðri Hóll Hugmyndahús</p>
                 </div>
 
+                {/* Back Button */}
+                {onBackClick && (
+                    <div className="p-4 border-b border-stone-800">
+                        <button
+                            onClick={onBackClick}
+                            className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors text-sm"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            Back to Dashboard
+                        </button>
+                    </div>
+                )}
+
                 {/* Navigation */}
                 <nav className="flex-1 p-4 space-y-1">
                     {navigation.map((item) => (
-                        <NavLink
-                            key={item.name}
-                            to={item.href}
-                            end={item.exact}
-                            className={({ isActive }) =>
-                                `flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors ${isActive
+                        <button
+                            key={item.id}
+                            onClick={() => onTabChange?.(item.id)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === item.id
                                     ? 'bg-amber text-charcoal'
                                     : 'text-stone-300 hover:bg-stone-800 hover:text-white'
-                                }`
-                            }
+                                }`}
                         >
                             <item.icon className="w-5 h-5" />
                             {item.name}
-                        </NavLink>
+                        </button>
                     ))}
                 </nav>
 
