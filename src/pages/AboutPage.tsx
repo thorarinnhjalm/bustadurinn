@@ -24,18 +24,9 @@ export default function AboutPage() {
                         </p>
 
                         <h3 className="text-2xl font-serif text-charcoal mt-10 mb-4">Hafið samband</h3>
-                        <p className="mb-6">
+                        <p className="mb-8">
                             Við erum stöðugt að bæta kerfið. Ef þú hefur ábendingar eða spurningar, heyrðu endilega í okkur.
                         </p>
-
-                        <div className="mb-8">
-                            <p className="mb-4">
-                                <a href="mailto:hallo@bustadurinn.is" className="text-amber hover:text-amber-dark font-medium underline underline-offset-4">
-                                    hallo@bustadurinn.is
-                                </a>
-                            </p>
-                            <p className="text-sm text-grey-mid">Eða fylltu út formið hér að neðan:</p>
-                        </div>
 
                         {/* Contact Form */}
                         <div className="not-prose my-12">
