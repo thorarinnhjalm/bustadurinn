@@ -327,7 +327,7 @@ export default function OnboardingPage() {
                             <h2 className="mb-4">Allt tilbúið!</h2>
                             <p className="text-xl text-grey-dark mb-8 max-w-md mx-auto">
                                 Stafræni tvíburinn af <strong>{houseData.name || 'sumarhúsinu'}</strong> er
-                                nú tilbúinn. Komdu vel fyrir í ykkur!
+                                nú tilbúinn. Njótið þess að nota kerfið!
                             </p>
                             <button
                                 onClick={() => navigate('/dashboard')}
