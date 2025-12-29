@@ -25,7 +25,7 @@ export default function FeaturesPage() {
         },
         {
             icon: Wifi,
-            title: "Stafrænn Gestaref",
+            title: "Stafrænn Gestaaðgangur",
             description: "Búðu til tímabundinn hlekk fyrir leigjendur eða gesti. Þar sjá þeir Wi-Fi lykilorð, húsreglur og leiðbeiningar, en ekkert annað."
         },
         {
