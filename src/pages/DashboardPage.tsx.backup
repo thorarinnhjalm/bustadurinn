@@ -475,37 +475,6 @@ const UserDashboard = () => {
                 </div>
             </main>
 
-                {/* ROW 2: Shopping List & Logbook */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    {/* SHOPPING LIST */}
-                    <section>
-                        <div className="flex justify-between items-center mb-3 px-1">
-                            <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Vantar</h3>
-                        </div>
-                        <ShoppingList
-                            items={shoppingItems}
-                            onToggle={handleToggleShoppingItem}
-                            onDelete={handleDeleteShoppingItem}
-                            onAdd={handleAddShoppingItem}
-                            currentUserId={currentUser?.uid || ''}
-                        />
-                    </section>
-
-                    {/* INTERNAL LOGBOOK */}
-                    <section>
-                        <div className="flex justify-between items-center mb-3 px-1">
-                            <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Gestapósturinn</h3>
-                        </div>
-                        <InternalLogbook
-                            logs={logs}
-                            currentUserName={currentUser?.name || ''}
-                            onAddLog={handleAddLog}
-                        />
-                    </section>
-
-                </div>
-
             {/* --- MOBILE BOTTOM NAV --- */}
             <div className="md:hidden fixed bottom-0 w-full bg-white border-t border-stone-200 pb-safe z-50 px-6 py-3 flex justify-between items-center text-stone-400">
                 <button onClick={() => navigate('/dashboard')} className="flex flex-col items-center gap-1 text-[#1a1a1a]">
@@ -525,8 +494,8 @@ const UserDashboard = () => {
                     </button>
                 </div>
                 <button onClick={() => navigate('/tasks')} className="flex flex-col items-center gap-1 hover:text-[#1a1a1a]">
-                    <ShoppingCart size={24} />
-                    <span className="text-[10px] font-bold">Vantar</span>
+                    <CheckSquare size={24} />
+                    <span className="text-[10px] font-bold">Verk</span>
                 </button>
                 <button onClick={() => navigate('/settings')} className="flex flex-col items-center gap-1 hover:text-[#1a1a1a]">
                     <Menu size={24} />
