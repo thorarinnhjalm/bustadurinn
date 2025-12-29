@@ -9,7 +9,6 @@ import {
     Users,
     BarChart2,
     Database,
-    Activity,
     ArrowLeft
 } from 'lucide-react';
 
@@ -25,8 +24,6 @@ export default function AdminLayout({ children, activeTab = 'overview', onTabCha
         { name: 'Overview', id: 'overview', icon: BarChart2 },
         { name: 'Houses', id: 'houses', icon: Home },
         { name: 'Users', id: 'users', icon: Users },
-        { name: 'Analytics', id: 'analytics', icon: Activity },
-        { name: 'System', id: 'system', icon: Database },
     ];
 
     return (
@@ -59,8 +56,8 @@ export default function AdminLayout({ children, activeTab = 'overview', onTabCha
                             key={item.id}
                             onClick={() => onTabChange?.(item.id)}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === item.id
-                                    ? 'bg-amber text-charcoal'
-                                    : 'text-stone-300 hover:bg-stone-800 hover:text-white'
+                                ? 'bg-amber text-charcoal'
+                                : 'text-stone-300 hover:bg-stone-800 hover:text-white'
                                 }`}
                         >
                             <item.icon className="w-5 h-5" />
