@@ -8,6 +8,11 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    // Helper function to check if user is super admin
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.email == 'thorarinnhjalmarsson@gmail.com';
+    }
+    
     // Helper function to check if user is manager of the house
     function isHouseManager(houseId) {
       return isAuthenticated() && 
@@ -28,11 +33,15 @@ service cloud.firestore {
     
     match /users/{userId} {
       // Users can read and write their own document
-      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      // Super admin can read and write all user documents
+      allow read, write: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
     }
     
     // Houses Collection
     match /houses/{houseId} {
+      // Super admin has full access
+      allow read, write: if isSuperAdmin();
+      
       // Anyone authenticated can create a house (they become the manager)
       allow create: if isAuthenticated() && 
         request.resource.data.manager_uid == request.auth.uid;
@@ -45,6 +54,9 @@ service cloud.firestore {
     
     // Bookings Collection
     match /bookings/{bookingId} {
+      // Super admin has full access
+      allow read, write: if isSuperAdmin();
+      
       // Members can create bookings for their house
       allow create: if isHouseMember(request.resource.data.house_id);
       
@@ -60,6 +72,9 @@ service cloud.firestore {
     
     // Budget Plans Collection
     match /budget_plans/{planId} {
+      // Super admin has full access
+      allow read, write: if isSuperAdmin();
+      
       // Only manager can create/update budget plans
       allow create: if isHouseManager(request.resource.data.house_id);
       allow update: if isHouseManager(resource.data.house_id);
@@ -73,6 +88,9 @@ service cloud.firestore {
     
     // Finance Entries Collection  
     match /finance_entries/{entryId} {
+      // Super admin has full access
+      allow read, write: if isSuperAdmin();
+      
       // Only manager can create/update/delete finance entries
       allow create: if isHouseManager(request.resource.data.house_id);
       allow update: if isHouseManager(resource.data.house_id);
@@ -84,6 +102,9 @@ service cloud.firestore {
     
     // Tasks Collection
     match /tasks/{taskId} {
+      // Super admin has full access
+      allow read, write: if isSuperAdmin();
+      
       // Members can create tasks
       allow create: if isAuthenticated();
       
