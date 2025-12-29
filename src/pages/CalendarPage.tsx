@@ -11,6 +11,7 @@ import { Plus, X, AlertCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
+import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import type { Booking, BookingType } from '@/types/models';
 import { dateLocales, calendarMessages, bookingTypeLabels, type SupportedLanguage } from '@/utils/i18n';
 import { getIcelandicHolidays, isHoliday, includesMajorHoliday } from '@/utils/icelandicHolidays';
@@ -27,7 +28,7 @@ interface BookingEvent {
 }
 
 export default function CalendarPage() {
-    const currentUser = useAppStore((state) => state.currentUser);
+    const { user: currentUser } = useEffectiveUser();
     const currentHouse = useAppStore((state) => state.currentHouse);
     const houseId = currentHouse?.id || currentUser?.house_ids?.[0];
     const [bookings, setBookings] = useState<Booking[]>([]);

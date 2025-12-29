@@ -12,7 +12,7 @@ import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
-    const { user: currentUser, isImpersonating } = useEffectiveUser();
+    const { user: currentUser } = useEffectiveUser();
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
     const setAuthenticated = useAppStore((state) => state.setAuthenticated);
 

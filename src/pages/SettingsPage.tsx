@@ -19,12 +19,13 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
+import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import type { House, User } from '@/types/models';
 
 type Tab = 'house' | 'members' | 'profile' | 'guests';
 
 export default function SettingsPage() {
-    const currentUser = useAppStore((state) => state.currentUser);
+    const { user: currentUser } = useEffectiveUser();
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
     const [activeTab, setActiveTab] = useState<Tab>('house');
     const [loading, setLoading] = useState(false);
