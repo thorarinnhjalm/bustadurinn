@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -16,6 +16,15 @@ import DataTable from '@/components/DataTable';
 
 import type { House, User } from '@/types/models';
 
+interface ContactSubmission {
+    id: string;
+    name: string;
+    email: string;
+    message: string;
+    created_at: Date;
+    status: 'new' | 'read' | 'replied';
+}
+
 interface Stats {
     totalHouses: number;
     totalUsers: number;
@@ -23,11 +32,12 @@ interface Stats {
     activeTasks: number;
     allHouses: House[];
     allUsers: User[];
+    allContacts: ContactSubmission[];
 }
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'overview' | 'houses' | 'users'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'houses' | 'users' | 'contacts'>('overview');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [seeding, setSeeding] = useState(false);
@@ -40,7 +50,8 @@ export default function SuperAdminPage() {
         totalBookings: 0,
         activeTasks: 0,
         allHouses: [],
-        allUsers: []
+        allUsers: [],
+        allContacts: []
     });
 
     useEffect(() => {
@@ -63,13 +74,22 @@ export default function SuperAdminPage() {
                 const tasksSnap = await getDocs(collection(db, 'tasks'));
                 const activeTasks = tasksSnap.docs.filter(doc => doc.data().status !== 'completed').length;
 
+                // Fetch contact submissions
+                const contactsSnap = await getDocs(collection(db, 'contact_submissions'));
+                const contacts = contactsSnap.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    created_at: doc.data().created_at?.toDate() || new Date()
+                } as ContactSubmission));
+
                 setStats({
                     totalHouses: houses.length,
                     totalUsers: users.length,
                     totalBookings: bookingsSnap.size,
                     activeTasks,
                     allHouses: houses,
-                    allUsers: users
+                    allUsers: users,
+                    allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
                 });
             } catch (error: any) {
                 console.error('Error fetching stats:', error);
@@ -293,6 +313,16 @@ export default function SuperAdminPage() {
                         >
                             <Users className="w-4 h-4 inline mr-2" />
                             Users ({stats.totalUsers})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('contacts')}
+                            className={`pb-3 border-b-2 transition-colors font-medium text-sm ${activeTab === 'contacts'
+                                ? 'border-amber text-charcoal'
+                                : 'border-transparent text-stone-500 hover:text-charcoal'
+                                }`}
+                        >
+                            <Send className="w-4 h-4 inline mr-2" />
+                            Contact ({stats.allContacts.length})
                         </button>
                     </div>
                 </div>
@@ -565,6 +595,57 @@ export default function SuperAdminPage() {
                                     Impersonate
                                 </button>
                             )}
+                        />
+                    </div>
+                )}
+
+                {/* Contacts Tab */}
+                {activeTab === 'contacts' && (
+                    <div>
+                        <h2 className="text-2xl font-serif mb-6">Contact Submissions</h2>
+                        <DataTable
+                            columns={[
+                                { key: 'name', label: 'Name' },
+                                { key: 'email', label: 'Email' },
+                                {
+                                    key: 'message',
+                                    label: 'Message',
+                                    render: (row) => {
+                                        const msg = row.message || '';
+                                        return msg.length > 100 ? msg.substring(0, 100) + '...' : msg;
+                                    }
+                                },
+                                {
+                                    key: 'created_at',
+                                    label: 'Date',
+                                    render: (row) => {
+                                        if (!row.created_at) return '—';
+                                        const date = row.created_at instanceof Date
+                                            ? row.created_at
+                                            : new Date(row.created_at);
+                                        return date.toLocaleDateString('is-IS');
+                                    }
+                                },
+                                {
+                                    key: 'status',
+                                    label: 'Status',
+                                    render: (row) => {
+                                        const status = row.status || 'new';
+                                        const colors = {
+                                            new: 'bg-blue-100 text-blue-700',
+                                            read: 'bg-gray-100 text-gray-700',
+                                            replied: 'bg-green-100 text-green-700'
+                                        };
+                                        return (
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${colors[status as keyof typeof colors]}`}>
+                                                {status}
+                                            </span>
+                                        );
+                                    }
+                                }
+                            ]}
+                            data={stats.allContacts}
+                            searchKeys={['name', 'email', 'message']}
                         />
                     </div>
                 )}

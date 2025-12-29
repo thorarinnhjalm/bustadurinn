@@ -9,7 +9,8 @@ import {
     Users,
     BarChart2,
     Database,
-    ArrowLeft
+    ArrowLeft,
+    Mail
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -24,6 +25,7 @@ export default function AdminLayout({ children, activeTab = 'overview', onTabCha
         { name: 'Overview', id: 'overview', icon: BarChart2 },
         { name: 'Houses', id: 'houses', icon: Home },
         { name: 'Users', id: 'users', icon: Users },
+        { name: 'Contact', id: 'contacts', icon: Mail },
     ];
 
     return (
