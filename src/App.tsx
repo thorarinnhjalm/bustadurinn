@@ -6,7 +6,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { HelmetProvider } from 'react-helmet-async';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { useAppStore } from '@/store/appStore';
 import { ImpersonationProvider } from '@/contexts/ImpersonationContext';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
@@ -103,11 +104,13 @@ function App() {
   const setLoading = useAppStore((state) => state.setLoading);
 
   useEffect(() => {
+    const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
+
     // Listen for auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // User is signed in
-        const user = {
+        // 1. Basic User Info from Auth
+        let user: any = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || '',
           name: firebaseUser.displayName || '',
@@ -115,12 +118,42 @@ function App() {
           house_ids: [],
           created_at: new Date(),
         };
+
+        // 2. Fetch Firestore Profile
+        try {
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userSnap = await getDoc(userDocRef);
+
+          if (userSnap.exists()) {
+            const firestoreData = userSnap.data();
+            user = { ...user, ...firestoreData }; // Merge firestore data (house_ids specifically)
+          }
+        } catch (err) {
+          console.error("Error fetching user profile:", err);
+        }
+
         setCurrentUser(user);
         setAuthenticated(true);
+
+        // 3. Fetch First House (if exists)
+        if (user.house_ids && user.house_ids.length > 0) {
+          try {
+            const houseDocRef = doc(db, 'houses', user.house_ids[0]);
+            const houseSnap = await getDoc(houseDocRef);
+            if (houseSnap.exists()) {
+              const houseData = { id: houseSnap.id, ...houseSnap.data() } as any;
+              setCurrentHouse(houseData);
+            }
+          } catch (e) {
+            console.error("Error fetching house:", e);
+          }
+        }
+
       } else {
         // User is signed out
         setCurrentUser(null);
         setAuthenticated(false);
+        setCurrentHouse(null);
       }
       setLoading(false);
     });
