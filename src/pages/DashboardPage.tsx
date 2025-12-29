@@ -32,8 +32,8 @@ const UserDashboard = () => {
     const [isOccupied, setIsOccupied] = useState(false);
 
     // Mock Data (until backend supported)
-    const weather = { temp: 14, wind: 4, condition: "Skýjað" }; // Weather API integration needed
-    const finances = { balance: 124500, lastAction: "-14.200 kr (Orkusalan)" }; // Finance module needed
+    const weather = { temp: "--", wind: 0, condition: "—" };
+    const finances = { balance: 0, lastAction: "—" };
 
     useEffect(() => {
         if (currentUser && (!currentUser.house_ids || currentUser.house_ids.length === 0)) {
