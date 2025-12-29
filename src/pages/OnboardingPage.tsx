@@ -2,10 +2,10 @@
 // Declare Google Maps types
 declare var google: any;
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, MapPin, Users, CheckCircle, Loader2 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, updateDoc, doc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 
@@ -14,6 +14,7 @@ type OnboardingStep = 'welcome' | 'house' | 'invite' | 'finish';
 export default function OnboardingPage() {
     const navigate = useNavigate();
     const currentUser = useAppStore((state) => state.currentUser);
+    const setCurrentUser = useAppStore((state) => state.setCurrentUser);
     const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -27,9 +28,7 @@ export default function OnboardingPage() {
     const [inviteEmails, setInviteEmails] = useState('');
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [suggestions, setSuggestions] = useState<any[]>([]);
-
-    const autocompleteService = useRef<any>(null);
-    const placesService = useRef<any>(null);
+    const [debounceTimer, setDebounceTimer] = useState<any>(null); // Store timer
 
     const steps = [
         { id: 'welcome', label: 'Velkomin' },
@@ -40,7 +39,7 @@ export default function OnboardingPage() {
 
     const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
-    // Initialize Google Maps API
+    // Initialize Google Maps API Script
     useEffect(() => {
         if (currentStep === 'house' && !scriptLoaded) {
             const loadMaps = async () => {
@@ -52,6 +51,7 @@ export default function OnboardingPage() {
 
                 if (typeof google === 'undefined' || !google.maps) {
                     const script = document.createElement('script');
+                    // Ensure v=weekly to get new features
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async&v=weekly`;
                     script.async = true;
                     script.defer = true;
@@ -66,63 +66,59 @@ export default function OnboardingPage() {
         }
     }, [currentStep, scriptLoaded]);
 
-    // Initialize Services
-    useEffect(() => {
-        if (scriptLoaded && google && google.maps && google.maps.places) {
-            if (!autocompleteService.current) {
-                autocompleteService.current = new google.maps.places.AutocompleteService();
-            }
-            if (!placesService.current) {
-                placesService.current = new google.maps.places.PlacesService(document.createElement('div'));
-            }
-        }
-    }, [scriptLoaded]);
-
     const handleAddressChange = (val: string) => {
         setHouseData(prev => ({ ...prev, address: val }));
 
-        if (val.length > 2 && autocompleteService.current) {
-            try {
-                autocompleteService.current.getPlacePredictions({
-                    input: val,
-                    componentRestrictions: { country: 'is' }
-                }, (predictions: any[], status: any) => {
-                    if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
-                        setSuggestions(predictions);
+        // Debounce Search
+        if (debounceTimer) clearTimeout(debounceTimer);
+
+        if (val.length > 3) {
+            const timer = setTimeout(async () => {
+                if (!scriptLoaded || !google) return;
+
+                try {
+                    // Use modern importLibrary
+                    const { Place } = await google.maps.importLibrary("places");
+
+                    // Use Place.searchByText (New Places API)
+                    // This replaces the deprecated AutocompleteService/PlacesService for new customers
+                    const { places } = await Place.searchByText({
+                        textQuery: val,
+                        fields: ['formattedAddress', 'location'],
+                    });
+
+                    if (places && places.length > 0) {
+                        setSuggestions(places.map((p: any) => ({
+                            place_id: p.id || Math.random(), // id might be missing on some partials? usually there.
+                            description: p.formattedAddress,
+                            location: p.location // This is a LatLng object
+                        })));
                     } else {
                         setSuggestions([]);
                     }
-                });
-            } catch (e) {
-                console.error("Autocomplete error:", e);
-                setSuggestions([]);
-            }
+
+                } catch (e) {
+                    console.error("Search error (New API):", e);
+                    // Fallback or ignore
+                    setSuggestions([]);
+                }
+            }, 800); // 800ms wait to reduce API calls
+            setDebounceTimer(timer);
         } else {
             setSuggestions([]);
         }
     };
 
-    const handleSelectPrediction = (placeId: string, description: string) => {
+    const handleSelectPrediction = (suggestion: any) => {
         setSuggestions([]);
-        setHouseData(prev => ({ ...prev, address: description }));
-
-        if (placesService.current) {
-            placesService.current.getDetails({
-                placeId: placeId,
-                fields: ['geometry', 'formatted_address']
-            }, (place: any, status: any) => {
-                if (status === google.maps.places.PlacesServiceStatus.OK && place && place.geometry) {
-                    setHouseData(prev => ({
-                        ...prev,
-                        address: place.formatted_address || description,
-                        location: {
-                            lat: place.geometry.location.lat(),
-                            lng: place.geometry.location.lng()
-                        }
-                    }));
-                }
-            });
-        }
+        setHouseData(prev => ({
+            ...prev,
+            address: suggestion.description,
+            location: {
+                lat: suggestion.location.lat(),
+                lng: suggestion.location.lng()
+            }
+        }));
     };
 
     const nextStep = () => {
@@ -154,7 +150,8 @@ export default function OnboardingPage() {
         setError('');
 
         try {
-            await addDoc(collection(db, 'houses'), {
+            // 1. Create House
+            const houseRef = await addDoc(collection(db, 'houses'), {
                 name: houseData.name,
                 address: houseData.address,
                 location: houseData.location,
@@ -166,6 +163,18 @@ export default function OnboardingPage() {
                 created_at: serverTimestamp(),
                 updated_at: serverTimestamp()
             });
+
+            // 2. Link to User (CRITICAL for Dashboard)
+            await updateDoc(doc(db, 'users', currentUser.uid), {
+                house_ids: arrayUnion(houseRef.id)
+            });
+
+            // 3. Update Local State (Immediate Reflection)
+            setCurrentUser({
+                ...currentUser,
+                house_ids: [...(currentUser.house_ids || []), houseRef.id]
+            });
+
             nextStep();
         } catch (err: any) {
             console.error('Error creating house:', err);
@@ -273,7 +282,7 @@ export default function OnboardingPage() {
                                             {suggestions.map((suggestion) => (
                                                 <li
                                                     key={suggestion.place_id}
-                                                    onClick={() => handleSelectPrediction(suggestion.place_id, suggestion.description)}
+                                                    onClick={() => handleSelectPrediction(suggestion)}
                                                     className="px-4 py-2 hover:bg-stone-50 cursor-pointer text-sm"
                                                 >
                                                     {suggestion.description}
