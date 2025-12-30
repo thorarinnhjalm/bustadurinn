@@ -6,7 +6,7 @@ export default function FAQPage() {
     const faqs = [
         {
             q: "Hvað kostar þjónustan?",
-            a: "14.900 kr. á ári (ein greiðsla) eða 1.990 kr. á mánuði. Innifalið eru allir eiginleikar, ótakmarkaður fjöldi notenda og gesta. 14 daga prufutími er í boði án skuldbindinga."
+            a: "9.900 kr. á ári (ein greiðsla) eða 1.990 kr. á mánuði. Innifalið eru allir eiginleikar, ótakmarkaður fjöldi notenda og gesta. 30 daga prufutími er í boði án skuldbindinga."
         },
         {
             q: "Get ég sagt upp áskriftinni?",

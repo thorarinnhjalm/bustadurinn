@@ -25,7 +25,7 @@ export default function LandingPage() {
         "operatingSystem": "Web",
         "offers": {
             "@type": "Offer",
-            "price": "1990",
+            "price": "9900",
             "priceCurrency": "ISK"
         },
         "description": "Bókunarkerfi og app fyrir sameiginleg sumarhús."
@@ -178,11 +178,11 @@ export default function LandingPage() {
                             </div>
                             <div className="text-center mb-8 pt-4">
                                 <h3 className="text-2xl font-serif mb-2">Árlega</h3>
-                                <div className="text-4xl font-bold font-serif mb-2">14.900 kr <span className="text-base font-normal text-grey-mid">/ ári</span></div>
+                                <div className="text-4xl font-bold font-serif mb-2">9.900 kr <span className="text-base font-normal text-grey-mid">/ ári</span></div>
                                 <p className="text-sm text-charcoal/80 bg-amber/10 inline-block px-3 py-1 rounded">
-                                    Sparar 38% (8.980 kr)
+                                    Sparar 58% (13.980 kr)
                                 </p>
-                                <p className="text-xs text-grey-mid mt-2">Jafngildir 1.242 kr/mán</p>
+                                <p className="text-xs text-grey-mid mt-2">Jafngildir 825 kr/mán</p>
                             </div>
 
                             <ul className="space-y-4 mb-8">
