@@ -192,7 +192,7 @@ export default function OnboardingPage() {
                 holiday_mode: 'fairness' as const,
                 seo_slug: houseData.name.toLowerCase().replace(/\s+/g, '-'),
                 subscription_status: 'trial',
-                subscription_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+                subscription_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
                 created_at: serverTimestamp(),
                 updated_at: serverTimestamp()
             });
@@ -444,6 +444,20 @@ export default function OnboardingPage() {
                             <p className="text-grey-dark mb-6">
                                 Sendu boð til fjölskyldumeðlima og meðeigenda sem eiga að hafa aðgang að húsinu.
                             </p>
+
+                            <div className="bg-bone border border-stone-200 rounded-lg p-4 mb-6">
+                                <h4 className="font-semibold text-charcoal mb-3 text-sm">Hlutverk í kerfinu</h4>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex gap-2">
+                                        <span className="font-bold text-charcoal min-w-[90px]">Bústaðastjóri:</span>
+                                        <span className="text-grey-dark">Þú (getur breytt stillingum, bætt við eigendum, eytt húsi)</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <span className="font-bold text-charcoal min-w-[90px]">Meðeigendur:</span>
+                                        <span className="text-grey-dark">Geta bókað, skráð útgjöld, bætt við verkefnum og séð allar upplýsingar</span>
+                                    </div>
+                                </div>
+                            </div>
 
                             <div className="bg-amber/10 border border-amber/30 rounded p-4 mb-6">
                                 <p className="text-sm">

@@ -178,18 +178,21 @@ export default function GuestPage() {
 
                     <div className="space-y-4">
                         {/* Door Code */}
-                        {data.access_code && (
-                            <div
-                                onClick={() => copyToClipboard(data.access_code, 'code')}
-                                className="bg-[#1a1a1a] rounded-xl p-4 text-center relative overflow-hidden group cursor-pointer shadow-lg shadow-stone-200"
-                            >
-                                <p className="text-stone-400 text-[10px] uppercase tracking-widest mb-1">Lyklabox / Kóði</p>
-                                <p className="text-white font-mono text-3xl font-bold tracking-[0.2em]">{data.access_code}</p>
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-600 group-hover:text-[#e8b058] transition-colors">
-                                    {copied === 'code' ? <span className="text-xs">✓</span> : <Copy size={16} />}
+                        {(() => {
+                            const accessCode = data.access_instructions?.match(/\d{4,6}/)?.[0];
+                            return accessCode ? (
+                                <div
+                                    onClick={() => copyToClipboard(accessCode, 'code')}
+                                    className="bg-[#1a1a1a] rounded-xl p-4 text-center relative overflow-hidden group cursor-pointer shadow-lg shadow-stone-200"
+                                >
+                                    <p className="text-stone-400 text-[10px] uppercase tracking-widest mb-1">Lyklabox / Kóði</p>
+                                    <p className="text-white font-mono text-3xl font-bold tracking-[0.2em]">{accessCode}</p>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-600 group-hover:text-[#e8b058] transition-colors">
+                                        {copied === 'code' ? <span className="text-xs">✓</span> : <Copy size={16} />}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            ) : null;
+                        })()}
 
                         {/* WiFi */}
                         {(data.wifi_ssid || data.wifi_password) && (

@@ -969,16 +969,21 @@ export default function SettingsPage() {
                                 <div className="bg-white p-6 rounded-lg shadow-sm">
                                     <div className="flex items-center gap-2 mb-6">
                                         <BookOpen className="w-6 h-6 text-amber" />
-                                        <h2 className="text-xl font-serif">Gestabók (Digital Guestbook)</h2>
+                                        <h2 className="text-xl font-serif">Gestahlekki</h2>
                                     </div>
-                                    <p className="text-grey-dark mb-4">
-                                        Þú getur búið til hlekk fyrir leigjendur/gesti til að sjá upplýsingar um bústaðinn (Reglur, WiFi, leiðarlýsingu) án innskráningar.
-                                    </p>
+
+                                    <div className="bg-amber/10 border border-amber/30 rounded-lg p-4 mb-4">
+                                        <h4 className="font-semibold text-charcoal mb-2 text-sm">Hvað er gestahlekkur?</h4>
+                                        <p className="text-sm text-grey-dark">
+                                            Deildu þessum hlekk með leigjendum eða gestum sem þurfa <strong>tímabundinn aðgang</strong> að upplýsingum um húsið (WiFi, hurðarkóði, reglur).
+                                            Þeir þurfa ekki að skrá sig inn eða búa til aðgang.
+                                        </p>
+                                    </div>
 
                                     <div className="bg-bone p-4 rounded-lg flex flex-col gap-4">
                                         {house.guest_token ? (
                                             <div>
-                                                <label className="label text-xs uppercase text-grey-mid">Gestahlekkur</label>
+                                                <label className="label text-xs uppercase text-grey-mid">Gestahlekkur (Virkt)</label>
                                                 <div className="flex gap-2">
                                                     <input
                                                         readOnly
@@ -1010,9 +1015,40 @@ export default function SettingsPage() {
                                                 onClick={() => handleGenerateGuestToken(false)}
                                                 className="btn btn-primary"
                                             >
-                                                Virkja Gestabók
+                                                Búa til gestahlekk
                                             </button>
                                         )}
+                                    </div>
+                                </div>
+
+                                {/* Access Code for Guests */}
+                                <div className="bg-white p-6 rounded-lg shadow-sm">
+                                    <h3 className="text-lg font-medium mb-4">Aðgangskóði fyrir gesti</h3>
+                                    <p className="text-sm text-grey-dark mb-4">
+                                        Ef þú notar lyklakassa eða rafrænar hurðir, skaltu setja inn kóðann hér. Hann birtist sjálfkrafa á gestasíðunni.
+                                    </p>
+                                    <div>
+                                        <label className="label">Hurðarkóði / Lyklakassanúmer</label>
+                                        <input
+                                            type="text"
+                                            className="input font-mono text-xl"
+                                            value={houseForm.access_instructions?.match(/\d{4,6}/)?.[0] || ''}
+                                            onChange={(e) => {
+                                                const code = e.target.value;
+                                                setHouseForm({
+                                                    ...houseForm,
+                                                    access_instructions: code ? `Kóði: ${code}` : ''
+                                                });
+                                            }}
+                                            placeholder="t.d. 1234"
+                                            maxLength={6}
+                                        />
+                                        <p className="text-xs text-grey-mid mt-1">Þetta birtist á aðgangssíðu gesta.</p>
+                                    </div>
+                                    <div className="pt-4">
+                                        <button onClick={handleSaveHouse} className="btn btn-secondary" disabled={loading}>
+                                            Vista kóða
+                                        </button>
                                     </div>
                                 </div>
 
