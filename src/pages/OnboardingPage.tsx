@@ -17,6 +17,7 @@ export default function OnboardingPage() {
     const navigate = useNavigate();
     const currentUser = useAppStore((state) => state.currentUser);
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
+    const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
     const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -44,14 +45,16 @@ export default function OnboardingPage() {
     const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
     useEffect(() => {
-        if (currentUser && currentUser.house_ids && currentUser.house_ids.length > 0) {
+        // Only auto-redirect if they have a house AND are on the very first step
+        // This allows them to stay in the flow after house creation (Step 2 -> 3)
+        if (currentUser && currentUser.house_ids && currentUser.house_ids.length > 0 && currentStep === 'welcome') {
             navigate('/dashboard');
-        } else {
+        } else if (currentStep === 'welcome') {
             // Track visit to onboarding
             analytics.onboardingStep('welcome');
             logFunnelEvent('onboarding_started');
         }
-    }, [currentUser, navigate]);
+    }, [currentUser, navigate, currentStep]);
 
     const logFunnelEvent = async (eventName: string) => {
         if (!currentUser) return;
@@ -220,6 +223,18 @@ export default function OnboardingPage() {
                 updated_at: serverTimestamp()
             });
 
+            const newHouse = {
+                id: houseRef.id,
+                name: houseData.name,
+                address: houseData.address,
+                location: houseData.location,
+                manager_id: currentUser.uid,
+                owner_ids: [currentUser.uid],
+                invite_code: inviteCode,
+                subscription_status: 'trial' as const,
+                subscription_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            };
+
             // Update local state with created house metadata
             setHouseData(prev => ({
                 ...prev,
@@ -236,6 +251,7 @@ export default function OnboardingPage() {
             }, { merge: true });
 
             // 3. Update Local State (Immediate Reflection)
+            setCurrentHouse(newHouse as any);
             setCurrentUser({
                 ...currentUser,
                 house_ids: [...(currentUser.house_ids || []), houseRef.id]
@@ -246,7 +262,7 @@ export default function OnboardingPage() {
                 try {
                     const userName = currentUser.name || currentUser.email?.split('@')[0];
 
-                    await fetch('/api/send-email', {
+                    const res = await fetch('/api/send-email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -255,7 +271,20 @@ export default function OnboardingPage() {
                             variables: { name: userName }
                         })
                     });
-                    console.log('✅ Welcome email sent');
+
+                    if (res.ok) {
+                        console.log('✅ Welcome email sent');
+                    } else {
+                        const text = await res.text();
+                        let errorMsg = res.statusText;
+                        try {
+                            const errorData = JSON.parse(text);
+                            errorMsg = errorData.error || errorMsg;
+                        } catch (e) {
+                            // Not JSON
+                        }
+                        console.error('❌ Failed to send welcome email:', errorMsg);
+                    }
                 } catch (e) {
                     console.error("Failed to send welcome email:", e);
                 }

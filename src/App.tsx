@@ -106,7 +106,7 @@ function App() {
   const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
 
   useEffect(() => {
-    console.log('App Version: 1.1.0 - Weather Fix & Mobile Overhaul');
+    console.log('App Version: 1.2.0 - Funnel & Flow Fixes');
 
     // Listen for auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {

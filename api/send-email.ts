@@ -8,14 +8,26 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Initialize Firebase Admin
 import admin from 'firebase-admin';
 
+// Initialize Firebase Admin
 if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        projectId: 'bustadurinn-is'
-    });
+    try {
+        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+                projectId: serviceAccount.project_id
+            });
+        } else {
+            admin.initializeApp({
+                credential: admin.credential.applicationDefault(),
+                projectId: 'bustadurinn-is'
+            });
+        }
+    } catch (error) {
+        console.error('Firebase Admin initialization error:', error);
+    }
 }
 
 const db = admin.firestore();
@@ -74,18 +86,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const html = replaceVariables(template.html_content, variables || {});
 
         // Send email via Resend
-        const data = await resend.emails.send({
+        if (!process.env.RESEND_API_KEY) {
+            throw new Error('RESEND_API_KEY is not configured on the server');
+        }
+
+        const response = await resend.emails.send({
             from: 'Bústaðurinn.is <onboarding@resend.dev>',
             to: Array.isArray(to) ? to : [to],
             subject,
             html,
         });
 
-        console.log(`✅ Sent email '${templateId}' to ${to}`);
+        if (response.error) {
+            console.error(`❌ Resend API Error for '${templateId}':`, response.error);
+            return res.status(400).json({
+                error: response.error.message,
+                code: (response.error as any).code || 'resend_error'
+            });
+        }
 
-        return res.status(200).json({ success: true, data });
+        console.log(`✅ Successfully sent email '${templateId}' to ${to}. ID: ${response.data?.id}`);
+
+        return res.status(200).json({ success: true, data: response.data });
     } catch (error: any) {
-        console.error('Error sending email:', error);
-        return res.status(500).json({ error: error.message });
+        console.error('❌ Server Error sending email:', error);
+        return res.status(500).json({
+            error: error.message,
+            code: error.code || 'internal_server_error'
+        });
     }
 }

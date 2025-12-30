@@ -216,5 +216,11 @@ service cloud.firestore {
       // System can read templates for sending (via Cloud Functions)
       allow read: if true;
     }
+
+    // Funnel Events Collection
+    match /funnel_events/{eventId} {
+      allow create: if isAuthenticated();
+      allow read: if isSuperAdmin();
+    }
   }
 }
