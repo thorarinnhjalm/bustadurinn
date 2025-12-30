@@ -1207,12 +1207,14 @@ export default function SuperAdminPage() {
                                             <div className="text-sm">
                                                 <span className="font-bold text-stone-700">Subject:</span> {tpl.subject}
                                             </div>
-                                            <div className="text-sm">
-                                                <span className="font-bold text-stone-700">Variables:</span>
-                                                <span className="font-mono text-xs bg-stone-100 px-1 ml-1 rounded text-stone-600">
-                                                    {tpl.variables.join(', ')}
-                                                </span>
-                                            </div>
+                                            {tpl.variables && tpl.variables.length > 0 && (
+                                                <div className="text-sm">
+                                                    <span className="font-bold text-stone-700">Variables:</span>
+                                                    <span className="font-mono text-xs bg-stone-100 px-1 ml-1 rounded text-stone-600">
+                                                        {tpl.variables.join(', ')}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
