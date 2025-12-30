@@ -1,8 +1,13 @@
 /**
  * Seed Email Templates using Firebase Admin SDK
- * Run with: node scripts/seedEmailTemplatesAdmin.js
  * 
- * This uses Admin SDK which bypasses security rules
+ * SETUP (ONE TIME):
+ * 1. Download service account key:
+ *    - Go to https://console.firebase.google.com/project/bustadurinn-is/settings/serviceaccounts/adminsdk
+ *    - Click "Generate new private key"
+ *    - Save as serviceAccountKey.json in project root
+ * 
+ * 2. Run: npm run seed-email-templates
  */
 
 import admin from 'firebase-admin';
@@ -13,18 +18,21 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Initialize Firebase Admin
-// Option 1: Use service account key (download from Firebase Console)
-// const serviceAccount = JSON.parse(readFileSync('./serviceAccountKey.json', 'utf8'));
-// admin.initializeApp({
-//     credential: admin.credential.cert(serviceAccount)
-// });
-
-// Option 2: Use Application Default Credentials (simpler)
-admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    projectId: 'bustadurinn-is'
-});
+// Initialize Firebase Admin with service account
+try {
+    const serviceAccount = JSON.parse(readFileSync('./serviceAccountKey.json', 'utf8'));
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+} catch (error) {
+    console.error('❌ Could not load serviceAccountKey.json');
+    console.error('');
+    console.error('Please download it from:');
+    console.error('https://console.firebase.google.com/project/bustadurinn-is/settings/serviceaccounts/adminsdk');
+    console.error('');
+    console.error('Click "Generate new private key" and save as serviceAccountKey.json in project root');
+    process.exit(1);
+}
 
 const db = admin.firestore();
 

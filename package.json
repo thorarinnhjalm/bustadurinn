@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "process-hms": "node scripts/process-hms.cjs",
-    "seed-email-templates": "node scripts/seedEmailTemplates.js"
+    "seed-email-templates": "node scripts/seedEmailTemplatesAdmin.js"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
