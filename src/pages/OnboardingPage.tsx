@@ -9,6 +9,7 @@ import { collection, addDoc, serverTimestamp, setDoc, doc, arrayUnion } from 'fi
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
+import { analytics } from '@/utils/analytics';
 
 type OnboardingStep = 'welcome' | 'house' | 'invite' | 'finish';
 
@@ -42,12 +43,29 @@ export default function OnboardingPage() {
 
     const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
-    // Redirect if already has a house
     useEffect(() => {
         if (currentUser && currentUser.house_ids && currentUser.house_ids.length > 0) {
             navigate('/dashboard');
+        } else {
+            // Track visit to onboarding
+            analytics.onboardingStep('welcome');
+            logFunnelEvent('onboarding_started');
         }
     }, [currentUser, navigate]);
+
+    const logFunnelEvent = async (eventName: string) => {
+        if (!currentUser) return;
+        try {
+            await addDoc(collection(db, 'funnel_events'), {
+                uid: currentUser.uid,
+                event_name: eventName,
+                timestamp: serverTimestamp(),
+                house_id: houseData.id || null
+            });
+        } catch (e) {
+            console.error('Funnel log error:', e);
+        }
+    };
 
     // Initialize Google Maps API Script
     useEffect(() => {
@@ -154,7 +172,12 @@ export default function OnboardingPage() {
     const nextStep = () => {
         const nextIndex = currentStepIndex + 1;
         if (nextIndex < steps.length) {
-            setCurrentStep(steps[nextIndex].id as OnboardingStep);
+            const nextStepId = steps[nextIndex].id;
+            setCurrentStep(nextStepId as OnboardingStep);
+
+            // Track funnel
+            analytics.onboardingStep(nextStepId);
+            logFunnelEvent(`step_${nextStepId}`);
         }
     };
 
@@ -238,6 +261,8 @@ export default function OnboardingPage() {
                 }
             })();
 
+            analytics.onboardingStep('invite');
+            logFunnelEvent('house_created');
             nextStep();
         } catch (err: any) {
             console.error('Error creating house:', err);
@@ -498,7 +523,11 @@ export default function OnboardingPage() {
                                 nú tilbúinn. Njótið þess að nota kerfið!
                             </p>
                             <button
-                                onClick={() => navigate('/dashboard')}
+                                onClick={() => {
+                                    analytics.onboardingCompleted();
+                                    logFunnelEvent('onboarding_completed');
+                                    navigate('/dashboard');
+                                }}
                                 className="btn btn-primary"
                             >
                                 Fara á stjórnborð

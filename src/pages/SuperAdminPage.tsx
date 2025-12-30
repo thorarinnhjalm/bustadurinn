@@ -721,7 +721,7 @@ export default function SuperAdminPage() {
                         !demoHouseNames.includes(h.name || '') &&
                         (h as any).subscription_status === 'active'
                     );
-                    const estimatedMRR = paidHouses.length * 1990; // 1,990 ISK per house/month
+                    const estimatedMRR = paidHouses.length * 2490; // 2,490 ISK per house/month
 
                     return (
                         <div className="space-y-8">
@@ -812,6 +812,25 @@ export default function SuperAdminPage() {
                                     label: 'Staðsetning',
                                     sortable: true,
                                     render: (row) => row.address || '—'
+                                },
+                                {
+                                    key: 'days_left',
+                                    label: 'Dagar eftir',
+                                    render: (row) => {
+                                        if (row.subscription_status === 'free') return <span className="text-green-600 font-bold uppercase text-[10px]">Lifetime</span>;
+                                        if (row.subscription_status === 'active') return <span className="text-blue-600 font-bold uppercase text-[10px]">Subscribed</span>;
+
+                                        if (!row.subscription_end) return <span className="text-stone-400">—</span>;
+
+                                        const now = new Date();
+                                        const endDate = (row.subscription_end as any).toDate ? (row.subscription_end as any).toDate() : new Date(row.subscription_end);
+                                        const diffTime = endDate.getTime() - now.getTime();
+                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                        if (diffDays <= 0) return <span className="text-red-600 font-bold">Expired</span>;
+                                        if (diffDays <= 3) return <span className="text-amber-600 font-bold">{diffDays} dagar!</span>;
+                                        return <span className="text-stone-600">{diffDays} dagar</span>;
+                                    }
                                 },
                                 {
                                     key: 'owner_ids',

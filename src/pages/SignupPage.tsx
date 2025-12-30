@@ -8,6 +8,8 @@ import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from '
 import { auth, googleProvider, db } from '@/lib/firebase';
 import { UserPlus } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { analytics } from '@/utils/analytics';
+import { useEffect } from 'react';
 
 import { useSearchParams } from 'react-router-dom';
 
@@ -23,6 +25,10 @@ export default function SignupPage() {
     });
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        analytics.signupStarted();
+    }, []);
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,6 +68,8 @@ export default function SignupPage() {
                 created_at: serverTimestamp(),
                 last_login: serverTimestamp()
             });
+
+            analytics.signupCompleted('email');
 
             if (returnUrl) {
                 navigate(returnUrl);
@@ -111,6 +119,7 @@ export default function SignupPage() {
                     last_login: serverTimestamp()
                 }, { merge: true });
 
+                analytics.signupCompleted('google');
                 if (returnUrl) {
                     navigate(returnUrl);
                 } else {
@@ -131,7 +140,7 @@ export default function SignupPage() {
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-serif mb-2">Bústaðurinn.is</h1>
                     <p className="text-grey-mid">Búa til aðgang</p>
-                    <div className="badge mt-4">Frítt í 14 daga</div>
+                    <div className="badge mt-4">Frítt í 30 daga</div>
                 </div>
 
                 <div className="card">

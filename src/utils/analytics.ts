@@ -37,6 +37,13 @@ export const analytics = {
     pricingViewed: () => trackEvent('pricing_viewed'),
     sandboxAccessed: () => trackEvent('sandbox_accessed'),
 
+    // Onboarding Funnel
+    onboardingStep: (step: string) => trackEvent('onboarding_step', { step_name: step }),
+    onboardingCompleted: () => {
+        trackEvent('onboarding_completed');
+        trackEvent('trial_started'); // High-level conversion
+    },
+
     // Conversion
     trialStarted: () => trackEvent('trial_started'),
     subscribed: (plan: 'monthly' | 'annual') => trackEvent('subscribe', { plan }),
