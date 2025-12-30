@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Home, Users, User as UserIcon, Save, Shield, Wifi, AlertTriangle, BookOpen, LogOut, Edit2, X, Upload, Image as ImageIcon } from 'lucide-react';
+import { Home, Users, User as UserIcon, Save, Shield, Wifi, AlertTriangle, BookOpen, LogOut, Edit2, X, Upload, Image as ImageIcon, Heart } from 'lucide-react';
 import ImageCropper from '@/components/ImageCropper';
 import {
     doc,
@@ -30,8 +30,10 @@ import type { House, User } from '@/types/models';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { MapPin, CheckCircle } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
+import GuestbookViewer from '@/components/GuestbookViewer';
 
-type Tab = 'house' | 'members' | 'profile' | 'guests';
+type Tab = 'house' | 'members' | 'profile' | 'guests' | 'guestbook';
+
 
 export default function SettingsPage() {
     const navigate = useNavigate();
@@ -502,7 +504,18 @@ export default function SettingsPage() {
                                     }`}
                             >
                                 <BookOpen className="w-5 h-5" />
-                                <span>Gestabók (Renters)</span>
+                                <span>Gestaupplýsingar</span>
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab('guestbook')}
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'guestbook'
+                                    ? 'bg-charcoal text-white'
+                                    : 'text-grey-dark hover:bg-bone'
+                                    }`}
+                            >
+                                <Heart className="w-5 h-5" />
+                                <span>Gestabók (Journal)</span>
                             </button>
 
                             <button
@@ -515,6 +528,7 @@ export default function SettingsPage() {
                                 <UserIcon className="w-5 h-5" />
                                 <span>Mínar stillingar</span>
                             </button>
+
 
                             <button
                                 onClick={handleLogout}
@@ -1126,6 +1140,23 @@ export default function SettingsPage() {
                                             </button>
                                         </div>
                                     </form>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB: GUESTBOOK */}
+                        {activeTab === 'guestbook' && house && (
+                            <div className="space-y-6">
+                                <div className="bg-white p-6 rounded-lg shadow-sm">
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <Heart className="w-6 h-6 text-amber" />
+                                        <h2 className="text-xl font-serif">Gestabók (Digital Journal)</h2>
+                                    </div>
+                                    <p className="text-grey-dark mb-6">
+                                        Hér geta gestir og fjölskyldumeðlimir skrifað minningar og upplifanir af dvöl sinni í húsinu.
+                                        Fagurt skjalasafn til að líta til baka.
+                                    </p>
+                                    <GuestbookViewer houseId={house.id} />
                                 </div>
                             </div>
                         )}

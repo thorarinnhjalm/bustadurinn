@@ -257,15 +257,59 @@ export default function GuestPage() {
 
                 {/* GUESTBOOK CTA */}
                 <div className="pt-4 pb-8">
-                    <div className="bg-[#e8b058]/10 rounded-xl p-6 text-center border border-[#e8b058]/30">
+                    <div className="bg-[#e8b058]/10 rounded-xl p-6 border border-[#e8b058]/30">
                         <div className="flex justify-center mb-3">
                             <Heart className="fill-[#e8b058] text-[#e8b058]" size={32} />
                         </div>
-                        <h3 className="font-serif text-lg font-bold text-[#1a1a1a] mb-2">Takk fyrir komuna!</h3>
-                        <p className="text-sm text-stone-600 mb-4">Við vonum að þið hafið haft það notalegt. Endilega skrifaðu í gestabókina okkar.</p>
-                        <button className="bg-[#1a1a1a] text-white w-full py-3 rounded-lg font-bold text-sm hover:bg-[#333] transition-colors">
-                            Skrifa í gestabók
-                        </button>
+                        <h3 className="font-serif text-lg font-bold text-[#1a1a1a] mb-2 text-center">Skrifaðu í gestabókina</h3>
+                        <p className="text-sm text-stone-600 mb-4 text-center">
+                            Deildu minningum og upplifun þinni af dvölinni
+                        </p>
+
+                        <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            const formData = new FormData(e.currentTarget);
+                            const author = formData.get('author') as string;
+                            const message = formData.get('message') as string;
+
+                            if (!author || !message) return;
+
+                            try {
+                                const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
+                                const { db } = await import('@/lib/firebase');
+
+                                await addDoc(collection(db, 'guestbook'), {
+                                    house_id: data.houseId,
+                                    author,
+                                    message,
+                                    created_at: serverTimestamp()
+                                });
+
+                                alert('Takk fyrir að skrifa í gestabókina! 🙏');
+                                e.currentTarget.reset();
+                            } catch (error) {
+                                console.error('Error saving guestbook entry:', error);
+                                alert('Villa kom upp. Reyndu aftur.');
+                            }
+                        }} className="space-y-3">
+                            <input
+                                type="text"
+                                name="author"
+                                placeholder="Nafn þitt"
+                                required
+                                className="w-full px-4 py-2 rounded-lg border border-stone-200 focus:border-[#e8b058] focus:outline-none text-sm"
+                            />
+                            <textarea
+                                name="message"
+                                placeholder="Skrifaðu hér..."
+                                required
+                                rows={4}
+                                className="w-full px-4 py-2 rounded-lg border border-stone-200 focus:border-[#e8b058] focus:outline-none text-sm resize-none"
+                            />
+                            <button type="submit" className="bg-[#1a1a1a] text-white w-full py-3 rounded-lg font-bold text-sm hover:bg-[#333] transition-colors">
+                                Senda inn
+                            </button>
+                        </form>
                     </div>
                 </div>
 

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
-import { Home, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Home, Loader2, CheckCircle, AlertTriangle, X } from 'lucide-react';
 import type { House } from '@/types/models';
 
 export default function JoinPage() {
@@ -162,8 +162,30 @@ export default function JoinPage() {
                 <h1 className="text-2xl font-serif mb-2">{house?.name}</h1>
                 <p className="text-grey-mid mb-2">{house?.address}</p>
 
-                <div className="my-8 border-t border-b border-bone py-6">
+                <div className="my-8 border-t border-b border-bone py-6 space-y-4">
                     <p className="text-sm text-charcoal font-medium">Þú ert að ganga í húsfélagið</p>
+
+                    <div className="bg-bone border border-stone-200 rounded-lg p-4 text-left">
+                        <h4 className="font-semibold text-charcoal mb-3 text-sm">Sem meðeigandi getur þú:</h4>
+                        <ul className="space-y-2 text-sm text-grey-dark">
+                            <li className="flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                <span>Bókað helgar og dvalir</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                <span>Skráð útgjöld og séð fjármál</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                <span>Bætt við verkefnum og listum</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <X className="w-4 h-4 text-stone-300 flex-shrink-0" />
+                                <span className="text-stone-400">Breytt stillingum eða eytt húsi</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
                 {status === 'joined' ? (
