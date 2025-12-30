@@ -14,8 +14,22 @@
    ============================================================================= */
 
 @layer base {
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    @apply overflow-x-hidden;
+  }
+
   body {
-    @apply font-sans text-charcoal bg-bone;
+    @apply font-sans text-charcoal bg-bone overflow-x-hidden;
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
   }
 
   h1,
