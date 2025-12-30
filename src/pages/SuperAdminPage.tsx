@@ -55,6 +55,7 @@ export default function SuperAdminPage() {
     const [seeding, setSeeding] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const { startImpersonation } = useImpersonation();
+    const currentUser = useAppStore((state) => state.currentUser);
 
     const [newCoupon, setNewCoupon] = useState({
         code: '',
@@ -368,8 +369,40 @@ export default function SuperAdminPage() {
     };
 
     const handleSendTestEmail = async (tpl: EmailTemplate) => {
-        // Placeholder for test functionality
-        alert(`Test feature to send "${tpl.subject}" to yourself coming soon.`);
+        if (!currentUser?.email) return;
+
+        const confirmSend = confirm(`Senda prufupóst ("${tpl.subject}") á ${currentUser.email}?`);
+        if (!confirmSend) return;
+
+        setActionLoading(`test-email-${tpl.id}`);
+        try {
+            const res = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templateId: tpl.id,
+                    to: currentUser.email,
+                    variables: {
+                        name: currentUser.name || 'Prófunarnotandi',
+                        houseName: 'Sýnishornsbústaður',
+                        inviteLink: 'https://bustadurinn.is/join?test=1',
+                        expiryDate: '15. janúar 2025'
+                    }
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert(`✅ Prufupóstur sendur! Athugaðu inboxið þitt (${currentUser.email}).\n\nResend ID: ${data.data?.id || 'N/A'}`);
+            } else {
+                throw new Error(data.error || 'Ekki tókst að senda póst');
+            }
+        } catch (error: any) {
+            console.error('Test email error:', error);
+            alert(`❌ Villa: ${error.message}`);
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     // Impersonate user
