@@ -135,6 +135,13 @@ export default function SuperAdminPage() {
         fetchStats();
     }, []);
 
+    // Fetch email templates when emails tab is active
+    useEffect(() => {
+        if (activeTab === 'emails') {
+            fetchTemplates();
+        }
+    }, [activeTab]);
+
     // Seed demo data
     const handleSeedDemo = async () => {
         if (!confirm('Create demo house with 3 users, bookings, tasks, and finance data?')) {
