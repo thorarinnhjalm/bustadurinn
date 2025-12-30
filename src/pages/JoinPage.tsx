@@ -170,19 +170,19 @@ export default function JoinPage() {
                         <ul className="space-y-2 text-sm text-grey-dark">
                             <li className="flex items-center gap-2">
                                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Bókað helgar og dvalir</span>
+                                <span>Bóka helgar og dvalir</span>
                             </li>
                             <li className="flex items-center gap-2">
                                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Skráð útgjöld og séð fjármál</span>
+                                <span>Skrá útgjöld og sjá fjármál</span>
                             </li>
                             <li className="flex items-center gap-2">
                                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                <span>Bætt við verkefnum og listum</span>
+                                <span>Bæta við verkefnum og listum</span>
                             </li>
                             <li className="flex items-center gap-2">
                                 <X className="w-4 h-4 text-stone-300 flex-shrink-0" />
-                                <span className="text-stone-400">Breytt stillingum eða eytt húsi</span>
+                                <span className="text-stone-400">Breyta stillingum eða eyða húsi</span>
                             </li>
                         </ul>
                     </div>

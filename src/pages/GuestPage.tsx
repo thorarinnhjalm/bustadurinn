@@ -263,7 +263,7 @@ export default function GuestPage() {
                         </div>
                         <h3 className="font-serif text-lg font-bold text-[#1a1a1a] mb-2 text-center">Skrifaðu í gestabókina</h3>
                         <p className="text-sm text-stone-600 mb-4 text-center">
-                            Deildu minningum og upplifun þinni af dvölinni
+                            Deildu hugsunum og minningum frá dvöl þinni
                         </p>
 
                         <form onSubmit={async (e) => {
