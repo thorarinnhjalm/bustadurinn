@@ -1268,7 +1268,7 @@ export default function SuperAdminPage() {
                                         </div>
 
                                         <div className="bg-stone-100 p-4 rounded text-xs">
-                                            <strong>Available Variables:</strong> {editingTemplate.variables.map(v => `{${v}}`).join(', ')}
+                                            <strong>Available Variables:</strong> {editingTemplate.variables?.map(v => `{${v}}`).join(', ') || 'None'}
                                         </div>
                                     </div>
 
