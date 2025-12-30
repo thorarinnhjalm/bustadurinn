@@ -77,6 +77,17 @@ export default function SuperAdminPage() {
         allCoupons: []
     });
 
+    // Email Templates Logic - Define BEFORE useEffect
+    const fetchTemplates = async () => {
+        try {
+            const snap = await getDocs(collection(db, 'email_templates'));
+            const list = snap.docs.map(d => ({ id: d.id, ...d.data() })) as EmailTemplate[];
+            setTemplates(list);
+        } catch (e) {
+            console.error("Fetch templates error:", e);
+        }
+    };
+
     useEffect(() => {
         const fetchStats = async () => {
             try {
@@ -293,17 +304,6 @@ export default function SuperAdminPage() {
             setPaydayStatus({ success: false, message: err.message });
         } finally {
             setActionLoading(null);
-        }
-    };
-
-    // Email Templates Logic
-    const fetchTemplates = async () => {
-        try {
-            const snap = await getDocs(collection(db, 'email_templates'));
-            const list = snap.docs.map(d => ({ id: d.id, ...d.data() })) as EmailTemplate[];
-            setTemplates(list);
-        } catch (e) {
-            console.error("Fetch templates error:", e);
         }
     };
 
