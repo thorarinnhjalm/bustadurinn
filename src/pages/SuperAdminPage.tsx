@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2 } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -144,6 +144,7 @@ export default function SuperAdminPage() {
             }
         };
 
+        console.log('📊 SuperAdmin Version: 1.2.0 - Email Service Active');
         fetchStats();
     }, []);
 
@@ -1247,12 +1248,26 @@ export default function SuperAdminPage() {
                                                 </div>
                                                 <p className="text-sm text-stone-500 mt-1">{tpl.description}</p>
                                             </div>
-                                            <button
-                                                onClick={() => setEditingTemplate(tpl)}
-                                                className="btn btn-secondary btn-sm"
-                                            >
-                                                Edit
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleSendTestEmail(tpl)}
+                                                    disabled={actionLoading === `test-email-${tpl.id}`}
+                                                    className="btn btn-ghost btn-sm text-stone-500 hover:text-amber border border-stone-200"
+                                                    title="Senda prufupóst á sjálfan þig"
+                                                >
+                                                    {actionLoading === `test-email-${tpl.id}` ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Send className="w-4 h-4" />
+                                                    )}
+                                                </button>
+                                                <button
+                                                    onClick={() => setEditingTemplate(tpl)}
+                                                    className="btn btn-secondary btn-sm"
+                                                >
+                                                    Edit
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2 mb-4">
@@ -1327,10 +1342,15 @@ export default function SuperAdminPage() {
                                     <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-between items-center">
                                         <button
                                             onClick={() => handleSendTestEmail(editingTemplate)}
-                                            disabled={actionLoading === 'sending-test'}
-                                            className="btn btn-ghost text-stone-600"
+                                            disabled={actionLoading === `test-email-${editingTemplate.id}`}
+                                            className="btn btn-ghost text-amber hover:bg-amber/5 font-bold flex items-center gap-2"
                                         >
-                                            {actionLoading === 'sending-test' ? 'Sending...' : 'Send Test to Me'}
+                                            {actionLoading === `test-email-${editingTemplate.id}` ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Send className="w-4 h-4" />
+                                            )}
+                                            {actionLoading === `test-email-${editingTemplate.id}` ? 'Sending...' : 'Send Test to Me'}
                                         </button>
                                         <div className="flex gap-3">
                                             <button onClick={() => setEditingTemplate(null)} className="btn btn-ghost">Cancel</button>
