@@ -5,7 +5,7 @@ declare var google: any;
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, MapPin, Users, CheckCircle, Loader2 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, setDoc, getDoc, doc, arrayUnion } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, setDoc, doc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
@@ -222,26 +222,17 @@ export default function OnboardingPage() {
             (async () => {
                 try {
                     const userName = currentUser.name || currentUser.email?.split('@')[0];
-                    let payload: any = { email: currentUser.email, name: userName };
 
-                    try {
-                        const tplSnap = await getDoc(doc(db, 'email_templates', 'welcome'));
-                        if (tplSnap.exists()) {
-                            const tpl = tplSnap.data();
-                            if (tpl.active) {
-                                payload.subject = tpl.subject;
-                                payload.html = tpl.html_content.replace('{name}', userName);
-                            }
-                        }
-                    } catch (err) {
-                        console.warn('Failed to fetch email template, using default.');
-                    }
-
-                    await fetch('/api/send-welcome', {
+                    await fetch('/api/send-email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+                        body: JSON.stringify({
+                            templateId: 'welcome',
+                            to: currentUser.email,
+                            variables: { name: userName }
+                        })
                     });
+                    console.log('✅ Welcome email sent');
                 } catch (e) {
                     console.error("Failed to send welcome email:", e);
                 }
