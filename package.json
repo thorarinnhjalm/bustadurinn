@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "process-hms": "node scripts/process-hms.cjs"
+    "process-hms": "node scripts/process-hms.cjs",
+    "seed-email-templates": "tsx scripts/seedEmailTemplates.ts"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
