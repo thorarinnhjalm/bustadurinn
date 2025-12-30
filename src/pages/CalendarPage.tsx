@@ -360,19 +360,19 @@ export default function CalendarPage() {
 
             {/* Calendar */}
             <div className="container mx-auto px-4 py-4 md:px-6 md:py-8 pb-24 md:pb-8">
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="bg-white rounded-lg shadow-sm p-2 md:p-6">
                     <BigCalendar
                         localizer={localizer}
                         events={events}
                         startAccessor="start"
                         endAccessor="end"
-                        className="h-[500px] md:h-[700px]"
+                        className="h-[600px] md:h-[700px]"
                         onSelectSlot={handleSelectSlot}
                         onSelectEvent={handleSelectEvent}
                         selectable
                         popup
-                        views={['month', 'week', 'day']}
-                        defaultView="month"
+                        views={['month', 'week', 'day', 'agenda']}
+                        defaultView={window.innerWidth < 768 ? 'agenda' : 'month'}
                         messages={calendarMessages[language]}
                         dayPropGetter={dayPropGetter}
                         eventPropGetter={(event: BookingEvent) => ({
@@ -384,9 +384,13 @@ export default function CalendarPage() {
                                 opacity: 0.8,
                                 color: 'white',
                                 border: '0px',
-                                display: 'block'
+                                display: 'block',
+                                padding: '2px 5px',
+                                fontSize: window.innerWidth < 768 ? '12px' : '14px'
                             }
                         })}
+                        step={60}
+                        showMultiDayTimes
                     />
                 </div>
 

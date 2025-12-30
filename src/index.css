@@ -375,3 +375,49 @@
     transform: scale(0.99);
   }
 }
+/* React Big Calendar - Mobile Optimizations */
+@media (max-width: 768px) {
+  .rbc-calendar {
+    font-size: 14px;
+  }
+
+  .rbc-header {
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+
+  .rbc-date-cell {
+    padding: 4px;
+    min-height: 50px;
+  }
+
+  .rbc-event {
+    padding: 2px 4px;
+    font-size: 11px;
+    min-height: 30px;
+  }
+
+  .rbc-toolbar button {
+    padding: 6px 12px;
+    font-size: 13px;
+    min-height: 44px;
+  }
+
+  /* Agenda view - better for mobile */
+  .rbc-agenda-view {
+    font-size: 14px;
+  }
+
+  .rbc-agenda-table {
+    width: 100%;
+  }
+
+  .rbc-agenda-date-cell,
+  .rbc-agenda-time-cell {
+    padding: 8px 4px;
+  }
+
+  .rbc-agenda-event-cell {
+    padding: 8px;
+  }
+}
