@@ -50,6 +50,7 @@ export default function SuperAdminPage() {
     const [activeTab, setActiveTab] = useState<'overview' | 'houses' | 'users' | 'contacts' | 'coupons' | 'integrations' | 'emails'>('overview');
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
+    const [editingHouse, setEditingHouse] = useState<House | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [seeding, setSeeding] = useState(false);
@@ -304,6 +305,30 @@ export default function SuperAdminPage() {
             }
         } catch (err: any) {
             setPaydayStatus({ success: false, message: err.message });
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleUpdateHouse = async (houseData: House) => {
+        if (!houseData.id) return;
+        setActionLoading('updating-house');
+        try {
+            await updateDoc(doc(db, 'houses', houseData.id), {
+                name: houseData.name,
+                address: houseData.address,
+                manager_id: houseData.manager_id,
+                subscription_status: houseData.subscription_status
+            });
+            setStats(prev => ({
+                ...prev,
+                allHouses: prev.allHouses.map(h => h.id === houseData.id ? houseData : h)
+            }));
+            setEditingHouse(null);
+            alert('Hús uppfært!');
+        } catch (e: any) {
+            console.error(e);
+            alert('Villa við að uppfæra hús: ' + e.message);
         } finally {
             setActionLoading(null);
         }
@@ -924,7 +949,11 @@ export default function SuperAdminPage() {
                                     >
                                         {row.subscription_status === 'free' ? 'Afturkalla' : 'Veita frítt'}
                                     </button>
-                                    <button className="p-1 hover:bg-stone-100 rounded" title="Breyta">
+                                    <button
+                                        onClick={() => setEditingHouse(row)}
+                                        className="p-1 hover:bg-stone-100 rounded"
+                                        title="Breyta"
+                                    >
                                         <Edit className="w-4 h-4 text-stone-500" />
                                     </button>
                                     <button
@@ -1374,6 +1403,72 @@ export default function SuperAdminPage() {
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Edit House Modal */}
+                {editingHouse && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+                            <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-stone-50 rounded-t-lg">
+                                <h3 className="font-bold text-xl">Breyta húsi</h3>
+                                <button onClick={() => setEditingHouse(null)} className="text-stone-400 hover:text-stone-600">
+                                    <XCircle className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="text-xs font-bold text-stone-500 uppercase">Nafn húss</label>
+                                    <input
+                                        type="text"
+                                        className="input mt-1"
+                                        value={editingHouse.name}
+                                        onChange={e => setEditingHouse({ ...editingHouse, name: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-stone-500 uppercase">Heimilisfang</label>
+                                    <input
+                                        type="text"
+                                        className="input mt-1"
+                                        value={editingHouse.address || ''}
+                                        onChange={e => setEditingHouse({ ...editingHouse, address: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-stone-500 uppercase">Stjórnandi (UID)</label>
+                                    <input
+                                        type="text"
+                                        className="input mt-1 font-mono text-xs"
+                                        value={editingHouse.manager_id}
+                                        onChange={e => setEditingHouse({ ...editingHouse, manager_id: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-stone-500 uppercase">Áskriftar staða</label>
+                                    <select
+                                        className="input mt-1"
+                                        value={editingHouse.subscription_status || 'trial'}
+                                        onChange={e => setEditingHouse({ ...editingHouse, subscription_status: e.target.value as any })}
+                                    >
+                                        <option value="trial">Trial</option>
+                                        <option value="active">Active</option>
+                                        <option value="free">Free (Lifetime)</option>
+                                        <option value="expired">Expired</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-end gap-3">
+                                <button onClick={() => setEditingHouse(null)} className="btn btn-ghost">Hætta við</button>
+                                <button
+                                    onClick={() => handleUpdateHouse(editingHouse)}
+                                    className="btn btn-primary"
+                                    disabled={actionLoading === 'updating-house'}
+                                >
+                                    {actionLoading === 'updating-house' ? 'Vistar...' : 'Vista breytingar'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

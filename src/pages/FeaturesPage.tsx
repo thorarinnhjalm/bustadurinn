@@ -1,5 +1,5 @@
 import MarketingLayout from '@/components/MarketingLayout';
-import { Calendar, User, Wallet, Wifi, Bell, Shield, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Calendar, User, Wallet, Wifi, Bell, Shield, CheckCircle2, ArrowRight, Home } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 
@@ -9,7 +9,7 @@ export default function FeaturesPage() {
             icon: Calendar,
             title: "Bókunardagatal",
             shortDesc: "Einfalt og skýrt dagatal sem sýnir hver á hvaða helgi.",
-            description: "Bókunardagatalið okkar er hannað til að gera stjórnun sumarhússins einfalda og skjóta. Sjáðu í einu augna því hver hefur bókað og hvenær. Dagatalið sýnir alla meðeigendur með mismunandi litum, svo að allir sjá strax hverjir eru búnir að taka hvaða helgar. Kerfið leyfir bókanir allt að 12 mánuði fram í tímann, sem er tilvalið fyrir langtímaáætlanir og hátíðarhelgar eins og jól og páska.",
+            description: "Bókunardagatalið okkar er hannað til að gera stjórnun sumarhússins einfalda og skjóta. Sjáðu við fyrstu sýn hver hefur bókað og hvenær. Dagatalið sýnir alla meðeigendur með mismunandi litum, svo að allir sjá strax hverjir eru búnir að taka hvaða helgar. Kerfið leyfir bókanir allt að 12 mánuði fram í tímann, sem er tilvalið fyrir langtímaáætlanir og hátíðarhelgar eins og jól og páska.",
             benefits: [
                 "Sjáðu allar bókanir í einu yfirliti",
                 "Litakóðaðar bókanir eftir meðeiganda",
@@ -20,7 +20,8 @@ export default function FeaturesPage() {
                 "Skipuleggðu fjölskylduverur fram í tímann",
                 "Forðastu árekstra við bókanir annarra",
                 "Sjáðu nýtingarhlutfall hússins yfir árið"
-            ]
+            ],
+            imageUrl: "/screenshots/calendar.png"
         },
         {
             icon: Shield,
@@ -37,7 +38,8 @@ export default function FeaturesPage() {
                 "Koma í veg fyrir að einn taki allar góðu helgarnar",
                 "Tryggja sanngjarna skiptingu yfir árið",
                 "Sýna fram á gagnsæi í meðeigendahópi"
-            ]
+            ],
+            imageUrl: "/screenshots/calendar.png"
         },
         {
             icon: Wallet,
@@ -54,7 +56,8 @@ export default function FeaturesPage() {
                 "Halda utan um rafmagnsreikninga og fasteignagjöld",
                 "Skipuleggja stórar framkvæmdir (t.d. málun, þakviðgerð)",
                 "Deila kostnaði sanngjarnt á alla meðeigendur"
-            ]
+            ],
+            imageUrl: "/screenshots/finance.png"
         },
         {
             icon: User,
@@ -71,7 +74,8 @@ export default function FeaturesPage() {
                 "Bústaðastjóri sér um stillingar og viðhald",
                 "Meðeigendur bóka og deila upplýsingum",
                 "Bættu við nýjum meðeiganda þegar eignarhlutur skiptist"
-            ]
+            ],
+            imageUrl: "/screenshots/tasks.png"
         },
         {
             icon: Wifi,
@@ -88,7 +92,8 @@ export default function FeaturesPage() {
                 "Veittu leigjanda aðgang á meðan hann er í húsinu",
                 "Láttu vini sjá WiFi-lykilorð og húsreglur",
                 "Vinnumenn geta séð aðgangsleiðbeiningar"
-            ]
+            ],
+            imageUrl: "/screenshots/guest-settings.png"
         },
         {
             icon: Bell,
@@ -105,7 +110,26 @@ export default function FeaturesPage() {
                 "Fáðu áminningar um komandi ferð í sumarhúsið",
                 "Vertu upplýstur um nýjar bókanir annarra",
                 "Fáðu áminningu þegar gjalddagi nálgast"
-            ]
+            ],
+            imageUrl: "/screenshots/dashboard.png"
+        },
+        {
+            icon: Home,
+            title: "Mörg hús í einu",
+            shortDesc: "Stýrðu öllum þínum sumarhúsum á einum stað.",
+            description: "Ertu meðeigandi í mörgum bústöðum? Ekkert mál. Bústaðurinn.is gerir þér kleift að bæta við mörgum húsum undir sama notandaaðganginn. Þú getur auðveldlega skipt á milli húsa á stjórnborðinu án þess að skrá þig út. Hvert hús hefur sitt eigið dagatal, sína meðeigendur og sitt eigið bókhald. Þetta tryggir að enginn ruglingur verði á milli eigna.",
+            benefits: [
+                "Einn aðgangur - mörg hús",
+                "Einfaldur valgluggi til að skipta um hús",
+                "Aðskilin gögn og fjármál fyrir hvert hús",
+                "Fullkomin yfirsýn yfir allar eignir"
+            ],
+            useCases: [
+                "Skiptu hratt á milli fjölskyldubústaðarins og þíns eigin",
+                "Halda utan um mörg hús í útleigu",
+                "Sjáðu stöðu margra félagshúsa á einum stað"
+            ],
+            imageUrl: "/screenshots/dashboard.png"
         }
     ];
 
@@ -256,11 +280,13 @@ export default function FeaturesPage() {
                                         </div>
                                     </div>
                                     <div className="flex-1">
-                                        <div className="bg-stone-100 rounded-xl p-4 shadow-lg aspect-video flex items-center justify-center">
-                                            <div className="text-center text-stone-400">
-                                                <feature.icon className="w-20 h-20 mx-auto mb-4 opacity-20" />
-                                                <p className="text-sm">Skjámynd: {feature.title}</p>
-                                            </div>
+                                        <div className="bg-white rounded-2xl overflow-hidden shadow-2xl border border-stone-100 aspect-video relative group">
+                                            <img
+                                                src={feature.imageUrl}
+                                                alt={feature.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                            />
+                                            <div className="absolute inset-0 bg-charcoal/5 group-hover:bg-transparent transition-colors"></div>
                                         </div>
                                     </div>
                                 </div>

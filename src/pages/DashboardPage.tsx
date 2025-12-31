@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import {
     Calendar, CheckSquare, Sun, Wind,
     Plus, Users, Wallet, Bell,
-    ChevronRight, Loader2, Shield
+    ChevronRight, Loader2, Shield,
+    ChevronDown, Home
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import { useNavigate } from 'react-router-dom';
@@ -33,7 +34,12 @@ const CabinLogo = ({ size = 24, className = "" }: { size?: number, className?: s
 const UserDashboard = () => {
     const navigate = useNavigate();
     const currentHouse = useAppStore((state) => state.currentHouse);
+    const userHouses = useAppStore((state) => state.userHouses);
+    const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
     const { user: currentUser } = useEffectiveUser();
+
+    // UI state
+    const [showHouseSwitcher, setShowHouseSwitcher] = useState(false);
 
     // Real Data State
     const [loading, setLoading] = useState(true);
@@ -312,11 +318,55 @@ const UserDashboard = () => {
 
             {/* --- TOP NAVIGATION (Mobile & Desktop) --- */}
             <nav className="fixed top-0 w-full bg-[#FDFCF8]/90 backdrop-blur-md border-b border-stone-100 z-50 px-4 h-16 flex items-center justify-between max-w-5xl mx-auto left-0 right-0">
-                <div className="flex items-center gap-2">
-                    <div className="text-[#1a1a1a]">
-                        <CabinLogo size={20} />
-                    </div>
-                    <span className="font-serif font-bold text-lg tracking-tight">{currentHouse.name}</span>
+                <div className="flex items-center gap-2 relative">
+                    <button
+                        onClick={() => setShowHouseSwitcher(!showHouseSwitcher)}
+                        className="flex items-center gap-2 hover:bg-stone-50 px-2 py-1 rounded-lg transition-colors group"
+                    >
+                        <div className="text-[#1a1a1a]">
+                            <CabinLogo size={20} />
+                        </div>
+                        <span className="font-serif font-bold text-lg tracking-tight">{currentHouse.name}</span>
+                        {userHouses.length > 1 && (
+                            <ChevronDown size={16} className={`text-stone-400 group-hover:text-amber transition-transform ${showHouseSwitcher ? 'rotate-180' : ''}`} />
+                        )}
+                    </button>
+
+                    {/* House Switcher Dropdown */}
+                    {showHouseSwitcher && userHouses.length > 1 && (
+                        <div className="absolute top-12 left-0 w-64 bg-white border border-stone-100 rounded-xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest px-3 py-2">Mín hús</p>
+                            <div className="space-y-1">
+                                {userHouses.map(house => (
+                                    <button
+                                        key={house.id}
+                                        onClick={() => {
+                                            setCurrentHouse(house);
+                                            localStorage.setItem('last_house_id', house.id);
+                                            setShowHouseSwitcher(false);
+                                        }}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${currentHouse.id === house.id
+                                                ? 'bg-amber/10 text-amber font-bold'
+                                                : 'text-stone-600 hover:bg-stone-50'
+                                            }`}
+                                    >
+                                        <Home size={16} className={currentHouse.id === house.id ? 'text-amber' : 'text-stone-400'} />
+                                        <span className="truncate">{house.name}</span>
+                                        {currentHouse.id === house.id && <div className="ml-auto w-1.5 h-1.5 bg-amber rounded-full"></div>}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-stone-100">
+                                <button
+                                    onClick={() => navigate('/onboarding')}
+                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-amber hover:bg-stone-50 transition-colors"
+                                >
+                                    <Plus size={14} />
+                                    Bæta við nýju húsi
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
                 <div className="flex items-center gap-4 relative">
                     {currentUser?.email && ADMIN_EMAILS.includes(currentUser.email) && (
