@@ -3,8 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
-import { Home, Loader2, CheckCircle, AlertTriangle, X } from 'lucide-react';
-import type { House } from '@/types/models';
+import { Home, Loader2, CheckCircle, AlertTriangle, X, Calendar, DollarSign, ListTodo, ArrowRight } from 'lucide-react';
+import type { House, User } from '@/types/models';
 
 export default function JoinPage() {
     const navigate = useNavigate();
@@ -15,8 +15,10 @@ export default function JoinPage() {
 
     const [loading, setLoading] = useState(true);
     const [house, setHouse] = useState<House | null>(null);
+    const [inviter, setInviter] = useState<User | null>(null);
     const [error, setError] = useState('');
     const [status, setStatus] = useState<'idle' | 'joining' | 'requested' | 'joined'>('idle');
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
     useEffect(() => {
         const checkHouse = async () => {
@@ -34,6 +36,18 @@ export default function JoinPage() {
                     const houseData = docSnap.data() as House;
                     if (houseData.invite_code === code) {
                         setHouse({ ...houseData, id: docSnap.id });
+
+                        // Fetch inviter (manager) info
+                        if (houseData.manager_id) {
+                            try {
+                                const managerDoc = await getDoc(doc(db, 'users', houseData.manager_id));
+                                if (managerDoc.exists()) {
+                                    setInviter({ uid: managerDoc.id, ...managerDoc.data() } as User);
+                                }
+                            } catch (err) {
+                                console.error('Could not fetch inviter:', err);
+                            }
+                        }
 
                         // Check if already a member
                         if (currentUser && houseData.owner_ids?.includes(currentUser.uid)) {
@@ -80,6 +94,8 @@ export default function JoinPage() {
             useAppStore.getState().setCurrentHouse(house);
 
             setStatus('joined');
+            // Show welcome modal instead of immediately redirecting
+            setShowWelcomeModal(true);
         } catch (err) {
             console.error(err);
             setError('Villa við að ganga í hús. Mögulega vantar réttindi.');
@@ -151,6 +167,12 @@ export default function JoinPage() {
                 <h1 className="text-2xl font-serif mb-2">{house?.name}</h1>
                 <p className="text-grey-mid mb-2">{house?.address}</p>
 
+                {inviter && (
+                    <p className="text-sm text-grey-mid mb-4">
+                        Boðið af <strong className="text-charcoal">{inviter.name || inviter.email}</strong>
+                    </p>
+                )}
+
                 <div className="my-8 border-t border-b border-bone py-6 space-y-4">
                     <p className="text-sm text-charcoal font-medium">Þú ert að ganga í húsfélagið</p>
 
@@ -202,6 +224,75 @@ export default function JoinPage() {
                     </div>
                 )}
             </div>
+
+            {/* Welcome Modal - Feature Tour */}
+            {showWelcomeModal && (
+                <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
+                    onClick={() => {
+                        setShowWelcomeModal(false);
+                        navigate('/dashboard');
+                    }}
+                >
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="text-center mb-6">
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <CheckCircle className="w-10 h-10 text-green-600" />
+                            </div>
+                            <h2 className="text-2xl font-serif mb-2">Velkomin í {house?.name}!</h2>
+                            <p className="text-grey-mid">
+                                Nú hefur þú aðgang að öllum helstu eiginleikum kerfisins.
+                            </p>
+                        </div>
+
+                        <div className="space-y-4 mb-8">
+                            <div className="flex items-start gap-4 p-4 bg-bone rounded-lg hover:bg-stone-100 transition-colors">
+                                <div className="w-10 h-10 bg-amber/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <Calendar className="w-5 h-5 text-amber" />
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="font-semibold text-charcoal mb-1">Bókun</h3>
+                                    <p className="text-sm text-grey-dark">Skipuleggðu dvalir og sjáðu hvenær aðrir eru að heimsækja húsið</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-4 p-4 bg-bone rounded-lg hover:bg-stone-100 transition-colors">
+                                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <DollarSign className="w-5 h-5 text-emerald-600" />
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="font-semibold text-charcoal mb-1">Fjármál</h3>
+                                    <p className="text-sm text-grey-dark">Skráðu útgjöld, sjáðu áætlun og fylgist með hússjóði</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-4 p-4 bg-bone rounded-lg hover:bg-stone-100 transition-colors">
+                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <ListTodo className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="font-semibold text-charcoal mb-1">Verkefni</h3>
+                                    <p className="text-sm text-grey-dark">Haltu utan um viðhald og verkefni sem þarf að klára</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                setShowWelcomeModal(false);
+                                navigate('/dashboard');
+                            }}
+                            className="btn btn-primary w-full flex items-center justify-center gap-2"
+                        >
+                            Byrja að nota kerfið
+                            <ArrowRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

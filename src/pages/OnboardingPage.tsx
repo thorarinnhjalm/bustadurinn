@@ -10,6 +10,7 @@ import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { analytics } from '@/utils/analytics';
+import AddToHomeScreenPrompt from '@/components/AddToHomeScreenPrompt';
 
 type OnboardingStep = 'welcome' | 'house' | 'invite' | 'finish';
 
@@ -34,6 +35,7 @@ export default function OnboardingPage() {
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [debounceTimer, setDebounceTimer] = useState<any>(null); // Store timer
+    const [showPwaPrompt, setShowPwaPrompt] = useState(false);
 
     const steps = [
         { id: 'welcome', label: 'Velkomin' },
@@ -555,7 +557,17 @@ export default function OnboardingPage() {
                                 onClick={() => {
                                     analytics.onboardingCompleted();
                                     logFunnelEvent('onboarding_completed');
-                                    navigate('/dashboard');
+
+                                    // Check if mobile - show PWA prompt after short delay
+                                    const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent.toLowerCase());
+                                    if (isMobile) {
+                                        // Show PWA prompt after a short delay
+                                        setTimeout(() => {
+                                            setShowPwaPrompt(true);
+                                        }, 800);
+                                    } else {
+                                        navigate('/dashboard');
+                                    }
                                 }}
                                 className="btn btn-primary"
                             >
@@ -565,6 +577,17 @@ export default function OnboardingPage() {
                     )}
                 </div>
             </div>
+
+            {/* PWA Prompt for Mobile Users */}
+            {showPwaPrompt && (
+                <AddToHomeScreenPrompt
+                    houseName={houseData.name}
+                    onDismiss={() => {
+                        setShowPwaPrompt(false);
+                        navigate('/dashboard');
+                    }}
+                />
+            )}
         </div>
     );
 }
