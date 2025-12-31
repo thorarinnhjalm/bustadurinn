@@ -392,11 +392,19 @@ export default function SuperAdminPage() {
                 })
             });
 
-            const data = await res.json();
+            const data = await res.text();
+            let parsedData: any = {};
+            try {
+                parsedData = JSON.parse(data);
+            } catch (e) {
+                // Not JSON
+            }
+
             if (res.ok) {
-                alert(`✅ Prufupóstur sendur! Athugaðu inboxið þitt (${currentUser.email}).\n\nResend ID: ${data.data?.id || 'N/A'}`);
+                alert(`✅ Prufupóstur sendur! Athugaðu inboxið þitt (${currentUser.email}).\n\nResend ID: ${parsedData.data?.id || 'N/A'}`);
             } else {
-                throw new Error(data.error || 'Ekki tókst að senda póst');
+                const errorMsg = parsedData.error || data || res.statusText;
+                throw new Error(errorMsg);
             }
         } catch (error: any) {
             console.error('Test email error:', error);

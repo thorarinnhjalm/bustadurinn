@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { Home, Loader2, CheckCircle, AlertTriangle, X } from 'lucide-react';
@@ -38,17 +38,6 @@ export default function JoinPage() {
                         // Check if already a member
                         if (currentUser && houseData.owner_ids?.includes(currentUser.uid)) {
                             setStatus('joined');
-                        } else if (currentUser) {
-                            // Check if already requested (legacy check, though we now do instant join)
-                            const q = query(
-                                collection(db, 'join_requests'),
-                                where('houseId', '==', houseId),
-                                where('userId', '==', currentUser.uid)
-                            );
-                            const snapshot = await getDocs(q);
-                            if (!snapshot.empty) {
-                                setStatus('requested');
-                            }
                         }
 
                     } else {
