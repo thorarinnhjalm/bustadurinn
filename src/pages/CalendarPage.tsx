@@ -149,6 +149,10 @@ export default function CalendarPage() {
     const [language, setLanguage] = useState<SupportedLanguage>('is');
     const [view, setView] = useState(window.innerWidth < 768 ? 'agenda' : 'month');
 
+    const handleViewChange = (newView: any) => {
+        setView(newView);
+    };
+
     // House Settings for Booking Rules
     const [houseSettings, setHouseSettings] = useState<any>(null);
 
@@ -483,7 +487,8 @@ export default function CalendarPage() {
                             }
                         }}
                         views={['month', 'week', 'agenda']}
-                        defaultView={window.innerWidth < 768 ? 'agenda' : 'month'}
+                        view={view}
+                        onView={handleViewChange}
                         messages={calendarMessages[language]}
                         dayPropGetter={dayPropGetter}
                         eventPropGetter={(event: BookingEvent) => ({
