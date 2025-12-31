@@ -9,8 +9,11 @@ import { useAppStore } from '@/store/appStore';
 import { auth } from '@/lib/firebase';
 import type { House } from '@/types/models';
 
+import { useNavigate } from 'react-router-dom';
+
 export default function ImpersonationBanner() {
     const { impersonatedUser, stopImpersonation, isImpersonating } = useImpersonation();
+    const navigate = useNavigate();
 
     if (!isImpersonating || !impersonatedUser) {
         return null;
@@ -33,7 +36,7 @@ export default function ImpersonationBanner() {
         const returnUrl = localStorage.getItem('admin_return_url') || '/super-admin';
         stopImpersonation();
         // Navigate back to where admin came from
-        window.location.href = returnUrl;
+        navigate(returnUrl);
     };
 
     return (

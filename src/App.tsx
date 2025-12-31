@@ -176,8 +176,8 @@ function App() {
   return (
     <ImpersonationProvider>
       <HelmetProvider>
-        <ImpersonationBanner />
         <Router>
+          <ImpersonationBanner />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />

@@ -494,7 +494,7 @@ export default function SuperAdminPage() {
             console.log('🚀 Navigating to dashboard as', user.name);
 
             // Navigate to their dashboard
-            window.location.href = '/dashboard';
+            navigate('/dashboard');
         } catch (error: any) {
             console.error('Impersonation error:', error);
             alert('Failed to impersonate user: ' + error.message);
