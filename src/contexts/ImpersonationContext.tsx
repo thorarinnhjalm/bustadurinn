@@ -3,7 +3,8 @@
  * Allows admin to view the app as any user
  */
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { auth } from '@/lib/firebase';
 import type { User } from '@/types/models';
 
 interface ImpersonationContextType {
@@ -32,6 +33,18 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
         return null;
     });
 
+    // Listen for auth state changes to clear impersonation on logout
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            // If user logs out (user is null) and we are impersonating, stop it
+            if (!user && impersonatedUser) {
+                console.log('🔒 User logged out - clearing impersonation');
+                stopImpersonation();
+            }
+        });
+        return () => unsubscribe();
+    }, [impersonatedUser]);
+
     const startImpersonation = (user: User) => {
         setImpersonatedUser(user);
         localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(user));
@@ -42,6 +55,8 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
         console.log('🎭 Stopped impersonation');
         setImpersonatedUser(null);
         localStorage.removeItem(IMPERSONATION_KEY);
+        localStorage.removeItem('admin_original_house');
+        localStorage.removeItem('admin_return_url');
     };
 
     return (
