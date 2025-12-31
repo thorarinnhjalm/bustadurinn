@@ -292,6 +292,34 @@ export default function OnboardingPage() {
                 }
             })();
 
+            // 5. Send Onboarding Completion Email with Getting Started Guide
+            (async () => {
+                try {
+                    const userName = currentUser.name || currentUser.email?.split('@')[0];
+
+                    const res = await fetch('/api/send-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            templateId: 'onboarding_complete',
+                            to: currentUser.email,
+                            variables: {
+                                name: userName,
+                                house_name: houseData.name
+                            }
+                        })
+                    });
+
+                    if (res.ok) {
+                        console.log('✅ Onboarding completion email sent');
+                    } else {
+                        console.error('❌ Failed to send onboarding email');
+                    }
+                } catch (e) {
+                    console.error("Failed to send onboarding email:", e);
+                }
+            })();
+
             analytics.onboardingStep('invite');
             logFunnelEvent('house_created');
             nextStep();

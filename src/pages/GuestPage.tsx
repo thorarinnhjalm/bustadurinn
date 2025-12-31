@@ -4,7 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
     Wifi, MapPin, Key, Copy, BookOpen,
-    Sun, Phone, Heart, Share2,
+    Sun, Phone, Heart, Share2, Mail,
     Tv, Droplets, Flame, ArrowRight, Loader2, Navigation
 } from 'lucide-react';
 import { fetchWeather } from '@/utils/weather';
@@ -149,10 +149,29 @@ export default function GuestPage() {
                             Góðan daginn!
                         </h1>
 
-                        {/* Information Pill */}
-                        <div className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full mt-2">
-                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                            <p className="text-stone-200 text-sm font-medium">Dvalaðgangur virkur</p>
+                        {/* Information Pills */}
+                        <div className="flex flex-wrap gap-2">
+                            <div className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
+                                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                                <p className="text-stone-200 text-sm font-medium">Dvalaðgangur virkur</p>
+                            </div>
+
+                            {/* Expiration Notice (if available) */}
+                            {data.valid_until && (() => {
+                                const expiryDate = data.valid_until.toDate ? data.valid_until.toDate() : new Date(data.valid_until);
+                                const isExpiringSoon = (expiryDate.getTime() - Date.now()) < (24 * 60 * 60 * 1000); // Less than 24h
+
+                                return (
+                                    <div className={`inline-flex items-center gap-2 backdrop-blur-md border px-4 py-2 rounded-full ${isExpiringSoon
+                                        ? 'bg-red-500/40 border-red-300/30'
+                                        : 'bg-black/40 border-white/10'
+                                        }`}>
+                                        <p className="text-stone-200 text-sm font-medium">
+                                            Gildir til {expiryDate.toLocaleDateString('is-IS', { day: 'numeric', month: 'short' })}
+                                        </p>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>
@@ -255,24 +274,44 @@ export default function GuestPage() {
                     ))}
                 </div>
 
-                {/* EMERGENCY CONTACT */}
-                {data.emergency_contact && (
-                    <a
-                        href={`tel:${data.emergency_contact}`}
-                        className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex items-center justify-between hover:bg-red-50 hover:border-red-100 transition-colors group"
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors">
-                                <Phone size={18} />
+                {/* CONTACT OWNER / EMERGENCY */}
+                <div className="space-y-3">
+                    {data.emergency_contact && (
+                        <a
+                            href={`tel:${data.emergency_contact}`}
+                            className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex items-center justify-between hover:bg-red-50 hover:border-red-100 transition-colors group block"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors">
+                                    <Phone size={18} />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-sm text-[#1a1a1a]">Hringja í eiganda</p>
+                                    <p className="text-xs text-stone-500">{data.emergency_contact}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="font-bold text-sm text-[#1a1a1a]">Neyðarnúmer</p>
-                                <p className="text-xs text-stone-500">{data.emergency_contact}</p>
+                            <ArrowRight size={16} className="text-stone-300 group-hover:text-red-600" />
+                        </a>
+                    )}
+
+                    {data.owner_email && (
+                        <a
+                            href={`mailto:${data.owner_email}?subject=Spurning um ${houseName}`}
+                            className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex items-center justify-between hover:bg-blue-50 hover:border-blue-100 transition-colors group block"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    <Mail size={18} />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-sm text-[#1a1a1a]">Hafa samband við eiganda</p>
+                                    <p className="text-xs text-stone-500 truncate max-w-[200px]">{data.owner_email}</p>
+                                </div>
                             </div>
-                        </div>
-                        <ArrowRight size={16} className="text-stone-300 group-hover:text-red-600" />
-                    </a>
-                )}
+                            <ArrowRight size={16} className="text-stone-300 group-hover:text-blue-600" />
+                        </a>
+                    )}
+                </div>
 
                 {/* GUESTBOOK CTA */}
                 <div className="pt-4 pb-8">
