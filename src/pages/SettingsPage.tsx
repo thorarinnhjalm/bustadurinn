@@ -5,18 +5,12 @@ import { db, storage, auth } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
     Home,
-    Settings as SettingsIcon,
     Users,
     BookOpen,
     Heart,
     User as UserIcon,
     LogOut,
-    Camera,
     CheckCircle,
-    Copy,
-    Phone,
-    Plus,
-    Trash2,
     Save,
     Shield,
     Wifi,

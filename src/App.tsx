@@ -11,6 +11,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useAppStore } from '@/store/appStore';
 import { ImpersonationProvider } from '@/contexts/ImpersonationContext';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
+import type { House } from '@/types/models';
 
 // Pages
 import LandingPage from '@/pages/LandingPage';
@@ -104,6 +105,7 @@ function App() {
   const setAuthenticated = useAppStore((state) => state.setAuthenticated);
   const setLoading = useAppStore((state) => state.setLoading);
   const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
+  const setUserHouses = useAppStore((state) => state.setUserHouses);
 
   useEffect(() => {
     console.log('App Version: 1.2.0 - Funnel & Flow Fixes');
@@ -134,30 +136,36 @@ function App() {
           console.error("Error fetching user profile:", err);
         }
 
-        // 3. Fetch First House (if exists)
-        let houseData = null;
+        // 3. Fetch All Houses User Belongs To
+        let houses: House[] = [];
         if (user.house_ids && user.house_ids.length > 0) {
           try {
-            const houseDocRef = doc(db, 'houses', user.house_ids[0]);
-            const houseSnap = await getDoc(houseDocRef);
-            if (houseSnap.exists()) {
-              houseData = { id: houseSnap.id, ...houseSnap.data() } as any;
-            }
+            const housesPromises = user.house_ids.map((id: string) => getDoc(doc(db, 'houses', id)));
+            const houseSnaps = await Promise.all(housesPromises);
+            houses = houseSnaps
+              .filter(snap => snap.exists())
+              .map(snap => ({ id: snap.id, ...snap.data() } as House));
           } catch (e) {
-            console.error("Error fetching house:", e);
+            console.error("Error fetching houses:", e);
           }
         }
 
-        // 4. Update Store (All at once to prevent race conditions)
+        // 4. Update Store
         setCurrentUser(user);
-        if (houseData) setCurrentHouse(houseData);
         setAuthenticated(true);
+        setUserHouses(houses);
+
+        // If currentHouse isn't set (initial load), pick the first one
+        const storedHouseId = localStorage.getItem('last_house_id');
+        const lastHouse = houses.find(h => h.id === storedHouseId);
+        setCurrentHouse(lastHouse || houses[0] || null);
 
       } else {
         // User is signed out
         setCurrentUser(null);
         setAuthenticated(false);
         setCurrentHouse(null);
+        setUserHouses([]); // Clear houses on sign out
       }
       setLoading(false);
     });
