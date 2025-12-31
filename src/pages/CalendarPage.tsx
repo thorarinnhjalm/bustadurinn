@@ -7,13 +7,13 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
-import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock, Users } from 'lucide-react';
+import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
-import type { Booking, BookingType, User } from '@/types/models';
+import type { Booking, BookingType } from '@/types/models';
 import { dateLocales, calendarMessages, bookingTypeLabels, type SupportedLanguage } from '@/utils/i18n';
 import { getIcelandicHolidays, isHoliday, includesMajorHoliday } from '@/utils/icelandicHolidays';
 import { analytics } from '@/utils/analytics';
@@ -34,7 +34,7 @@ interface CustomToolbarProps {
     localizer: { messages: any };
 }
 
-const CustomToolbar = ({ view, label, onNavigate, onView }: CustomToolbarProps) => {
+const CustomToolbar = ({ label, onNavigate, onView, view }: CustomToolbarProps) => {
     return (
         <div className="flex flex-col gap-4 mb-6">
             <div className="flex items-center justify-between">
@@ -147,7 +147,6 @@ export default function CalendarPage() {
     const houseId = currentHouse?.id || currentUser?.house_ids?.[0];
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [events, setEvents] = useState<BookingEvent[]>([]);
-    const [owners, setOwners] = useState<User[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -155,10 +154,15 @@ export default function CalendarPage() {
     // Language preference (default to Icelandic, but can be changed)
     const [language, setLanguage] = useState<SupportedLanguage>('is');
     const [view, setView] = useState<CalendarView>(window.innerWidth < 768 ? 'agenda' : 'month');
+    const [date, setDate] = useState(new Date());
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleViewChange = (newView: any) => {
         setView(newView);
+    };
+
+    const handleNavigate = (newDate: Date) => {
+        setDate(newDate);
     };
 
     // House Settings for Booking Rules
@@ -176,16 +180,6 @@ export default function CalendarPage() {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const houseData = docSnap.data() as any;
                     setHouseSettings(houseData);
-
-                    // Fetch owners if they exist
-                    if (houseData.owner_ids && Array.isArray(houseData.owner_ids)) {
-                        const ownerPromises = houseData.owner_ids.map((uid: string) => getDoc(doc(db, 'users', uid)));
-                        const ownerSnaps = await Promise.all(ownerPromises);
-                        const ownersData = ownerSnaps
-                            .filter(snap => snap.exists())
-                            .map(snap => ({ uid: snap.id, ...snap.data() } as User));
-                        setOwners(ownersData);
-                    }
                 }
 
             } catch (e) {
@@ -414,7 +408,6 @@ export default function CalendarPage() {
                 type: 'personal',
                 notes: ''
             });
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             console.error('Error creating booking:', err);
             setError('Villa kom upp við að búa til bókun: ' + err.message);
@@ -495,7 +488,7 @@ export default function CalendarPage() {
 
             {/* Calendar */}
             <div className="container mx-auto px-4 py-4 md:px-6 md:py-8 pb-24 md:pb-8">
-                <div className="bg-white rounded-lg shadow-sm p-2 md:p-6">
+                <div className="bg-white rounded-lg shadow-sm p-2 md:p-6 overflow-hidden">
                     <BigCalendar
                         localizer={localizer}
                         events={events}
@@ -515,6 +508,8 @@ export default function CalendarPage() {
                         views={['month', 'week', 'agenda']}
                         view={view}
                         onView={handleViewChange}
+                        date={date}
+                        onNavigate={handleNavigate}
                         messages={calendarMessages[language]}
                         dayPropGetter={dayPropGetter}
                         eventPropGetter={(event: BookingEvent) => ({
@@ -587,32 +582,6 @@ export default function CalendarPage() {
                         )}
                     </div>
                 )}
-
-                {/* Owners List */}
-                <div className="mt-6 card">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Users className="w-5 h-5 text-indigo-600" />
-                        <h3 className="text-lg font-serif">Meðeigendur</h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {owners.map(owner => (
-                            <div key={owner.uid} className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg border border-stone-100">
-                                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm shadow-sm">
-                                    {owner.name?.[0]?.toUpperCase() || owner.email[0].toUpperCase()}
-                                </div>
-                                <div className="overflow-hidden">
-                                    <p className="font-medium text-charcoal truncate">{owner.name || 'Ónafngreindur'}</p>
-                                    <a href={`mailto:${owner.email}`} className="text-sm text-stone-500 truncate block hover:text-indigo-600 transition-colors">
-                                        {owner.email}
-                                    </a>
-                                </div>
-                            </div>
-                        ))}
-                        {owners.length === 0 && (
-                            <p className="text-stone-500 italic text-sm">Engir meðeigendur fundust.</p>
-                        )}
-                    </div>
-                </div>
             </div>
 
             {/* Booking Modal */}
