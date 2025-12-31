@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 import {
     Wifi, MapPin, Key, Copy, BookOpen,
     Sun, Phone, Heart, Share2,
-    Tv, Droplets, Flame, ArrowRight, Loader2
+    Tv, Droplets, Flame, ArrowRight, Loader2, Navigation
 } from 'lucide-react';
 import { fetchWeather } from '@/utils/weather';
 
@@ -226,6 +226,25 @@ export default function GuestPage() {
 
                 {/* GUIDES GRID */}
                 <div className="grid grid-cols-2 gap-3">
+                    {/* Directions Button (Dynamic based on GPS) */}
+                    {data.location?.lat && data.location?.lng && (
+                        <a
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${data.location.lat},${data.location.lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 hover:border-[#e8b058] transition-all group text-left col-span-2 flex items-center gap-4"
+                        >
+                            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                <Navigation size={20} />
+                            </div>
+                            <div>
+                                <span className="font-bold text-sm text-[#1a1a1a] block">Rata í hús</span>
+                                <span className="text-xs text-stone-500">Opna í Google Maps</span>
+                            </div>
+                            <ArrowRight size={16} className="ml-auto text-stone-300 group-hover:text-emerald-600" />
+                        </a>
+                    )}
+
                     {guides.map(guide => (
                         <button key={guide.id} className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 hover:border-[#e8b058] transition-all group text-left">
                             <div className="w-10 h-10 rounded-full bg-stone-50 text-[#1a1a1a] flex items-center justify-center mb-3 group-hover:bg-[#1a1a1a] group-hover:text-white transition-colors">

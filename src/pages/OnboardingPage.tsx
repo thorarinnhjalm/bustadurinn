@@ -386,7 +386,7 @@ export default function OnboardingPage() {
                             <Home className="w-16 h-16 mx-auto mb-6 text-amber" />
                             <h2 className="mb-4">Velkomin í Bústaðurinn.is</h2>
                             <p className="text-xl text-grey-dark mb-8 max-w-md mx-auto">
-                                Við skulum setja upp stafræna tvíburann af sumarhúsinu ykkar.
+                                Við skulum setja upp sumarhúsið ykkar í kerfinu.
                                 Þetta tekur bara nokkrar mínútur.
                             </p>
                             <button onClick={nextStep} className="btn btn-primary">
@@ -548,8 +548,8 @@ export default function OnboardingPage() {
                             <CheckCircle className="w-16 h-16 mx-auto mb-6 text-amber" />
                             <h2 className="mb-4">Allt tilbúið!</h2>
                             <p className="text-xl text-grey-dark mb-8 max-w-md mx-auto">
-                                Stafræni tvíburinn af <strong>{houseData.name || 'sumarhúsinu'}</strong> er
-                                nú tilbúinn. Njótið þess að nota kerfið!
+                                Uppsetningu á <strong>{houseData.name || 'sumarhúsinu'}</strong> er
+                                lokið. Njótið þess að nota kerfið!
                             </p>
                             <button
                                 onClick={() => {

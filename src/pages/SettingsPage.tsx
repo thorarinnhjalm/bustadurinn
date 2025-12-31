@@ -72,6 +72,8 @@ export default function SettingsPage() {
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [debounceTimer, setDebounceTimer] = useState<any>(null);
     const [members, setMembers] = useState<User[]>([]);
+    const [loadingMembers, setLoadingMembers] = useState(false);
+    const [membersError, setMembersError] = useState('');
     const [isEditingLocation, setIsEditingLocation] = useState(false);
     const [imageFile, setImageFile] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
@@ -194,14 +196,25 @@ export default function SettingsPage() {
     useEffect(() => {
         if (activeTab === 'members' && house?.owner_ids?.length) {
             const fetchMembers = async () => {
+                setLoadingMembers(true);
+                setMembersError('');
                 try {
                     // Note: Firestore 'in' query supports max 10. Using Promise.all for robustness.
                     const promises = house.owner_ids.map(uid => getDoc(doc(db, 'users', uid)));
                     const docs = await Promise.all(promises);
-                    const users = docs.map(d => ({ uid: d.id, ...d.data() } as User)).filter(u => u.uid);
+                    const users = docs.map(d => {
+                        if (d.exists()) {
+                            return { uid: d.id, ...d.data() } as User;
+                        }
+                        return null;
+                    }).filter((u): u is User => u !== null);
+
                     setMembers(users);
                 } catch (err) {
                     console.error("Error fetching members", err);
+                    setMembersError('Gat ekki sótt lista yfir meðeigendur.');
+                } finally {
+                    setLoadingMembers(false);
                 }
             };
             fetchMembers();
@@ -331,6 +344,24 @@ export default function SettingsPage() {
         if (replace && !confirm('Ertu viss? Gamli hlekkurinn mun hætta að virka.')) return;
         if (!house) return;
 
+        // Check if we have enough info to make a useful guest page
+        const hasInfo =
+            houseForm.wifi_ssid ||
+            houseForm.wifi_password ||
+            houseForm.house_rules ||
+            houseForm.check_in_time ||
+            houseForm.check_out_time ||
+            houseForm.directions ||
+            houseForm.access_instructions ||
+            (houseForm.lat !== 0 && houseForm.lng !== 0); // Valid coordinates act as "info" (Directions)
+
+        if (!hasInfo) {
+            setError('Vinsamlegast fylltu út einhverjar upplýsingar (t.d. WiFi, reglur, eða staðsetningu) áður en þú býrð til gestahlekk.');
+            // Switch to relevant tab (e.g. house or guests) if needed, currently mainly in Guests
+            // But some info is in House tab (location). 
+            return;
+        }
+
         setLoading(true);
         try {
             // Delete old if exists
@@ -363,7 +394,7 @@ export default function SettingsPage() {
 
             await updateDoc(doc(db, 'houses', house.id), { guest_token: newToken });
             setHouse({ ...house, guest_token: newToken });
-            setSuccess('Nýr gestahlekkur búinn til!');
+            setSuccess('Nýr gestahlekkur búinn til! Gestir geta nú nálgast upplýsingar.');
         } catch (err) {
             console.error(err);
             setError('Villa við að búa til hlekk.');
@@ -784,8 +815,23 @@ export default function SettingsPage() {
 
                                 <div className="space-y-4">
                                     {/* Members List */}
-                                    {members.length === 0 ? (
-                                        <div className="text-center text-grey-mid py-4">Hleð meðeigendum...</div>
+                                    {loadingMembers ? (
+                                        <div className="text-center py-8">
+                                            <div className="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                            <p className="text-grey-mid">Hleð meðeigendum...</p>
+                                        </div>
+                                    ) : membersError ? (
+                                        <div className="p-4 bg-red-50 text-red-600 rounded-lg text-center">
+                                            {membersError}
+                                            <button
+                                                onClick={() => window.location.reload()}
+                                                className="block mx-auto mt-2 text-sm underline hover:text-red-800"
+                                            >
+                                                Reyna aftur
+                                            </button>
+                                        </div>
+                                    ) : members.length === 0 ? (
+                                        <div className="text-center text-grey-mid py-4">Engir meðeigendur fundust.</div>
                                     ) : (
                                         members.map(member => (
                                             <div key={member.uid} className="flex items-center justify-between p-4 border rounded-lg bg-white mb-2">
@@ -1029,6 +1075,12 @@ export default function SettingsPage() {
                                                 onChange={(e) => setHouseForm({ ...houseForm, directions: e.target.value })}
                                                 placeholder="t.d. Keyrt er í gegnum..."
                                             />
+                                            {(houseForm.lat !== 0 && houseForm.lng !== 0) && (
+                                                <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                                    <CheckCircle size={12} />
+                                                    GPS hnit eru skráð. Gestasíðan mun sýna "Rata í hús" takka sjálfkrafa, en þú getur bætt við nánari lýsingu hér.
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div>
