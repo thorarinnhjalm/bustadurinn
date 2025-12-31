@@ -1,34 +1,45 @@
-/**
- * Settings Page
- * Manage house details, booking logic, members, and user preferences
- */
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { auth, storage } from '@/lib/firebase';
+import { db, storage, auth } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Home, Users, User as UserIcon, Save, Shield, Wifi, AlertTriangle, BookOpen, LogOut, Edit2, X, Upload, Image as ImageIcon, Heart } from 'lucide-react';
+import {
+    Home,
+    Settings as SettingsIcon,
+    Users,
+    BookOpen,
+    Heart,
+    User as UserIcon,
+    LogOut,
+    Camera,
+    CheckCircle,
+    Copy,
+    Phone,
+    Plus,
+    Trash2,
+    Save,
+    Shield,
+    Wifi,
+    Edit2,
+    X,
+    Upload,
+    Image as ImageIcon,
+    AlertTriangle
+} from 'lucide-react';
 import ImageCropper from '@/components/ImageCropper';
 import {
     doc,
-    setDoc,
     getDoc,
     updateDoc,
-    collection,
-    query,
-    where,
-    onSnapshot,
-    arrayUnion,
+    setDoc,
     deleteDoc,
     serverTimestamp
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import type { House, User } from '@/types/models';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
-import { MapPin, CheckCircle } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import GuestbookViewer from '@/components/GuestbookViewer';
 
@@ -182,27 +193,8 @@ export default function SettingsPage() {
         loadHouse();
     }, [currentUser?.house_ids]);
 
-    const [joinRequests, setJoinRequests] = useState<any[]>([]);
-
     // Allow any owner to edit house settings, not just the designated manager
     const isManager = house && currentUser && house.owner_ids?.includes(currentUser.uid);
-
-    useEffect(() => {
-        if (!house || !isManager || activeTab !== 'members') return;
-
-        const q = query(
-            collection(db, 'join_requests'),
-            where('houseId', '==', house.id),
-            where('status', '==', 'pending')
-        );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const reqs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setJoinRequests(reqs);
-        });
-
-        return () => unsubscribe();
-    }, [house?.id, isManager, activeTab]);
 
     // Fetch Members
     useEffect(() => {
@@ -221,50 +213,6 @@ export default function SettingsPage() {
             fetchMembers();
         }
     }, [activeTab, house?.owner_ids]);
-
-    const handleApproveRequest = async (req: any) => {
-        if (!house) return;
-        setLoading(true);
-        try {
-            // 1. Add to House
-            await updateDoc(doc(db, 'houses', house.id), {
-                owner_ids: arrayUnion(req.userId)
-            });
-
-            // 2. Add to User (Important: User needs to know they are in)
-            // Note: This requires permission to update OTHER users. 
-            // Standard Firestore rules might block this if not Manager/Admin of creating user.
-            // If this fails, we need a Cloud Function.
-            // For now, let's try. If it fails, we fall back to manual user update or assume user doc is self-writable? 
-            // No, manager writes to user. Rules need to allow manager to update `house_ids` of any user if they are adding them to managed house? Complex.
-            // Let's assume rules allow it for the sake of MVP or we update rules to `allow update: if request.auth != null`.
-
-            // Actually, best bet: `updateDoc(doc(db, 'users', req.userId), { house_ids: arrayUnion(house.id) })`
-            await updateDoc(doc(db, 'users', req.userId), {
-                house_ids: arrayUnion(house.id)
-            });
-
-            // 3. Mark request approved (or delete)
-            await deleteDoc(doc(db, 'join_requests', req.id));
-
-            setSuccess(`Samþykkti ${req.userName}!`);
-        } catch (err) {
-            console.error('Error approving:', err);
-            setError('Gat ekki samþykkt beiðni. Athugaðu réttindi.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleRejectRequest = async (req: any) => {
-        if (!confirm('Hafna þessari beiðni?')) return;
-        try {
-            await deleteDoc(doc(db, 'join_requests', req.id));
-            setSuccess('Beiðni hafnað.');
-        } catch (err) {
-            console.error(err);
-        }
-    };
 
     const handleSaveHouse = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -841,30 +789,6 @@ export default function SettingsPage() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    {/* Join Requests */}
-                                    {joinRequests.length > 0 && (
-                                        <div className="mb-6 p-4 bg-amber/10 border border-amber/30 rounded-lg">
-                                            <h3 className="flex items-center gap-2 font-serif text-charcoal mb-4">
-                                                <AlertTriangle className="w-5 h-5 text-amber" />
-                                                Inngöngubeiðnir ({joinRequests.length})
-                                            </h3>
-                                            <div className="space-y-3">
-                                                {joinRequests.map(req => (
-                                                    <div key={req.id} className="flex items-center justify-between bg-white p-3 rounded shadow-sm">
-                                                        <div>
-                                                            <div className="font-semibold">{req.userName}</div>
-                                                            <div className="text-xs text-grey-mid">{req.userEmail}</div>
-                                                        </div>
-                                                        <div className="flex gap-2">
-                                                            <button onClick={() => handleApproveRequest(req)} className="btn btn-primary text-xs py-1 px-3">Samþykkja</button>
-                                                            <button onClick={() => handleRejectRequest(req)} className="btn btn-ghost text-xs py-1 px-3 text-red-500 hover:text-red-700 hover:bg-red-50">Hafna</button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
                                     {/* Members List */}
                                     {members.length === 0 ? (
                                         <div className="text-center text-grey-mid py-4">Hleð meðeigendum...</div>
