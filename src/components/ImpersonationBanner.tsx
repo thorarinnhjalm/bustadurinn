@@ -6,6 +6,7 @@
 import { X, AlertTriangle } from 'lucide-react';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
+import { auth } from '@/lib/firebase';
 import type { House } from '@/types/models';
 
 export default function ImpersonationBanner() {
@@ -47,6 +48,9 @@ export default function ImpersonationBanner() {
                             </p>
                             <p className="text-xs opacity-90">
                                 Viewing as: {impersonatedUser.name} ({impersonatedUser.email})
+                            </p>
+                            <p className="text-[10px] opacity-70 font-mono mt-1">
+                                Real UID: {auth.currentUser?.uid}
                             </p>
                         </div>
                     </div>
