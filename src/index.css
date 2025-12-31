@@ -448,34 +448,75 @@
     font-size: 14px;
   }
 
+
   /* Agenda view - better for mobile */
   .rbc-agenda-view {
     font-size: 14px;
-    background: white;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
+    background: transparent;
+    /* Remove default background */
+    border: none;
+  }
+
+  /* Hide the table header in agenda view on mobile */
+  .rbc-agenda-view table.rbc-agenda-table thead {
+    display: none;
   }
 
   .rbc-agenda-table {
     width: 100%;
+    border-spacing: 0 8px;
+    /* Add spacing between rows */
+    border-collapse: separate;
   }
 
-  .rbc-agenda-date-cell {
-    padding: 12px 8px;
-    font-weight: 600;
-    color: #4b5563;
-    white-space: nowrap;
-  }
-
+  /* Hide date/time columns to create a "Card" look */
+  .rbc-agenda-date-cell,
   .rbc-agenda-time-cell {
-    padding: 12px 8px;
-    color: #6b7280;
-    font-size: 12px;
-    text-transform: lowercase;
+    display: none;
   }
 
+  /* Make the event cell full width and card-like */
   .rbc-agenda-event-cell {
-    padding: 12px;
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  /* Add date header before the card? */
+  .rbc-agenda-view .rbc-date-cell {
+    /* We can't easily insert content here via CSS only without structural changes */
+    /* So we rely on the custom component to show date info if needed */
+  }
+
+  /* Style for the custom agenda event */
+  .custom-agenda-event {
+    width: 100%;
+  }
+
+  /* Month dots improvement */
+  .rbc-month-view .rbc-event {
+    margin: 1px auto;
+    width: 6px;
+    height: 6px;
+  }
+
+  /* Hide 'show more' link on mobile month view to reduce clutter */
+  .rbc-month-view .rbc-show-more {
+    font-size: 10px;
+    color: #9ca3af;
+    background: transparent;
+    padding: 0;
+    margin-top: 2px;
+  }
+
+  /* Ensure toolbar doesn't break */
+  .rbc-toolbar {
+    flex-wrap: wrap;
   }
 
   /* Remove the default today background if it clashes */
@@ -483,3 +524,5 @@
     background-color: #f3f4f6;
   }
 }
+
+```

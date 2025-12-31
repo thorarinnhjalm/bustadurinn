@@ -7,7 +7,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
-import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useNavigate } from 'react-router-dom';
@@ -31,66 +31,93 @@ interface CustomToolbarProps {
 
 const CustomToolbar = ({ view, label, onNavigate, onView }: CustomToolbarProps) => {
     return (
-        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 p-4 bg-white rounded-lg border border-stone-200 shadow-sm">
-            <div className="flex items-center justify-between w-full md:w-auto gap-4">
-                <button
-                    className="p-2 hover:bg-stone-100 rounded-full transition-colors text-charcoal"
-                    onClick={() => onNavigate('PREV')}
-                    aria-label="Previous"
-                >
-                    <ChevronLeft className="w-5 h-5" />
-                </button>
+        <div className="flex flex-col gap-4 mb-6">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <button
+                        className="btn btn-ghost p-2 h-10 w-10 rounded-full border border-stone-200"
+                        onClick={() => onNavigate('PREV')}
+                        aria-label="Previous"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                        className="btn btn-ghost p-2 h-10 w-10 rounded-full border border-stone-200"
+                        onClick={() => onNavigate('NEXT')}
+                        aria-label="Next"
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                    <h2 className="text-xl font-serif font-bold text-charcoal ml-2">
+                        {label}
+                    </h2>
+                </div>
 
-                <span className="text-xl font-serif font-bold text-charcoal capitalize whitespace-nowrap">
-                    {label}
-                </span>
-
                 <button
-                    className="p-2 hover:bg-stone-100 rounded-full transition-colors text-charcoal"
-                    onClick={() => onNavigate('NEXT')}
-                    aria-label="Next"
-                >
-                    <ChevronRight className="w-5 h-5" />
-                </button>
-            </div>
-
-            <div className="flex items-center gap-2 w-full md:w-auto justify-center">
-                <button
-                    className="btn btn-secondary text-sm py-2 px-4 shadow-sm"
+                    className="btn btn-secondary text-sm hidden md:flex"
                     onClick={() => onNavigate('TODAY')}
                 >
                     Í dag
                 </button>
+            </div>
 
-                <div className="flex bg-stone-100 rounded-lg p-1 border border-stone-200">
-                    <button
-                        onClick={() => onView('month')}
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${view === 'month'
-                            ? 'bg-white text-charcoal shadow-sm'
-                            : 'text-stone-500 hover:text-stone-700'
-                            }`}
-                    >
-                        Mán
-                    </button>
-                    <button
-                        onClick={() => onView('week')}
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all hidden md:block ${view === 'week'
-                            ? 'bg-white text-charcoal shadow-sm'
-                            : 'text-stone-500 hover:text-stone-700'
-                            }`}
-                    >
-                        Vika
-                    </button>
-                    <button
-                        onClick={() => onView('agenda')}
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${view === 'agenda'
-                            ? 'bg-white text-charcoal shadow-sm'
-                            : 'text-stone-500 hover:text-stone-700'
-                            }`}
-                    >
-                        Listi
-                    </button>
-                </div>
+            {/* View Switcher - Segmented Control Style */}
+            <div className="flex p-1 bg-stone-100 rounded-lg self-center md:self-start w-full md:w-auto">
+                <button
+                    onClick={() => onView('month')}
+                    className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${view === 'month'
+                        ? 'bg-white text-charcoal shadow-sm'
+                        : 'text-stone-500 hover:text-stone-700'
+                        }`}
+                >
+                    Mánuður
+                </button>
+                <button
+                    onClick={() => onView('week')}
+                    className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all hidden md:block ${view === 'week'
+                        ? 'bg-white text-charcoal shadow-sm'
+                        : 'text-stone-500 hover:text-stone-700'
+                        }`}
+                >
+                    Vika
+                </button>
+                <button
+                    onClick={() => onView('agenda')}
+                    className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${view === 'agenda'
+                        ? 'bg-white text-charcoal shadow-sm'
+                        : 'text-stone-500 hover:text-stone-700'
+                        }`}
+                >
+                    Listi
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const CustomAgendaEvent = ({ event }: { event: BookingEvent }) => {
+    return (
+        <div className="flex flex-col py-1">
+            <div className="flex items-center justify-between mb-1">
+                <span className="font-semibold text-charcoal text-base">
+                    {event.booking.user_name}
+                </span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${event.booking.type === 'personal' ? 'bg-amber/10 text-amber-dark' :
+                    event.booking.type === 'rental' ? 'bg-green-100 text-green-700' :
+                        event.booking.type === 'maintenance' ? 'bg-red-100 text-red-700' :
+                            'bg-indigo-100 text-indigo-700'
+                    }`}>
+                    {event.title.split(' - ')[1] || event.title}
+                </span>
+            </div>
+            {event.booking.notes && (
+                <p className="text-sm text-stone-500 line-clamp-2 mb-1">
+                    {event.booking.notes}
+                </p>
+            )}
+            <div className="flex items-center text-xs text-stone-400 mt-1">
+                <Clock className="w-3 h-3 mr-1" />
+                {event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
         </div>
     );
@@ -120,7 +147,7 @@ export default function CalendarPage() {
 
     // Language preference (default to Icelandic, but can be changed)
     const [language, setLanguage] = useState<SupportedLanguage>('is');
-
+    const [view, setView] = useState(window.innerWidth < 768 ? 'agenda' : 'month');
 
     // House Settings for Booking Rules
     const [houseSettings, setHouseSettings] = useState<any>(null);
@@ -135,6 +162,7 @@ export default function CalendarPage() {
                 if (docSnap.exists()) {
                     setHouseSettings(docSnap.data());
                 }
+
             } catch (e) {
                 console.error("Error fetching house settings", e);
             }
@@ -449,7 +477,10 @@ export default function CalendarPage() {
                         selectable
                         popup
                         components={{
-                            toolbar: CustomToolbar
+                            toolbar: CustomToolbar,
+                            agenda: {
+                                event: CustomAgendaEvent
+                            }
                         }}
                         views={['month', 'week', 'agenda']}
                         defaultView={window.innerWidth < 768 ? 'agenda' : 'month'}
@@ -460,6 +491,11 @@ export default function CalendarPage() {
                                 backgroundColor: event.booking.type === 'personal' ? '#e8b058' :
                                     event.booking.type === 'rental' ? '#10b981' :
                                         event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1',
+                                // Agenda view color override (since we provide custom component, this usually affects the dot or line)
+                                borderLeft: view === 'agenda' ? `4px solid ${event.booking.type === 'personal' ? '#e8b058' :
+                                    event.booking.type === 'rental' ? '#10b981' :
+                                        event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1'
+                                    }` : undefined,
                                 borderRadius: '4px',
                                 opacity: 1,
                                 color: 'white',
