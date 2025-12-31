@@ -19,13 +19,18 @@ import { getIcelandicHolidays, isHoliday, includesMajorHoliday } from '@/utils/i
 import { analytics } from '@/utils/analytics';
 import MobileNav from '@/components/MobileNav';
 
+// View type derived from string as generic View type import is tricky
+type CalendarView = 'month' | 'week' | 'work_week' | 'day' | 'agenda';
+
 interface CustomToolbarProps {
     date: Date;
-    view: string;
-    views: string[];
+    view: CalendarView;
+    views: CalendarView[];
     label: string;
     onNavigate: (action: 'PREV' | 'NEXT' | 'TODAY' | 'DATE', newDate?: Date) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onView: (view: any) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     localizer: { messages: any };
 }
 
@@ -131,6 +136,7 @@ interface BookingEvent {
     start: Date;
     end: Date;
     allDay?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resource?: any;
 }
 
@@ -147,13 +153,15 @@ export default function CalendarPage() {
 
     // Language preference (default to Icelandic, but can be changed)
     const [language, setLanguage] = useState<SupportedLanguage>('is');
-    const [view, setView] = useState(window.innerWidth < 768 ? 'agenda' : 'month');
+    const [view, setView] = useState<CalendarView>(window.innerWidth < 768 ? 'agenda' : 'month');
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleViewChange = (newView: any) => {
         setView(newView);
     };
 
     // House Settings for Booking Rules
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [houseSettings, setHouseSettings] = useState<any>(null);
 
     useEffect(() => {
@@ -194,18 +202,12 @@ export default function CalendarPage() {
         });
     }, [language]);
 
-    // Get Icelandic holidays for current year
-    const holidays = useMemo(() => {
-        const currentYear = new Date().getFullYear();
-        return getIcelandicHolidays(currentYear);
-    }, []);
+    // Helper functions
+    const getBookingTypeLabel = useCallback((type: BookingType): string => {
+        return bookingTypeLabels[language][type] || type;
+    }, [language]);
 
-    // Load bookings from Firestore
-    useEffect(() => {
-        loadBookings();
-    }, []);
-
-    const loadBookings = async () => {
+    const loadBookings = useCallback(async () => {
         try {
             const q = query(collection(db, 'bookings'), where('house_id', '==', houseId));
             const snapshot = await getDocs(q);
@@ -233,20 +235,18 @@ export default function CalendarPage() {
         } catch (err) {
             console.error('Error loading bookings:', err);
         }
-    };
+    }, [houseId, getBookingTypeLabel]);
 
-    const getBookingTypeLabel = (type: BookingType): string => {
-        return bookingTypeLabels[language][type] || type;
-    };
-
-    const checkConflicts = (start: Date, end: Date): boolean => {
+    // Check conflicts helper
+    const checkConflicts = useCallback((start: Date, end: Date): boolean => {
         return bookings.some(booking => {
             // Check if dates overlap
             return (start < booking.end && end > booking.start);
         });
-    };
+    }, [bookings]);
 
-    const checkFairness = async (start: Date, end: Date, userId: string): Promise<{ allowed: boolean; reason?: string }> => {
+    // Check fairness helper
+    const checkFairness = useCallback(async (start: Date, end: Date, userId: string): Promise<{ allowed: boolean; reason?: string }> => {
         // Only apply if house is in 'fairness' mode
         if (houseSettings?.holiday_mode !== 'fairness') {
             return { allowed: true };
@@ -297,7 +297,19 @@ export default function CalendarPage() {
         }
 
         return { allowed: true };
-    };
+    }, [houseSettings, houseId]);
+
+
+    // Load bookings from Firestore
+    useEffect(() => {
+        loadBookings();
+    }, [loadBookings]);
+
+    // Get Icelandic holidays for current year
+    const holidays = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        return getIcelandicHolidays(currentYear);
+    }, []);
 
     const handleCreateBooking = async () => {
         if (!currentUser) {
@@ -389,6 +401,7 @@ export default function CalendarPage() {
                 type: 'personal',
                 notes: ''
             });
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             console.error('Error creating booking:', err);
             setError('Villa kom upp við að búa til bókun: ' + err.message);
@@ -408,7 +421,7 @@ export default function CalendarPage() {
 
     const handleSelectEvent = useCallback((event: BookingEvent) => {
         alert(`Bókun: ${event.booking.user_name}\n${event.booking.start.toLocaleDateString()} - ${event.booking.end.toLocaleDateString()}\nTegund: ${getBookingTypeLabel(event.booking.type)}\nAthugasemd: ${event.booking.notes || 'Engin'}`);
-    }, [language]);
+    }, [getBookingTypeLabel]);
 
     // Custom day cell style to highlight holidays
     const dayPropGetter = useCallback((date: Date) => {
