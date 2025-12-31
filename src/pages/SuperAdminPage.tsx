@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2 } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
@@ -448,38 +448,50 @@ export default function SuperAdminPage() {
         try {
             setActionLoading(`impersonate-${user.uid}`);
 
-            // Fetch the impersonated user's house
+            // Fetch the impersonated user's house DIRECTLY (not all houses)
             let userHouse = null;
             if (user.house_ids && user.house_ids.length > 0) {
                 const firstHouseId = user.house_ids[0];
-                const houseSnap = await getDocs(collection(db, 'houses'));
-                const foundHouse = houseSnap.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() } as House))
-                    .find(h => h.id === firstHouseId);
 
-                if (foundHouse) {
-                    userHouse = foundHouse;
+                try {
+                    const houseDocRef = doc(db, 'houses', firstHouseId);
+                    const houseSnap = await getDoc(houseDocRef);
+
+                    if (houseSnap.exists()) {
+                        userHouse = { id: houseSnap.id, ...houseSnap.data() } as House;
+                        console.log('🏠 Loaded user house:', userHouse.name);
+                    } else {
+                        console.warn('House not found:', firstHouseId);
+                    }
+                } catch (fetchError) {
+                    console.error('Error fetching user house:', fetchError);
+                    // Continue anyway - user might not have a house
                 }
             }
 
             // Set impersonation context FIRST
             startImpersonation(user);
+            console.log('🎭 Impersonation context set for:', user.name);
 
             // Then update store with their house
             if (userHouse) {
                 useAppStore.getState().setCurrentHouse(userHouse);
                 useAppStore.getState().setUserHouses([userHouse]);
+                console.log('✅ Store updated with user house');
             } else {
                 // Clear house if they don't have one
                 useAppStore.getState().setCurrentHouse(null);
                 useAppStore.getState().setUserHouses([]);
+                console.log('ℹ️ User has no house - cleared store');
             }
 
             // Save return URL
             localStorage.setItem('admin_return_url', window.location.pathname);
 
             // Small delay to ensure store updates are processed
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 200));
+
+            console.log('🚀 Navigating to dashboard as', user.name);
 
             // Navigate to their dashboard
             window.location.href = '/dashboard';
