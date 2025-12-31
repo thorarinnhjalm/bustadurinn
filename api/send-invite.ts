@@ -112,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const response = await resend.emails.send({
-            from: 'Bústaðurinn.is <onboarding@resend.dev>',
+            from: 'Bústaðurinn <no-reply@bustadurinn.is>',
             to: emailList,
             subject,
             html,

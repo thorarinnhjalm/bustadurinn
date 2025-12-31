@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Send email to all house owners
         const data = await resend.emails.send({
-            from: 'Bústaðurinn.is <onboarding@resend.dev>',
+            from: 'Bústaðurinn <no-reply@bustadurinn.is>',
             to: ownerEmails,
             subject: `Ný bókun í ${houseName}`,
             html: `
