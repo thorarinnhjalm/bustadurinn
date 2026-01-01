@@ -92,6 +92,41 @@ export default function SettingsPage() {
     const [showCropper, setShowCropper] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
 
+    // Invite State
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteLoading, setInviteLoading] = useState(false);
+
+    const handleSendInvite = async () => {
+        if (!inviteEmail.trim() || !house || !currentUser) return;
+        setInviteLoading(true);
+        setError('');
+        try {
+            const resp = await fetch('/api/invite-member', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: inviteEmail.trim(),
+                    houseId: house.id,
+                    houseName: house.name,
+                    senderName: currentUser.name || 'Notandi',
+                    senderUid: currentUser.uid
+                })
+            });
+
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.error || 'Failed to send invite');
+
+            setSuccess(data.message || 'Boð sent!');
+            setInviteEmail('');
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err: any) {
+            console.error('Invite error:', err);
+            setError(err.message || 'Gat ekki sent boð.');
+        } finally {
+            setInviteLoading(false);
+        }
+    };
+
     // Profile State
     const [userName, setUserName] = useState('');
 
@@ -950,8 +985,33 @@ export default function SettingsPage() {
                                         <div className="mt-8 pt-6 border-t border-grey-warm">
                                             <h3 className="text-lg font-serif mb-4">Bjóða nýjum aðilum</h3>
                                             <p className="text-sm text-grey-dark mb-4">
-                                                Deildu hlekknum hér að neðan til að bjóða öðrum að ganga í húsfélagið.
+                                                Deildu hlekknum hér að neðan til að bjóða öðrum að ganga í húsfélagið, eða sendu boð í tölvupósti.
                                             </p>
+
+                                            {/* Email Invite Form */}
+                                            <div className="bg-bone p-4 rounded-lg mb-4 border border-stone-200">
+                                                <label className="label text-xs uppercase text-grey-mid">Bjóða með tölvupósti</label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="email"
+                                                        placeholder="sláðu inn netfang..."
+                                                        className="input w-full"
+                                                        value={inviteEmail}
+                                                        onChange={(e) => setInviteEmail(e.target.value)}
+                                                        disabled={inviteLoading}
+                                                    />
+                                                    <button
+                                                        onClick={handleSendInvite}
+                                                        disabled={inviteLoading || !inviteEmail.trim().includes('@')}
+                                                        className="btn btn-primary whitespace-nowrap"
+                                                    >
+                                                        {inviteLoading ? 'Sendi...' : 'Senda boð'}
+                                                    </button>
+                                                </div>
+                                                <p className="text-xs text-stone-500 mt-2">
+                                                    Við sendum tölvupóst. Ef viðkomandi er ekki skráður þá fær hann boð um að stofna aðgang.
+                                                </p>
+                                            </div>
 
                                             <div className="bg-bone p-4 rounded-lg flex flex-col gap-4">
                                                 {house.invite_code ? (
