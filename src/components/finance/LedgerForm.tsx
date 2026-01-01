@@ -7,18 +7,26 @@ interface LedgerFormProps {
     onCancel: () => void;
     budgetCategories?: string[];
     initialValues?: LedgerEntry | null;
+    houseMembers?: { uid: string, name: string }[];
 }
 
-export default function LedgerForm({ onSave, onCancel, budgetCategories = [], initialValues }: LedgerFormProps) {
+export default function LedgerForm({ onSave, onCancel, budgetCategories = [], initialValues, houseMembers = [] }: LedgerFormProps) {
     const [type, setType] = useState<LedgerType>(initialValues?.type || 'expense');
     const [amount, setAmount] = useState(initialValues?.amount?.toString() || '');
     const [category, setCategory] = useState(initialValues?.category || '');
     const [description, setDescription] = useState(initialValues?.description || '');
     const [date, setDate] = useState(initialValues?.date ? new Date(initialValues.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+    const [splitUsers, setSplitUsers] = useState<string[]>(initialValues?.split_between?.map(u => u.uid) || []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!amount || !category || !date) return;
+
+        // Simplify legacy logic: if splitUsers has entries, we use that.
+        // The parent determines paid_by based on context, but here we can define the split.
+        const splitData = splitUsers.length > 0
+            ? houseMembers.filter(m => splitUsers.includes(m.uid)).map(m => ({ uid: m.uid, name: m.name }))
+            : undefined;
 
         onSave({
             ...(initialValues?.id ? { id: initialValues.id } : {}),
@@ -27,8 +35,15 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
             category,
             description,
             date: new Date(date),
+            split_between: splitData,
             created_at: initialValues?.created_at || new Date()
         });
+    };
+
+    const toggleSplitUser = (uid: string) => {
+        setSplitUsers(prev =>
+            prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
+        );
     };
 
     return (
@@ -117,6 +132,35 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
                     />
                 </div>
             </div>
+
+            {/* Split / Member Selection (Mostly relevant for Income/Innborgun) */}
+            {houseMembers.length > 0 && (
+                <div className="mb-4 pt-4 border-t border-grey-warm/50">
+                    <label className="label mb-2 block">
+                        {type === 'income' ? 'Hver greiddi inn?' : 'Hver stofnaði til kostnaðar?'}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                        {houseMembers.map(member => (
+                            <button
+                                key={member.uid}
+                                type="button"
+                                onClick={() => toggleSplitUser(member.uid)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${splitUsers.includes(member.uid)
+                                    ? 'bg-amber text-white border-amber'
+                                    : 'bg-white text-stone-600 border-stone-200 hover:border-amber'
+                                    }`}
+                            >
+                                {member.name}
+                            </button>
+                        ))}
+                    </div>
+                    {splitUsers.length === 0 && (
+                        <p className="text-xs text-stone-400 mt-1 italic">
+                            Ef enginn er valinn skráist þetta á þig ({houseMembers.find(m => m.name)?.name || 'Notandi'}).
+                        </p>
+                    )}
+                </div>
+            )}
 
             <div className="flex justify-end">
                 <button type="submit" className="btn btn-primary">

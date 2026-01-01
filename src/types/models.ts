@@ -127,6 +127,7 @@ export interface LedgerEntry {
     paid_by_user_id: string; // Who paid / received
     user_uid?: string; // Creator ID (optional for backward compact)
     paid_by_name?: string;
+    split_between?: { uid: string, name: string }[];
     created_at: Date;
 }
 

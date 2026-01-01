@@ -28,7 +28,8 @@ import {
     getDoc,
     arrayUnion,
     serverTimestamp,
-    arrayRemove
+    arrayRemove,
+    getDocs
 } from 'firebase/firestore';
 import type { BudgetPlan, BudgetItem, LedgerEntry, House } from '@/types/models';
 import BudgetForm from '@/components/finance/BudgetForm';
@@ -477,6 +478,8 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
         return () => unsubscribe();
     }, [houseId, currentYear]);
 
+    const [members, setMembers] = useState<{ uid: string, name: string }[]>([]);
+
     useEffect(() => {
         if (!houseId) return;
 
@@ -498,26 +501,69 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
         return () => unsubscribe();
     }, [houseId]);
 
+
+    useEffect(() => {
+        if (!houseId) return;
+        const fetchMembers = async () => {
+            try {
+                // Fetch the house document to get owner_ids
+                const houseDoc = await getDoc(doc(db, 'houses', houseId));
+                if (!houseDoc.exists()) return;
+                const houseData = houseDoc.data();
+                const ownerIds = houseData.owner_ids || [];
+
+                if (ownerIds.length === 0) return;
+
+                // Fetch users
+                const chunks = [];
+                for (let i = 0; i < ownerIds.length; i += 10) {
+                    chunks.push(ownerIds.slice(i, i + 10));
+                }
+
+                const memberList: { uid: string, name: string }[] = [];
+                for (const chunk of chunks) {
+                    const q = query(collection(db, 'users'), where('uid', 'in', chunk));
+                    const snap = await getDocs(q);
+                    snap.docs.forEach((d: any) => memberList.push({ uid: d.id, name: d.data().name }));
+                }
+                setMembers(memberList);
+
+            } catch (err) {
+                console.error('Error fetching members:', err);
+            }
+        };
+        fetchMembers();
+    }, [houseId]);
+
     const handleSaveEntry = async (entryData: Partial<LedgerEntry>) => {
         if (!houseId || !currentUserId) return;
 
         try {
+            // Determine paid_by logic for backward compatibility + display
+            let finalPaidByName = currentUserName || 'Notandi';
+            // If split between is set, we might want to update paid_by_name to be a comma list or "Multiple"
+            if (entryData.split_between && entryData.split_between.length > 0) {
+                // For the main display column "paid_by_name", we can join names.
+                finalPaidByName = entryData.split_between.map(u => u.name.split(' ')[0]).join(', ');
+            }
+
+            const dataToSave = {
+                ...entryData,
+                house_id: houseId,
+                paid_by_name: finalPaidByName,
+                ...(entryData.id ? { updated_at: serverTimestamp() } : {
+                    user_uid: currentUserId,
+                    paid_by_user_id: currentUserId, // Primary creator/payer
+                })
+            };
+
             if (entryData.id) {
                 // Update existing
-                const { id, ...data } = entryData;
-                await updateDoc(doc(db, 'finance_entries', id!), {
-                    ...data,
-                    updated_at: serverTimestamp()
-                });
+                const { id, ...data } = dataToSave;
+                await updateDoc(doc(db, 'finance_entries', id!), data);
             } else {
                 // Create new
-                await addDoc(collection(db, 'finance_entries'), {
-                    ...entryData,
-                    house_id: houseId,
-                    user_uid: currentUserId,
-                    paid_by: currentUserId,
-                    paid_by_name: currentUserName || 'Notandi'
-                });
+                await addDoc(collection(db, 'finance_entries'), dataToSave);
             }
             setShowForm(false);
             setEditingEntry(null);
@@ -605,6 +651,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
                         }}
                         budgetCategories={budgetCategories}
                         initialValues={editingEntry}
+                        houseMembers={members}
                     />
                 )}
 
