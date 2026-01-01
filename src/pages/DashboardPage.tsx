@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import {
-    Calendar, CheckSquare, Sun, Wind,
+    Calendar, CheckSquare, Sun,
     Plus, Users, Wallet, Bell,
     ChevronRight, Loader2, Shield,
-    ChevronDown, Home
+    ChevronDown, Home, LogOut
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import { useNavigate } from 'react-router-dom';
@@ -252,7 +252,7 @@ const UserDashboard = () => {
         const startDay = start.getDate();
         const endDay = end.getDate();
         const month = format(end, 'MMMM', { locale: is });
-        return `${startDay}. - ${endDay}. ${month}`;
+        return `${startDay}.- ${endDay}. ${month} `;
     };
 
     const getDaysUntil = (date: Date) => {
@@ -428,7 +428,7 @@ const UserDashboard = () => {
                         </div>
                         <span className="font-serif font-bold text-lg tracking-tight">{currentHouse.name}</span>
                         {userHouses.length > 1 && (
-                            <ChevronDown size={16} className={`text-stone-400 group-hover:text-amber transition-transform ${showHouseSwitcher ? 'rotate-180' : ''}`} />
+                            <ChevronDown size={16} className={`text - stone - 400 group - hover: text - amber transition - transform ${showHouseSwitcher ? 'rotate-180' : ''} `} />
                         )}
                     </button>
 
@@ -445,10 +445,10 @@ const UserDashboard = () => {
                                             localStorage.setItem('last_house_id', house.id);
                                             setShowHouseSwitcher(false);
                                         }}
-                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${currentHouse.id === house.id
-                                            ? 'bg-amber/10 text-amber font-bold'
-                                            : 'text-stone-600 hover:bg-stone-50'
-                                            }`}
+                                        className={`w - full flex items - center gap - 3 px - 3 py - 2.5 rounded - lg text - sm transition - colors ${currentHouse.id === house.id
+                                                ? 'bg-amber/10 text-amber font-bold'
+                                                : 'text-stone-600 hover:bg-stone-50'
+                                            } `}
                                     >
                                         <Home size={16} className={currentHouse.id === house.id ? 'text-amber' : 'text-stone-400'} />
                                         <span className="truncate">{house.name}</span>
@@ -510,64 +510,86 @@ const UserDashboard = () => {
 
             {/* --- HERO IMAGE & STATUS --- */}
             <div className="pt-16 max-w-5xl mx-auto">
-                <div className="relative h-64 md:h-80 w-full overflow-hidden md:rounded-b-3xl">
+                <div className="relative h-72 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50">
                     <img
                         src={currentHouse?.image_url || "https://images.unsplash.com/photo-1542718610-a1d656d1884c?q=80&w=2670&auto=format&fit=crop"}
                         alt={currentHouse?.name || "Cabin"}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/80 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/20 to-transparent opacity-90"></div>
 
-                    {/* Weather Widget */}
-                    <div className="absolute bottom-6 left-6 text-white">
-                        <div className="flex items-center gap-3 mb-1">
-                            <Sun size={28} className="text-[#e8b058]" />
-                            <span className="text-4xl font-serif font-bold">{weather.temp}°</span>
+                    {/* Greeting & Weather */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div>
+                            <p className="text-amber font-bold text-sm uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <span className="w-8 h-0.5 bg-amber inline-block"></span>
+                                {(() => {
+                                    const hour = new Date().getHours();
+                                    if (hour < 12) return 'Góðan daginn';
+                                    if (hour < 18) return 'Góðan dag';
+                                    return 'Góða kvöldið';
+                                })()}
+                            </p>
+                            <h2 className="text-4xl md:text-5xl font-serif font-bold mb-2 text-white/95">
+                                {currentUser?.name?.split(' ')[0] || 'Gestur'}
+                            </h2>
+                            <div className="flex items-center gap-4 text-stone-300 text-sm font-medium">
+                                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+                                    <Sun size={16} className="text-amber" />
+                                    <span>{weather.temp}°</span>
+                                    <span className="text-stone-400">|</span>
+                                    <span>{weather.wind} m/s</span>
+                                </div>
+                                <span className="hidden md:inline text-stone-400">•</span>
+                                <span className="hidden md:inline capitalize">{weather.condition}</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 text-stone-300 text-sm">
-                            <Wind size={14} /> {weather.wind} m/s • {weather.condition}
-                        </div>
-                    </div>
 
-                    {/* Occupancy Status */}
-                    <div className="absolute bottom-6 right-6">
-                        {isOccupied ? (
-                            <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl flex items-center gap-2 text-white">
-                                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                                <span className="text-xs font-bold uppercase tracking-widest">Í notkun</span>
-                            </div>
-                        ) : (
-                            <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl flex items-center gap-2 text-white">
-                                <span className="text-xs font-bold uppercase tracking-widest text-stone-300">Laust</span>
-                            </div>
-                        )}
+                        {/* Occupancy Status Badge */}
+                        <div className="self-start md:self-end mb-1">
+                            {isOccupied ? (
+                                <div className="bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 text-emerald-100 px-4 py-2 rounded-xl flex items-center gap-2.5 shadow-lg">
+                                    <div className="relative flex h-2.5 w-2.5">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                    </div>
+                                    <span className="text-xs font-bold uppercase tracking-widest leading-none">Húsið er í notkun</span>
+                                </div>
+                            ) : (
+                                <div className="bg-white/10 backdrop-blur-md border border-white/20 text-stone-200 px-4 py-2 rounded-xl flex items-center gap-2.5 shadow-lg">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-stone-400"></div>
+                                    <span className="text-xs font-bold uppercase tracking-widest leading-none">Laust núna</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* --- MAIN CONTENT --- */}
-            <main className="max-w-5xl mx-auto px-4 -mt-6 relative z-10 space-y-6">
+            <main className="max-w-5xl mx-auto px-4 -mt-8 relative z-10 space-y-8">
 
-                {/* Action Bar */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex justify-between gap-3">
+                {/* Quick Actions Bar */}
+                <div className="bg-white p-2 rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-100 flex p-1.5 gap-2">
                     <button
                         onClick={() => navigate('/calendar')}
-                        className="flex-1 bg-[#1a1a1a] text-white py-3 rounded-lg font-bold text-sm hover:bg-[#333] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-stone-200"
+                        className="flex-1 bg-[#1a1a1a] text-white py-4 rounded-xl font-bold text-sm hover:bg-stone-800 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 group relative overflow-hidden"
                     >
-                        <Plus size={16} /> Bóka helgi
+                        <div className="absolute inset-0 bg-gradient-to-r from-stone-800 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="w-8 h-8 md:w-6 md:h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-amber group-hover:text-[#1a1a1a] transition-colors relative z-10">
+                            <Plus size={16} />
+                        </div>
+                        <span className="relative z-10">Bóka helgi</span>
                     </button>
+
                     <button
                         onClick={async () => {
                             if (!currentHouse || !currentUser) return;
-
                             if (isCheckedIn) {
-                                // Trigger Checkout Modal
                                 setShowCheckoutModal(true);
                             } else {
-                                // Trigger Check-in
                                 const confirmCheckIn = window.confirm("Viltu skrá komu þína í gestabókina?");
                                 if (!confirmCheckIn) return;
-
                                 try {
                                     const text = `${currentUser.name} skráði komu sína.`;
                                     const newLog = {
@@ -577,107 +599,132 @@ const UserDashboard = () => {
                                         text,
                                         created_at: serverTimestamp()
                                     };
-
                                     const docRef = await addDoc(collection(db, 'internal_logs'), newLog);
-
-                                    // Optimistic update
-                                    setLogs(prev => [{
-                                        id: docRef.id,
-                                        ...newLog,
-                                        created_at: new Date()
-                                    } as InternalLog, ...prev]);
-
+                                    setLogs(prev => [{ id: docRef.id, ...newLog, created_at: new Date() } as InternalLog, ...prev]);
                                     setIsCheckedIn(true);
-
                                 } catch (error) {
                                     console.error('Error logging check-in:', error);
                                 }
                             }
                         }}
-                        className={`flex-1 min-w-[100px] border border-stone-200 py-3 rounded-lg font-bold text-sm transition-colors ${isCheckedIn
-                            ? 'bg-amber text-white hover:bg-amber-dark border-transparent'
-                            : 'bg-white text-[#1a1a1a] hover:bg-stone-50'
-                            }`}
+                        className={`flex - 1 py - 4 rounded - xl font - bold text - sm transition - all active: scale - [0.98] flex flex - col md: flex - row items - center justify - center gap - 2 md: gap - 3 border ${isCheckedIn
+                                ? 'bg-amber text-[#1a1a1a] border-amber shadow-lg shadow-amber/20 hover:bg-[#d9a044]'
+                                : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50 hover:border-stone-300'
+                            } `}
                     >
-                        {isCheckedIn ? 'Skrá brottför' : 'Skrá komu'}
+                        <div className={`w - 8 h - 8 md: w - 6 md: h - 6 rounded - full flex items - center justify - center transition - colors ${isCheckedIn ? 'bg-black/10' : 'bg-stone-100'} `}>
+                            {isCheckedIn ? <LogOut size={16} /> : <Home size={16} />}
+                        </div>
+                        <span>{isCheckedIn ? 'Skrá brottför' : 'Skrá komu'}</span>
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
 
                     {/* NEXT BOOKING CARD */}
-                    <section onClick={() => navigate('/calendar')} className="cursor-pointer">
-                        <div className="flex justify-between items-center mb-3 px-1">
-                            <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Næst á dagskrá</h3>
-                            <button className="text-xs font-bold text-stone-400 hover:text-[#e8b058]">Sjá allt</button>
+                    <section onClick={() => navigate('/calendar')} className="group cursor-pointer">
+                        <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Næst á dagskrá</h3>
+                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-amber group-hover:text-white transition-colors">
+                                <ChevronRight size={18} />
+                            </div>
                         </div>
-                        <div className="bg-white p-5 rounded-xl border border-stone-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-[#e8b058]"></div>
+                        <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+                            <div className="absolute top-0 left-0 w-1.5 h-full bg-amber"></div>
+
+                            {/* Background Pattern */}
+                            <div className="absolute right-0 top-0 opacity-[0.03] transform translate-x-1/3 -translate-y-1/3 pointer-events-none">
+                                <Calendar size={200} />
+                            </div>
 
                             {nextBooking ? (
-                                <>
-                                    <div className="flex justify-between items-start">
+                                <div className="relative z-10">
+                                    <div className="flex justify-between items-start mb-6">
                                         <div>
-                                            <p className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-stone-100 text-stone-600 text-xs font-bold uppercase tracking-wider mb-3">
                                                 {getDaysUntil(nextBooking.start)}
-                                            </p>
-                                            <h4 className="text-xl font-bold text-[#1a1a1a]">{nextBooking.user_name}</h4>
-                                            <p className="text-stone-500 text-sm mt-1">
-                                                {formatBookingDates(nextBooking.start, nextBooking.end)}
-                                            </p>
-                                        </div>
-                                        <div className="w-10 h-10 bg-stone-50 rounded-full flex items-center justify-center text-stone-400">
-                                            <Calendar size={20} />
+                                            </span>
+                                            <h4 className="text-2xl font-serif font-bold text-[#1a1a1a] leading-tight">{nextBooking.user_name}</h4>
                                         </div>
                                     </div>
-                                    <div className="mt-4 pt-4 border-t border-stone-100 flex gap-2">
-                                        <span className="text-[10px] bg-stone-100 px-2 py-1 rounded text-stone-600 font-bold uppercase">
-                                            {nextBooking.type === 'personal' ? 'Einkanot' : (nextBooking.type === 'rental' ? 'Útleiga' : 'Fjölskylda')}
-                                        </span>
+
+                                    <div className="flex items-center gap-4 text-stone-500">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Komutími</span>
+                                            <span className="font-medium text-[#1a1a1a]">{formatBookingDates(nextBooking.start, nextBooking.end)}</span>
+                                        </div>
+                                        <div className="w-px h-8 bg-stone-200"></div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Tegund</span>
+                                            <span className="font-medium text-[#1a1a1a] capitalize">
+                                                {nextBooking.type === 'personal' ? 'Einkanot' : (nextBooking.type === 'rental' ? 'Útleiga' : 'Fjölskylda')}
+                                            </span>
+                                        </div>
                                     </div>
-                                </>
+                                </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-6 text-stone-400">
-                                    <Calendar size={32} className="mb-2 opacity-20" />
-                                    <p className="text-sm font-medium">Engar bókanir framundan</p>
+                                <div className="flex flex-col items-center justify-center py-8 text-stone-400 relative z-10">
+                                    <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center mb-4">
+                                        <Calendar size={28} className="opacity-40" />
+                                    </div>
+                                    <p className="text-base font-medium text-stone-500">Húsið er laust næstu daga</p>
+                                    <button className="mt-4 text-sm font-bold text-amber hover:underline">Bóka núna</button>
                                 </div>
                             )}
                         </div>
                     </section>
 
                     {/* FINANCE SNAPSHOT */}
-                    <section onClick={() => navigate('/finance')} className="cursor-pointer">
-                        <div className="flex justify-between items-center mb-3 px-1">
-                            <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Hússjóður</h3>
-                            <button className="text-xs font-bold text-stone-400 hover:text-[#e8b058]">Yfirlit</button>
-                        </div>
-                        <div className="bg-[#1a1a1a] p-5 rounded-xl text-white shadow-lg shadow-stone-200 relative overflow-hidden group hover:shadow-xl transition-shadow">
-                            {/* Decorative */}
-                            <div className="absolute -right-4 -bottom-4 text-stone-800 opacity-20 transform group-hover:scale-110 transition-transform">
-                                <Wallet size={80} />
+                    <section onClick={() => navigate('/finance')} className="group cursor-pointer">
+                        <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Hússjóður</h3>
+                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-[#1a1a1a] group-hover:text-white transition-colors">
+                                <ChevronRight size={18} />
                             </div>
+                        </div>
+                        <div className="bg-[#1a1a1a] p-6 rounded-2xl text-white shadow-xl shadow-stone-200 relative overflow-hidden group hover:shadow-2xl hover:scale-[1.01] transition-all duration-300">
+                            {/* Decorative Gradients */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-amber/20 to-transparent opacity-50 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
 
-                            <p className="text-stone-400 text-xs font-bold uppercase tracking-widest mb-1">Staða</p>
-                            <h4 className="text-3xl font-serif text-[#e8b058] mb-4">{finances.balance.toLocaleString('is-IS')} kr.</h4>
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="p-1.5 bg-white/10 rounded-md">
+                                        <Wallet size={16} className="text-amber" />
+                                    </div>
+                                    <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Staða sjóðs</p>
+                                </div>
 
-                            <div className="flex items-center gap-3 text-sm border-t border-stone-800 pt-3">
-                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                <span className="text-stone-400 truncate">Síðast: {finances.lastAction}</span>
+                                <h4 className="text-4xl font-serif text-white mb-6 tracking-tight">
+                                    {finances.balance.toLocaleString('is-IS')} <span className="text-xl text-stone-500 font-sans font-normal">kr.</span>
+                                </h4>
+
+                                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
+                                    <div className="flex items-center gap-3 text-sm">
+                                        <div className={`w - 2 h - 2 rounded - full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow - [0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-stone-300 text-xs uppercase tracking-wide font-bold mb-0.5">Síðasta færsla</p>
+                                            <p className="text-white font-medium truncate">{finances.lastAction}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>
 
                     {/* TASKS */}
                     <section className="md:col-span-2">
-                        <div className="flex justify-between items-center mb-3 px-1">
-                            <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Verkefni</h3>
-                            <button onClick={() => navigate('/tasks')} className="text-xs font-bold text-stone-400 hover:text-[#e8b058]">Bæta við</button>
+                        <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Verkefni</h3>
+                            <button onClick={() => navigate('/tasks')} className="text-xs font-bold text-stone-400 hover:text-[#e8b058]">Sjá öll</button>
                         </div>
-                        <div className="bg-white rounded-xl border border-stone-100 shadow-sm divide-y divide-stone-50">
+                        <div className="bg-white rounded-2xl border border-stone-100 shadow-xl shadow-stone-200/50 divide-y divide-stone-100 overflow-hidden">
                             {tasks.length === 0 ? (
-                                <div className="p-8 text-center text-stone-400">
-                                    <CheckSquare size={24} className="mx-auto mb-2 opacity-50" />
-                                    <p>Engin verkefni skráð</p>
+                                <div className="p-10 text-center text-stone-400 flex flex-col items-center justify-center">
+                                    <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center mb-3">
+                                        <CheckSquare size={20} className="opacity-50" />
+                                    </div>
+                                    <p className="font-medium">Öllum verkefnum lokið!</p>
+                                    <button onClick={() => navigate('/tasks')} className="mt-2 text-sm font-bold text-amber hover:underline">Bæta við nýju</button>
                                 </div>
                             ) : tasks.map(task => (
                                 <div
@@ -685,18 +732,18 @@ const UserDashboard = () => {
                                     onClick={() => navigate('/tasks')}
                                     className="p-4 flex items-center gap-4 hover:bg-stone-50 transition-colors cursor-pointer group"
                                 >
-                                    <div className={`w-5 h-5 rounded border ${task.status === 'completed' ? 'bg-[#e8b058] border-[#e8b058]' : 'border-stone-300'} flex items-center justify-center`}>
-                                        {task.status === 'completed' && <CheckSquare size={12} className="text-white" />}
+                                    <div className={`w - 6 h - 6 rounded - lg border - 2 ${task.status === 'completed' ? 'bg-[#e8b058] border-[#e8b058]' : 'border-stone-200 group-hover:border-[#e8b058]'} flex items - center justify - center transition - colors`}>
+                                        {task.status === 'completed' && <CheckSquare size={14} className="text-white" />}
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-[#1a1a1a]">{task.title}</p>
+                                        <p className={`text - base font - bold text - [#1a1a1a] ${task.status === 'completed' ? 'line-through text-stone-400' : ''} `}>{task.title}</p>
                                         {task.assigned_to_name ? (
-                                            <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1"><Users size={10} /> {task.assigned_to_name}</p>
+                                            <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1"><Users size={12} /> {task.assigned_to_name}</p>
                                         ) : (
-                                            <p className="text-xs text-[#e8b058] mt-0.5 group-hover:underline">+ Taka að sér</p>
+                                            <p className="text-xs text-[#e8b058] mt-0.5 group-hover:underline font-bold">+ Taka að sér</p>
                                         )}
                                     </div>
-                                    <ChevronRight size={16} className="text-stone-300" />
+                                    <ChevronRight size={18} className="text-stone-300 group-hover:text-[#e8b058] transition-colors" />
                                 </div>
                             ))}
                         </div>
@@ -706,33 +753,36 @@ const UserDashboard = () => {
             </main>
 
             {/* ROW 2: Shopping List & Logbook */}
-            <div className="max-w-5xl mx-auto px-4 mt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="max-w-5xl mx-auto px-4 mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
 
                     {/* SHOPPING LIST */}
                     <section>
-                        <div className="flex justify-between items-center mb-3 px-1">
-                            <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Vantar</h3>
+                        <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Vantar í bústaðinn</h3>
                         </div>
-                        <ShoppingList
-                            items={shoppingItems}
-                            onToggle={handleToggleShoppingItem}
-                            onDelete={handleDeleteShoppingItem}
-                            onAdd={handleAddShoppingItem}
-
-                        />
+                        <div className="bg-white rounded-2xl border border-stone-100 shadow-xl shadow-stone-200/50 overflow-hidden p-1">
+                            <ShoppingList
+                                items={shoppingItems}
+                                onToggle={handleToggleShoppingItem}
+                                onDelete={handleDeleteShoppingItem}
+                                onAdd={handleAddShoppingItem}
+                            />
+                        </div>
                     </section>
 
                     {/* INTERNAL LOGBOOK */}
                     <section>
-                        <div className="flex justify-between items-center mb-3 px-1">
-                            <h3 className="font-serif text-lg font-bold text-[#1a1a1a]">Gestapósturinn</h3>
+                        <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Gestapósturinn</h3>
                         </div>
-                        <InternalLogbook
-                            logs={logs}
-                            currentUserName={currentUser?.name || ''}
-                            onAddLog={handleAddLog}
-                        />
+                        <div className="bg-white rounded-2xl border border-stone-100 shadow-xl shadow-stone-200/50 overflow-hidden">
+                            <InternalLogbook
+                                logs={logs}
+                                currentUserName={currentUser?.name || ''}
+                                onAddLog={handleAddLog}
+                            />
+                        </div>
                     </section>
 
                 </div>

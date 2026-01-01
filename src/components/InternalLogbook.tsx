@@ -39,7 +39,7 @@ export default function InternalLogbook({ logs, currentUserName, onAddLog }: Int
     };
 
     return (
-        <div className="bg-white rounded-xl border border-stone-100 shadow-sm p-4 space-y-6">
+        <div className="p-4 space-y-6">
             {/* Input */}
             <form onSubmit={handleSubmit} className="flex gap-3">
                 <div className="w-8 h-8 bg-amber rounded-full flex items-center justify-center text-white text-xs font-bold shadow-md">

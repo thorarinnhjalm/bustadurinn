@@ -25,7 +25,7 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
     const checkedItems = items.filter(i => i.checked);
 
     return (
-        <div className="bg-white rounded-xl border border-stone-100 shadow-sm p-2">
+        <div className="space-y-1">
             {/* Unchecked Items */}
             {uncheckedItems.map(item => (
                 <div
