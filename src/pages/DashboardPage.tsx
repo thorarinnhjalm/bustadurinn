@@ -492,7 +492,37 @@ const UserDashboard = () => {
                     >
                         <Plus size={16} /> Bóka helgi
                     </button>
-                    <button className="flex-1 bg-white border border-stone-200 text-[#1a1a1a] py-3 rounded-lg font-bold text-sm hover:bg-stone-50 transition-colors">
+                    <button
+                        onClick={async () => {
+                            if (!currentHouse || !currentUser) return;
+                            const confirmCheckIn = window.confirm("Viltu skrá komu þína í gestabókina?");
+                            if (!confirmCheckIn) return;
+
+                            try {
+                                const text = `${currentUser.name} skráði komu sína.`;
+                                const newLog = {
+                                    house_id: currentHouse.id,
+                                    user_id: currentUser.uid,
+                                    user_name: currentUser.name,
+                                    text,
+                                    created_at: serverTimestamp()
+                                };
+
+                                const docRef = await addDoc(collection(db, 'internal_logs'), newLog);
+
+                                // Optimistic update
+                                setLogs(prev => [{
+                                    id: docRef.id,
+                                    ...newLog,
+                                    created_at: new Date()
+                                } as InternalLog, ...prev]);
+
+                            } catch (error) {
+                                console.error('Error logging check-in:', error);
+                            }
+                        }}
+                        className="flex-1 bg-white border border-stone-200 text-[#1a1a1a] py-3 rounded-lg font-bold text-sm hover:bg-stone-50 transition-colors"
+                    >
                         Skrá komu
                     </button>
                 </div>
