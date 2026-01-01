@@ -5,12 +5,13 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2 } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
+import { updateUserNameInAllCollections } from '@/services/userService';
 import AdminLayout from '@/components/AdminLayout';
 import DataTable from '@/components/DataTable';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
@@ -531,6 +532,21 @@ export default function SuperAdminPage() {
         } catch (error: any) {
             console.error('Error deleting user:', error);
             alert(`❌ Villa: ${error.message}`);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleSyncName = async (user: User) => {
+        if (!confirm(`Force update name "${user.name}" across all system records (tasks, logs, bookings etc)?`)) return;
+
+        setActionLoading(`sync-name-${user.uid}`);
+        try {
+            await updateUserNameInAllCollections(user.uid, user.name, user.house_ids || []);
+            alert('✅ User name synced successfully across all collections.');
+        } catch (error: any) {
+            console.error('Error syncing name:', error);
+            alert(`❌ Error: ${error.message}`);
         } finally {
             setActionLoading(null);
         }
@@ -1188,6 +1204,15 @@ export default function SuperAdminPage() {
                                     >
                                         <UserCog className="w-3 h-3" />
                                         Líkja eftir
+                                    </button>
+                                    <button
+                                        onClick={() => handleSyncName(row)}
+                                        disabled={actionLoading === `sync-name-${row.uid}`}
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                        title="Samstilla nafn í öllu kerfinu"
+                                    >
+                                        <RefreshCw className={`w-3 h-3 ${actionLoading === `sync-name-${row.uid}` ? 'animate-spin' : ''}`} />
+                                        Sync
                                     </button>
                                     <button
                                         onClick={() => handleDeleteUser(row)}
