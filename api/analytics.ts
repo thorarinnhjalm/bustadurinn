@@ -32,12 +32,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 1. Check for configuration
     const propertyId = process.env.GA4_PROPERTY_ID;
     const clientEmail = process.env.GOOGLE_CLIENT_EMAIL; // From service account
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'); // Handle newlines in Vercel env vars
+    let privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
     if (!propertyId || !clientEmail || !privateKey) {
         console.warn('⚠️ Missing GA4 Environment Variables (GA4_PROPERTY_ID, GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY). Returning empty data.');
         return res.status(200).json(MOCK_DATA);
     }
+
+    // 🕵️‍♀️ Helpful Error Handling for Common Key Issues
+    if (privateKey.startsWith('"') || privateKey.endsWith('"')) {
+        console.error('❌ GOOGLE_PRIVATE_KEY has surrounding quotes. Please remove them in Vercel.');
+        return res.status(500).json({ error: 'CONFIGURATION ERROR: The GOOGLE_PRIVATE_KEY Env Var has surrounding quotes ("). Please remove them in Vercel Settings.' });
+    }
+    if (!privateKey.includes('BEGIN PRIVATE KEY')) {
+        console.error('❌ GOOGLE_PRIVATE_KEY is missing the "-----BEGIN PRIVATE KEY-----" header.');
+        return res.status(500).json({ error: 'CONFIGURATION ERROR: The GOOGLE_PRIVATE_KEY is missing the "-----BEGIN PRIVATE KEY-----" header. Please check your copy-paste.' });
+    }
+
 
     try {
         const analyticsDataClient = new BetaAnalyticsDataClient({
