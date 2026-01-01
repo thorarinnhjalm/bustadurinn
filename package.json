@@ -12,6 +12,7 @@
     "seed-email-templates": "node scripts/seedEmailTemplatesAdmin.js"
   },
   "dependencies": {
+    "@google-analytics/data": "^5.2.1",
     "@googlemaps/js-api-loader": "^2.0.2",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",

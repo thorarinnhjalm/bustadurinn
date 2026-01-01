@@ -15,6 +15,9 @@ export interface AnalyticsData {
     }[];
 }
 
+// Mock data for development and fallback
+
+
 export const analyticsService = {
     getWebAnalytics: async (period: '7d' | '30d' | '90d' = '30d'): Promise<AnalyticsData> => {
         try {
@@ -23,8 +26,7 @@ export const analyticsService = {
             const data = await response.json();
             return data as AnalyticsData;
         } catch (error) {
-            console.error("Error fetching analytics:", error);
-            // Fallback mock data if fetch fails
+            console.warn("Error fetching analytics:", error);
             return {
                 activeUsers: 0,
                 sessions: 0,

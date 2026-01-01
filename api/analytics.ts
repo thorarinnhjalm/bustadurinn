@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { BetaAnalyticsDataClient } from '@google-analytics/data';
 
 interface AnalyticsData {
     activeUsers: number;
@@ -15,36 +16,153 @@ interface AnalyticsData {
     }[];
 }
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
-    // In a real implementation, we would use the Google Analytics Data API here.
-    // For now, we simulate data for demonstration purposes or fallback.
+// Fallback data if API is not configured
+const MOCK_DATA: AnalyticsData = {
+    activeUsers: 0,
+    sessions: 0,
+    engagementRate: 0,
+    screenPageViews: 0,
+    trafficSources: [],
+    topPages: []
+};
 
-    // We can simulate slightly different data based on 'period' param if we want.
-    const { period } = req.query;
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+    const { period = '30d' } = req.query;
 
-    const multiplier = period === '90d' ? 3 : period === '7d' ? 0.25 : 1;
+    // 1. Check for configuration
+    const propertyId = process.env.GA4_PROPERTY_ID;
+    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL; // From service account
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'); // Handle newlines in Vercel env vars
 
-    const data: AnalyticsData = {
-        activeUsers: Math.round(1243 * multiplier),
-        sessions: Math.round(5432 * multiplier),
-        engagementRate: 0.65,
-        screenPageViews: Math.round(12403 * multiplier),
-        trafficSources: [
-            { source: 'direct', users: Math.round(500 * multiplier) },
-            { source: 'google', users: Math.round(350 * multiplier) },
-            { source: 'facebook', users: Math.round(200 * multiplier) },
-            { source: 'instagram', users: Math.round(150 * multiplier) },
-            { source: 'referral', users: Math.round(43 * multiplier) }
-        ],
-        topPages: [
-            { pagePath: '/dashboard', screenPageViews: Math.round(4500 * multiplier) },
-            { pagePath: '/calendar', screenPageViews: Math.round(3200 * multiplier) },
-            { pagePath: '/', screenPageViews: Math.round(2100 * multiplier) },
-            { pagePath: '/tasks', screenPageViews: Math.round(1500 * multiplier) },
-            { pagePath: '/settings', screenPageViews: Math.round(800 * multiplier) },
-            { pagePath: '/guest', screenPageViews: Math.round(300 * multiplier) }
-        ]
-    };
+    if (!propertyId || !clientEmail || !privateKey) {
+        console.warn('⚠️ Missing GA4 Environment Variables (GA4_PROPERTY_ID, GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY). Returning empty data.');
+        return res.status(200).json(MOCK_DATA);
+    }
 
-    res.status(200).json(data);
+    try {
+        const analyticsDataClient = new BetaAnalyticsDataClient({
+            credentials: {
+                client_email: clientEmail,
+                private_key: privateKey,
+            },
+        });
+
+        // Calculate date range
+        let startDate = '30daysAgo';
+        if (period === '7d') startDate = '7daysAgo';
+        if (period === '90d') startDate = '90daysAgo';
+
+        const [response] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [
+                {
+                    startDate: startDate,
+                    endDate: 'today',
+                },
+            ],
+            dimensions: [
+                { name: 'pagePath' },
+                { name: 'sessionSource' },
+            ],
+            metrics: [
+                { name: 'activeUsers' },
+                { name: 'sessions' },
+                { name: 'screenPageViews' },
+                { name: 'engagementRate' },
+            ],
+        });
+
+        // Process raw GA4 data into our simplified format
+        // Note: GA4 returns rows with dimension combinations. We need to aggregate.
+
+        let activeUsers = 0;
+        let sessions = 0;
+        let screenPageViews = 0;
+        let totalEngagementRate = 0;
+        let rowCount = 0;
+
+        const pagesMap = new Map<string, number>();
+        const sourcesMap = new Map<string, number>();
+
+        response.rows?.forEach(row => {
+            const users = parseInt(row.metricValues?.[0]?.value || '0');
+            const sess = parseInt(row.metricValues?.[1]?.value || '0');
+            const views = parseInt(row.metricValues?.[2]?.value || '0');
+            const rate = parseFloat(row.metricValues?.[3]?.value || '0');
+
+            const pagePath = row.dimensionValues?.[0]?.value || '(unknown)';
+            const source = row.dimensionValues?.[1]?.value || '(direct)';
+
+            // Aggregates (This is a rough approximation as users overlap across dimensions)
+            // Ideally we'd make separate requests for totals vs breakdowns for perfect accuracy.
+            // For dashboard purposes, summing pageviews is safe. Users/Sessions overlap.
+
+            // Actually, for Totals, it's better to request them separately without dimensions
+            // But to save API calls/complexity, we will loop. 
+            // HOWEVER: Summing 'activeUsers' across rows with dimensions WILL overcount unique users.
+            // We'll address this by getting the totals from the 'totals' or 'maximums' field if available, 
+            // OR making a separate simple request. Let's make a separate simple request for accurate totals.
+        });
+
+        // 2. Parallel Request: Get Totals (Accurate)
+        const [totalsResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate, endDate: 'today' }],
+            metrics: [
+                { name: 'activeUsers' },
+                { name: 'sessions' },
+                { name: 'screenPageViews' },
+                { name: 'engagementRate' },
+            ]
+        });
+
+        // 3. Parallel Request: Get Top Pages
+        const [pagesResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate, endDate: 'today' }],
+            dimensions: [{ name: 'pagePath' }],
+            metrics: [{ name: 'screenPageViews' }],
+            limit: 10,
+            orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }]
+        });
+
+        // 4. Parallel Request: Get Traffic Sources
+        const [sourcesResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate, endDate: 'today' }],
+            dimensions: [{ name: 'sessionSource' }],
+            metrics: [{ name: 'totalUsers' }], // 'activeUsers' per source
+            limit: 10,
+            orderBys: [{ metric: { metricName: 'totalUsers' }, desc: true }]
+        });
+
+
+        // Construct final data
+        const totalRow = totalsResponse.rows?.[0];
+
+        const finalData: AnalyticsData = {
+            activeUsers: parseInt(totalRow?.metricValues?.[0]?.value || '0'),
+            sessions: parseInt(totalRow?.metricValues?.[1]?.value || '0'),
+            screenPageViews: parseInt(totalRow?.metricValues?.[2]?.value || '0'),
+            engagementRate: parseFloat(totalRow?.metricValues?.[3]?.value || '0'),
+
+            topPages: pagesResponse.rows?.map(row => ({
+                pagePath: row.dimensionValues?.[0]?.value || '',
+                screenPageViews: parseInt(row.metricValues?.[0]?.value || '0')
+            })) || [],
+
+            trafficSources: sourcesResponse.rows?.map(row => ({
+                source: row.dimensionValues?.[0]?.value || '',
+                users: parseInt(row.metricValues?.[0]?.value || '0')
+            })) || []
+        };
+
+        return res.status(200).json(finalData);
+
+    } catch (e: any) {
+        console.error('❌ GA4 Data API Error:', e);
+        // Returning empty "real" data structure rather than fake data if it fails,
+        // so the user knows something is wrong rather than seeing fake numbers.
+        return res.status(500).json({ error: e.message });
+    }
 }
