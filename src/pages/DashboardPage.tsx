@@ -600,7 +600,7 @@ const UserDashboard = () => {
             </main>
 
             {/* ROW 2: Shopping List & Logbook */}
-            <div className="max-w-5xl mx-auto px-4">
+            <div className="max-w-5xl mx-auto px-4 mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* SHOPPING LIST */}
