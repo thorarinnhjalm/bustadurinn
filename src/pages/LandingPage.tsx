@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Calendar, TrendingUp, Key, CheckCircle, ArrowRight } from 'lucide-react';
+import { Calendar, TrendingUp, Key, CheckCircle, ArrowRight, Users } from 'lucide-react';
 import SEO from '@/components/SEO';
 import MarketingLayout from '@/components/MarketingLayout';
 import { useAppStore } from '@/store/appStore';
@@ -147,13 +147,13 @@ export default function LandingPage() {
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8 mb-12">
-                        {features.map((feature, index) => (
-                            <div key={index} className="card hover:shadow-lg transition-shadow bg-white text-center">
-                                <feature.icon className="w-12 h-12 mb-4 text-amber mx-auto" />
-                                <h3 className="text-2xl font-serif mb-3">{feature.title}</h3>
-                                <p className="text-grey-dark leading-relaxed">{feature.description}</p>
-                            </div>
-                        ))}
+                        <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <Users className="w-10 h-10 text-amber mb-6" />
+                            <h3 className="text-xl font-serif mb-3">Gestaaðgangur</h3>
+                            <p className="text-grey-dark leading-relaxed">
+                                Sendu sjálfvirka "Töfrahlekki" á gesti sem opna upplýsingar um bústaðinn, veður og reglur. Virkar eins og stafræn gestabók og leiðarvísir í einu.
+                            </p>
+                        </div>
                     </div>
 
                     <div className="text-center">

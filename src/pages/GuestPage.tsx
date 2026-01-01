@@ -32,6 +32,24 @@ export default function GuestPage() {
                 const docSnap = await getDoc(doc(db, 'guest_views', token));
                 if (docSnap.exists()) {
                     const viewData = docSnap.data();
+
+                    // Check Time Validity
+                    const now = new Date();
+                    const validFrom = viewData.valid_from?.toDate ? viewData.valid_from.toDate() : (viewData.valid_from ? new Date(viewData.valid_from) : null);
+                    const validUntil = viewData.valid_until?.toDate ? viewData.valid_until.toDate() : (viewData.valid_until ? new Date(viewData.valid_until) : null);
+
+                    if (validFrom && now < validFrom) {
+                        setError(`Þessi hlekkur virkjast þann ${validFrom.toLocaleDateString('is-IS')} kl. ${validFrom.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}`);
+                        setLoading(false);
+                        return;
+                    }
+
+                    if (validUntil && now > validUntil) {
+                        setError('Þessi hlekkur er útrunninn.');
+                        setLoading(false);
+                        return;
+                    }
+
                     setData(viewData);
 
                     // Fetch weather

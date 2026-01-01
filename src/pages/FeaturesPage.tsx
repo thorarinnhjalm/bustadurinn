@@ -80,18 +80,18 @@ export default function FeaturesPage() {
         {
             icon: Wifi,
             title: "Stafrænn Gestaaðgangur",
-            shortDesc: "Deildu upplýsingum með gestum án þess að veita fullt aðgengi.",
-            description: "Gestaaðgangurinn er einstakur eiginleiki sem gerir þér kleift að búa til tímabundinn hlekk fyrir gesti, leigjendur eða vinnu­menn. Gesturinn sér WiFi-lykilorðið, húsreglur, leiðbeiningar um aðgang að húsinu og neyðarsímanúmer, en ekkert annað. Hlekkurinn gildir í takmarkaðan tíma (t.d. aðeins meðan gesturinn er á staðnum) og þú getur eytt honum hvenær sem er. Þetta er tilvalið fyrir skammtímaleigu eða þegar þú vilt láta vini nota húsið án þess að veita þeim aðgang að fjármálum eða bókunum.",
+            shortDesc: "Deildu upplýsingum með gestum í gegnum tímabundna hlekki.",
+            description: "Gestaaðgangurinn er bylting í samskiptum við gesti. Búðu til 'Töfrahlekki' (Magic Links) fyrir hverja bókun sem virkjast sjálfkrafa 24 tímum fyrir komu og renna út eftir brottför. Gestir fá upplýsingar um aðgang, WiFi, pottinn og reglur beint í símann án þess að þurfa að hlaða niður appi eða skrá sig inn. Þú getur líka verið með fastan hlekk fyrir fjölskylduna.",
             benefits: [
-                "Tímabundinn aðgangur fyrir gesti",
-                "Sjá WiFi, húsreglur og leiðbeiningar",
-                "Enginn aðgangur að fjármálum eða bókunum",
-                "Eyðið hlekknum hvenær sem er"
+                "Sjálfvirkir hlekkir fyrir hverja bókun",
+                "Virkjast sjálfkrafa og renna út",
+                "Ekkert app, engin innskráning fyrir gesti",
+                "Virkar fullkomlega í síma"
             ],
             useCases: [
-                "Veittu leigjanda aðgang á meðan hann er í húsinu",
-                "Láttu vini sjá WiFi-lykilorð og húsreglur",
-                "Vinnumenn geta séð aðgangsleiðbeiningar"
+                "Sendu leigjanda hlekk sem virkar bara á meðan dvöl stendur",
+                "Láttu gesti sjá pin-númer og WiFi lykilorð",
+                "Stafræn gestabók og veðurupplýsingar á staðnum"
             ],
             imageUrl: "/screenshots/guest-settings.png"
         },

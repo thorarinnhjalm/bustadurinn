@@ -18,7 +18,10 @@ import {
     X,
     Upload,
     Image as ImageIcon,
-    AlertTriangle
+    AlertTriangle,
+    Copy,
+    RefreshCw,
+    Link as LinkIcon
 } from 'lucide-react';
 import ImageCropper from '@/components/ImageCropper';
 import {
@@ -29,6 +32,7 @@ import {
     deleteDoc,
     serverTimestamp
 } from 'firebase/firestore';
+import MagicLinkGenerator from '@/components/guest/MagicLinkGenerator';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import type { House, User } from '@/types/models';
@@ -960,222 +964,269 @@ export default function SettingsPage() {
 
                         {/* TAB: GUESTS */}
                         {activeTab === 'guests' && house && (
-                            <div className="space-y-6">
-                                {/* Link Section */}
-                                <div className="bg-white p-6 rounded-lg shadow-sm">
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <BookOpen className="w-6 h-6 text-amber" />
-                                        <h2 className="text-xl font-serif">Gestahlekki</h2>
+                            <div className="max-w-4xl mx-auto space-y-12">
+
+                                {/* Dynamic Links (New) */}
+                                <section>
+                                    <div className="mb-6">
+                                        <h2 className="text-2xl font-serif font-bold text-charcoal mb-2">Bókunarhlekkir</h2>
+                                        <p className="text-grey-mid">Búðu til tímabundna hlekki sem virka sjálfkrafa fyrir hverja bókun.</p>
+                                    </div>
+                                    <MagicLinkGenerator house={house} />
+                                </section>
+
+                                <hr className="border-stone-200" />
+
+                                {/* Static Link (Old) */}
+                                <section>
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div>
+                                            <h2 className="text-2xl font-serif font-bold text-charcoal mb-2">Fastur Gestahlekkur</h2>
+                                            <p className="text-grey-mid">Einn fastur hlekkur fyrir húsið sem hægt er að senda handvirkt. Virkur þar til honum er eytt.</p>
+                                        </div>
+                                        <div className="bg-amber/10 text-amber-700 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider">
+                                            Mælt með fyrir fjölskyldu
+                                        </div>
                                     </div>
 
-                                    <div className="bg-amber/10 border border-amber/30 rounded-lg p-4 mb-4">
-                                        <h4 className="font-semibold text-charcoal mb-2 text-sm">Hvað er gestahlekkur?</h4>
-                                        <p className="text-sm text-grey-dark">
-                                            Deildu þessum hlekk með leigjendum eða gestum sem þurfa <strong>tímabundinn aðgang</strong> að upplýsingum um húsið (WiFi, hurðarkóði, reglur).
-                                            Þeir þurfa ekki að skrá sig inn eða búa til aðgang.
-                                        </p>
-                                    </div>
-
-                                    <div className="bg-bone p-4 rounded-lg flex flex-col gap-4">
+                                    <div className="card p-6 border-2 border-stone-100">
                                         {house.guest_token ? (
-                                            <div>
-                                                <label className="label text-xs uppercase text-grey-mid">Gestahlekkur (Virkt)</label>
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        readOnly
-                                                        className="input font-mono text-sm bg-white"
-                                                        value={`${window.location.origin}/guest/${house.guest_token}`}
-                                                    />
-                                                    <button
-                                                        onClick={() => {
-                                                            navigator.clipboard.writeText(`${window.location.origin}/guest/${house.guest_token}`);
-                                                            setSuccess('Hlekkur afritaður!');
-                                                            setTimeout(() => setSuccess(''), 2000);
-                                                        }}
-                                                        className="btn btn-secondary whitespace-nowrap"
-                                                    >
-                                                        Afrita
-                                                    </button>
+                                            <div className="space-y-6">
+                                                <div className="bg-green-50 border border-green-100 rounded-xl p-6 text-center">
+                                                    <p className="text-green-800 font-medium mb-2">✓ Gestasíða er virk</p>
+                                                    <div className="flex items-center justify-center gap-2 mb-4">
+                                                        <code className="bg-white px-3 py-1 rounded border border-green-200 text-green-900 font-mono text-lg">
+                                                            bustadurinn.is/guest/{house.guest_token}
+                                                        </code>
+                                                        <button
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(`${window.location.origin}/guest/${house.guest_token}`);
+                                                                setSuccess('Hlekkur afritaður!');
+                                                            }}
+                                                            className="p-2 hover:bg-green-100 rounded-lg text-green-700 transition-colors"
+                                                            title="Afrita hlekk"
+                                                        >
+                                                            <Copy size={20} />
+                                                        </button>
+                                                    </div>
+                                                    <div className="flex justify-center gap-3">
+                                                        <a
+                                                            href={`/guest/${house.guest_token}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="btn bg-green-600 text-white hover:bg-green-700 border-none text-sm px-6"
+                                                        >
+                                                            Opna síðu
+                                                        </a>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (navigator.share) {
+                                                                    navigator.share({
+                                                                        title: `Gestasíða - ${house.name}`,
+                                                                        url: `${window.location.origin}/guest/${house.guest_token}`
+                                                                    });
+                                                                }
+                                                            }}
+                                                            className="btn bg-white text-green-700 border border-green-200 hover:bg-green-50 text-sm px-4"
+                                                        >
+                                                            Deila
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <div className="mt-4">
-                                                    <button
-                                                        onClick={() => handleGenerateGuestToken(true)}
-                                                        className="text-xs text-red-500 hover:text-red-700 underline"
-                                                    >
-                                                        Búa til nýjan hlekk (Ógilda gamlan)
-                                                    </button>
+
+                                                <div className="flex justify-between items-center pt-4 border-t border-stone-100">
+                                                    <p className="text-sm text-stone-500">
+                                                        Viltu endurnýja hlekkinn? Gamli hlekkurinn hættir að virka.
+                                                    </p>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleGenerateGuestToken(true)}
+                                                            className="btn btn-ghost text-stone-500 hover:text-charcoal text-sm"
+                                                        >
+                                                            <RefreshCw size={14} className="mr-2" />
+                                                            Endurnýja
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (!confirm('Ertu viss? Þetta lokar á aðganginn strax.')) return;
+                                                                setLoading(true);
+                                                                try {
+                                                                    await deleteDoc(doc(db, 'guest_views', house.guest_token!));
+                                                                    await updateDoc(doc(db, 'houses', house.id), { guest_token: null });
+                                                                    setHouse({ ...house, guest_token: undefined });
+                                                                    setSuccess('Gestasíðu eytt');
+                                                                } catch (e) {
+                                                                    console.error(e);
+                                                                    setError('Gat ekki eytt síðu');
+                                                                } finally {
+                                                                    setLoading(false);
+                                                                }
+                                                            }}
+                                                            className="btn btn-ghost text-red-400 hover:bg-red-50 hover:text-red-600 text-sm"
+                                                        >
+                                                            Eyða
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <button
-                                                onClick={() => handleGenerateGuestToken(false)}
-                                                className="btn btn-primary"
-                                            >
-                                                Búa til gestahlekk
-                                            </button>
+                                            <div className="text-center py-8">
+                                                <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                    <LinkIcon size={32} className="text-stone-400" />
+                                                </div>
+                                                <h3 className="text-lg font-bold text-charcoal mb-2">Enginn fastur gestahlekkur</h3>
+                                                <p className="text-stone-500 mb-6 max-w-sm mx-auto">
+                                                    Þú getur búið til einn fastan hlekk sem er alltaf virkur, til dæmis fyrir fjölskyldumeðlimi.
+                                                </p>
+                                                <button
+                                                    onClick={() => handleGenerateGuestToken(false)}
+                                                    disabled={loading}
+                                                    className="btn btn-primary"
+                                                >
+                                                    {loading ? 'Bý til...' : 'Búa til fastan hlekk'}
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
-                                </div>
+                                </section>
 
-                                {/* Access Code for Guests */}
-                                <div className="bg-white p-6 rounded-lg shadow-sm">
-                                    <h3 className="text-lg font-medium mb-4">Aðgangskóði fyrir gesti</h3>
-                                    <p className="text-sm text-grey-dark mb-4">
-                                        Ef þú notar lyklakassa eða rafrænar hurðir, skaltu setja inn kóðann hér. Hann birtist sjálfkrafa á gestasíðunni.
-                                    </p>
-                                    <div>
-                                        <label className="label">Hurðarkóði / Lyklakassanúmer</label>
-                                        <input
-                                            type="text"
-                                            className="input font-mono text-xl"
-                                            value={houseForm.access_instructions?.match(/\d{4,6}/)?.[0] || ''}
-                                            onChange={(e) => {
-                                                const code = e.target.value;
-                                                setHouseForm({
-                                                    ...houseForm,
-                                                    access_instructions: code ? `Kóði: ${code}` : ''
-                                                });
-                                            }}
-                                            placeholder="t.d. 1234"
-                                            maxLength={6}
-                                        />
-                                        <p className="text-xs text-grey-mid mt-1">Þetta birtist á aðgangssíðu gesta.</p>
-                                    </div>
-                                    <div className="pt-4">
-                                        <button onClick={handleSaveHouse} className="btn btn-secondary" disabled={loading}>
-                                            Vista kóða
-                                        </button>
-                                    </div>
-                                </div>
+                                <hr className="border-stone-200" />
 
                                 {/* Content Editor */}
-                                <div className="bg-white p-6 rounded-lg shadow-sm">
-                                    <h3 className="text-lg font-medium mb-4">Upplýsingar fyrir gesti</h3>
-                                    <form onSubmit={handleSaveHouse} className="space-y-4">
-                                        <div className="grid md:grid-cols-2 gap-4">
+                                <section>
+                                    <div className="mb-6">
+                                        <h2 className="text-2xl font-serif font-bold text-charcoal mb-2">Upplýsingar fyrir gesti</h2>
+                                        <p className="text-grey-mid">Þessar upplýsingar birtast sjálfkrafa á gestasíðunni.</p>
+                                    </div>
+
+                                    <div className="card p-6 border-2 border-stone-100">
+                                        <form onSubmit={handleSaveHouse} className="space-y-6">
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="label">Innritun (kl.)</label>
+                                                    <input
+                                                        type="text"
+                                                        className="input"
+                                                        value={houseForm.check_in_time}
+                                                        onChange={(e) => setHouseForm({ ...houseForm, check_in_time: e.target.value })}
+                                                        placeholder="16:00"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="label">Útritun (kl.)</label>
+                                                    <input
+                                                        type="text"
+                                                        className="input"
+                                                        value={houseForm.check_out_time}
+                                                        onChange={(e) => setHouseForm({ ...houseForm, check_out_time: e.target.value })}
+                                                        placeholder="12:00"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Language Toggle */}
+                                            <div className="flex items-center justify-between pt-4 border-t border-stone-100">
+                                                <span className="text-sm font-medium text-stone-500">Tungumál lýsingar:</span>
+                                                <div className="flex bg-stone-100 rounded-lg p-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditLang('is')}
+                                                        className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${editLang === 'is'
+                                                            ? 'bg-white text-charcoal shadow-sm'
+                                                            : 'text-stone-500 hover:text-stone-700'
+                                                            }`}
+                                                    >
+                                                        🇮🇸 Íslenska
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditLang('en')}
+                                                        className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${editLang === 'en'
+                                                            ? 'bg-white text-charcoal shadow-sm'
+                                                            : 'text-stone-500 hover:text-stone-700'
+                                                            }`}
+                                                    >
+                                                        🇬🇧 English
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className={`transition-all duration-300 ${editLang === 'en' ? 'bg-amber-50/50 p-4 rounded-lg border border-amber-100' : ''}`}>
+                                                <div className="mb-4">
+                                                    <label className="label flex items-center gap-2">
+                                                        Húsreglur
+                                                        {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
+                                                    </label>
+                                                    <textarea
+                                                        className="input min-h-[100px]"
+                                                        value={editLang === 'is' ? houseForm.house_rules : houseForm.house_rules_en}
+                                                        onChange={(e) => setHouseForm({
+                                                            ...houseForm,
+                                                            [editLang === 'is' ? 'house_rules' : 'house_rules_en']: e.target.value
+                                                        })}
+                                                        placeholder={editLang === 'is' ? "t.d. Reykingar bannaðar. Þrífa eftir sig..." : "e.g. No smoking. Clean up after yourself..."}
+                                                    />
+                                                </div>
+
+                                                <div className="mb-4">
+                                                    <label className="label flex items-center gap-2">
+                                                        Leiðarlýsing (eða hlekkur á kort)
+                                                        {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
+                                                    </label>
+                                                    <textarea
+                                                        className="input"
+                                                        value={editLang === 'is' ? houseForm.directions : houseForm.directions_en}
+                                                        onChange={(e) => setHouseForm({
+                                                            ...houseForm,
+                                                            [editLang === 'is' ? 'directions' : 'directions_en']: e.target.value
+                                                        })}
+                                                        placeholder={editLang === 'is' ? "t.d. Keyrt er í gegnum..." : "e.g. Drive through..."}
+                                                    />
+                                                    {(houseForm.lat !== 0 && houseForm.lng !== 0) && (
+                                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                                            <CheckCircle size={12} />
+                                                            GPS hnit eru skráð. Gestasíðan mun sýna "Rata í hús" takka sjálfkrafa.
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <label className="label flex items-center gap-2">
+                                                        Aðgangsleiðbeiningar (Lykilbox ofl.)
+                                                        {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
+                                                    </label>
+                                                    <textarea
+                                                        className="input"
+                                                        value={editLang === 'is' ? houseForm.access_instructions : houseForm.access_instructions_en}
+                                                        onChange={(e) => setHouseForm({
+                                                            ...houseForm,
+                                                            [editLang === 'is' ? 'access_instructions' : 'access_instructions_en']: e.target.value
+                                                        })}
+                                                        placeholder={editLang === 'is' ? "t.d. Kóði í lykilbox er 1234..." : "e.g. Keybox code is 1234..."}
+                                                    />
+                                                </div>
+                                            </div>
+
                                             <div>
-                                                <label className="label">Innritun (kl.)</label>
+                                                <label className="label">Neyðarnúmer / Tengiliður</label>
                                                 <input
                                                     type="text"
                                                     className="input"
-                                                    value={houseForm.check_in_time}
-                                                    onChange={(e) => setHouseForm({ ...houseForm, check_in_time: e.target.value })}
-                                                    placeholder="16:00"
+                                                    value={houseForm.emergency_contact}
+                                                    onChange={(e) => setHouseForm({ ...houseForm, emergency_contact: e.target.value })}
+                                                    placeholder="Sími 555-1234"
                                                 />
                                             </div>
-                                            <div>
-                                                <label className="label">Útritun (kl.)</label>
-                                                <input
-                                                    type="text"
-                                                    className="input"
-                                                    value={houseForm.check_out_time}
-                                                    onChange={(e) => setHouseForm({ ...houseForm, check_out_time: e.target.value })}
-                                                    placeholder="12:00"
-                                                />
-                                            </div>
-                                        </div>
 
-                                        {/* Language Toggle */}
-                                        <div className="flex items-center justify-between pt-4 border-t border-stone-100">
-                                            <span className="text-sm font-medium text-stone-500">Tungumál lýsingar:</span>
-                                            <div className="flex bg-stone-100 rounded-lg p-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setEditLang('is')}
-                                                    className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${editLang === 'is'
-                                                        ? 'bg-white text-charcoal shadow-sm'
-                                                        : 'text-stone-500 hover:text-stone-700'
-                                                        }`}
-                                                >
-                                                    🇮🇸 Íslenska
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setEditLang('en')}
-                                                    className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${editLang === 'en'
-                                                        ? 'bg-white text-charcoal shadow-sm'
-                                                        : 'text-stone-500 hover:text-stone-700'
-                                                        }`}
-                                                >
-                                                    🇬🇧 English
+                                            <div className="pt-4 border-t border-stone-100">
+                                                <button type="submit" className="btn btn-primary w-full md:w-auto" disabled={loading}>
+                                                    <Save className="w-4 h-4 mr-2 inline" />
+                                                    Vista upplýsingar
                                                 </button>
                                             </div>
-                                        </div>
-
-                                        <div className={`transition-all duration-300 ${editLang === 'en' ? 'bg-amber-50/50 p-4 rounded-lg border border-amber-100' : ''}`}>
-                                            <div className="mb-4">
-                                                <label className="label flex items-center gap-2">
-                                                    Húsreglur
-                                                    {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
-                                                </label>
-                                                <textarea
-                                                    className="input min-h-[100px]"
-                                                    value={editLang === 'is' ? houseForm.house_rules : houseForm.house_rules_en}
-                                                    onChange={(e) => setHouseForm({
-                                                        ...houseForm,
-                                                        [editLang === 'is' ? 'house_rules' : 'house_rules_en']: e.target.value
-                                                    })}
-                                                    placeholder={editLang === 'is' ? "t.d. Reykingar bannaðar. Þrífa eftir sig..." : "e.g. No smoking. Clean up after yourself..."}
-                                                />
-                                            </div>
-
-                                            <div className="mb-4">
-                                                <label className="label flex items-center gap-2">
-                                                    Leiðarlýsing (eða hlekkur á kort)
-                                                    {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
-                                                </label>
-                                                <textarea
-                                                    className="input"
-                                                    value={editLang === 'is' ? houseForm.directions : houseForm.directions_en}
-                                                    onChange={(e) => setHouseForm({
-                                                        ...houseForm,
-                                                        [editLang === 'is' ? 'directions' : 'directions_en']: e.target.value
-                                                    })}
-                                                    placeholder={editLang === 'is' ? "t.d. Keyrt er í gegnum..." : "e.g. Drive through..."}
-                                                />
-                                                {(houseForm.lat !== 0 && houseForm.lng !== 0) && (
-                                                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                                                        <CheckCircle size={12} />
-                                                        GPS hnit eru skráð. Gestasíðan mun sýna "Rata í hús" takka sjálfkrafa.
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <div>
-                                                <label className="label flex items-center gap-2">
-                                                    Aðgangsleiðbeiningar (Lykilbox ofl.)
-                                                    {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
-                                                </label>
-                                                <textarea
-                                                    className="input"
-                                                    value={editLang === 'is' ? houseForm.access_instructions : houseForm.access_instructions_en}
-                                                    onChange={(e) => setHouseForm({
-                                                        ...houseForm,
-                                                        [editLang === 'is' ? 'access_instructions' : 'access_instructions_en']: e.target.value
-                                                    })}
-                                                    placeholder={editLang === 'is' ? "t.d. Kóði í lykilbox er 1234..." : "e.g. Keybox code is 1234..."}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="label">Neyðarnúmer / Tengiliður</label>
-                                            <input
-                                                type="text"
-                                                className="input"
-                                                value={houseForm.emergency_contact}
-                                                onChange={(e) => setHouseForm({ ...houseForm, emergency_contact: e.target.value })}
-                                                placeholder="Sími 555-1234"
-                                            />
-                                        </div>
-
-                                        <div className="pt-4">
-                                            <button type="submit" className="btn btn-primary" disabled={loading}>
-                                                Vista upplýsingar
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
+                                        </form>
+                                    </div>
+                                </section>
                             </div>
                         )}
 
@@ -1264,8 +1315,8 @@ export default function SettingsPage() {
                             </div>
                         )}
                     </div>
-                </div>
-            </div>
+                </div >
+            </div >
 
             {/* Image Cropper Modal */}
             {
