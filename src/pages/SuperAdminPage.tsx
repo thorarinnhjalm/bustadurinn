@@ -59,6 +59,13 @@ export default function SuperAdminPage() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const { startImpersonation } = useImpersonation();
     const currentUser = useAppStore((state) => state.currentUser);
+    const userHouses = useAppStore((state) => state.userHouses);
+    const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
+
+    const handleHouseSwitch = (house: House) => {
+        setCurrentHouse(house);
+        navigate('/dashboard');
+    };
 
     const [newCoupon, setNewCoupon] = useState({
         code: '',
@@ -628,6 +635,8 @@ export default function SuperAdminPage() {
                 activeTab={activeTab}
                 onTabChange={(tab) => setActiveTab(tab as 'overview' | 'houses' | 'users')}
                 onBackClick={() => navigate('/dashboard')}
+                userHouses={userHouses}
+                onHouseSelect={handleHouseSwitch}
             >
                 <div className="flex items-center justify-center h-full">
                     <div className="text-center">
@@ -646,6 +655,8 @@ export default function SuperAdminPage() {
                 activeTab={activeTab}
                 onTabChange={(tab) => setActiveTab(tab as 'overview' | 'houses' | 'users')}
                 onBackClick={() => navigate('/dashboard')}
+                userHouses={userHouses}
+                onHouseSelect={handleHouseSwitch}
             >
                 <div className="flex items-center justify-center h-full">
                     <div className="text-center max-w-md">
@@ -671,6 +682,8 @@ export default function SuperAdminPage() {
                 activeTab={activeTab}
                 onTabChange={(tab) => setActiveTab(tab as 'overview' | 'houses' | 'users')}
                 onBackClick={() => navigate('/dashboard')}
+                userHouses={userHouses}
+                onHouseSelect={handleHouseSwitch}
             >
                 <div className="flex items-center justify-center h-full">
                     <div className="text-center max-w-md">
@@ -698,6 +711,8 @@ export default function SuperAdminPage() {
             activeTab={activeTab}
             onTabChange={(tab) => setActiveTab(tab as any)}
             onBackClick={() => navigate('/dashboard')}
+            userHouses={userHouses}
+            onHouseSelect={handleHouseSwitch}
         >
             {/* Header */}
             <div className="border-b border-stone-200 bg-white sticky top-0 z-10">

@@ -12,17 +12,28 @@ import {
     ArrowLeft,
     Mail,
     Menu,
-    X
+    X,
+    LogOut
 } from 'lucide-react';
+import type { House } from '@/types/models';
 
 interface AdminLayoutProps {
     children: ReactNode;
     activeTab?: string;
     onTabChange?: (tab: string) => void;
     onBackClick?: () => void;
+    userHouses?: House[];
+    onHouseSelect?: (house: House) => void;
 }
 
-export default function AdminLayout({ children, activeTab = 'overview', onTabChange, onBackClick }: AdminLayoutProps) {
+export default function AdminLayout({
+    children,
+    activeTab = 'overview',
+    onTabChange,
+    onBackClick,
+    userHouses = [],
+    onHouseSelect
+}: AdminLayoutProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const navigation = [
@@ -72,16 +83,36 @@ export default function AdminLayout({ children, activeTab = 'overview', onTabCha
                     <p className="text-xs text-stone-400 mt-1">Bústaðurinn Kerfisstjórn</p>
                 </div>
 
-                {/* Back Button */}
+                {/* Header Actions / House Switcher */}
                 <div className="p-4 border-b border-stone-800 space-y-2 mt-16 md:mt-0">
-                    {onBackClick && (
-                        <button
-                            onClick={onBackClick}
-                            className="w-full flex items-center justify-center gap-2 bg-stone-800 text-stone-200 hover:bg-stone-700 hover:text-white px-3 py-2 rounded text-sm transition-colors border border-stone-700"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            Til baka í App
-                        </button>
+                    {/* If user has houses, list them */}
+                    {userHouses.length > 0 ? (
+                        <div className="space-y-2">
+                            <p className="text-[10px] uppercase tracking-wider text-stone-500 font-bold px-1">Mín Hús</p>
+                            {userHouses.map(house => (
+                                <button
+                                    key={house.id}
+                                    onClick={() => onHouseSelect?.(house)}
+                                    className="w-full flex items-center gap-2 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white px-3 py-2 rounded text-sm transition-colors border border-stone-700 text-left truncate"
+                                    title={`Fara í ${house.name}`}
+                                >
+                                    <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                                    <span className="truncate">{house.name}</span>
+                                    <LogOut className="w-3 h-3 ml-auto opacity-50" />
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        /* Fallback if no houses found */
+                        onBackClick && (
+                            <button
+                                onClick={onBackClick}
+                                className="w-full flex items-center justify-center gap-2 bg-stone-800 text-stone-200 hover:bg-stone-700 hover:text-white px-3 py-2 rounded text-sm transition-colors border border-stone-700 top-button"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                Til baka í App
+                            </button>
+                        )
                     )}
                 </div>
 
