@@ -167,6 +167,46 @@ export default function CalendarPage() {
         setDate(newDate);
     };
 
+    // Touch handling for swipe
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+    // Min swipe distance
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe) {
+            // Swipe Left -> Next Month
+            const next = new Date(date);
+            if (view === 'month') next.setMonth(next.getMonth() + 1);
+            else if (view === 'week') next.setDate(next.getDate() + 7);
+            else next.setDate(next.getDate() + 1);
+            handleNavigate(next);
+        }
+        if (isRightSwipe) {
+            // Swipe Right -> Prev Month
+            const prev = new Date(date);
+            if (view === 'month') prev.setMonth(prev.getMonth() - 1);
+            else if (view === 'week') prev.setDate(prev.getDate() - 7);
+            else prev.setDate(prev.getDate() - 1);
+            handleNavigate(prev);
+        }
+    };
+
     // House Settings for Booking Rules
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [houseSettings, setHouseSettings] = useState<any>(null);
@@ -217,17 +257,34 @@ export default function CalendarPage() {
     }, [language]);
 
     const loadBookings = useCallback(async () => {
+        if (!houseId) return;
+
         try {
             const q = query(collection(db, 'bookings'), where('house_id', '==', houseId));
             const snapshot = await getDocs(q);
 
-            const bookingsData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                start: doc.data().start.toDate(),
-                end: doc.data().end.toDate(),
-                created_at: doc.data().created_at.toDate()
-            })) as Booking[];
+            const bookingsData = snapshot.docs.map(doc => {
+                const data = doc.data();
+                let start = data.start.toDate();
+                let end = data.end.toDate();
+
+                // Sanitize dates: If end is before start, fix it for display
+                if (end < start) {
+                    console.warn(`Booking ${doc.id} has invalid dates (end < start). Fixing for display.`);
+                    // Swap them or just set end to start + 1 hour as fallback, 
+                    // but usually swapping is what happened (wrong order picked)
+                    // or just user error. Let's force end to be at least start.
+                    end = new Date(start.getTime() + 60 * 60 * 1000);
+                }
+
+                return {
+                    id: doc.id,
+                    ...data,
+                    start,
+                    end,
+                    created_at: data.created_at?.toDate() || new Date()
+                } as Booking;
+            });
 
             setBookings(bookingsData);
 
@@ -334,6 +391,12 @@ export default function CalendarPage() {
         // Check for conflicts
         if (checkConflicts(newBooking.start, newBooking.end)) {
             setError('Það er þegar bókun á þessum dagsetningum. Vinsamlegast veldu aðrar dagsetningar.');
+            return;
+        }
+
+        // Validate dates
+        if (newBooking.end < newBooking.start) {
+            setError('Lokadagur getur ekki verið á undan upphafsdegi.');
             return;
         }
 
@@ -501,53 +564,61 @@ export default function CalendarPage() {
             {/* Calendar */}
             <div className="container mx-auto px-4 py-4 md:px-6 md:py-8 pb-24 md:pb-8">
                 <div className="bg-white rounded-lg shadow-sm p-2 md:p-6 overflow-hidden">
-                    <BigCalendar
-                        localizer={localizer}
-                        events={events}
-                        startAccessor="start"
-                        endAccessor="end"
-                        className="h-[65vh] md:h-[700px] font-sans"
-                        onSelectSlot={handleSelectSlot}
-                        onSelectEvent={handleSelectEvent}
-                        selectable
-                        popup
-                        components={{
-                            toolbar: CustomToolbar,
-                            agenda: {
-                                event: CustomAgendaEvent
-                            }
-                        }}
-                        views={['month', 'week', 'agenda']}
-                        view={view}
-                        onView={handleViewChange}
-                        date={date}
-                        onNavigate={handleNavigate}
-                        messages={calendarMessages[language]}
-                        dayPropGetter={dayPropGetter}
-                        eventPropGetter={(event: BookingEvent) => ({
-                            style: {
-                                backgroundColor: event.booking.type === 'personal' ? '#e8b058' :
-                                    event.booking.type === 'rental' ? '#10b981' :
-                                        event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1',
-                                // Agenda view color override (since we provide custom component, this usually affects the dot or line)
-                                borderLeft: view === 'agenda' ? `4px solid ${event.booking.type === 'personal' ? '#e8b058' :
-                                    event.booking.type === 'rental' ? '#10b981' :
-                                        event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1'
-                                    }` : undefined,
-                                borderRadius: '4px',
-                                opacity: 1,
-                                color: 'white',
-                                border: '0px',
-                                display: 'block',
-                                padding: '2px 5px',
-                                fontSize: '13px',
-                                fontWeight: 500,
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                            }
-                        })}
-                        step={60}
-                        showMultiDayTimes
-                    />
+                    <div
+                        onTouchStart={onTouchStart}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
+                        className="h-full"
+                    >
+                        <BigCalendar
+                            localizer={localizer}
+                            events={events}
+                            startAccessor="start"
+                            endAccessor="end"
+                            className="h-[65vh] md:h-[700px] font-sans"
+                            onSelectSlot={handleSelectSlot}
+                            onSelectEvent={handleSelectEvent}
+                            selectable
+                            popup
+                            components={{
+                                toolbar: CustomToolbar,
+                                agenda: {
+                                    event: CustomAgendaEvent
+                                }
+                            }}
+                            views={['month', 'week', 'agenda']}
+                            view={view}
+                            onView={handleViewChange}
+                            date={date}
+                            onNavigate={handleNavigate}
+                            culture={language}
+                            messages={calendarMessages[language]}
+                            dayPropGetter={dayPropGetter}
+                            eventPropGetter={(event: BookingEvent) => ({
+                                style: {
+                                    backgroundColor: event.booking.type === 'personal' ? '#e8b058' :
+                                        event.booking.type === 'rental' ? '#10b981' :
+                                            event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1',
+                                    // Agenda view color override (since we provide custom component, this usually affects the dot or line)
+                                    borderLeft: view === 'agenda' ? `4px solid ${event.booking.type === 'personal' ? '#e8b058' :
+                                        event.booking.type === 'rental' ? '#10b981' :
+                                            event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1'
+                                        }` : undefined,
+                                    borderRadius: '4px',
+                                    opacity: 1,
+                                    color: 'white',
+                                    border: '0px',
+                                    display: 'block',
+                                    padding: '2px 5px',
+                                    fontSize: '13px',
+                                    fontWeight: 500,
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                                }
+                            })}
+                            step={60}
+                            showMultiDayTimes
+                        />
+                    </div>
                 </div>
 
                 {/* Legend */}
@@ -622,7 +693,15 @@ export default function CalendarPage() {
                                         type="date"
                                         className="input"
                                         value={newBooking.start.toISOString().split('T')[0]}
-                                        onChange={(e) => setNewBooking({ ...newBooking, start: new Date(e.target.value) })}
+                                        onChange={(e) => {
+                                            const newStart = new Date(e.target.value);
+                                            // If new start is after current end, update end to match start
+                                            let newEnd = newBooking.end;
+                                            if (newStart > newBooking.end) {
+                                                newEnd = newStart;
+                                            }
+                                            setNewBooking({ ...newBooking, start: newStart, end: newEnd });
+                                        }}
                                         required
                                     />
                                 </div>
@@ -700,6 +779,12 @@ export default function CalendarPage() {
                             <div>
                                 <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Bókað af</label>
                                 <p className="text-lg font-medium">{selectedBooking.user_name}</p>
+                                {/* Added Created At Date */}
+                                {selectedBooking.created_at && (
+                                    <p className="text-xs text-stone-400 mt-1">
+                                        Bókað þann: {selectedBooking.created_at.toLocaleDateString('is-IS')}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

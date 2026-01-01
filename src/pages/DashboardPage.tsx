@@ -428,7 +428,7 @@ const UserDashboard = () => {
                         </div>
                         <span className="font-serif font-bold text-lg tracking-tight">{currentHouse.name}</span>
                         {userHouses.length > 1 && (
-                            <ChevronDown size={16} className={`text - stone - 400 group - hover: text - amber transition - transform ${showHouseSwitcher ? 'rotate-180' : ''} `} />
+                            <ChevronDown size={16} className={`text-stone-400 group-hover:text-amber transition-transform ${showHouseSwitcher ? 'rotate-180' : ''} `} />
                         )}
                     </button>
 
@@ -445,9 +445,9 @@ const UserDashboard = () => {
                                             localStorage.setItem('last_house_id', house.id);
                                             setShowHouseSwitcher(false);
                                         }}
-                                        className={`w - full flex items - center gap - 3 px - 3 py - 2.5 rounded - lg text - sm transition - colors ${currentHouse.id === house.id
-                                                ? 'bg-amber/10 text-amber font-bold'
-                                                : 'text-stone-600 hover:bg-stone-50'
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${currentHouse.id === house.id
+                                            ? 'bg-amber/10 text-amber font-bold'
+                                            : 'text-stone-600 hover:bg-stone-50'
                                             } `}
                                     >
                                         <Home size={16} className={currentHouse.id === house.id ? 'text-amber' : 'text-stone-400'} />
@@ -607,12 +607,12 @@ const UserDashboard = () => {
                                 }
                             }
                         }}
-                        className={`flex - 1 py - 4 rounded - xl font - bold text - sm transition - all active: scale - [0.98] flex flex - col md: flex - row items - center justify - center gap - 2 md: gap - 3 border ${isCheckedIn
-                                ? 'bg-amber text-[#1a1a1a] border-amber shadow-lg shadow-amber/20 hover:bg-[#d9a044]'
-                                : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50 hover:border-stone-300'
+                        className={`flex-1 py-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 border ${isCheckedIn
+                            ? 'bg-amber text-[#1a1a1a] border-amber shadow-lg shadow-amber/20 hover:bg-[#d9a044]'
+                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50 hover:border-stone-300'
                             } `}
                     >
-                        <div className={`w - 8 h - 8 md: w - 6 md: h - 6 rounded - full flex items - center justify - center transition - colors ${isCheckedIn ? 'bg-black/10' : 'bg-stone-100'} `}>
+                        <div className={`w-8 h-8 md:w-6 md:h-6 rounded-full flex items-center justify-center transition-colors ${isCheckedIn ? 'bg-black/10' : 'bg-stone-100'} `}>
                             {isCheckedIn ? <LogOut size={16} /> : <Home size={16} />}
                         </div>
                         <span>{isCheckedIn ? 'Skrá brottför' : 'Skrá komu'}</span>
@@ -700,7 +700,7 @@ const UserDashboard = () => {
 
                                 <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
                                     <div className="flex items-center gap-3 text-sm">
-                                        <div className={`w - 2 h - 2 rounded - full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow - [0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
+                                        <div className={`w-2 h-2 rounded-full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-stone-300 text-xs uppercase tracking-wide font-bold mb-0.5">Síðasta færsla</p>
                                             <p className="text-white font-medium truncate">{finances.lastAction}</p>
@@ -732,11 +732,11 @@ const UserDashboard = () => {
                                     onClick={() => navigate('/tasks')}
                                     className="p-4 flex items-center gap-4 hover:bg-stone-50 transition-colors cursor-pointer group"
                                 >
-                                    <div className={`w - 6 h - 6 rounded - lg border - 2 ${task.status === 'completed' ? 'bg-[#e8b058] border-[#e8b058]' : 'border-stone-200 group-hover:border-[#e8b058]'} flex items - center justify - center transition - colors`}>
+                                    <div className={`w-6 h-6 rounded-lg border-2 ${task.status === 'completed' ? 'bg-[#e8b058] border-[#e8b058]' : 'border-stone-200 group-hover:border-[#e8b058]'} flex items-center justify-center transition-colors`}>
                                         {task.status === 'completed' && <CheckSquare size={14} className="text-white" />}
                                     </div>
                                     <div className="flex-1">
-                                        <p className={`text - base font - bold text - [#1a1a1a] ${task.status === 'completed' ? 'line-through text-stone-400' : ''} `}>{task.title}</p>
+                                        <p className={`text-base font-bold text-[#1a1a1a] ${task.status === 'completed' ? 'line-through text-stone-400' : ''} `}>{task.title}</p>
                                         {task.assigned_to_name ? (
                                             <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1"><Users size={12} /> {task.assigned_to_name}</p>
                                         ) : (
@@ -787,6 +787,21 @@ const UserDashboard = () => {
 
                 </div>
             </div>
+
+            {/* --- FOOTER --- */}
+            <footer className="max-w-5xl mx-auto px-4 py-8 mt-12 text-center border-t border-stone-100 hidden md:block">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-stone-400 text-sm">
+                    <div className="flex items-center gap-2">
+                        <CabinLogo size={16} className="opacity-50" />
+                        <span>© {new Date().getFullYear()} Bústaðurinn.is</span>
+                    </div>
+                    <div className="flex gap-6">
+                        <a href="#" className="hover:text-amber transition-colors">Hjálp</a>
+                        <a href="#" className="hover:text-amber transition-colors">Skilmálar</a>
+                        <a href="#" className="hover:text-amber transition-colors">Persónuvernd</a>
+                    </div>
+                </div>
+            </footer>
 
             {/* --- MOBILE BOTTOM NAV --- */}
             <MobileNav />
