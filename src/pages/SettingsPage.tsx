@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
+import { signOut, sendPasswordResetEmail } from 'firebase/auth';
 import { db, storage, auth } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
@@ -41,6 +41,7 @@ import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { MapPin } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import GuestbookViewer from '@/components/GuestbookViewer';
+import { updateUserNameInAllCollections } from '@/services/userService';
 
 type Tab = 'house' | 'members' | 'profile' | 'guests' | 'guestbook';
 
@@ -108,6 +109,9 @@ export default function SettingsPage() {
                 name: userName.trim()
             });
 
+            // Update name globally in all collections
+            await updateUserNameInAllCollections(currentUser.uid, userName.trim(), currentUser.house_ids || []);
+
             const updatedUser = { ...currentUser, name: userName.trim() };
 
             if (isImpersonating) {
@@ -132,6 +136,17 @@ export default function SettingsPage() {
             navigate('/login');
         } catch (err) {
             console.error('Logout error:', err);
+        }
+    };
+
+    const handlePasswordReset = async () => {
+        if (!currentUser?.email) return;
+        try {
+            await sendPasswordResetEmail(auth, currentUser.email);
+            setSuccess(`Tölvupóstur sendur á ${currentUser.email}. Athugaðu ruslpóstinn ef hann berst ekki.`);
+        } catch (err) {
+            console.error('Error sending password reset:', err);
+            setError('Gat ekki sent tölvupóst. Reyndu aftur síðar.');
         }
     };
 
@@ -1339,6 +1354,28 @@ export default function SettingsPage() {
                                             </button>
                                         </div>
                                         <p className="text-xs text-grey-mid mt-1">Hér getur þú breytt nafninu þínu sem birtist öðrum notendum.</p>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-grey-warm">
+                                        <label className="label">Netfang & Aðgangur</label>
+                                        <div className="bg-stone-50 p-4 rounded-lg border border-stone-200">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <div>
+                                                    <p className="text-sm font-bold text-charcoal">Netfang</p>
+                                                    <p className="text-stone-600 font-mono text-sm">{currentUser?.email}</p>
+                                                </div>
+                                                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold">Virkt</span>
+                                            </div>
+                                            <div className="pt-3 border-t border-stone-200 mt-2">
+                                                <button
+                                                    onClick={handlePasswordReset}
+                                                    className="text-sm font-bold text-amber hover:text-amber-dark flex items-center gap-1 hover:underline"
+                                                >
+                                                    <RefreshCw size={14} />
+                                                    Endurstilla lykilorð (Senda tölvupóst)
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="pt-8 border-t border-grey-warm flex justify-end">
