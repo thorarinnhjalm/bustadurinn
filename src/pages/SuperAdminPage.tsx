@@ -880,51 +880,51 @@ export default function SuperAdminPage() {
 
                     return (
                         <div className="space-y-8">
-                            {/* Primary Metrics Grid */}
-                            <div className="grid grid-cols-4 gap-6">
+                            {/* Primary Metrics Grid - Responsive */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
                                 {/* Total Houses */}
-                                <div className="bg-white border border-stone-200 rounded-xl p-8 transition-shadow hover:shadow-sm">
-                                    <div className="flex items-center gap-3 mb-6">
+                                <div className="bg-white border border-stone-200 rounded-xl p-6 md:p-8 transition-shadow hover:shadow-sm">
+                                    <div className="flex items-center gap-3 mb-4 md:mb-6">
                                         <Home className="w-5 h-5 text-stone-400" />
                                         <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Heildarfjöldi húsa</p>
                                     </div>
-                                    <p className="text-5xl font-serif font-bold text-charcoal mb-4">{stats.totalHouses}</p>
+                                    <p className="text-4xl md:text-5xl font-serif font-bold text-charcoal mb-4">{stats.totalHouses}</p>
                                     <p className="text-xs text-stone-400">
                                         {activeHouses} virk • {trialHouses.length} prufa
                                     </p>
                                 </div>
 
                                 {/* Total Users */}
-                                <div className="bg-white border border-stone-200 rounded-xl p-8 transition-shadow hover:shadow-sm">
-                                    <div className="flex items-center gap-3 mb-6">
+                                <div className="bg-white border border-stone-200 rounded-xl p-6 md:p-8 transition-shadow hover:shadow-sm">
+                                    <div className="flex items-center gap-3 mb-4 md:mb-6">
                                         <Users className="w-5 h-5 text-stone-400" />
                                         <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Heildarfjöldi notenda</p>
                                     </div>
-                                    <p className="text-5xl font-serif font-bold text-charcoal mb-4">{stats.totalUsers}</p>
+                                    <p className="text-4xl md:text-5xl font-serif font-bold text-charcoal mb-4">{stats.totalUsers}</p>
                                     <p className="text-xs text-stone-400">
                                         {stats.totalHouses > 0 ? (stats.totalUsers / stats.totalHouses).toFixed(1) : 0} meðaltal
                                     </p>
                                 </div>
 
                                 {/* Trials Expiring Soon */}
-                                <div className="bg-white border border-stone-200 rounded-xl p-8 transition-shadow hover:shadow-sm">
-                                    <div className="flex items-center gap-3 mb-6">
+                                <div className="bg-white border border-stone-200 rounded-xl p-6 md:p-8 transition-shadow hover:shadow-sm">
+                                    <div className="flex items-center gap-3 mb-4 md:mb-6">
                                         <Activity className="w-5 h-5 text-stone-400" />
                                         <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Rennur út fljótlega</p>
                                     </div>
-                                    <p className="text-5xl font-serif font-bold text-charcoal mb-4">{expiringTrials.length}</p>
+                                    <p className="text-4xl md:text-5xl font-serif font-bold text-charcoal mb-4">{expiringTrials.length}</p>
                                     <p className="text-xs text-stone-400">
                                         {expiringTrials.length > 0 ? 'Aðgerð nauðsynleg' : 'Allt í lagi'}
                                     </p>
                                 </div>
 
                                 {/* Estimated MRR */}
-                                <div className="bg-white border border-stone-200 rounded-xl p-8 transition-shadow hover:shadow-sm">
-                                    <div className="flex items-center gap-3 mb-6">
+                                <div className="bg-white border border-stone-200 rounded-xl p-6 md:p-8 transition-shadow hover:shadow-sm">
+                                    <div className="flex items-center gap-3 mb-4 md:mb-6">
                                         <TrendingUp className="w-5 h-5 text-stone-400" />
                                         <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Áætlaðar MRR</p>
                                     </div>
-                                    <p className="text-5xl font-serif font-bold text-charcoal mb-4">
+                                    <p className="text-4xl md:text-5xl font-serif font-bold text-charcoal mb-4">
                                         {estimatedMRR.toLocaleString('is-IS')} kr
                                     </p>
                                     <p className="text-xs text-stone-400">
