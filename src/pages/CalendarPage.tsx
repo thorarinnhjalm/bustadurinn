@@ -67,7 +67,7 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: CustomToolbarProps) 
                 </button>
             </div>
 
-            {/* View Switcher - Segmented Control Style */}
+            {/* View Switcher - Segmented Control Style (Month and List only) */}
             <div className="flex p-1 bg-stone-100 rounded-lg self-center md:self-start w-full md:w-auto">
                 <button
                     onClick={() => onView('month')}
@@ -77,15 +77,6 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: CustomToolbarProps) 
                         }`}
                 >
                     Mánuður
-                </button>
-                <button
-                    onClick={() => onView('week')}
-                    className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all hidden md:block ${view === 'week'
-                        ? 'bg-white text-charcoal shadow-sm'
-                        : 'text-stone-500 hover:text-stone-700'
-                        }`}
-                >
-                    Vika
                 </button>
                 <button
                     onClick={() => onView('agenda')}
@@ -102,13 +93,33 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: CustomToolbarProps) 
 };
 
 const CustomAgendaEvent = ({ event }: { event: BookingEvent }) => {
+    // Format date range nicely: "17. - 20. júní"
+    const formatDateRange = (start: Date, end: Date) => {
+        const startDay = start.getDate();
+        const endDay = end.getDate();
+        const sameMonth = start.getMonth() === end.getMonth();
+
+        if (sameMonth) {
+            const month = start.toLocaleDateString('is-IS', { month: 'long' });
+            return `${startDay}. - ${endDay}. ${month}`;
+        } else {
+            const startMonth = start.toLocaleDateString('is-IS', { month: 'short' });
+            const endMonth = end.toLocaleDateString('is-IS', { month: 'short' });
+            return `${startDay}. ${startMonth} - ${endDay}. ${endMonth}`;
+        }
+    };
+
     return (
-        <div className="flex flex-col py-1">
-            <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold text-charcoal text-base">
+        <div className="flex flex-col py-3 px-2 border-l-4" style={{
+            borderLeftColor: event.booking.type === 'personal' ? '#e8b058' :
+                event.booking.type === 'rental' ? '#10b981' :
+                    event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1'
+        }}>
+            <div className="flex items-center justify-between mb-2">
+                <span className="font-bold text-charcoal text-lg">
                     {event.booking.user_name}
                 </span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${event.booking.type === 'personal' ? 'bg-amber/10 text-amber-dark' :
+                <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${event.booking.type === 'personal' ? 'bg-amber/10 text-amber-dark' :
                     event.booking.type === 'rental' ? 'bg-green-100 text-green-700' :
                         event.booking.type === 'maintenance' ? 'bg-red-100 text-red-700' :
                             'bg-indigo-100 text-indigo-700'
@@ -116,15 +127,28 @@ const CustomAgendaEvent = ({ event }: { event: BookingEvent }) => {
                     {event.title.split(' - ')[1] || event.title}
                 </span>
             </div>
+
+            {/* Date Range - More Prominent */}
+            <div className="flex items-center gap-2 mb-2">
+                <CalendarIcon className="w-4 h-4 text-amber" />
+                <span className="text-base font-semibold text-stone-700">
+                    {formatDateRange(event.start, event.end)}
+                </span>
+            </div>
+
             {event.booking.notes && (
-                <p className="text-sm text-stone-500 line-clamp-2 mb-1">
+                <p className="text-sm text-stone-600 bg-stone-50 rounded p-2 mb-2">
                     {event.booking.notes}
                 </p>
             )}
-            <div className="flex items-center text-xs text-stone-400 mt-1">
-                <Clock className="w-3 h-3 mr-1" />
-                {event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </div>
+
+            {/* Created date */}
+            {event.booking.created_at && (
+                <div className="flex items-center text-xs text-stone-400 mt-1">
+                    <Clock className="w-3 h-3 mr-1" />
+                    Bókað: {event.booking.created_at.toLocaleDateString('is-IS', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </div>
+            )}
         </div>
     );
 };
@@ -153,8 +177,14 @@ export default function CalendarPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    // Pull-to-refresh state
+    const [isPulling, setIsPulling] = useState(false);
+    const [pullDistance, setPullDistance] = useState(0);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
     // Language preference (default to Icelandic, but can be changed)
     const [language] = useState<SupportedLanguage>('is');
+    // Only use month and agenda views (no week view with hours)
     const [view, setView] = useState<CalendarView>(window.innerWidth < 768 ? 'agenda' : 'month');
     const [date, setDate] = useState(new Date());
 
@@ -167,43 +197,46 @@ export default function CalendarPage() {
         setDate(newDate);
     };
 
-    // Touch handling for swipe
-    const [touchStart, setTouchStart] = useState<number | null>(null);
-    const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
-    // Min swipe distance
-    const minSwipeDistance = 50;
+    // Touch handling for pull-to-refresh only
+    const [touchStartY, setTouchStartY] = useState<number | null>(null);
+    const [scrollTop, setScrollTop] = useState(0);
 
     const onTouchStart = (e: React.TouchEvent) => {
-        setTouchEnd(null);
-        setTouchStart(e.targetTouches[0].clientX);
+        setTouchStartY(e.targetTouches[0].clientY);
+
+        // Store current scroll position
+        const scrollableElement = document.querySelector('.calendar-container');
+        setScrollTop(scrollableElement?.scrollTop || 0);
     };
 
     const onTouchMove = (e: React.TouchEvent) => {
-        setTouchEnd(e.targetTouches[0].clientX);
+        // Handle pull-to-refresh only (vertical pull from top)
+        if (touchStartY !== null && scrollTop === 0) {
+            const currentY = e.targetTouches[0].clientY;
+            const pullDist = currentY - touchStartY;
+
+            // Only trigger when pulling down (positive distance) and at top of page
+            if (pullDist > 0 && pullDist < 150) {
+                setIsPulling(true);
+                setPullDistance(pullDist);
+                e.preventDefault(); // Prevent default scroll when pulling
+            }
+        }
     };
 
-    const onTouchEnd = () => {
-        if (!touchStart || !touchEnd) return;
-        const distance = touchStart - touchEnd;
-        const isLeftSwipe = distance > minSwipeDistance;
-        const isRightSwipe = distance < -minSwipeDistance;
-
-        if (isLeftSwipe) {
-            // Swipe Left -> Next Month
-            const next = new Date(date);
-            if (view === 'month') next.setMonth(next.getMonth() + 1);
-            else if (view === 'week') next.setDate(next.getDate() + 7);
-            else next.setDate(next.getDate() + 1);
-            handleNavigate(next);
-        }
-        if (isRightSwipe) {
-            // Swipe Right -> Prev Month
-            const prev = new Date(date);
-            if (view === 'month') prev.setMonth(prev.getMonth() - 1);
-            else if (view === 'week') prev.setDate(prev.getDate() - 7);
-            else prev.setDate(prev.getDate() - 1);
-            handleNavigate(prev);
+    const onTouchEnd = async () => {
+        // Handle pull-to-refresh only
+        if (isPulling && pullDistance > 80) {
+            setIsRefreshing(true);
+            await loadBookings();
+            setTimeout(() => {
+                setIsRefreshing(false);
+                setIsPulling(false);
+                setPullDistance(0);
+            }, 500);
+        } else {
+            setIsPulling(false);
+            setPullDistance(0);
         }
     };
 
@@ -288,12 +321,13 @@ export default function CalendarPage() {
 
             setBookings(bookingsData);
 
-            // Convert to calendar events
+            // Convert to calendar events - mark as all-day events
             const calendarEvents: BookingEvent[] = bookingsData.map(booking => ({
                 id: booking.id,
                 title: `${booking.user_name} - ${getBookingTypeLabel(booking.type)}`,
                 start: booking.start,
                 end: booking.end,
+                allDay: true,
                 booking
             }));
 
@@ -563,12 +597,40 @@ export default function CalendarPage() {
 
             {/* Calendar */}
             <div className="container mx-auto px-4 py-4 md:px-6 md:py-8 pb-24 md:pb-8">
+                {/* Pull-to-refresh indicator */}
+                {(isPulling || isRefreshing) && (
+                    <div
+                        className="fixed top-0 left-0 right-0 flex justify-center items-center transition-all duration-200 z-40"
+                        style={{
+                            transform: `translateY(${isPulling ? pullDistance - 40 : 0}px)`,
+                            opacity: isPulling ? Math.min(pullDistance / 80, 1) : 0
+                        }}
+                    >
+                        <div className="bg-white rounded-full shadow-lg p-3 flex items-center gap-2">
+                            {isRefreshing ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-amber border-t-transparent rounded-full animate-spin"></div>
+                                    <span className="text-sm font-medium text-stone-600">Hleð inn...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="w-5 h-5 text-amber">↓</div>
+                                    <span className="text-sm font-medium text-stone-600">
+                                        {pullDistance > 80 ? 'Sleppa til að endurnýja' : 'Draga niður'}
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 <div className="bg-white rounded-lg shadow-sm p-2 md:p-6 overflow-hidden">
                     <div
                         onTouchStart={onTouchStart}
                         onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
-                        className="h-full"
+                        className="h-full calendar-container"
+                        style={{ overflowY: 'auto' }}
                     >
                         <BigCalendar
                             localizer={localizer}
@@ -586,7 +648,7 @@ export default function CalendarPage() {
                                     event: CustomAgendaEvent
                                 }
                             }}
-                            views={['month', 'week', 'agenda']}
+                            views={['month', 'agenda']}
                             view={view}
                             onView={handleViewChange}
                             date={date}
@@ -615,8 +677,7 @@ export default function CalendarPage() {
                                     boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
                                 }
                             })}
-                            step={60}
-                            showMultiDayTimes
+                        // All-day events only, no time slots needed
                         />
                     </div>
                 </div>

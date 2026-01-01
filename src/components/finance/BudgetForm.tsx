@@ -101,40 +101,42 @@ export default function BudgetForm({ onSave, onCancel, ownerIds = [] }: BudgetFo
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 gap-4 mb-4">
                 <div>
                     <label className="label">Flokkur</label>
                     <input
                         type="text"
                         className="input"
-                        placeholder={type === 'expense' ? 't.d. Rafmagn' : 't.d. Mánaðargjald'}
+                        placeholder={type === 'expense' ? 't.d. Rafmagn' : 't.d. Mánaðargjöld'}
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
                         required
                     />
                 </div>
-                <div>
-                    <label className="label">Upphæð (kr.)</label>
-                    <input
-                        type="number"
-                        className="input"
-                        placeholder="0"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        required
-                    />
-                </div>
-                <div>
-                    <label className="label">Tíðni</label>
-                    <select
-                        className="input"
-                        value={frequency}
-                        onChange={(e) => setFrequency(e.target.value as BudgetFrequency)}
-                    >
-                        <option value="monthly">Mánaðarlega</option>
-                        <option value="yearly">Árlega</option>
-                        <option value="one-time">Einskiptis</option>
-                    </select>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="label">Upphæð (kr.)</label>
+                        <input
+                            type="number"
+                            className="input"
+                            placeholder="0"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="label">Tíðni</label>
+                        <select
+                            className="input"
+                            value={frequency}
+                            onChange={(e) => setFrequency(e.target.value as BudgetFrequency)}
+                        >
+                            <option value="monthly">Mánaðarlega</option>
+                            <option value="yearly">Árlega</option>
+                            <option value="one-time">Einskiptis</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 

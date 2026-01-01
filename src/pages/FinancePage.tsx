@@ -308,41 +308,45 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
     if (loading) return <div className="p-8 text-center text-grey-mid">Hleð gögnum...</div>;
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className={`col-span-1 md:col-span-3 card text-white p-6 mb-6 ${netPosition >= 0 ? 'bg-charcoal' : 'bg-red-800'}`}>
-                <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-white/10 rounded-full">
-                        <PiggyBank className="w-6 h-6 text-amber" />
+        <div className="space-y-6">
+            {/* Summary Card - Improved Mobile Layout */}
+            <div className={`card text-white p-4 sm:p-6 ${netPosition >= 0 ? 'bg-charcoal' : 'bg-red-800'}`}>
+                <div className="flex items-start gap-3 sm:gap-4 mb-4">
+                    <div className="p-2.5 sm:p-3 bg-white/10 rounded-full flex-shrink-0">
+                        <PiggyBank className="w-5 h-5 sm:w-6 sm:h-6 text-amber" />
                     </div>
-                    <div>
-                        <h2 className="text-lg font-medium opacity-90">Rekstraráætlun {currentYear}</h2>
-                        <div className="text-3xl font-serif font-bold mt-1">
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-base sm:text-lg font-medium opacity-90 mb-1">Rekstraráætlun {currentYear}</h2>
+                        <div className="text-2xl sm:text-3xl font-serif font-bold">
                             {netPosition >= 0 ? '+' : ''}{netPosition.toLocaleString()} kr.
                         </div>
-                        <div className="text-sm opacity-60 mt-1">Áætluð nettóstaða í lok árs</div>
+                        <div className="text-xs sm:text-sm opacity-60 mt-1">Áætluð nettóstaða í lok árs</div>
                     </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4 mt-4 border-t border-white/10 pt-4">
-                    <div>
-                        <div className="text-sm opacity-60">Tekjur áætlaðar</div>
-                        <div className="text-xl font-medium text-green-400">+{totalIncome.toLocaleString()} kr.</div>
+
+                {/* Mobile: Stack vertically, Desktop: 3 columns */}
+                <div className="flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-4 mt-4 border-t border-white/10 pt-4">
+                    <div className="flex justify-between sm:block">
+                        <div className="text-xs sm:text-sm opacity-60">Tekjur áætlaðar</div>
+                        <div className="text-lg sm:text-xl font-medium text-green-400">+{totalIncome.toLocaleString()} kr.</div>
                     </div>
-                    <div>
-                        <div className="text-sm opacity-60">Gjöld áætluð</div>
-                        <div className="text-xl font-medium text-red-300">-{totalExpenses.toLocaleString()} kr.</div>
+                    <div className="flex justify-between sm:block">
+                        <div className="text-xs sm:text-sm opacity-60">Gjöld áætluð</div>
+                        <div className="text-lg sm:text-xl font-medium text-red-300">-{totalExpenses.toLocaleString()} kr.</div>
                     </div>
-                    <div>
-                        <div className="text-sm opacity-60">Þörf fyrir framlag</div>
-                        <div className="text-xl font-medium text-amber">{monthlyContribution.toLocaleString()} kr./mán</div>
+                    <div className="flex justify-between sm:block">
+                        <div className="text-xs sm:text-sm opacity-60">Þörf fyrir framlag</div>
+                        <div className="text-lg sm:text-xl font-medium text-amber">{monthlyContribution.toLocaleString()} kr./mán</div>
                     </div>
                 </div>
             </div>
 
-            <div className="col-span-1 md:col-span-2 card">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-serif">Kostnaðarliðir</h3>
+            {/* Budget Items List - Improved Mobile Layout */}
+            <div className="card">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+                    <h3 className="text-lg sm:text-xl font-serif">Kostnaðarliðir</h3>
                     {!showForm && (
-                        <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm">
+                        <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm w-full sm:w-auto">
                             <Plus className="w-4 h-4 mr-2" />
                             Bæta við lið
                         </button>
@@ -365,18 +369,18 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
                         </div>
                     )
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                         {plan.items.map((item, index) => {
-                            const itemType = item.type || 'expense'; // Backwards compatibility
+                            const itemType = item.type || 'expense';
                             return (
                                 <div
                                     key={index}
-                                    className={`flex justify-between items-center p-3 rounded hover:bg-bone transition-colors group ${itemType === 'income' ? 'bg-green-50 border border-green-200' : 'bg-bone/50'
+                                    className={`flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded hover:bg-bone transition-colors group ${itemType === 'income' ? 'bg-green-50 border border-green-200' : 'bg-bone/50'
                                         }`}
                                 >
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <div className={`font-medium ${itemType === 'income' ? 'text-green-700' : 'text-charcoal'
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <div className={`font-medium text-sm sm:text-base ${itemType === 'income' ? 'text-green-700' : 'text-charcoal'
                                                 }`}>
                                                 {item.category}
                                             </div>
@@ -386,16 +390,16 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="text-xs text-grey-mid capitalize">
+                                        <div className="text-xs text-grey-mid capitalize mt-1">
                                             {item.frequency === 'monthly' ? 'Mánaðarlega' :
                                                 item.frequency === 'yearly' ? `Árlega${item.month ? ` (${new Date(2000, item.month - 1).toLocaleString('is', { month: 'long' })})` : ''}` :
                                                     `Einskiptis${item.month ? ` (${new Date(2000, item.month - 1).toLocaleString('is', { month: 'long' })})` : ''}`}
                                             {item.assigned_owner_name && ` • ${item.assigned_owner_name}`}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-right">
-                                            <div className={`font-bold ${itemType === 'income' ? 'text-green-700' : 'text-charcoal'
+                                    <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                                        <div className="text-left sm:text-right">
+                                            <div className={`font-bold text-sm sm:text-base ${itemType === 'income' ? 'text-green-700' : 'text-charcoal'
                                                 }`}>
                                                 {itemType === 'income' ? '+' : ''}{item.estimated_amount.toLocaleString()} kr.
                                             </div>
@@ -407,7 +411,8 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
                                         </div>
                                         <button
                                             onClick={() => handleDeleteItem(item)}
-                                            className="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-opacity"
+                                            className="sm:opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-opacity touch-manipulation"
+                                            aria-label="Eyða"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
@@ -419,11 +424,12 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
                 )}
             </div>
 
-            <div className="col-span-1">
+            {/* Sidebar Widgets - Stack on Mobile */}
+            <div className="space-y-6">
                 <VarianceWidget budgetItems={plan?.items.filter(i => i.type === 'expense') || []} entries={entries} />
 
-                <div className="card mt-6">
-                    <h3 className="font-medium mb-4">Um Rekstraráætlun</h3>
+                <div className="card">
+                    <h3 className="font-medium mb-4 text-sm sm:text-base">Um Rekstraráætlun</h3>
                     <p className="text-sm text-grey-mid mb-4">
                         Hér setur þú upp áætlun fyrir fastan kostnað og tekjur búsins.
                         Stöðukortið hér að ofan sýnir samanburð við raunverulegan kostnað.
@@ -432,7 +438,7 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
             </div>
 
             {/* Monthly Breakdown - Full Width */}
-            <div className="col-span-1 md:col-span-3">
+            <div className="w-full">
                 <MonthlyBreakdown budgetItems={plan?.items || []} />
             </div>
         </div>
