@@ -62,12 +62,18 @@ export default function SettingsPage() {
         wifi_password: '',
         holiday_mode: 'first_come' as 'fairness' | 'first_come',
         house_rules: '',
+        house_rules_en: '',
         check_in_time: '',
         check_out_time: '',
         directions: '',
+        directions_en: '',
         access_instructions: '',
+        access_instructions_en: '',
         emergency_contact: ''
     });
+
+    // Language Toggle for dual-input fields
+    const [editLang, setEditLang] = useState<'is' | 'en'>('is');
 
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [debounceTimer, setDebounceTimer] = useState<any>(null);
@@ -171,10 +177,13 @@ export default function SettingsPage() {
                         wifi_password: houseData.wifi_password || '',
                         holiday_mode: houseData.holiday_mode || 'first_come',
                         house_rules: houseData.house_rules || '',
+                        house_rules_en: houseData.house_rules_en || '',
                         check_in_time: houseData.check_in_time || '',
                         check_out_time: houseData.check_out_time || '',
                         directions: houseData.directions || '',
+                        directions_en: houseData.directions_en || '',
                         access_instructions: houseData.access_instructions || '',
+                        access_instructions_en: houseData.access_instructions_en || '',
                         emergency_contact: houseData.emergency_contact || ''
                     });
                 }
@@ -241,10 +250,13 @@ export default function SettingsPage() {
                 wifi_password: houseForm.wifi_password,
                 holiday_mode: houseForm.holiday_mode as any,
                 house_rules: houseForm.house_rules,
+                house_rules_en: houseForm.house_rules_en,
                 check_in_time: houseForm.check_in_time,
                 check_out_time: houseForm.check_out_time,
                 directions: houseForm.directions,
+                directions_en: houseForm.directions_en,
                 access_instructions: houseForm.access_instructions,
+                access_instructions_en: houseForm.access_instructions_en,
                 emergency_contact: houseForm.emergency_contact,
                 updated_at: new Date()
             };
@@ -260,10 +272,13 @@ export default function SettingsPage() {
                     wifi_ssid: houseForm.wifi_ssid,
                     wifi_password: houseForm.wifi_password,
                     house_rules: houseForm.house_rules,
+                    house_rules_en: houseForm.house_rules_en,
                     check_in_time: houseForm.check_in_time,
                     check_out_time: houseForm.check_out_time,
                     directions: houseForm.directions,
+                    directions_en: houseForm.directions_en,
                     access_instructions: houseForm.access_instructions,
+                    access_instructions_en: houseForm.access_instructions_en,
                     emergency_contact: houseForm.emergency_contact,
                     location: {
                         lat: houseForm.lat,
@@ -379,10 +394,13 @@ export default function SettingsPage() {
                 wifi_ssid: houseForm.wifi_ssid,
                 wifi_password: houseForm.wifi_password,
                 house_rules: houseForm.house_rules,
+                house_rules_en: houseForm.house_rules_en,
                 check_in_time: houseForm.check_in_time,
                 check_out_time: houseForm.check_out_time,
                 directions: houseForm.directions,
+                directions_en: houseForm.directions_en,
                 access_instructions: houseForm.access_instructions,
+                access_instructions_en: houseForm.access_instructions_en,
                 emergency_contact: houseForm.emergency_contact,
                 location: {
                     lat: houseForm.lat,
@@ -1057,40 +1075,87 @@ export default function SettingsPage() {
                                             </div>
                                         </div>
 
-                                        <div>
-                                            <label className="label">Húsreglur</label>
-                                            <textarea
-                                                className="input min-h-[100px]"
-                                                value={houseForm.house_rules}
-                                                onChange={(e) => setHouseForm({ ...houseForm, house_rules: e.target.value })}
-                                                placeholder="t.d. Reykingar bannaðar. Þrífa eftir sig..."
-                                            />
+                                        {/* Language Toggle */}
+                                        <div className="flex items-center justify-between pt-4 border-t border-stone-100">
+                                            <span className="text-sm font-medium text-stone-500">Tungumál lýsingar:</span>
+                                            <div className="flex bg-stone-100 rounded-lg p-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditLang('is')}
+                                                    className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${editLang === 'is'
+                                                        ? 'bg-white text-charcoal shadow-sm'
+                                                        : 'text-stone-500 hover:text-stone-700'
+                                                        }`}
+                                                >
+                                                    🇮🇸 Íslenska
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditLang('en')}
+                                                    className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${editLang === 'en'
+                                                        ? 'bg-white text-charcoal shadow-sm'
+                                                        : 'text-stone-500 hover:text-stone-700'
+                                                        }`}
+                                                >
+                                                    🇬🇧 English
+                                                </button>
+                                            </div>
                                         </div>
 
-                                        <div>
-                                            <label className="label">Leiðarlýsing (eða hlekkur á kort)</label>
-                                            <textarea
-                                                className="input"
-                                                value={houseForm.directions}
-                                                onChange={(e) => setHouseForm({ ...houseForm, directions: e.target.value })}
-                                                placeholder="t.d. Keyrt er í gegnum..."
-                                            />
-                                            {(houseForm.lat !== 0 && houseForm.lng !== 0) && (
-                                                <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                                                    <CheckCircle size={12} />
-                                                    GPS hnit eru skráð. Gestasíðan mun sýna "Rata í hús" takka sjálfkrafa, en þú getur bætt við nánari lýsingu hér.
-                                                </p>
-                                            )}
-                                        </div>
+                                        <div className={`transition-all duration-300 ${editLang === 'en' ? 'bg-amber-50/50 p-4 rounded-lg border border-amber-100' : ''}`}>
+                                            <div className="mb-4">
+                                                <label className="label flex items-center gap-2">
+                                                    Húsreglur
+                                                    {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
+                                                </label>
+                                                <textarea
+                                                    className="input min-h-[100px]"
+                                                    value={editLang === 'is' ? houseForm.house_rules : houseForm.house_rules_en}
+                                                    onChange={(e) => setHouseForm({
+                                                        ...houseForm,
+                                                        [editLang === 'is' ? 'house_rules' : 'house_rules_en']: e.target.value
+                                                    })}
+                                                    placeholder={editLang === 'is' ? "t.d. Reykingar bannaðar. Þrífa eftir sig..." : "e.g. No smoking. Clean up after yourself..."}
+                                                />
+                                            </div>
 
-                                        <div>
-                                            <label className="label">Aðgangsleiðbeiningar (Lykilbox ofl.)</label>
-                                            <textarea
-                                                className="input"
-                                                value={houseForm.access_instructions}
-                                                onChange={(e) => setHouseForm({ ...houseForm, access_instructions: e.target.value })}
-                                                placeholder="t.d. Kóði í lykilbox er 1234..."
-                                            />
+                                            <div className="mb-4">
+                                                <label className="label flex items-center gap-2">
+                                                    Leiðarlýsing (eða hlekkur á kort)
+                                                    {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
+                                                </label>
+                                                <textarea
+                                                    className="input"
+                                                    value={editLang === 'is' ? houseForm.directions : houseForm.directions_en}
+                                                    onChange={(e) => setHouseForm({
+                                                        ...houseForm,
+                                                        [editLang === 'is' ? 'directions' : 'directions_en']: e.target.value
+                                                    })}
+                                                    placeholder={editLang === 'is' ? "t.d. Keyrt er í gegnum..." : "e.g. Drive through..."}
+                                                />
+                                                {(houseForm.lat !== 0 && houseForm.lng !== 0) && (
+                                                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                                        <CheckCircle size={12} />
+                                                        GPS hnit eru skráð. Gestasíðan mun sýna "Rata í hús" takka sjálfkrafa.
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="label flex items-center gap-2">
+                                                    Aðgangsleiðbeiningar (Lykilbox ofl.)
+                                                    {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
+                                                </label>
+                                                <textarea
+                                                    className="input"
+                                                    value={editLang === 'is' ? houseForm.access_instructions : houseForm.access_instructions_en}
+                                                    onChange={(e) => setHouseForm({
+                                                        ...houseForm,
+                                                        [editLang === 'is' ? 'access_instructions' : 'access_instructions_en']: e.target.value
+                                                    })}
+                                                    placeholder={editLang === 'is' ? "t.d. Kóði í lykilbox er 1234..." : "e.g. Keybox code is 1234..."}
+                                                />
+                                            </div>
                                         </div>
 
                                         <div>

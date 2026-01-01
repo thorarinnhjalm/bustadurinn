@@ -22,10 +22,13 @@ export interface House {
 
     // Guest Information
     house_rules?: string;
+    house_rules_en?: string;
     check_in_time?: string;
     check_out_time?: string;
     directions?: string;
+    directions_en?: string;
     access_instructions?: string;
+    access_instructions_en?: string;
     emergency_contact?: string;
 
     manager_id: string; // The designated administrator (Bústaðastjóri)
