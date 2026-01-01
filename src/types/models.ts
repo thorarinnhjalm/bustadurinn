@@ -41,6 +41,7 @@ export interface House {
 
     // Subscription
     subscription_status?: 'trial' | 'active' | 'free' | 'expired';
+    plan_id?: 'monthly' | 'annual';
     subscription_end?: Date;
 
     created_at: Date;
@@ -99,6 +100,7 @@ export interface BudgetItem {
     type: BudgetItemType; // expense or income
     assigned_owner_id?: string; // For income: which co-owner contributes this (optional)
     assigned_owner_name?: string; // For display purposes
+    month?: number; // Optional: 1-12. If set, the expense is allocated to this specific month.
 }
 
 export interface BudgetPlan {

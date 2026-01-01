@@ -37,11 +37,21 @@ export default function MonthlyBreakdown({ budgetItems }: MonthlyBreakdownProps)
             if (item.frequency === 'monthly') {
                 monthlyAmount = item.estimated_amount;
             } else if (item.frequency === 'yearly') {
-                // Spread yearly costs across all months
-                monthlyAmount = item.estimated_amount / 12;
+                if (item.month) {
+                    // Specific month for yearly expense
+                    monthlyAmount = (i + 1) === item.month ? item.estimated_amount : 0;
+                } else {
+                    // Spread yearly costs across all months
+                    monthlyAmount = item.estimated_amount / 12;
+                }
             } else if (item.frequency === 'one-time') {
-                // One-time costs only in January for planning purposes
-                monthlyAmount = i === 0 ? item.estimated_amount : 0;
+                if (item.month) {
+                    // Specific month for one-time expense
+                    monthlyAmount = (i + 1) === item.month ? item.estimated_amount : 0;
+                } else {
+                    // Default to January if no month specified
+                    monthlyAmount = i === 0 ? item.estimated_amount : 0;
+                }
             }
 
             if (item.type === 'income') {

@@ -24,6 +24,7 @@ import {
     Link as LinkIcon
 } from 'lucide-react';
 import ImageCropper from '@/components/ImageCropper';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 import {
     doc,
     getDoc,
@@ -46,7 +47,8 @@ type Tab = 'house' | 'members' | 'profile' | 'guests' | 'guestbook';
 
 export default function SettingsPage() {
     const navigate = useNavigate();
-    const { user: currentUser } = useEffectiveUser();
+    const { user: currentUser, isImpersonating } = useEffectiveUser();
+    const { startImpersonation } = useImpersonation();
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
     const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
     const [activeTab, setActiveTab] = useState<Tab>('house');
@@ -88,6 +90,41 @@ export default function SettingsPage() {
     const [imageFile, setImageFile] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
+
+    // Profile State
+    const [userName, setUserName] = useState('');
+
+    useEffect(() => {
+        if (currentUser?.name) {
+            setUserName(currentUser.name);
+        }
+    }, [currentUser?.name]);
+
+    const handleSaveProfile = async () => {
+        if (!currentUser || !userName.trim()) return;
+        setLoading(true);
+        try {
+            await updateDoc(doc(db, 'users', currentUser.uid), {
+                name: userName.trim()
+            });
+
+            const updatedUser = { ...currentUser, name: userName.trim() };
+
+            if (isImpersonating) {
+                startImpersonation(updatedUser);
+            } else {
+                setCurrentUser(updatedUser);
+            }
+
+            setSuccess('Nafni breytt!');
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            console.error('Error updating profile:', err);
+            setError('Gat ekki vistað nafn.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleLogout = async () => {
         try {
@@ -1285,14 +1322,23 @@ export default function SettingsPage() {
 
                                     <div className="pt-4 border-t border-grey-warm">
                                         <label className="label">Nafn</label>
-                                        <input
-                                            type="text"
-                                            className="input max-w-md"
-                                            value={currentUser?.name || ''}
-                                            readOnly // For now
-                                            disabled
-                                        />
-                                        <p className="text-xs text-grey-mid mt-1">Hafðu samband við þjónustuver til að breyta nafni.</p>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                className="input max-w-md"
+                                                value={userName}
+                                                onChange={(e) => setUserName(e.target.value)}
+                                                placeholder="Nafn..."
+                                            />
+                                            <button
+                                                onClick={handleSaveProfile}
+                                                disabled={loading || !userName.trim() || userName === currentUser?.name}
+                                                className="btn btn-primary whitespace-nowrap"
+                                            >
+                                                Vista
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-grey-mid mt-1">Hér getur þú breytt nafninu þínu sem birtist öðrum notendum.</p>
                                     </div>
 
                                     <div className="pt-8 border-t border-grey-warm flex justify-end">

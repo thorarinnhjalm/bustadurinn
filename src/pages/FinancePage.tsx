@@ -189,6 +189,65 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
         return () => unsubscribe();
     }, [houseId, currentYear]);
 
+    // Sync Subscription Cost
+    useEffect(() => {
+        if (loading || !house || !houseId || !currentUserId || house.subscription_status !== 'active') return;
+
+        const subItemName = 'Bústaðurinn.is Áskrift';
+        const hasSubItem = plan?.items.some(i => i.category === subItemName);
+
+        if (hasSubItem) return;
+
+        const syncSubscription = async () => {
+            // Determine start month based on created_at or subscription_end
+            // If subscription_end exists, use its month (renewal). Otherwise use created_at.
+            let targetMonth = 1;
+            if (house.subscription_end) {
+                const date = house.subscription_end instanceof Date ? house.subscription_end : (house.subscription_end as any).toDate();
+                targetMonth = date.getMonth() + 1;
+            } else if (house.created_at) {
+                const date = house.created_at instanceof Date ? house.created_at : (house.created_at as any).toDate();
+                targetMonth = date.getMonth() + 1;
+            }
+
+            const isMonthly = house.plan_id === 'monthly';
+            // Default to annual (9900) if not specified, as per recommendation
+            const amount = isMonthly ? 1990 : 9900;
+            const frequency = isMonthly ? 'monthly' : 'yearly';
+
+            const newItem: BudgetItem = {
+                category: subItemName,
+                estimated_amount: amount,
+                frequency: frequency as any,
+                type: 'expense',
+                // If monthly, no specific month. If annual, set the renewal month.
+                month: isMonthly ? undefined : targetMonth
+            };
+
+            try {
+                if (plan) {
+                    await updateDoc(doc(db, 'budget_plans', plan.id), {
+                        items: arrayUnion(newItem),
+                        updated_at: serverTimestamp()
+                    });
+                } else {
+                    await addDoc(collection(db, 'budget_plans'), {
+                        house_id: houseId,
+                        year: currentYear,
+                        items: [newItem],
+                        created_by: currentUserId,
+                        created_at: serverTimestamp(),
+                        updated_at: serverTimestamp()
+                    });
+                }
+            } catch (err) {
+                console.error("Error syncing subscription budget:", err);
+            }
+        };
+
+        syncSubscription();
+    }, [house, plan, loading, currentUserId, houseId, currentYear]);
+
     const handleSaveItem = async (item: BudgetItem) => {
         if (!houseId || !currentUserId) return;
 
@@ -328,7 +387,8 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
                                         </div>
                                         <div className="text-xs text-grey-mid capitalize">
                                             {item.frequency === 'monthly' ? 'Mánaðarlega' :
-                                                item.frequency === 'yearly' ? 'Árlega' : 'Einskiptis'}
+                                                item.frequency === 'yearly' ? `Árlega${item.month ? ` (${new Date(2000, item.month - 1).toLocaleString('is', { month: 'long' })})` : ''}` :
+                                                    `Einskiptis${item.month ? ` (${new Date(2000, item.month - 1).toLocaleString('is', { month: 'long' })})` : ''}`}
                                             {item.assigned_owner_name && ` • ${item.assigned_owner_name}`}
                                         </div>
                                     </div>
