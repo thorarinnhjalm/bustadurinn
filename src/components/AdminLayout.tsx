@@ -74,7 +74,7 @@ export default function AdminLayout({
             {/* Sidebar */}
             <aside className={`
                 fixed inset-y-0 left-0 z-50 w-64 bg-charcoal text-bone flex flex-col border-r border-stone-800 transition-transform duration-300 ease-in-out
-                md:relative md:translate-x-0
+                md:translate-x-0 md:relative md:inset-auto
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
                 {/* Logo / Header (Desktop only) */}
