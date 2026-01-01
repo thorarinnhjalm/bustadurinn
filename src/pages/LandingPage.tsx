@@ -100,7 +100,7 @@ export default function LandingPage() {
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-charcoal opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-3 w-3 bg-charcoal"></span>
                                 </span>
-                                Prófaðu Sandkassann
+                                Prófaðu Sumarbústaðinn
                             </button>
                             <button
                                 onClick={() => navigate('/signup')}
@@ -256,7 +256,7 @@ export default function LandingPage() {
                             onClick={() => navigate('/prufa')}
                             className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-8 py-4 shadow-xl shadow-amber/20"
                         >
-                            Prófaðu Sandkassann
+                            Prófaðu Sumarbústaðinn
                         </button>
                         <button
                             onClick={() => navigate('/signup')}
