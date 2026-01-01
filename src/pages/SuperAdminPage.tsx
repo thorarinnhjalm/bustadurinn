@@ -504,6 +504,37 @@ export default function SuperAdminPage() {
         }
     };
 
+    const handleDeleteUser = async (user: User) => {
+        const confirmText = `EYÐA NOTANDA "${user.name}" (${user.email})?\n\nÞetta eyðir aðganginum varanlega úr Auth og gagnagrunni.\n\nSkrifaðu "DELETE" til að staðfesta:`;
+        if (prompt(confirmText) !== 'DELETE') return;
+
+        setActionLoading(`delete-user-${user.uid}`);
+        try {
+            const res = await fetch('/api/admin-delete-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: user.uid })
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to delete user');
+            }
+
+            setStats(prev => ({
+                ...prev,
+                totalUsers: prev.totalUsers - 1,
+                allUsers: prev.allUsers.filter(u => u.uid !== user.uid)
+            }));
+
+            alert('✅ Notanda eytt!');
+        } catch (error: any) {
+            console.error('Error deleting user:', error);
+            alert(`❌ Villa: ${error.message}`);
+        } finally {
+            setActionLoading(null);
+        }
+    };
 
     const handleCreateCoupon = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1150,13 +1181,27 @@ export default function SuperAdminPage() {
                             data={stats.allUsers}
                             searchKeys={['name', 'email']}
                             actions={(row) => (
-                                <button
-                                    onClick={() => handleImpersonate(row)}
-                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors"
-                                >
-                                    <UserCog className="w-3 h-3" />
-                                    Líkja eftir
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleImpersonate(row)}
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors"
+                                    >
+                                        <UserCog className="w-3 h-3" />
+                                        Líkja eftir
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteUser(row)}
+                                        disabled={actionLoading === `delete-user-${row.uid}`}
+                                        className="p-1.5 hover:bg-red-50 text-stone-400 hover:text-red-600 rounded transition-colors"
+                                        title="Eyða notanda"
+                                    >
+                                        {actionLoading === `delete-user-${row.uid}` ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Trash2 className="w-4 h-4" />
+                                        )}
+                                    </button>
+                                </div>
                             )}
                         />
                     </div>
