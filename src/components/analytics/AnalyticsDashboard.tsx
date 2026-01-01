@@ -1,9 +1,22 @@
 import { useState, useEffect } from 'react';
 import { analyticsService, type AnalyticsData } from '@/services/analyticsService';
-import { BarChart2, TrendingUp, Users, MousePointer, Eye, Globe } from 'lucide-react';
+import { BarChart2, TrendingUp, Users, MousePointer, Eye, Globe, Search, ArrowRight } from 'lucide-react';
+
+interface SearchConsoleData {
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+    topQueries: {
+        query: string;
+        clicks: number;
+        impressions: number;
+    }[];
+}
 
 export default function AnalyticsDashboard() {
     const [data, setData] = useState<AnalyticsData | null>(null);
+    const [searchData, setSearchData] = useState<SearchConsoleData | null>(null);
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
@@ -11,8 +24,15 @@ export default function AnalyticsDashboard() {
         const loadData = async () => {
             setLoading(true);
             try {
-                const result = await analyticsService.getWebAnalytics(period);
-                setData(result);
+                // Parallel fetch
+                const [analyticsRes, searchRes] = await Promise.all([
+                    analyticsService.getWebAnalytics(period),
+                    fetch(`/api/search-console?period=${period}`).then(r => r.json())
+                ]);
+                setData(analyticsRes);
+                setSearchData(searchRes);
+            } catch (error) {
+                console.error('Error loading analytics:', error);
             } finally {
                 setLoading(false);
             }
@@ -20,11 +40,17 @@ export default function AnalyticsDashboard() {
         loadData();
     }, [period]);
 
-    if (loading) return <div className="p-12 text-center text-grey-mid animate-pulse">Sæki gögn úr Google Analytics...</div>;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center p-12 space-y-4">
+            <div className="w-8 h-8 border-4 border-amber border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-stone-500 animate-pulse">Sæki gögn úr Google Analytics & Search Console...</p>
+        </div>
+    );
     if (!data) return <div className="p-12 text-center text-red-400">Gat ekki sótt gögn.</div>;
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-12">
+            {/* Header / Period Selector */}
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-serif font-bold text-charcoal flex items-center gap-2">
                     <BarChart2 className="w-5 h-5 text-amber" />
@@ -44,13 +70,12 @@ export default function AnalyticsDashboard() {
                 </div>
             </div>
 
-            {/* Key Metrics */}
+            {/* GA4 Key Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <MetricCard
                     label="Notendur"
                     value={data.activeUsers.toLocaleString('is-IS')}
                     icon={<Users className="w-5 h-5 text-blue-500" />}
-                    trend="Aukning"
                 />
                 <MetricCard
                     label="Heimsóknir"
@@ -69,6 +94,7 @@ export default function AnalyticsDashboard() {
                 />
             </div>
 
+            {/* GA4 Charts */}
             <div className="grid md:grid-cols-2 gap-8">
                 {/* Top Pages */}
                 <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
@@ -94,7 +120,6 @@ export default function AnalyticsDashboard() {
                                 </div>
                             </div>
                         ))}
-                        {data.topPages.length === 0 && <p className="text-stone-400 text-sm">Engin gögn fundust.</p>}
                     </div>
                 </div>
 
@@ -122,10 +147,76 @@ export default function AnalyticsDashboard() {
                                 </div>
                             </div>
                         ))}
-                        {data.trafficSources.length === 0 && <p className="text-stone-400 text-sm">Engin gögn fundust.</p>}
                     </div>
                 </div>
             </div>
+
+            {/* SEO Section (Search Console) */}
+            {searchData && (
+                <div className="pt-8 border-t border-stone-200">
+                    <h2 className="text-xl font-serif font-bold text-charcoal flex items-center gap-2 mb-6">
+                        <Search className="w-5 h-5 text-blue-600" />
+                        Google Search (SEO)
+                    </h2>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                        <MetricCard
+                            label="Smellir (Clicks)"
+                            value={searchData.clicks?.toLocaleString() || '0'}
+                            icon={<MousePointer className="w-5 h-5 text-blue-600" />}
+                        />
+                        <MetricCard
+                            label="Birtingar (Impressions)"
+                            value={searchData.impressions?.toLocaleString() || '0'}
+                            icon={<Eye className="w-5 h-5 text-purple-600" />}
+                        />
+                        <MetricCard
+                            label="CTR (Smellihlutfall)"
+                            value={`${searchData.ctr?.toFixed(1) || '0'}%`}
+                            icon={<TrendingUp className="w-5 h-5 text-green-600" />}
+                        />
+                        <MetricCard
+                            label="Meðal Staða"
+                            value={searchData.position?.toFixed(1) || '-'}
+                            icon={<Globe className="w-5 h-5 text-amber" />}
+                        />
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
+                        <h3 className="font-bold text-charcoal mb-4 flex items-center gap-2">
+                            <Search className="w-4 h-4 text-stone-400" /> Top Search Queries
+                        </h3>
+                        {searchData.topQueries && searchData.topQueries.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="text-xs text-stone-500 uppercase bg-stone-50">
+                                        <tr>
+                                            <th className="px-4 py-2">Leitarorð</th>
+                                            <th className="px-4 py-2 text-right">Smellir</th>
+                                            <th className="px-4 py-2 text-right">Birtingar</th>
+                                            <th className="px-4 py-2 text-right">CTR</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-stone-100">
+                                        {searchData.topQueries.map((q, idx) => (
+                                            <tr key={idx} className="hover:bg-stone-50">
+                                                <td className="px-4 py-2 font-medium text-stone-700">{q.query}</td>
+                                                <td className="px-4 py-2 text-right text-stone-600">{q.clicks}</td>
+                                                <td className="px-4 py-2 text-right text-stone-600">{q.impressions}</td>
+                                                <td className="px-4 py-2 text-right text-stone-600">
+                                                    {((q.clicks / q.impressions) * 100).toFixed(1)}%
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <p className="text-stone-400 text-sm">Engin leitarorð fundust á þessu tímabili.</p>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
