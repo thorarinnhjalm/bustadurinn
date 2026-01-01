@@ -53,6 +53,11 @@ const UserDashboard = () => {
 
     const [showNotifications, setShowNotifications] = useState(false);
 
+    // Checkout State
+    const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+    const [checkoutMessage, setCheckoutMessage] = useState('');
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
+
     useEffect(() => {
         if (currentUser && (!currentUser.house_ids || currentUser.house_ids.length === 0)) {
             navigate('/onboarding');
@@ -327,6 +332,48 @@ const UserDashboard = () => {
         }
     };
 
+    const handleCheckout = async () => {
+        if (!currentHouse || !currentUser) return;
+        setCheckoutLoading(true);
+        try {
+            // 1. Create Guestbook Entry if message provided
+            if (checkoutMessage.trim()) {
+                await addDoc(collection(db, 'guestbook'), {
+                    house_id: currentHouse.id,
+                    author: currentUser.name || currentUser.email || 'Óþekktur',
+                    message: checkoutMessage.trim(),
+                    created_at: serverTimestamp()
+                });
+            }
+
+            // 2. Log Internal Check-out
+            const text = `${currentUser.name} skráði brottför.`;
+            const newLog = {
+                house_id: currentHouse.id,
+                user_id: currentUser.uid,
+                user_name: currentUser.name,
+                text,
+                created_at: serverTimestamp()
+            };
+            const docRef = await addDoc(collection(db, 'internal_logs'), newLog);
+
+            // Optimistic Log Update
+            setLogs(prev => [{
+                id: docRef.id,
+                ...newLog,
+                created_at: new Date()
+            } as InternalLog, ...prev]);
+
+            setShowCheckoutModal(false);
+            setCheckoutMessage('');
+
+        } catch (error) {
+            console.error('Error during checkout:', error);
+        } finally {
+            setCheckoutLoading(false);
+        }
+    };
+
     // Handle missing house (e.g., during impersonation or onboarding incomplete)
     if (!currentHouse) {
         return (
@@ -521,9 +568,15 @@ const UserDashboard = () => {
                                 console.error('Error logging check-in:', error);
                             }
                         }}
-                        className="flex-1 bg-white border border-stone-200 text-[#1a1a1a] py-3 rounded-lg font-bold text-sm hover:bg-stone-50 transition-colors"
+                        className="flex-1 min-w-[100px] bg-white border border-stone-200 text-[#1a1a1a] py-3 rounded-lg font-bold text-sm hover:bg-stone-50 transition-colors"
                     >
                         Skrá komu
+                    </button>
+                    <button
+                        onClick={() => setShowCheckoutModal(true)}
+                        className="flex-1 min-w-[100px] bg-white border border-stone-200 text-[#1a1a1a] py-3 rounded-lg font-bold text-sm hover:bg-stone-50 transition-colors"
+                    >
+                        Skrá brottför
                     </button>
                 </div>
 
@@ -664,6 +717,43 @@ const UserDashboard = () => {
 
             {/* --- MOBILE BOTTOM NAV --- */}
             <MobileNav />
+
+            {/* CHECKOUT MODAL */}
+            {showCheckoutModal && (
+                <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+                        <h2 className="text-2xl font-serif text-[#1a1a1a] mb-2">Skrá Brottför</h2>
+                        <p className="text-stone-500 mb-4">Takk fyrir komuna! Viltu skrifa í gestabókina?</p>
+
+                        <div className="mb-4">
+                            <label className="label">Færsla í gestabók (valfrjálst)</label>
+                            <textarea
+                                className="input min-h-[100px]"
+                                placeholder="Hvernig var dvölin? Eitthvað sem þarf að laga?"
+                                value={checkoutMessage}
+                                onChange={(e) => setCheckoutMessage(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowCheckoutModal(false)}
+                                className="btn btn-ghost flex-1"
+                                disabled={checkoutLoading}
+                            >
+                                Hætta við
+                            </button>
+                            <button
+                                onClick={handleCheckout}
+                                className="btn btn-primary flex-1"
+                                disabled={checkoutLoading}
+                            >
+                                {checkoutLoading ? 'Skrái...' : 'Staðfesta Brottför'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );
