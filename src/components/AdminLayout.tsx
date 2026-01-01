@@ -3,14 +3,16 @@
  * Desktop-first, high-density professional interface
  */
 
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
     Home,
     Users,
     BarChart2,
     Database,
     ArrowLeft,
-    Mail
+    Mail,
+    Menu,
+    X
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -21,6 +23,8 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children, activeTab = 'overview', onTabChange, onBackClick }: AdminLayoutProps) {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
     const navigation = [
         { name: 'Yfirlit', id: 'overview', icon: BarChart2 },
         { name: 'Hús', id: 'houses', icon: Home },
@@ -28,18 +32,48 @@ export default function AdminLayout({ children, activeTab = 'overview', onTabCha
         { name: 'Samskipti', id: 'contacts', icon: Mail },
     ];
 
+    const handleTabClick = (id: string) => {
+        onTabChange?.(id);
+        setIsMobileMenuOpen(false); // Close menu on selection (mobile)
+    };
+
     return (
-        <div className="flex h-screen bg-stone-50">
-            {/* Dark Sidebar */}
-            <aside className="w-64 bg-charcoal text-bone flex flex-col border-r border-stone-800">
-                {/* Logo / Header */}
-                <div className="p-6 border-b border-stone-800">
+        <div className="flex h-screen bg-stone-50 overflow-hidden">
+            {/* Mobile Header */}
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-charcoal text-bone flex items-center justify-between px-4 z-40 border-b border-stone-800">
+                <div>
+                    <h1 className="text-lg font-mono font-bold text-amber">STJÓRNBORÐ</h1>
+                </div>
+                <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="p-2 text-stone-300 hover:text-white"
+                >
+                    {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+            </div>
+
+            {/* Overlay for mobile */}
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
+
+            {/* Sidebar */}
+            <aside className={`
+                fixed inset-y-0 left-0 z-50 w-64 bg-charcoal text-bone flex flex-col border-r border-stone-800 transition-transform duration-300 ease-in-out
+                md:relative md:translate-x-0
+                ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}>
+                {/* Logo / Header (Desktop only) */}
+                <div className="p-6 border-b border-stone-800 hidden md:block">
                     <h1 className="text-lg font-mono font-bold text-amber">STJÓRNBORÐ</h1>
                     <p className="text-xs text-stone-400 mt-1">Bústaðurinn Kerfisstjórn</p>
                 </div>
 
                 {/* Back Button */}
-                <div className="p-4 border-b border-stone-800 space-y-2">
+                <div className="p-4 border-b border-stone-800 space-y-2 mt-16 md:mt-0">
                     {onBackClick && (
                         <button
                             onClick={onBackClick}
@@ -52,11 +86,11 @@ export default function AdminLayout({ children, activeTab = 'overview', onTabCha
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-1">
+                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                     {navigation.map((item) => (
                         <button
                             key={item.id}
-                            onClick={() => onTabChange?.(item.id)}
+                            onClick={() => handleTabClick(item.id)}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === item.id
                                 ? 'bg-amber text-charcoal'
                                 : 'text-stone-300 hover:bg-stone-800 hover:text-white'
@@ -97,7 +131,7 @@ export default function AdminLayout({ children, activeTab = 'overview', onTabCha
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 overflow-auto w-full md:w-auto mt-16 md:mt-0">
                 {children}
             </main>
         </div>
