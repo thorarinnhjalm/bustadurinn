@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { analyticsService, type AnalyticsData } from '@/services/analyticsService';
-import { BarChart2, TrendingUp, Users, MousePointer, Eye, Globe, Search, ArrowRight } from 'lucide-react';
+import { BarChart2, TrendingUp, Users, MousePointer, Eye, Globe, Search } from 'lucide-react';
 
 interface SearchConsoleData {
     clicks: number;
