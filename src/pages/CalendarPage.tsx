@@ -41,18 +41,18 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: CustomToolbarProps) 
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <button
-                        className="btn btn-secondary p-2 h-10 w-10 rounded-full flex items-center justify-center border-stone-200 hover:bg-stone-100 bg-white shadow-sm"
+                        className="p-2 h-10 w-10 rounded-full flex items-center justify-center border border-stone-300 hover:bg-stone-100 bg-white shadow-md active:scale-95 transition-all"
                         onClick={() => onNavigate('PREV')}
                         aria-label="Previous"
                     >
-                        <ChevronLeft className="w-5 h-5 text-charcoal" />
+                        <ChevronLeft className="w-6 h-6 text-stone-800" />
                     </button>
                     <button
-                        className="btn btn-secondary p-2 h-10 w-10 rounded-full flex items-center justify-center border-stone-200 hover:bg-stone-100 bg-white shadow-sm"
+                        className="p-2 h-10 w-10 rounded-full flex items-center justify-center border border-stone-300 hover:bg-stone-100 bg-white shadow-md active:scale-95 transition-all"
                         onClick={() => onNavigate('NEXT')}
                         aria-label="Next"
                     >
-                        <ChevronRight className="w-5 h-5 text-charcoal" />
+                        <ChevronRight className="w-6 h-6 text-stone-800" />
                     </button>
                     <h2 className="text-xl font-serif font-bold text-charcoal ml-2 capitalize">
                         {label}
