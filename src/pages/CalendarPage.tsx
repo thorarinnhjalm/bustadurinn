@@ -386,7 +386,8 @@ export default function CalendarPage() {
                             startDate: newBooking.start.toISOString(),
                             endDate: newBooking.end.toISOString(),
                             bookingType: newBooking.type,
-                            ownerEmails
+                            ownerEmails,
+                            language: currentUser.language || 'is'
                         })
                     });
                 }

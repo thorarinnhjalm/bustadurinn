@@ -17,32 +17,69 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
+        // Initialize language
+        const language = req.body.language || 'is';
+
+        const translations: any = {
+            is: {
+                subject: `Ný bókun í ${houseName}`,
+                title: '🏠 Ný bókun hefur verið gerð',
+                house: 'Hús',
+                bookedBy: 'Bókað af',
+                date: 'Dags.',
+                type: 'Tegund',
+                personal: 'Persónuleg',
+                guest: 'Gestur',
+                rental: 'Leiga',
+                maintenance: 'Viðhald',
+                footer: 'Sjá allar bókanir á <a href="https://bustadurinn.is/dashboard">bustadurinn.is</a>'
+            },
+            en: {
+                subject: `New booking in ${houseName}`,
+                title: '🏠 A new booking has been made',
+                house: 'House',
+                bookedBy: 'Booked by',
+                date: 'Date',
+                type: 'Type',
+                personal: 'Personal',
+                guest: 'Guest',
+                rental: 'Rental',
+                maintenance: 'Maintenance',
+                footer: 'View all bookings on <a href="https://bustadurinn.is/dashboard">bustadurinn.is</a>'
+            }
+        };
+
+        const t = translations[language] || translations.is;
+
         // Format dates
-        const start = new Date(startDate).toLocaleDateString('is-IS', {
+        const locale = language === 'is' ? 'is-IS' : 'en-GB';
+        const start = new Date(startDate).toLocaleDateString(locale, {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         });
-        const end = new Date(endDate).toLocaleDateString('is-IS', {
+        const end = new Date(endDate).toLocaleDateString(locale, {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         });
 
+        const typeLabel = t[bookingType] || bookingType || t.personal;
+
         // Send email to all house owners
         const data = await resend.emails.send({
             from: 'Bústaðurinn <no-reply@bustadurinn.is>',
             to: ownerEmails,
-            subject: `Ný bókun í ${houseName}`,
+            subject: t.subject,
             html: `
-                <h2>🏠 Ný bókun hefur verið gerð</h2>
-                <p><strong>Hús:</strong> ${houseName}</p>
-                <p><strong>Bókað af:</strong> ${userName}</p>
-                <p><strong>Dags.:</strong> ${start} - ${end}</p>
-                <p><strong>Tegund:</strong> ${bookingType || 'Persónuleg'}</p>
+                <h2>${t.title}</h2>
+                <p><strong>${t.house}:</strong> ${houseName}</p>
+                <p><strong>${t.bookedBy}:</strong> ${userName}</p>
+                <p><strong>${t.date}:</strong> ${start} - ${end}</p>
+                <p><strong>${t.type}:</strong> ${typeLabel}</p>
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e5e5;">
                 <p style="color: #666; font-size: 14px;">
-                    Sjá allar bókanir á <a href="https://bustadurinn.is/dashboard">bústaðurinn.is</a>
+                    ${t.footer}
                 </p>
             `,
         });
