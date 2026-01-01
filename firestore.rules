@@ -37,7 +37,8 @@ service cloud.firestore {
     match /users/{userId} {
       // Users can read and write their own document
       // Super admin can read and write all user documents
-      allow read, write: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      allow read: if isSuperAdmin() || isAuthenticated(); 
+      allow write: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
     }
     
     // Houses Collection
