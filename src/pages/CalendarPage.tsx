@@ -8,8 +8,8 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css'; // Add base styles
 import { format, parse, startOfWeek, getDay } from 'date-fns';
-import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock, Trash2 } from 'lucide-react';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
@@ -149,6 +149,7 @@ export default function CalendarPage() {
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [events, setEvents] = useState<BookingEvent[]>([]);
     const [showModal, setShowModal] = useState(false);
+    const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -428,8 +429,30 @@ export default function CalendarPage() {
     }, []);
 
     const handleSelectEvent = useCallback((event: BookingEvent) => {
-        alert(`Bókun: ${event.booking.user_name}\n${event.booking.start.toLocaleDateString()} - ${event.booking.end.toLocaleDateString()}\nTegund: ${getBookingTypeLabel(event.booking.type)}\nAthugasemd: ${event.booking.notes || 'Engin'}`);
-    }, [getBookingTypeLabel]);
+        setSelectedBooking(event.booking);
+    }, []);
+
+    const handleDeleteBooking = async () => {
+        if (!selectedBooking) return;
+        if (!confirm('Ertu viss um að þú viljir eyða þessari bókun?')) return;
+
+        setLoading(true);
+        try {
+            await deleteDoc(doc(db, 'bookings', selectedBooking.id));
+
+            // Reload bookings
+            await loadBookings();
+            setSelectedBooking(null);
+
+            // Track analytics
+            // analytics.bookingDeleted(); 
+        } catch (err) {
+            console.error("Error deleting booking:", err);
+            setError("Gat ekki eytt bókun.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Custom day cell style to highlight holidays
     const dayPropGetter = useCallback((date: Date) => {
@@ -661,6 +684,72 @@ export default function CalendarPage() {
                     </div>
                 )
             }
+
+            {/* View/Delete Booking Modal */}
+            {selectedBooking && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-serif">Bókun</h2>
+                            <button onClick={() => setSelectedBooking(null)} className="text-grey-mid hover:text-charcoal">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Bókað af</label>
+                                <p className="text-lg font-medium">{selectedBooking.user_name}</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Frá</label>
+                                    <p>{selectedBooking.start.toLocaleDateString('is-IS')}</p>
+                                    <p className="text-sm text-stone-500">{selectedBooking.start.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Til</label>
+                                    <p>{selectedBooking.end.toLocaleDateString('is-IS')}</p>
+                                    <p className="text-sm text-stone-500">{selectedBooking.end.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Tegund</label>
+                                <span className={`inline-block mt-1 px-2 py-1 rounded text-sm font-medium ${selectedBooking.type === 'personal' ? 'bg-amber/10 text-amber-dark' :
+                                    selectedBooking.type === 'rental' ? 'bg-green-100 text-green-700' :
+                                        selectedBooking.type === 'maintenance' ? 'bg-red-100 text-red-700' :
+                                            'bg-indigo-100 text-indigo-700'
+                                    }`}>
+                                    {getBookingTypeLabel(selectedBooking.type)}
+                                </span>
+                            </div>
+
+                            {selectedBooking.notes && (
+                                <div>
+                                    <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Athugasemd</label>
+                                    <p className="text-stone-700 bg-stone-50 p-3 rounded mt-1">{selectedBooking.notes}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Only allow deletion if user owns the booking */}
+                        {(currentUser?.uid === selectedBooking.user_id) && (
+                            <div className="flex gap-3 pt-4 border-t border-stone-100">
+                                <button
+                                    onClick={handleDeleteBooking}
+                                    className="btn bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 flex-1 flex items-center justify-center gap-2"
+                                    disabled={loading}
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    {loading ? 'Eyði...' : 'Eyða Bókun'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
             <MobileNav />
         </div >
     );

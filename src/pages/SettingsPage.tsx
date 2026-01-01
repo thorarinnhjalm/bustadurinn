@@ -224,13 +224,16 @@ export default function SettingsPage() {
         }
     };
 
+    const currentHouse = useAppStore((state) => state.currentHouse);
+
     useEffect(() => {
         if (!currentUser?.house_ids?.[0]) return;
 
         const loadHouse = async () => {
             setLoading(true);
             try {
-                const houseId = currentUser.house_ids[0];
+                // Prioritize the globally selected house, otherwise default to first available
+                const houseId = currentHouse?.id || currentUser.house_ids[0];
                 const houseSnap = await getDoc(doc(db, 'houses', houseId));
 
                 if (houseSnap.exists()) {
