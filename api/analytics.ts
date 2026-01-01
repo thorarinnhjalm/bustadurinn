@@ -143,6 +143,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('❌ GA4 Data API Error:', e);
         // Returning empty "real" data structure rather than fake data if it fails,
         // so the user knows something is wrong rather than seeing fake numbers.
-        return res.status(500).json({ error: e.message });
+        return res.status(500).json({
+            error: `${e.message} | Debug Info -> Client Identity: ${clientEmail}, Target Property: ${propertyId}`
+        });
     }
 }
