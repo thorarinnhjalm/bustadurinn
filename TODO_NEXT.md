@@ -15,19 +15,12 @@ Here is your checklist to verify everything is working correctly:
     - Does the "Rata í hús" (Directions) button work?
     - **Time Test:** If the booking is far in the future, does it say "Not yet active"?
 
-## 2. 📊 Deploy & Check Analytics
-The new **Analytics Dashboard** in the Super Admin panel relies on the backend Cloud Function `getWebAnalytics`.
-
-- [ ] **Deploy Cloud Functions:**
-  Run this command in your terminal to ensure the backend is up to date:
-  ```bash
-  firebase deploy --only functions
-  ```
+## 2. 📊 Analytics is Live
 - [ ] **Check the Dashboard:**
   - Go to `/super-admin` (or click "Admin Mode" in your user menu).
   - Click on the new **"Greining"** (Analytics) tab.
-  - Verify that the widgets load (Active Users, Traffic Sources, etc.).
-  - *Note: If Google Analytics is not fully connected in `functions/src/analytics.ts`, you might see placeholder/fallback data.*
+  - You should see data (Active Users, etc.) loading from the new Vercel API endpoint.
+  - *Note: Since we are using Vercel Serverless Functions (`/api/analytics`), no manual `firebase deploy` is needed. The `git push` I just performed handled the deployment.*
 
 ## 3. 🚀 Landing Page & USP
 - [ ] Visit your **Landing Page** (log out or open Incognito).

@@ -1,5 +1,4 @@
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '@/lib/firebase';
+
 
 export interface AnalyticsData {
     activeUsers: number;
@@ -19,12 +18,13 @@ export interface AnalyticsData {
 export const analyticsService = {
     getWebAnalytics: async (period: '7d' | '30d' | '90d' = '30d'): Promise<AnalyticsData> => {
         try {
-            const getAnalytics = httpsCallable(functions, 'getWebAnalytics');
-            const result = await getAnalytics({ period, forceRefresh: true }); // We can cache, but 'forceRefresh' ensures fresh data for Admin
-            return result.data as AnalyticsData;
+            const response = await fetch(`/api/analytics?period=${period}`);
+            if (!response.ok) throw new Error('Failed to fetch analytics');
+            const data = await response.json();
+            return data as AnalyticsData;
         } catch (error) {
             console.error("Error fetching analytics:", error);
-            // Fallback mock data if function fails (for development/demo)
+            // Fallback mock data if fetch fails
             return {
                 activeUsers: 0,
                 sessions: 0,
