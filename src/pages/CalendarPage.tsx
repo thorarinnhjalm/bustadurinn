@@ -6,6 +6,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
+import 'react-big-calendar/lib/css/react-big-calendar.css'; // Add base styles
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
@@ -152,7 +153,7 @@ export default function CalendarPage() {
     const [error, setError] = useState('');
 
     // Language preference (default to Icelandic, but can be changed)
-    const [language, setLanguage] = useState<SupportedLanguage>('is');
+    const [language] = useState<SupportedLanguage>('is');
     const [view, setView] = useState<CalendarView>(window.innerWidth < 768 ? 'agenda' : 'month');
     const [date, setDate] = useState(new Date());
 
@@ -461,19 +462,6 @@ export default function CalendarPage() {
                             <p className="text-grey-mid">Skipulagðu dvöl í sumarhúsinu</p>
                         </div>
                         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                            {/* Language Selector */}
-                            <select
-                                value={language}
-                                onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
-                                className="input py-2 px-3 w-auto"
-                            >
-                                <option value="is">🇮🇸</option>
-                                <option value="en">🇬🇧</option>
-                                <option value="de">🇩🇪</option>
-                                <option value="fr">🇫🇷</option>
-                                <option value="es">🇪🇸</option>
-                            </select>
-
                             <button
                                 onClick={() => setShowModal(true)}
                                 className="btn btn-primary flex items-center gap-2 whitespace-nowrap"

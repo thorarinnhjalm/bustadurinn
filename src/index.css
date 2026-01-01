@@ -376,11 +376,13 @@
   }
 }
 
-/* React Big Calendar - Mobile Optimizations */
 @media (max-width: 768px) {
   .rbc-calendar {
     font-size: 14px;
     min-height: 500px;
+    width: 100% !important;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .rbc-header {
@@ -417,10 +419,8 @@
     display: none;
   }
 
-  /* Stack events horizontally if possible? No, RBC stacks vertically. */
   .rbc-month-row {
-    overflow-y: hidden;
-    /* Prevent scrollbars in cells */
+    /* Allow content to flow naturally without forced scrollbars */
   }
 
   /* Toolbar adjustments */
