@@ -163,15 +163,17 @@ const UserDashboard = () => {
                 setLogs(logsData);
 
                 // Check if user is checked in
-                const userLogs = logsData.filter(log => log.user_id === currentUser.uid);
-                if (userLogs.length > 0) {
-                    // Check if last action was check-in or check-out
-                    // Simple logic: Look for "skráði komu" vs "skráði brottför" in the text
-                    const lastLog = userLogs[0];
-                    if (lastLog.text.includes('skráði komu')) {
-                        setIsCheckedIn(true);
-                    } else if (lastLog.text.includes('skráði brottför')) {
-                        setIsCheckedIn(false);
+                if (currentUser?.uid) {
+                    const userLogs = logsData.filter(log => log.user_id === currentUser.uid);
+                    if (userLogs.length > 0) {
+                        // Check if last action was check-in or check-out
+                        // Simple logic: Look for "skráði komu" vs "skráði brottför" in the text
+                        const lastLog = userLogs[0];
+                        if (lastLog.text.includes('skráði komu')) {
+                            setIsCheckedIn(true);
+                        } else if (lastLog.text.includes('skráði brottför')) {
+                            setIsCheckedIn(false);
+                        }
                     }
                 }
 
