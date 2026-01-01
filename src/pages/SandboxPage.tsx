@@ -1,237 +1,395 @@
 /**
- * Public Sandbox - Visual Showcase
- * Show visitors how the real system works and looks
+ * Public Sandbox - Interactive Mock
+ * A fully functional "Demo Mode" running on local state.
  */
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, DollarSign, CheckSquare, Home, ArrowLeft, Eye } from 'lucide-react';
+import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay, addDays } from 'date-fns';
+import { is } from 'date-fns/locale';
+import {
+    Calendar, DollarSign, CheckSquare, Settings,
+    Bell, Menu, User as UserIcon
+} from 'lucide-react';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 
-export default function SandboxPage() {
-    const navigate = useNavigate();
+// Setup Calendar Localizer
+const locales = { 'is': is };
+const localizer = dateFnsLocalizer({
+    format,
+    parse,
+    startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
+    getDay,
+    locales,
+});
 
-    // Mock UI previews - showing the actual design
-    const previews = [
-        {
-            id: 'calendar',
-            title: 'Bókunardagatal',
-            description: 'Einfalt dagatal með sanngjarni - kerfið reiknar út forgang sjálfkrafa',
-            icon: Calendar,
-            color: 'bg-amber',
-            mockup: (
-                <div className="bg-white rounded-lg border border-stone-200 p-6">
-                    {/* Calendar Header */}
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-serif font-semibold">Janúar 2025</h3>
-                        <button className="btn btn-primary bg-amber text-charcoal px-4 py-2 text-sm">
-                            + Ný bókun
-                        </button>
-                    </div>
-                    {/* Mini Calendar Grid */}
-                    <div className="grid grid-cols-7 gap-2 text-center text-sm">
-                        {['M', 'Þ', 'M', 'F', 'F', 'L', 'S'].map((day, i) => (
-                            <div key={i} className="text-grey-mid font-medium">{day}</div>
-                        ))}
-                        {[...Array(31)].map((_, i) => (
-                            <div key={i} className={`p-2 rounded ${i === 10 || i === 11 ? 'bg-amber/20 text-amber font-semibold' :
-                                i === 24 ? 'bg-green-100 text-green-700' :
-                                    'hover:bg-stone-50'
-                                }`}>
-                                {i + 1}
-                            </div>
-                        ))}
-                    </div>
-                    <div className="mt-4 p-3 bg-amber/5 border-l-4 border-amber rounded text-sm">
-                        <p className="font-medium">Jón Jónsson · 11-13 jan</p>
-                        <p className="text-grey-mid text-xs mt-1">Fjölskylduhelgi</p>
-                    </div>
-                </div>
-            )
-        },
-        {
-            id: 'finance',
-            title: 'Hússjóður',
-            description: 'Haltu utan um tekjur og gjöld - sjáðu strax ef þú ert í mínus',
-            icon: DollarSign,
-            color: 'bg-green-500',
-            mockup: (
-                <div className="bg-white rounded-lg border border-stone-200 p-6">
-                    {/* Balance Card */}
-                    <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-6 mb-6">
-                        <p className="text-sm opacity-90 mb-2">Staða hússjóðs</p>
-                        <p className="text-4xl font-bold font-mono">342.500 kr</p>
-                    </div>
-                    {/* Transactions */}
-                    <div className="space-y-3">
-                        {[
-                            { label: 'Rafmagn - des', amount: '−45.000', type: 'expense' },
-                            { label: 'Leigjutekjur', amount: '+150.000', type: 'income' },
-                            { label: 'Viðhald', amount: '−12.500', type: 'expense' }
-                        ].map((tx, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 border border-stone-200 rounded">
-                                <span className="text-sm">{tx.label}</span>
-                                <span className={`font-mono font-semibold ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'
-                                    }`}>{tx.amount} kr</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )
-        },
-        {
-            id: 'tasks',
-            title: 'Verkefni',
-            description: 'Halda utan um viðhald - úthluta verkefnum til meðeigenda',
-            icon: CheckSquare,
-            color: 'bg-blue-500',
-            mockup: (
-                <div className="bg-white rounded-lg border border-stone-200 p-6">
-                    <button className="btn btn-primary bg-blue-500 text-white px-4 py-2 text-sm mb-6 w-full">
-                        + Nýtt verkefni
-                    </button>
-                    <div className="space-y-3">
-                        {[
-                            { task: 'Laga skemmda ljósaperu', status: 'pending', assignee: 'Jón' },
-                            { task: 'Mála verönd', status: 'in_progress', assignee: 'Guðrún' },
-                            { task: 'Hreinsa flísar', status: 'completed', assignee: 'Ólafur' }
-                        ].map((item, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3 border border-stone-200 rounded">
-                                <input
-                                    type="checkbox"
-                                    checked={item.status === 'completed'}
-                                    className="w-5 h-5"
-                                    readOnly
-                                />
-                                <div className="flex-1">
-                                    <p className={`text-sm ${item.status === 'completed' ? 'line-through text-grey-mid' : ''}`}>
-                                        {item.task}
-                                    </p>
-                                    <p className="text-xs text-grey-mid">→ {item.assignee}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )
-        },
-        {
-            id: 'settings',
-            title: 'Hússtillingar',
-            description: 'WiFi, húsreglur, aðgangsleiðbeiningar fyrir leigjendur',
-            icon: Home,
-            color: 'bg-purple-500',
-            mockup: (
-                <div className="bg-white rounded-lg border border-stone-200 p-6">
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-sm font-medium text-grey-dark block mb-2">WiFi Network</label>
-                            <input
-                                type="text"
-                                value="SumarhusWiFi"
-                                className="w-full px-4 py-2 border border-stone-300 rounded text-sm"
-                                readOnly
-                            />
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium text-grey-dark block mb-2">Lykilorð</label>
-                            <input
-                                type="password"
-                                value="thingvellir2025"
-                                className="w-full px-4 py-2 border border-stone-300 rounded text-sm"
-                                readOnly
-                            />
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium text-grey-dark block mb-2">Húsreglur</label>
-                            <textarea
-                                className="w-full px-4 py-2 border border-stone-300 rounded text-sm"
-                                rows={3}
-                                defaultValue="1. Hafðu hvíta sófann hreinan&#10;2. Slökktu á ljósum&#10;3. Njóttu vel!"
-                                readOnly
-                            />
-                        </div>
-                    </div>
-                </div>
-            )
+// --- Mock Data ---
+
+const INITIAL_BOOKINGS = [
+    {
+        id: '1',
+        title: 'Jón Jónsson',
+        start: addDays(new Date(), 2),
+        end: addDays(new Date(), 4),
+        type: 'personal',
+        notes: 'Fjölskylduhelgi'
+    },
+    {
+        id: '2',
+        title: 'Leiga - Airbnb',
+        start: addDays(new Date(), 10),
+        end: addDays(new Date(), 15),
+        type: 'rental',
+        notes: 'Gestir frá Þýskalandi'
+    }
+];
+
+const INITIAL_FINANCE = [
+    { id: '1', date: '2025-01-01', description: 'Leigutekjur janúar', amount: 150000, type: 'income', category: 'Rent' },
+    { id: '2', date: '2025-01-05', description: 'Orkureikningur', amount: -24500, type: 'expense', category: 'Utilities' },
+    { id: '3', date: '2025-01-10', description: 'Snjómokstur', amount: -15000, type: 'expense', category: 'Maintenance' },
+];
+
+const INITIAL_TASKS = [
+    { id: '1', title: 'Skipta um ljósaperu á baði', assignee: 'Jón', status: 'todo' },
+    { id: '2', title: 'Mála pallinn', assignee: 'Guðrún', status: 'in_progress' },
+    { id: '3', title: 'Kauptu nýjan slökkvitæki', assignee: '', status: 'done' },
+];
+
+// --- Sub-Components ---
+
+const SandboxCalendar = () => {
+    const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
+    const [view, setView] = useState<any>('month');
+    const [date, setDate] = useState(new Date());
+
+    const handleSelectSlot = ({ start, end }: any) => {
+        const title = prompt('Nafn bókunar (eða "Leiga"):');
+        if (title) {
+            setBookings([...bookings, {
+                id: Math.random().toString(),
+                title,
+                start,
+                end,
+                type: title.toLowerCase().includes('leiga') ? 'rental' : 'personal',
+                notes: ''
+            }]);
         }
-    ];
+    };
 
     return (
-        <div className="min-h-screen bg-bone">
-            {/* Demo Banner */}
-            <div className="bg-amber text-charcoal px-6 py-4 border-b-2 border-charcoal sticky top-0 z-50">
-                <div className="container mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Eye className="w-5 h-5" />
-                        <div>
-                            <p className="font-bold text-sm">Sýnishorn</p>
-                            <p className="text-xs opacity-80">Sjáðu hvernig kerfið virkar</p>
-                        </div>
+        <div className="h-full flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-serif font-bold text-charcoal">Bókunardagatal</h2>
+                <button
+                    onClick={() => alert('Í fullu kerfi opnast bókunargluggi hér!')}
+                    className="btn btn-primary"
+                >
+                    + Ný bókun
+                </button>
+            </div>
+
+            <div className="flex-1 bg-white p-6 rounded-xl shadow-sm border border-stone-200 min-h-[600px]">
+                <BigCalendar
+                    localizer={localizer}
+                    events={bookings}
+                    startAccessor="start"
+                    endAccessor="end"
+                    style={{ height: '100%' }}
+                    views={['month', 'week', 'agenda']}
+                    view={view}
+                    onView={setView}
+                    date={date}
+                    onNavigate={setDate}
+                    culture="is"
+                    selectable
+                    onSelectSlot={handleSelectSlot}
+                    messages={{
+                        next: "Áfram",
+                        previous: "Til baka",
+                        today: "Í dag",
+                        month: "Mánuður",
+                        week: "Vika",
+                        day: "Dagur",
+                        agenda: "Listi"
+                    }}
+                    eventPropGetter={(event: any) => ({
+                        style: {
+                            backgroundColor: event.type === 'rental' ? '#10b981' : '#e8b058',
+                            borderRadius: '4px',
+                            color: 'white',
+                            border: '0px',
+                            display: 'block'
+                        }
+                    })}
+                />
+            </div>
+        </div>
+    );
+};
+
+const SandboxFinance = () => {
+    const [entries, setEntries] = useState(INITIAL_FINANCE);
+
+    const balance = entries.reduce((acc, curr) => acc + curr.amount, 0);
+
+    const handleAdd = () => {
+        const desc = prompt('Skýring færslu:');
+        const amountStr = prompt('Upphæð (neikvæð fyrir útgjöld):');
+        if (desc && amountStr) {
+            setEntries([{
+                id: Math.random().toString(),
+                date: new Date().toISOString().split('T')[0],
+                description: desc,
+                amount: parseInt(amountStr),
+                type: parseInt(amountStr) > 0 ? 'income' : 'expense',
+                category: 'General'
+            }, ...entries]);
+        }
+    };
+
+    return (
+        <div className="max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-serif font-bold text-charcoal">Fjármál</h2>
+                <button onClick={handleAdd} className="btn btn-primary">Skrá færslu</button>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-charcoal text-white p-6 rounded-xl shadow-lg col-span-2">
+                    <p className="text-stone-400 text-sm font-medium mb-2 uppercase tracking-wide">Staða sjóðs</p>
+                    <div className="flex items-baseline gap-2">
+                        <h3 className="text-4xl font-mono font-bold tracking-tight">
+                            {balance.toLocaleString('is-IS')}
+                        </h3>
+                        <span className="text-stone-400">kr.</span>
                     </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => navigate('/')}
-                            className="btn btn-ghost text-sm flex items-center gap-2 border border-charcoal/20 hover:bg-charcoal/10"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            Til baka
-                        </button>
-                        <button
-                            onClick={() => navigate('/signup')}
-                            className="btn btn-primary bg-charcoal text-bone hover:bg-charcoal/90 text-sm"
-                        >
-                            Búa til eigið hús →
-                        </button>
-                    </div>
+                </div>
+                {/* Stats placeholder */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-200 flex flex-col justify-center">
+                    <p className="text-sm text-grey-mid">Tekjur (Jan)</p>
+                    <p className="text-xl font-bold text-green-600">+150.000 kr.</p>
+                    <div className="h-4"></div>
+                    <p className="text-sm text-grey-mid">Gjöld (Jan)</p>
+                    <p className="text-xl font-bold text-red-500">-39.500 kr.</p>
                 </div>
             </div>
 
-            {/* Content */}
-            <div className="container mx-auto px-6 py-12">
-                <div className="text-center mb-12">
-                    <h1 className="text-5xl font-serif font-bold mb-6">Sjáðu kerfið í vinnslu</h1>
-                    <p className="text-xl text-grey-dark max-w-3xl mx-auto leading-relaxed">
-                        Þetta er alvöru viðmótið frá <strong>Sumarbústaðnum við Þingvallavatn</strong>.
-                        Fágað, einfalt, og hannað fyrir íslenskar þarfir.
-                    </p>
+            <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                <div className="p-4 border-b border-stone-100 flex justify-between items-center bg-stone-50">
+                    <h3 className="font-semibold text-charcoal">Færsluyfirlit</h3>
+                    <button className="text-sm text-amber font-medium">Sækja Excel</button>
                 </div>
-
-                {/* Feature Showcases */}
-                <div className="space-y-12 max-w-5xl mx-auto">
-                    {previews.map((preview, idx) => (
-                        <div key={preview.id} className={`${idx % 2 === 0 ? '' : 'flex flex-row-reverse'}`}>
-                            <div className="grid md:grid-cols-2 gap-8 items-center">
-                                {/* Description */}
-                                <div className="space-y-4">
-                                    <div className={`w-14 h-14 ${preview.color} rounded-lg flex items-center justify-center`}>
-                                        <preview.icon className="w-7 h-7 text-white" />
-                                    </div>
-                                    <h2 className="text-3xl font-serif font-bold">{preview.title}</h2>
-                                    <p className="text-lg text-grey-dark leading-relaxed">{preview.description}</p>
+                <div className="divide-y divide-stone-100">
+                    {entries.map(entry => (
+                        <div key={entry.id} className="p-4 hover:bg-stone-50 transition-colors flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${entry.type === 'income' ? 'bg-green-100 text-green-600' : 'bg-red-50 text-red-500'
+                                    }`}>
+                                    <DollarSign className="w-5 h-5" />
                                 </div>
-
-                                {/* Live Preview */}
-                                <div className="transform hover:scale-[1.02] transition-transform">
-                                    {preview.mockup}
+                                <div>
+                                    <p className="font-medium text-charcoal">{entry.description}</p>
+                                    <p className="text-xs text-stone-500">{entry.date} • {entry.category}</p>
                                 </div>
+                            </div>
+                            <span className={`font-mono font-medium ${entry.type === 'income' ? 'text-green-600' : 'text-charcoal'
+                                }`}>
+                                {entry.amount > 0 ? '+' : ''}{entry.amount.toLocaleString('is-IS')} kr
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const SandboxTasks = () => {
+    const [tasks, setTasks] = useState(INITIAL_TASKS);
+
+    const toggleTask = (id: string) => {
+        setTasks(tasks.map(t => t.id === id ? { ...t, status: t.status === 'done' ? 'todo' : 'done' } : t));
+    };
+
+    return (
+        <div className="max-w-3xl mx-auto">
+            <h2 className="text-2xl font-serif font-bold text-charcoal mb-6">Verkefni & Viðhald</h2>
+
+            <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                <div className="p-4 bg-stone-50 border-b border-stone-200 flex justify-between">
+                    <h3 className="font-semibold">Verkefnalisti</h3>
+                    <span className="text-sm text-stone-500">{tasks.filter(t => t.status !== 'done').length} ólokið</span>
+                </div>
+                <div className="divide-y divide-stone-100">
+                    {tasks.map(task => (
+                        <div key={task.id} className="p-4 flex items-center gap-4 hover:bg-stone-50 cursor-pointer" onClick={() => toggleTask(task.id)}>
+                            <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${task.status === 'done' ? 'bg-green-500 border-green-500' : 'border-stone-300'
+                                }`}>
+                                {task.status === 'done' && <CheckSquare className="w-4 h-4 text-white" />}
+                            </div>
+                            <div className="flex-1">
+                                <p className={`font-medium ${task.status === 'done' ? 'line-through text-stone-400' : 'text-charcoal'}`}>
+                                    {task.title}
+                                </p>
+                                {task.assignee && (
+                                    <p className="text-xs text-stone-500 mt-0.5">Ábyrgð: {task.assignee}</p>
+                                )}
+                            </div>
+                            <div className={`px-2 py-1 rounded text-xs font-medium ${task.status === 'done' ? 'bg-green-100 text-green-700' :
+                                task.status === 'in_progress' ? 'bg-amber/10 text-amber-dark' :
+                                    'bg-stone-100 text-stone-600'
+                                }`}>
+                                {task.status === 'done' ? 'Lokið' : task.status === 'in_progress' ? 'Í vinnslu' : 'Óunnið'}
                             </div>
                         </div>
                     ))}
                 </div>
-
-                {/* CTA */}
-                <div className="text-center mt-16 p-12 card max-w-3xl mx-auto">
-                    <h3 className="text-3xl font-serif font-bold mb-4">Tilbúinn að byrja?</h3>
-                    <p className="text-grey-dark mb-8">
-                        Búðu til þitt eigið sumarhús og fáðu aðgang að öllu þessu og meira.
-                    </p>
+                <div className="p-4 bg-stone-50 border-t border-stone-200">
                     <button
-                        onClick={() => navigate('/signup')}
-                        className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-12 py-4"
+                        onClick={() => {
+                            const t = prompt('Nýtt verkefni:');
+                            if (t) setTasks([...tasks, { id: Math.random().toString(), title: t, assignee: '', status: 'todo' }]);
+                        }}
+                        className="text-amber font-medium text-sm hover:underline"
                     >
-                        Byrja núna - Frítt í 14 daga →
+                        + Bæta við verkefni
                     </button>
                 </div>
             </div>
+        </div>
+    );
+};
+
+// --- Main Page Component ---
+
+export default function SandboxPage() {
+    const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState<'calendar' | 'finance' | 'tasks' | 'settings'>('calendar');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const MenuLink = ({ id, icon: Icon, label }: { id: typeof activeTab, icon: any, label: string }) => (
+        <button
+            onClick={() => setActiveTab(id)}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium mb-1 ${activeTab === id
+                ? 'bg-amber text-charcoal shadow-sm'
+                : 'text-stone-400 hover:text-white hover:bg-charcoal-light'
+                }`}
+        >
+            <Icon size={20} />
+            {label}
+        </button>
+    );
+
+    return (
+        <div className="flex h-screen bg-bone font-sans overflow-hidden">
+            {/* Sidebar (Mocking the real one) */}
+            <aside className={`
+                fixed inset-y-0 left-0 z-40 w-64 bg-charcoal text-white transform transition-transform duration-300 ease-in-out
+                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}>
+                <div className="p-6">
+                    <h1 className="text-2xl font-serif text-amber italic tracking-wide">bústaðurinn</h1>
+                    <div className="mt-2 text-[10px] bg-amber/20 text-amber inline-block px-2 py-0.5 rounded uppercase tracking-wider font-semibold">
+                        Prufu-hamur
+                    </div>
+                </div>
+
+                <nav className="px-3 mt-6">
+                    <MenuLink id="calendar" icon={Calendar} label="Dagatal" />
+                    <MenuLink id="finance" icon={DollarSign} label="Fjármál" />
+                    <MenuLink id="tasks" icon={CheckSquare} label="Verkefni" />
+                    <MenuLink id="settings" icon={Settings} label="Stillingar" />
+                </nav>
+
+                <div className="absolute bottom-0 w-full p-4 border-t border-charcoal-light bg-charcoal">
+                    <div className="flex items-center gap-3 mb-4 px-2">
+                        <div className="w-8 h-8 rounded-full bg-amber text-charcoal flex items-center justify-center font-bold">
+                            G
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-sm font-medium truncate">Gestur (Þú)</p>
+                            <p className="text-xs text-stone-400 truncate">Prufuaðgangur</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => navigate('/signup')}
+                        className="w-full btn bg-white text-charcoal hover:bg-stone-100 flex items-center justify-center gap-2"
+                    >
+                        <UserIcon size={16} />
+                        Stofna aðgang
+                    </button>
+                    <button
+                        onClick={() => navigate('/')}
+                        className="w-full mt-2 text-xs text-stone-500 hover:text-stone-300 text-center"
+                    >
+                        Hætta í prufu
+                    </button>
+                </div>
+            </aside>
+
+            {/* Main Content Area */}
+            <main className="flex-1 md:ml-64 flex flex-col h-full overflow-hidden relative">
+
+                {/* Mobile Header */}
+                <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-stone-200">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-charcoal">
+                            <Menu size={24} />
+                        </button>
+                        <h1 className="font-serif text-lg">Prufu-hamur</h1>
+                    </div>
+                </header>
+
+                {/* Content Scroll Area */}
+                <div className="flex-1 overflow-auto p-4 md:p-8 relative">
+                    {/* Floating Info Banner */}
+                    <div className="bg-blue-50 border border-blue-100 text-blue-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3 shadow-sm max-w-4xl mx-auto">
+                        <div className="bg-blue-100 p-1 rounded-full mt-0.5">
+                            <Bell size={16} />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium">Velkomin(n) í sandkassann!</p>
+                            <p className="text-xs mt-1 opacity-90">
+                                Hér getur þú prófað virkni kerfisins. Öll gögn eru vistuð tímabundið í vafranum þínum.
+                                Engar breytingar vistast varanlega.
+                            </p>
+                        </div>
+                        <button onClick={() => navigate('/signup')} className="ml-auto text-xs font-bold underline whitespace-nowrap hidden md:block">
+                            Stofna alvöru aðgang →
+                        </button>
+                    </div>
+
+                    {/* View Rendering */}
+                    <div className="max-w-7xl mx-auto h-full pb-20">
+                        {activeTab === 'calendar' && <SandboxCalendar />}
+                        {activeTab === 'finance' && <SandboxFinance />}
+                        {activeTab === 'tasks' && <SandboxTasks />}
+                        {activeTab === 'settings' && (
+                            <div className="text-center py-20">
+                                <Settings className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+                                <h2 className="text-xl font-bold text-charcoal">Stillingar</h2>
+                                <p className="text-stone-500 max-w-md mx-auto mt-2">
+                                    Í fullu útgáfunni getur þú stillt WiFi, húsreglur, boðið meðeigendum og fleira.
+                                </p>
+                                <button onClick={() => navigate('/signup')} className="btn btn-primary mt-6">
+                                    Stofna aðgang til að sjá meira
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+            </main>
+
+            {/* Overlay for mobile sidebar */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
         </div>
     );
 }
