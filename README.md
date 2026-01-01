@@ -6,21 +6,24 @@ A premium SaaS platform for managing shared summer houses. Built with modern tec
 
 ## 📊 Project Status
 
-**Version**: 1.1.0  
+**Version**: 1.2.0  
 **Status**: ✅ Production-Ready  
-**Last Updated**: 2025-12-29  
+**Last Updated**: 2026-01-01  
 **Deployment**: Live on Vercel Pro
 
 ### Current State
 - ✅ Full user authentication and onboarding
 - ✅ Complete booking calendar with fairness rules
-- ✅ Task management system
+- ✅ Enhanced calendar UX (pull-to-refresh, date ranges in list view)
+- ✅ Mobile-optimized budget interface with responsive layouts
+- ✅ Task management system (Kanban board + list view)
 - ✅ Shopping list functionality  
 - ✅ Internal logbook (owner communication)
+- ✅ Finance tracking (Budget Planning + Ledger)
 - ✅ Real-time weather integration (Open-Meteo)
 - ✅ Guest access via magic links
 - ✅ Super Admin dashboard with impersonation
-- ✅ Mobile-optimized experience
+- ✅ Mobile-first responsive design with touch-optimized interfaces
 - ✅ House image upload and management
 - ✅ GPS-based location search (HMS + Google Maps)
 
@@ -548,6 +551,19 @@ Contact: thor arinnhjalmarsson@gmail.com
 
 **Built with ❤️ for Icelandic summer house owners** 🇮🇸
 
-**Current Version**: 1.1.0  
-**Last Updated**: 2025-12-29  
+**Current Version**: 1.2.0  
+**Last Updated**: 2026-01-01  
 **Status**: ✅ Production-Ready
+
+### Recent Updates (v1.2.0 - 2026-01-01)
+- ✅ Improved Calendar Booking UX
+  - Clear date ranges in list view (e.g., "17. - 20. júní")
+  - Bookings display as all-day events
+  - Pull-to-refresh on mobile
+  - Removed week view for cleaner interface
+  - Show booking creation dates
+- ✅ Mobile-Optimized Budget Interface
+  - Responsive summary cards with vertical stacking
+  - Mobile-friendly form layouts
+  - Touch-optimized interactions
+  - Always-visible action buttons on mobile
