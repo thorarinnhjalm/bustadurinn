@@ -13,6 +13,7 @@ import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
 import AdminLayout from '@/components/AdminLayout';
 import DataTable from '@/components/DataTable';
+import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
 
 import type { House, User, Coupon } from '@/types/models';
 
@@ -47,7 +48,7 @@ interface Stats {
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'overview' | 'houses' | 'users' | 'contacts' | 'coupons' | 'integrations' | 'emails'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'houses' | 'users' | 'contacts' | 'coupons' | 'integrations' | 'emails'>('overview');
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [editingHouse, setEditingHouse] = useState<House | null>(null);
@@ -689,6 +690,16 @@ export default function SuperAdminPage() {
                                 <span>Yfirlit</span>
                             </button>
                             <button
+                                onClick={() => setActiveTab('analytics')}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${activeTab === 'analytics'
+                                    ? 'bg-amber text-charcoal shadow-sm'
+                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
+                                    }`}
+                            >
+                                <BarChart2 className="w-4 h-4" />
+                                <span>Greining</span>
+                            </button>
+                            <button
                                 onClick={() => setActiveTab('houses')}
                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${activeTab === 'houses'
                                     ? 'bg-amber text-charcoal shadow-sm'
@@ -775,6 +786,9 @@ export default function SuperAdminPage() {
 
             {/* Content */}
             <div className="p-8">
+                {/* Analytics Tab */}
+                {activeTab === 'analytics' && <AnalyticsDashboard />}
+
                 {/* Overview Tab */}
                 {activeTab === 'overview' && (() => {
                     // Calculate metrics
