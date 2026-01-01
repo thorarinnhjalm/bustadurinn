@@ -52,24 +52,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (period === '7d') startDate = '7daysAgo';
         if (period === '90d') startDate = '90daysAgo';
 
-
-
-        // Process raw GA4 data into our simplified format
-        // Note: GA4 returns rows with dimension combinations. We need to aggregate.
-
-
-
-        // Aggregates (This is a rough approximation as users overlap across dimensions)
-        // Ideally we'd make separate requests for totals vs breakdowns for perfect accuracy.
-        // For dashboard purposes, summing pageviews is safe. Users/Sessions overlap.
-
-        // Actually, for Totals, it's better to request them separately without dimensions
-        // But to save API calls/complexity, we will loop. 
-        // HOWEVER: Summing 'activeUsers' across rows with dimensions WILL overcount unique users.
-        // We'll address this by getting the totals from the 'totals' or 'maximums' field if available, 
-        // OR making a separate simple request. Let's make a separate simple request for accurate totals.
-
-
         // 2. Parallel Request: Get Totals (Accurate)
         const [totalsResponse] = await analyticsDataClient.runReport({
             property: `properties/${propertyId}`,
