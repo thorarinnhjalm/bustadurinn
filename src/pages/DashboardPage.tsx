@@ -57,6 +57,7 @@ const UserDashboard = () => {
     const [showCheckoutModal, setShowCheckoutModal] = useState(false);
     const [checkoutMessage, setCheckoutMessage] = useState('');
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [isCheckedIn, setIsCheckedIn] = useState(false);
 
     useEffect(() => {
         if (currentUser && (!currentUser.house_ids || currentUser.house_ids.length === 0)) {
@@ -160,6 +161,19 @@ const UserDashboard = () => {
                     created_at: doc.data().created_at?.toDate() || new Date()
                 })) as InternalLog[];
                 setLogs(logsData);
+
+                // Check if user is checked in
+                const userLogs = logsData.filter(log => log.user_id === currentUser.uid);
+                if (userLogs.length > 0) {
+                    // Check if last action was check-in or check-out
+                    // Simple logic: Look for "skráði komu" vs "skráði brottför" in the text
+                    const lastLog = userLogs[0];
+                    if (lastLog.text.includes('skráði komu')) {
+                        setIsCheckedIn(true);
+                    } else if (lastLog.text.includes('skráði brottför')) {
+                        setIsCheckedIn(false);
+                    }
+                }
 
                 // 6. Fetch Weather
                 if (currentHouse.location?.lat && currentHouse.location?.lng) {
@@ -366,6 +380,7 @@ const UserDashboard = () => {
 
             setShowCheckoutModal(false);
             setCheckoutMessage('');
+            setIsCheckedIn(false);
 
         } catch (error) {
             console.error('Error during checkout:', error);
@@ -542,41 +557,47 @@ const UserDashboard = () => {
                     <button
                         onClick={async () => {
                             if (!currentHouse || !currentUser) return;
-                            const confirmCheckIn = window.confirm("Viltu skrá komu þína í gestabókina?");
-                            if (!confirmCheckIn) return;
 
-                            try {
-                                const text = `${currentUser.name} skráði komu sína.`;
-                                const newLog = {
-                                    house_id: currentHouse.id,
-                                    user_id: currentUser.uid,
-                                    user_name: currentUser.name,
-                                    text,
-                                    created_at: serverTimestamp()
-                                };
+                            if (isCheckedIn) {
+                                // Trigger Checkout Modal
+                                setShowCheckoutModal(true);
+                            } else {
+                                // Trigger Check-in
+                                const confirmCheckIn = window.confirm("Viltu skrá komu þína í gestabókina?");
+                                if (!confirmCheckIn) return;
 
-                                const docRef = await addDoc(collection(db, 'internal_logs'), newLog);
+                                try {
+                                    const text = `${currentUser.name} skráði komu sína.`;
+                                    const newLog = {
+                                        house_id: currentHouse.id,
+                                        user_id: currentUser.uid,
+                                        user_name: currentUser.name,
+                                        text,
+                                        created_at: serverTimestamp()
+                                    };
 
-                                // Optimistic update
-                                setLogs(prev => [{
-                                    id: docRef.id,
-                                    ...newLog,
-                                    created_at: new Date()
-                                } as InternalLog, ...prev]);
+                                    const docRef = await addDoc(collection(db, 'internal_logs'), newLog);
 
-                            } catch (error) {
-                                console.error('Error logging check-in:', error);
+                                    // Optimistic update
+                                    setLogs(prev => [{
+                                        id: docRef.id,
+                                        ...newLog,
+                                        created_at: new Date()
+                                    } as InternalLog, ...prev]);
+
+                                    setIsCheckedIn(true);
+
+                                } catch (error) {
+                                    console.error('Error logging check-in:', error);
+                                }
                             }
                         }}
-                        className="flex-1 min-w-[100px] bg-white border border-stone-200 text-[#1a1a1a] py-3 rounded-lg font-bold text-sm hover:bg-stone-50 transition-colors"
+                        className={`flex-1 min-w-[100px] border border-stone-200 py-3 rounded-lg font-bold text-sm transition-colors ${isCheckedIn
+                            ? 'bg-amber text-white hover:bg-amber-dark border-transparent'
+                            : 'bg-white text-[#1a1a1a] hover:bg-stone-50'
+                            }`}
                     >
-                        Skrá komu
-                    </button>
-                    <button
-                        onClick={() => setShowCheckoutModal(true)}
-                        className="flex-1 min-w-[100px] bg-white border border-stone-200 text-[#1a1a1a] py-3 rounded-lg font-bold text-sm hover:bg-stone-50 transition-colors"
-                    >
-                        Skrá brottför
+                        {isCheckedIn ? 'Skrá brottför' : 'Skrá komu'}
                     </button>
                 </div>
 
