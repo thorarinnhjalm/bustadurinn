@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
 import { collection, query, where, orderBy, limit, getDocs, Timestamp, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Booking, Task, ShoppingItem, InternalLog } from '@/types/models';
+import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry } from '@/types/models';
 import ShoppingList from '@/components/ShoppingList';
 import InternalLogbook from '@/components/InternalLogbook';
 import { fetchWeather } from '@/utils/weather';
@@ -49,9 +49,7 @@ const UserDashboard = () => {
     const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
     const [logs, setLogs] = useState<InternalLog[]>([]);
     const [weather, setWeather] = useState({ temp: "--" as string | number, wind: 0, condition: "—" });
-
-    // Mock Data (until backend supported)
-    const finances = { balance: 0, lastAction: "—" };
+    const [finances, setFinances] = useState({ balance: 0, lastAction: "—" });
 
     const [showNotifications, setShowNotifications] = useState(false);
 
@@ -171,6 +169,44 @@ const UserDashboard = () => {
                 } else {
                     setWeather({ temp: "?", wind: 0, condition: "Vantar staðsetningu" });
                 }
+
+                // 7. Fetch Finance Data (Hússjóður)
+                const financeRef = collection(db, 'finance_entries');
+                const qFinance = query(
+                    financeRef,
+                    where('house_id', '==', currentHouse.id)
+                );
+                const financeSnap = await getDocs(qFinance);
+                const financeEntries = financeSnap.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        date: data.date?.toDate() || new Date(),
+                        created_at: data.created_at?.toDate() || new Date()
+                    } as LedgerEntry;
+                });
+
+                const totalIncome = financeEntries
+                    .filter(e => e.type !== 'expense')
+                    .reduce((sum, e) => sum + e.amount, 0);
+                const totalExpense = financeEntries
+                    .filter(e => e.type === 'expense')
+                    .reduce((sum, e) => sum + e.amount, 0);
+                const balance = totalIncome - totalExpense;
+
+                let lastAction = "Ekkert að frétta";
+                if (financeEntries.length > 0) {
+                    // Sort by date desc (latest first)
+                    financeEntries.sort((a, b) => b.date.getTime() - a.date.getTime());
+                    const latest = financeEntries[0];
+                    const amountStr = latest.amount.toLocaleString('is-IS');
+                    const action = latest.type === 'expense' ? 'Greiddi' : 'Lagði inn';
+                    const who = latest.paid_by_name ? latest.paid_by_name.split(' ')[0] : 'Sjóðurinn';
+                    lastAction = `${who} ${action.toLowerCase()} ${amountStr} kr.`;
+                }
+
+                setFinances({ balance, lastAction });
 
             } catch (error) {
                 console.error("Dashboard data fetch error:", error);
@@ -346,8 +382,8 @@ const UserDashboard = () => {
                                             setShowHouseSwitcher(false);
                                         }}
                                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${currentHouse.id === house.id
-                                                ? 'bg-amber/10 text-amber font-bold'
-                                                : 'text-stone-600 hover:bg-stone-50'
+                                            ? 'bg-amber/10 text-amber font-bold'
+                                            : 'text-stone-600 hover:bg-stone-50'
                                             }`}
                                     >
                                         <Home size={16} className={currentHouse.id === house.id ? 'text-amber' : 'text-stone-400'} />
