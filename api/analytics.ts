@@ -52,57 +52,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (period === '7d') startDate = '7daysAgo';
         if (period === '90d') startDate = '90daysAgo';
 
-        const [response] = await analyticsDataClient.runReport({
-            property: `properties/${propertyId}`,
-            dateRanges: [
-                {
-                    startDate: startDate,
-                    endDate: 'today',
-                },
-            ],
-            dimensions: [
-                { name: 'pagePath' },
-                { name: 'sessionSource' },
-            ],
-            metrics: [
-                { name: 'activeUsers' },
-                { name: 'sessions' },
-                { name: 'screenPageViews' },
-                { name: 'engagementRate' },
-            ],
-        });
+
 
         // Process raw GA4 data into our simplified format
         // Note: GA4 returns rows with dimension combinations. We need to aggregate.
 
-        let activeUsers = 0;
-        let sessions = 0;
-        let screenPageViews = 0;
-        let totalEngagementRate = 0;
-        let rowCount = 0;
 
-        const pagesMap = new Map<string, number>();
-        const sourcesMap = new Map<string, number>();
 
-        response.rows?.forEach(row => {
-            const users = parseInt(row.metricValues?.[0]?.value || '0');
-            const sess = parseInt(row.metricValues?.[1]?.value || '0');
-            const views = parseInt(row.metricValues?.[2]?.value || '0');
-            const rate = parseFloat(row.metricValues?.[3]?.value || '0');
+        // Aggregates (This is a rough approximation as users overlap across dimensions)
+        // Ideally we'd make separate requests for totals vs breakdowns for perfect accuracy.
+        // For dashboard purposes, summing pageviews is safe. Users/Sessions overlap.
 
-            const pagePath = row.dimensionValues?.[0]?.value || '(unknown)';
-            const source = row.dimensionValues?.[1]?.value || '(direct)';
+        // Actually, for Totals, it's better to request them separately without dimensions
+        // But to save API calls/complexity, we will loop. 
+        // HOWEVER: Summing 'activeUsers' across rows with dimensions WILL overcount unique users.
+        // We'll address this by getting the totals from the 'totals' or 'maximums' field if available, 
+        // OR making a separate simple request. Let's make a separate simple request for accurate totals.
 
-            // Aggregates (This is a rough approximation as users overlap across dimensions)
-            // Ideally we'd make separate requests for totals vs breakdowns for perfect accuracy.
-            // For dashboard purposes, summing pageviews is safe. Users/Sessions overlap.
-
-            // Actually, for Totals, it's better to request them separately without dimensions
-            // But to save API calls/complexity, we will loop. 
-            // HOWEVER: Summing 'activeUsers' across rows with dimensions WILL overcount unique users.
-            // We'll address this by getting the totals from the 'totals' or 'maximums' field if available, 
-            // OR making a separate simple request. Let's make a separate simple request for accurate totals.
-        });
 
         // 2. Parallel Request: Get Totals (Accurate)
         const [totalsResponse] = await analyticsDataClient.runReport({
