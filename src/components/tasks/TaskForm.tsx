@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, X, Calendar, User } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import type { Task, TaskStatus } from '@/types/models';
 
 interface TaskFormProps {
@@ -67,10 +67,10 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="label">Ábyrgðarmaður</label>
+                        <label className="label">Ábyrgðarmaður (valfrjálst)</label>
                         <div className="relative">
                             <select
-                                className="input w-full appearance-none"
+                                className="input w-full"
                                 value={assignedTo}
                                 onChange={(e) => setAssignedTo(e.target.value)}
                             >
@@ -81,12 +81,11 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
                                     </option>
                                 ))}
                             </select>
-                            <User className="w-4 h-4 text-grey-mid absolute right-3 top-3 pointer-events-none" />
                         </div>
                     </div>
 
                     <div>
-                        <label className="label">Lokadagur</label>
+                        <label className="label">Lokadagur (valfrjálst)</label>
                         <div className="relative">
                             <input
                                 type="date"
@@ -94,7 +93,6 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
                                 value={dueDate}
                                 onChange={(e) => setDueDate(e.target.value)}
                             />
-                            <Calendar className="w-4 h-4 text-grey-mid absolute right-3 top-3 pointer-events-none" />
                         </div>
                     </div>
                 </div>

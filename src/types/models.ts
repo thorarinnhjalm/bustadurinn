@@ -90,11 +90,15 @@ export interface Task {
 
 // Budget Playground (Rekstrarhermir)
 export type BudgetFrequency = 'monthly' | 'yearly' | 'one-time';
+export type BudgetItemType = 'expense' | 'income';
 
 export interface BudgetItem {
-    category: string; // e.g., "Electricity", "Maintenance", "Property Tax"
+    category: string; // e.g., "Electricity", "Maintenance", "Property Tax" or "Monthly Contribution"
     estimated_amount: number;
     frequency: BudgetFrequency;
+    type: BudgetItemType; // expense or income
+    assigned_owner_id?: string; // For income: which co-owner contributes this (optional)
+    assigned_owner_name?: string; // For display purposes
 }
 
 export interface BudgetPlan {

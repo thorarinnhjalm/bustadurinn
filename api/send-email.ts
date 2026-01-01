@@ -91,15 +91,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Fetch template from Firestore
         const templateDoc = await db.collection('email_templates').doc(templateId).get();
+        let template: EmailTemplate;
 
-        if (!templateDoc.exists) {
-            return res.status(404).json({ error: `Template '${templateId}' not found` });
-        }
+        if (templateDoc.exists) {
+            template = templateDoc.data() as EmailTemplate;
+            if (!template.active) {
+                return res.status(400).json({ error: `Template '${templateId}' is inactive` });
+            }
+        } else {
+            // Fallback for system templates that haven't been seeded yet
+            const systemTemplates: Record<string, EmailTemplate> = {
+                'general_notification': {
+                    id: 'general_notification',
+                    subject: '{title} - Bústaðurinn.is',
+                    html_content: `
+                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                            <h2 style="color: #4a4642;">{title}</h2>
+                            <p style="font-size: 16px; color: #1c1917; line-height: 1.6;">{message}</p>
+                            <div style="margin-top: 24px; text-align: center;">
+                                <a href="{actionUrl}" style="background-color: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Skoða nánar</a>
+                            </div>
+                        </div>
+                    `,
+                    active: true,
+                    variables: ['title', 'message', 'actionUrl'],
+                    description: 'System fallback for general notifications'
+                }
+            };
 
-        const template = templateDoc.data() as EmailTemplate;
-
-        if (!template.active) {
-            return res.status(400).json({ error: `Template '${templateId}' is inactive` });
+            if (systemTemplates[templateId]) {
+                template = systemTemplates[templateId];
+                console.log(`ℹ️ Using system fallback for template '${templateId}'`);
+            } else {
+                return res.status(404).json({ error: `Template '${templateId}' not found` });
+            }
         }
 
         // Replace variables in subject and content

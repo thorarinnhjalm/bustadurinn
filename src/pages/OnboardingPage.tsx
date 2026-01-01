@@ -4,8 +4,8 @@ declare var google: any;
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, MapPin, Users, CheckCircle, Loader2 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, setDoc, doc, arrayUnion } from 'firebase/firestore';
+import { Home, MapPin, Users, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { collection, addDoc, serverTimestamp, setDoc, doc, arrayUnion, query, where, getDocs, limit, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
@@ -36,6 +36,10 @@ export default function OnboardingPage() {
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [debounceTimer, setDebounceTimer] = useState<any>(null); // Store timer
     const [showPwaPrompt, setShowPwaPrompt] = useState(false);
+
+    // Duplicate detection state
+    const [duplicateHouse, setDuplicateHouse] = useState<{ id: string; name: string; manager_id: string } | null>(null);
+    const [joinRequestSent, setJoinRequestSent] = useState(false);
 
     const steps = [
         { id: 'welcome', label: 'Velkomin' },
@@ -101,6 +105,8 @@ export default function OnboardingPage() {
 
     const handleAddressChange = (val: string) => {
         setHouseData(prev => ({ ...prev, address: val }));
+        setDuplicateHouse(null); // Reset duplicate warning on change
+        setJoinRequestSent(false);
 
         // Debounce Search
         if (debounceTimer) clearTimeout(debounceTimer);
@@ -193,6 +199,57 @@ export default function OnboardingPage() {
         }
     };
 
+    const handleSendJoinRequest = async () => {
+        if (!duplicateHouse || !currentUser) return;
+        setLoading(true);
+        setError('');
+
+        try {
+            // 1. Fetch manager email
+            const managerDoc = await getDoc(doc(db, 'users', duplicateHouse.manager_id));
+            if (!managerDoc.exists()) throw new Error('Eigandi fannst ekki');
+            const managerData = managerDoc.data();
+            const managerEmail = managerData.email;
+
+            // 2. Send email via API
+            await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templateId: 'general_notification', // Using generic template for now
+                    to: managerEmail,
+                    variables: {
+                        title: 'Beiðni um aðgang að húsi',
+                        message: `${currentUser.name || currentUser.email} hefur óskað eftir aðgangi að húsinu ${duplicateHouse.name} (${houseData.address}).`,
+                        actionUrl: `https://bustadurinn.is/dashboard` // Ideally link to approvals
+                    }
+                })
+            });
+
+            // 3. Create a notification in DB
+            await addDoc(collection(db, 'notifications'), {
+                user_id: duplicateHouse.manager_id,
+                type: 'join_request',
+                title: 'Beiðni um aðgang',
+                message: `${currentUser.name || currentUser.email} vill ganga í húsfélagið fyrir ${duplicateHouse.name}`,
+                data: {
+                    requester_id: currentUser.uid,
+                    requester_email: currentUser.email,
+                    house_id: duplicateHouse.id
+                },
+                read: false,
+                created_at: serverTimestamp()
+            });
+
+            setJoinRequestSent(true);
+        } catch (err: any) {
+            console.error('Error sending request:', err);
+            setError('Ekki tókst að senda beiðni: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleCreateHouse = async () => {
         if (!houseData.name || !houseData.address) {
             setError('Vinsamlegast fylltu út öll nauðsynleg svæði');
@@ -208,6 +265,21 @@ export default function OnboardingPage() {
         setError('');
 
         try {
+            // 0. Check for duplicate address
+            const q = query(collection(db, 'houses'), where('address', '==', houseData.address), limit(1));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const existingHouse = querySnapshot.docs[0].data();
+                setDuplicateHouse({
+                    id: querySnapshot.docs[0].id,
+                    name: existingHouse.name,
+                    manager_id: existingHouse.manager_id
+                });
+                setLoading(false);
+                return;
+            }
+
             // 1. Create House
             const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             const houseRef = await addDoc(collection(db, 'houses'), {
@@ -411,6 +483,57 @@ export default function OnboardingPage() {
 
                 {/* Step Content */}
                 <div className="card">
+                    {/* Duplicate House Modal/Override */}
+                    {duplicateHouse && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+                                <div className="flex items-center gap-3 text-amber mb-4">
+                                    <AlertTriangle className="w-8 h-8" />
+                                    <h3 className="text-xl font-bold text-charcoal m-0">Húsið er þegar skráð</h3>
+                                </div>
+
+                                <p className="text-charcoal mb-4">
+                                    Húsið <strong>{duplicateHouse.name}</strong> á {houseData.address} er þegar skráð í kerfið.
+                                </p>
+
+                                {joinRequestSent ? (
+                                    <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded mb-6 flex items-center gap-3">
+                                        <CheckCircle className="w-5 h-5" />
+                                        <div>
+                                            <p className="font-bold">Beiðni send!</p>
+                                            <p className="text-sm">Eigandi hússins fær tilkynningu um að þú viljir fá aðgang.</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-grey-dark mb-6">
+                                        Í stað þess að búa til nýtt hús, viltu senda beiðni á núverandi eiganda um að fá aðgang?
+                                    </p>
+                                )}
+
+                                <div className="flex flex-col gap-3">
+                                    {!joinRequestSent && (
+                                        <button
+                                            onClick={handleSendJoinRequest}
+                                            className="btn btn-primary w-full justify-center"
+                                            disabled={loading}
+                                        >
+                                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Senda aðgangsbeiðni'}
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => {
+                                            setDuplicateHouse(null);
+                                            setJoinRequestSent(false);
+                                        }}
+                                        className="btn btn-ghost w-full"
+                                    >
+                                        Loka og breyta skráningu
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {currentStep === 'welcome' && (
                         <div className="text-center py-8 animate-fade-in">
                             <Home className="w-16 h-16 mx-auto mb-6 text-amber" />

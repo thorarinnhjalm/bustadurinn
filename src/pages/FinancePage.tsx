@@ -35,6 +35,7 @@ import BudgetForm from '@/components/finance/BudgetForm';
 import LedgerForm from '@/components/finance/LedgerForm';
 import TransactionList from '@/components/finance/TransactionList';
 import VarianceWidget from '@/components/finance/VarianceWidget';
+import MonthlyBreakdown from '@/components/finance/MonthlyBreakdown';
 
 type Tab = 'budget' | 'ledger';
 
@@ -114,7 +115,7 @@ export default function FinancePage() {
             {/* Content Area */}
             <div className="max-w-5xl mx-auto">
                 {activeTab === 'budget' ? (
-                    <BudgetView houseId={house?.id} currentUserId={currentUser?.uid} />
+                    <BudgetView houseId={house?.id} currentUserId={currentUser?.uid} house={house} />
                 ) : (
                     <LedgerView
                         houseId={house?.id}
@@ -132,7 +133,7 @@ export default function FinancePage() {
 // Budget View
 // ------------------------------------------------------------------
 
-function BudgetView({ houseId, currentUserId }: { houseId?: string, currentUserId?: string }) {
+function BudgetView({ houseId, currentUserId, house }: { houseId?: string, currentUserId?: string, house?: House | null }) {
     const [plan, setPlan] = useState<BudgetPlan | null>(null);
     const [entries, setEntries] = useState<LedgerEntry[]>([]);
     const [showForm, setShowForm] = useState(false);
@@ -224,38 +225,55 @@ function BudgetView({ houseId, currentUserId }: { houseId?: string, currentUserI
         }
     };
 
-    const totalBudget = plan?.items.reduce((sum, item) => {
-        let annualAmount = item.estimated_amount;
-        if (item.frequency === 'monthly') annualAmount *= 12;
-        return sum + annualAmount;
-    }, 0) || 0;
+    // Separate income and expenses (backwards compatible: items without type default to expense)
+    const totalExpenses = plan?.items
+        .filter(item => (item.type || 'expense') === 'expense')
+        .reduce((sum, item) => {
+            let annualAmount = item.estimated_amount;
+            if (item.frequency === 'monthly') annualAmount *= 12;
+            return sum + annualAmount;
+        }, 0) || 0;
 
-    const monthlyContribution = Math.ceil(totalBudget / 12);
+    const totalIncome = plan?.items
+        .filter(item => item.type === 'income')
+        .reduce((sum, item) => {
+            let annualAmount = item.estimated_amount;
+            if (item.frequency === 'monthly') annualAmount *= 12;
+            return sum + annualAmount;
+        }, 0) || 0;
+
+    const netPosition = totalIncome - totalExpenses;
+    const monthlyContribution = Math.ceil(Math.max(0, totalExpenses - totalIncome) / 12);
 
     if (loading) return <div className="p-8 text-center text-grey-mid">Hleð gögnum...</div>;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="col-span-1 md:col-span-3 card bg-charcoal text-white p-6 mb-6">
+            <div className={`col-span-1 md:col-span-3 card text-white p-6 mb-6 ${netPosition >= 0 ? 'bg-charcoal' : 'bg-red-800'}`}>
                 <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-white/10 rounded-full">
                         <PiggyBank className="w-6 h-6 text-amber" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-medium opacity-90">Áætlaður kostnaður {currentYear}</h2>
+                        <h2 className="text-lg font-medium opacity-90">Rekstraráætlun {currentYear}</h2>
                         <div className="text-3xl font-serif font-bold mt-1">
-                            {totalBudget.toLocaleString()} kr.
+                            {netPosition >= 0 ? '+' : ''}{netPosition.toLocaleString()} kr.
                         </div>
+                        <div className="text-sm opacity-60 mt-1">Áætluð nettóstaða í lok árs</div>
                     </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mt-4 border-t border-white/10 pt-4">
+                <div className="grid grid-cols-3 gap-4 mt-4 border-t border-white/10 pt-4">
                     <div>
-                        <div className="text-sm opacity-60">Mánaðarlegt framlag</div>
-                        <div className="text-xl font-medium">{monthlyContribution.toLocaleString()} kr.</div>
+                        <div className="text-sm opacity-60">Tekjur áætlaðar</div>
+                        <div className="text-xl font-medium text-green-400">+{totalIncome.toLocaleString()} kr.</div>
                     </div>
                     <div>
-                        <div className="text-sm opacity-60">Staða í lok árs</div>
-                        <div className="text-xl font-medium text-amber">0 kr.</div>
+                        <div className="text-sm opacity-60">Gjöld áætluð</div>
+                        <div className="text-xl font-medium text-red-300">-{totalExpenses.toLocaleString()} kr.</div>
+                    </div>
+                    <div>
+                        <div className="text-sm opacity-60">Þörf fyrir framlag</div>
+                        <div className="text-xl font-medium text-amber">{monthlyContribution.toLocaleString()} kr./mán</div>
                     </div>
                 </div>
             </div>
@@ -272,7 +290,11 @@ function BudgetView({ houseId, currentUserId }: { houseId?: string, currentUserI
                 </div>
 
                 {showForm && (
-                    <BudgetForm onSave={handleSaveItem} onCancel={() => setShowForm(false)} />
+                    <BudgetForm
+                        onSave={handleSaveItem}
+                        onCancel={() => setShowForm(false)}
+                        ownerIds={house?.owner_ids}
+                    />
                 )}
 
                 {!plan || !plan.items || plan.items.length === 0 ? (
@@ -284,49 +306,73 @@ function BudgetView({ houseId, currentUserId }: { houseId?: string, currentUserI
                     )
                 ) : (
                     <div className="space-y-4">
-                        {plan.items.map((item, index) => (
-                            <div key={index} className="flex justify-between items-center p-3 bg-bone/50 rounded hover:bg-bone transition-colors group">
-                                <div>
-                                    <div className="font-medium text-charcoal">{item.category}</div>
-                                    <div className="text-xs text-grey-mid capitalize">
-                                        {item.frequency === 'monthly' ? 'Mánaðarlega' :
-                                            item.frequency === 'yearly' ? 'Árlega' : 'Einskiptis'}
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="text-right">
-                                        <div className="font-bold text-charcoal">
-                                            {item.estimated_amount.toLocaleString()} kr.
-                                        </div>
-                                        {item.frequency === 'monthly' && (
-                                            <div className="text-xs text-grey-mid">
-                                                x 12 = {(item.estimated_amount * 12).toLocaleString()}
+                        {plan.items.map((item, index) => {
+                            const itemType = item.type || 'expense'; // Backwards compatibility
+                            return (
+                                <div
+                                    key={index}
+                                    className={`flex justify-between items-center p-3 rounded hover:bg-bone transition-colors group ${itemType === 'income' ? 'bg-green-50 border border-green-200' : 'bg-bone/50'
+                                        }`}
+                                >
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <div className={`font-medium ${itemType === 'income' ? 'text-green-700' : 'text-charcoal'
+                                                }`}>
+                                                {item.category}
                                             </div>
-                                        )}
+                                            {itemType === 'income' && (
+                                                <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">
+                                                    Tekjur
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-xs text-grey-mid capitalize">
+                                            {item.frequency === 'monthly' ? 'Mánaðarlega' :
+                                                item.frequency === 'yearly' ? 'Árlega' : 'Einskiptis'}
+                                            {item.assigned_owner_name && ` • ${item.assigned_owner_name}`}
+                                        </div>
                                     </div>
-                                    <button
-                                        onClick={() => handleDeleteItem(item)}
-                                        className="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-opacity"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <div className={`font-bold ${itemType === 'income' ? 'text-green-700' : 'text-charcoal'
+                                                }`}>
+                                                {itemType === 'income' ? '+' : ''}{item.estimated_amount.toLocaleString()} kr.
+                                            </div>
+                                            {item.frequency === 'monthly' && (
+                                                <div className="text-xs text-grey-mid">
+                                                    x 12 = {itemType === 'income' ? '+' : ''}{(item.estimated_amount * 12).toLocaleString()}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeleteItem(item)}
+                                            className="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-opacity"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
 
             <div className="col-span-1">
-                <VarianceWidget budgetItems={plan?.items || []} entries={entries} />
+                <VarianceWidget budgetItems={plan?.items.filter(i => i.type === 'expense') || []} entries={entries} />
 
                 <div className="card mt-6">
                     <h3 className="font-medium mb-4">Um Rekstraráætlun</h3>
                     <p className="text-sm text-grey-mid mb-4">
-                        Hér setur þú upp áætlun fyrir fastan kostnað búsins.
+                        Hér setur þú upp áætlun fyrir fastan kostnað og tekjur búsins.
                         Stöðukortið hér að ofan sýnir samanburð við raunverulegan kostnað.
                     </p>
                 </div>
+            </div>
+
+            {/* Monthly Breakdown - Full Width */}
+            <div className="col-span-1 md:col-span-3">
+                <MonthlyBreakdown budgetItems={plan?.items || []} />
             </div>
         </div>
     );
