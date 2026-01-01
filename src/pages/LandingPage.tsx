@@ -93,16 +93,20 @@ export default function LandingPage() {
                         {/* CTAs */}
                         <div className="flex flex-col sm:flex-row gap-4 mb-12">
                             <button
-                                onClick={() => navigate('/signup')}
-                                className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-10 py-4 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+                                onClick={() => navigate('/prufa')}
+                                className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-10 py-4 shadow-[0_0_30px_rgba(251,191,36,0.3)] hover:shadow-[0_0_40px_rgba(251,191,36,0.4)] transform hover:scale-105 transition-all flex items-center justify-center gap-2 group"
                             >
-                                Byrja frítt →
+                                <span className="relative flex h-3 w-3 mr-1">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-charcoal opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-charcoal"></span>
+                                </span>
+                                Prófaðu Sandkassann
                             </button>
                             <button
-                                onClick={() => navigate('/prufa')}
-                                className="btn btn-secondary border-2 border-amber/30 text-amber hover:bg-amber/10 backdrop-blur-sm text-lg px-10 py-4"
+                                onClick={() => navigate('/signup')}
+                                className="btn btn-secondary border-2 border-white/20 text-white hover:bg-white/10 backdrop-blur-sm text-lg px-10 py-4 hover:border-white/40 transition-all"
                             >
-                                Skoða dæmi
+                                Stofna Aðgang
                             </button>
                         </div>
 
@@ -249,16 +253,16 @@ export default function LandingPage() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button
-                            onClick={() => navigate('/signup')}
+                            onClick={() => navigate('/prufa')}
                             className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-8 py-4 shadow-xl shadow-amber/20"
                         >
-                            Stofna aðgang núna
+                            Prófaðu Sandkassann
                         </button>
                         <button
-                            onClick={() => navigate('/prufa')}
+                            onClick={() => navigate('/signup')}
                             className="btn btn-ghost border-2 border-white/20 text-bone hover:bg-white/10 text-lg px-8 py-4"
                         >
-                            Sjá kerfið í vinnslu
+                            Stofna aðgang núna
                         </button>
                     </div>
                 </div>
