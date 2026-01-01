@@ -25,7 +25,16 @@ Also, ensure the API is enabled for the project so the code can actually work on
 
 ---
 
-**What error exactly does it give you?**
-*   "One or more email addresses are invalid" -> Typo/Space
-*   "Email addresses from this domain are not allowed" -> Organization Policy
-*   "Something went wrong" -> Try refreshing
+## 4. "DECODER routines::unsupported" Error (Critical)
+If you see this error, the `GOOGLE_PRIVATE_KEY` in Vercel is formatted incorrectly.
+
+**How to Fix:**
+1. Open your `serviceAccountKey.json`.
+2. Find the `"private_key"` field. It looks like: `"-----BEGIN PRIVATE KEY-----\nMII...`
+3. **DO NOT copy the surrounding quotes (" ").**
+4. Copy **only** the text inside the quotes, including the `-----BEGIN` and `-----END` parts.
+5. Go to Vercel > Settings > Environment Variables.
+6. Edit `GOOGLE_PRIVATE_KEY`.
+7. Paste the key.
+    - **Note:** Vercel might show it as one long line. That is okay, our code handles the `\n` characters.
+    - **Crucial:** Ensure there are no spaces at the start or end, and NO quote marks `"` around it.
