@@ -32,25 +32,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 1. Check for configuration
     const propertyId = process.env.GA4_PROPERTY_ID;
     const clientEmail = process.env.GOOGLE_CLIENT_EMAIL; // From service account
-    let privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    let privateKey = process.env.GOOGLE_PRIVATE_KEY;
 
     if (!propertyId || !clientEmail || !privateKey) {
-        console.warn('⚠️ Missing GA4 Environment Variables (GA4_PROPERTY_ID, GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY). Returning empty data.');
+        console.warn('⚠️ Missing GA4 Environment Variables');
         return res.status(200).json(MOCK_DATA);
     }
 
-    // 🕵️‍♀️ Helpful Error Handling for Common Key Issues
-    if (privateKey.startsWith('"') || privateKey.endsWith('"')) {
-        console.error('❌ GOOGLE_PRIVATE_KEY has surrounding quotes. Please remove them in Vercel.');
-        return res.status(500).json({ error: 'CONFIGURATION ERROR: The GOOGLE_PRIVATE_KEY Env Var has surrounding quotes ("). Please remove them in Vercel Settings.' });
+    // 🧹 Aggressive Cleanup
+    // 1. Handle literal "\n" from JSON copy-paste
+    privateKey = privateKey.replace(/\\n/g, '\n');
+
+    // 2. Handle surrounding quotes
+    if (privateKey.startsWith('"')) privateKey = privateKey.slice(1);
+    if (privateKey.endsWith('"')) privateKey = privateKey.slice(0, -1);
+
+    // 3. Ensure Headers have newlines (Fixes "space instead of newline" issues)
+    const beginHeader = '-----BEGIN PRIVATE KEY-----';
+    const endHeader = '-----END PRIVATE KEY-----';
+
+    if (privateKey.includes(beginHeader) && !privateKey.includes(beginHeader + '\n')) {
+        privateKey = privateKey.replace(beginHeader, beginHeader + '\n');
     }
-    if (!privateKey.includes('BEGIN PRIVATE KEY')) {
-        console.error('❌ GOOGLE_PRIVATE_KEY is missing the "-----BEGIN PRIVATE KEY-----" header.');
-        return res.status(500).json({ error: 'CONFIGURATION ERROR: The GOOGLE_PRIVATE_KEY is missing the "-----BEGIN PRIVATE KEY-----" header. Please check your copy-paste.' });
+    if (privateKey.includes(endHeader) && !privateKey.includes('\n' + endHeader)) {
+        privateKey = privateKey.replace(endHeader, '\n' + endHeader);
     }
 
+    // 🕵️‍♀️ Debug Info for the User
+    const keyPreview = privateKey.substring(0, 40) + '...';
+    const keyLength = privateKey.length;
+    const hasNewlines = privateKey.includes('\n');
+
+    if (!privateKey.includes(beginHeader)) {
+        console.error('❌ Missing Header in Key');
+        return res.status(500).json({
+            error: `CONFIGURATION ERROR: Private Key is missing header. Got: "${keyPreview}"`
+        });
+    }
 
     try {
+
         const analyticsDataClient = new BetaAnalyticsDataClient({
             credentials: {
                 client_email: clientEmail,
