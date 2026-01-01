@@ -453,6 +453,29 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
     const [entries, setEntries] = useState<LedgerEntry[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
+    const [budgetCategories, setBudgetCategories] = useState<string[]>([]);
+
+    const currentYear = new Date().getFullYear();
+
+    // Fetch Budget Categories for dropdown
+    useEffect(() => {
+        if (!houseId) return;
+        const q = query(
+            collection(db, 'budget_plans'),
+            where('house_id', '==', houseId),
+            where('year', '==', currentYear)
+        );
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                const plan = snapshot.docs[0].data() as BudgetPlan;
+                const cats = plan.items?.map(i => i.category).filter(Boolean) || [];
+                // Unique categories
+                setBudgetCategories(Array.from(new Set(cats)).sort());
+            }
+        });
+        return () => unsubscribe();
+    }, [houseId, currentYear]);
 
     useEffect(() => {
         if (!houseId) return;
@@ -479,25 +502,42 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
         if (!houseId || !currentUserId) return;
 
         try {
-            await addDoc(collection(db, 'finance_entries'), {
-                ...entryData,
-                house_id: houseId,
-                user_uid: currentUserId,
-                paid_by: currentUserId,
-                paid_by_name: currentUserName || 'Notandi'
-            });
+            if (entryData.id) {
+                // Update existing
+                const { id, ...data } = entryData;
+                await updateDoc(doc(db, 'finance_entries', id!), {
+                    ...data,
+                    updated_at: serverTimestamp()
+                });
+            } else {
+                // Create new
+                await addDoc(collection(db, 'finance_entries'), {
+                    ...entryData,
+                    house_id: houseId,
+                    user_uid: currentUserId,
+                    paid_by: currentUserId,
+                    paid_by_name: currentUserName || 'Notandi'
+                });
+            }
             setShowForm(false);
+            setEditingEntry(null);
         } catch (error) {
             console.error('Error saving entry:', error);
         }
     };
 
     const handleDeleteEntry = async (entry: LedgerEntry) => {
+        if (!confirm('Ertu viss um að þú viljir eyða þessari færslu?')) return;
         try {
             await deleteDoc(doc(db, 'finance_entries', entry.id));
         } catch (error) {
             console.error('Error deleting entry:', error);
         }
+    };
+
+    const handleEditEntry = (entry: LedgerEntry) => {
+        setEditingEntry(entry);
+        setShowForm(true);
     };
 
     const totalIncome = entries
@@ -544,7 +584,10 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
                     <h3 className="text-xl font-serif">Bókhald</h3>
                     {!showForm && (
                         <button
-                            onClick={() => setShowForm(true)}
+                            onClick={() => {
+                                setEditingEntry(null);
+                                setShowForm(true);
+                            }}
                             className="btn btn-primary btn-sm"
                         >
                             <Plus className="w-4 h-4 mr-2" />
@@ -554,12 +597,21 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
                 </div>
 
                 {showForm && (
-                    <LedgerForm onSave={handleSaveEntry} onCancel={() => setShowForm(false)} />
+                    <LedgerForm
+                        onSave={handleSaveEntry}
+                        onCancel={() => {
+                            setShowForm(false);
+                            setEditingEntry(null);
+                        }}
+                        budgetCategories={budgetCategories}
+                        initialValues={editingEntry}
+                    />
                 )}
 
                 <TransactionList
                     entries={entries}
                     onDelete={handleDeleteEntry}
+                    onEdit={handleEditEntry}
                     currentUserId={currentUserId || ''}
                     isManager={isManager}
                 />

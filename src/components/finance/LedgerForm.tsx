@@ -5,26 +5,29 @@ import type { LedgerEntry, LedgerType } from '@/types/models';
 interface LedgerFormProps {
     onSave: (entry: Partial<LedgerEntry>) => void;
     onCancel: () => void;
+    budgetCategories?: string[];
+    initialValues?: LedgerEntry | null;
 }
 
-export default function LedgerForm({ onSave, onCancel }: LedgerFormProps) {
-    const [type, setType] = useState<LedgerType>('expense');
-    const [amount, setAmount] = useState('');
-    const [category, setCategory] = useState('');
-    const [description, setDescription] = useState('');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+export default function LedgerForm({ onSave, onCancel, budgetCategories = [], initialValues }: LedgerFormProps) {
+    const [type, setType] = useState<LedgerType>(initialValues?.type || 'expense');
+    const [amount, setAmount] = useState(initialValues?.amount?.toString() || '');
+    const [category, setCategory] = useState(initialValues?.category || '');
+    const [description, setDescription] = useState(initialValues?.description || '');
+    const [date, setDate] = useState(initialValues?.date ? new Date(initialValues.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!amount || !category || !date) return;
 
         onSave({
+            ...(initialValues?.id ? { id: initialValues.id } : {}),
             type,
             amount: parseInt(amount),
             category,
             description,
             date: new Date(date),
-            created_at: new Date()
+            created_at: initialValues?.created_at || new Date()
         });
     };
 
@@ -91,11 +94,17 @@ export default function LedgerForm({ onSave, onCancel }: LedgerFormProps) {
                     <input
                         type="text"
                         className="input"
+                        list="category-list"
                         placeholder={type === 'expense' ? "t.d. Bónus, Viðhald" : "t.d. Mánaðargjald"}
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
                         required
                     />
+                    <datalist id="category-list">
+                        {budgetCategories.map((cat, i) => (
+                            <option key={i} value={cat} />
+                        ))}
+                    </datalist>
                 </div>
                 <div>
                     <label className="label">Lýsing (valfrjálst)</label>
