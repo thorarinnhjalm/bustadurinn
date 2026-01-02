@@ -783,35 +783,42 @@ export default function SuperAdminPage() {
             onHouseSelect={handleHouseSwitch}
         >
             {/* Header */}
-            <div className="border-b border-stone-200 bg-white sticky top-0 z-10">
-                <div className="px-8 py-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-serif font-bold text-charcoal">Stjórnborð</h1>
-                            <p className="text-sm text-stone-500 mt-1">Kerfisstjórn & greining</p>
+            <div className="border-b border-stone-200 bg-white sticky top-0 z-10 shadow-sm">
+                <div className="px-4 py-4 md:px-8 md:py-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 md:mb-0">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h1 className="text-xl md:text-2xl font-serif font-bold text-charcoal">Stjórnborð</h1>
+                                <p className="text-xs md:text-sm text-stone-500 mt-1">Kerfisstjórn & greining</p>
+                            </div>
+                            {/* Mobile Admin Badge */}
+                            <div className="md:hidden px-2 py-1 bg-amber/10 text-amber border border-amber/20 rounded text-[10px] font-medium font-mono">
+                                ADMIN
+                            </div>
                         </div>
+
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={handleSeedDemo}
                                 disabled={seeding}
-                                className="btn btn-secondary text-sm flex items-center gap-2"
+                                className="hidden md:flex btn btn-secondary text-sm items-center gap-2"
                             >
                                 <Database className="w-4 h-4" />
                                 {seeding ? 'Hleður...' : 'Fylla prufugögn'}
                             </button>
-                            <div className="px-3 py-2 bg-amber/10 text-amber border border-amber/20 rounded text-xs font-medium font-mono">
+                            <div className="hidden md:block px-3 py-2 bg-amber/10 text-amber border border-amber/20 rounded text-xs font-medium font-mono">
                                 ADMIN MODE
                             </div>
                         </div>
                     </div>
 
-                    {/* Tabs - Two-row layout for scalability */}
-                    <div className="mt-6 space-y-3">
-                        {/* Primary Tabs Row - Core Business Data */}
-                        <div className="flex gap-2">
+                    {/* Unified Mobile-First Tabs - Horizontal Scroll */}
+                    <div className="mt-4 md:mt-6 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto no-scrollbar">
+                        <div className="flex gap-2 min-w-max pb-2">
+                            {/* Core Tabs */}
                             <button
                                 onClick={() => setActiveTab('overview')}
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${activeTab === 'overview'
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'overview'
                                     ? 'bg-amber text-charcoal shadow-sm'
                                     : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
                                     }`}
@@ -821,47 +828,48 @@ export default function SuperAdminPage() {
                             </button>
                             <button
                                 onClick={() => setActiveTab('analytics')}
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${activeTab === 'analytics'
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'analytics'
                                     ? 'bg-amber text-charcoal shadow-sm'
                                     : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
                                     }`}
                             >
-                                <BarChart2 className="w-4 h-4" />
+                                <TrendingUp className="w-4 h-4" />
                                 <span>Greining</span>
                             </button>
                             <button
                                 onClick={() => setActiveTab('houses')}
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${activeTab === 'houses'
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'houses'
                                     ? 'bg-amber text-charcoal shadow-sm'
                                     : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
                                     }`}
                             >
                                 <Home className="w-4 h-4" />
                                 <span>Hús</span>
-                                <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'houses' ? 'bg-charcoal/10' : 'bg-stone-200 text-stone-600'}`}>
+                                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'houses' ? 'bg-charcoal/10' : 'bg-stone-200 text-stone-600'}`}>
                                     {stats.totalHouses}
                                 </span>
                             </button>
                             <button
                                 onClick={() => setActiveTab('users')}
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${activeTab === 'users'
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'users'
                                     ? 'bg-amber text-charcoal shadow-sm'
                                     : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
                                     }`}
                             >
                                 <Users className="w-4 h-4" />
                                 <span>Notendur</span>
-                                <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'users' ? 'bg-charcoal/10' : 'bg-stone-200 text-stone-600'}`}>
+                                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'users' ? 'bg-charcoal/10' : 'bg-stone-200 text-stone-600'}`}>
                                     {stats.totalUsers}
                                 </span>
                             </button>
-                        </div>
 
-                        {/* Secondary Tabs Row - Tools & Communication */}
-                        <div className="flex gap-2 pb-3 border-b border-stone-200">
+                            {/* Divider for desktop */}
+                            <div className="w-px h-8 bg-stone-200 mx-2 hidden md:block"></div>
+
+                            {/* Secondary Tabs */}
                             <button
                                 onClick={() => setActiveTab('contacts')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${activeTab === 'contacts'
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'contacts'
                                     ? 'bg-stone-800 text-white shadow-sm'
                                     : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
                                     }`}
@@ -869,14 +877,14 @@ export default function SuperAdminPage() {
                                 <Send className="w-4 h-4" />
                                 <span>Samskipti</span>
                                 {stats.allContacts.length > 0 && (
-                                    <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'contacts' ? 'bg-white/20' : 'bg-stone-200 text-stone-600'}`}>
+                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'contacts' ? 'bg-white/20' : 'bg-stone-200 text-stone-600'}`}>
                                         {stats.allContacts.length}
                                     </span>
                                 )}
                             </button>
                             <button
                                 onClick={() => setActiveTab('coupons')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${activeTab === 'coupons'
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'coupons'
                                     ? 'bg-stone-800 text-white shadow-sm'
                                     : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
                                     }`}
@@ -884,14 +892,14 @@ export default function SuperAdminPage() {
                                 <Tag className="w-4 h-4" />
                                 <span>Afsláttarkóðar</span>
                                 {stats.allCoupons.length > 0 && (
-                                    <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'coupons' ? 'bg-white/20' : 'bg-stone-200 text-stone-600'}`}>
+                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'coupons' ? 'bg-white/20' : 'bg-stone-200 text-stone-600'}`}>
                                         {stats.allCoupons.length}
                                     </span>
                                 )}
                             </button>
                             <button
                                 onClick={() => setActiveTab('emails')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${activeTab === 'emails'
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'emails'
                                     ? 'bg-stone-800 text-white shadow-sm'
                                     : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
                                     }`}
@@ -901,7 +909,7 @@ export default function SuperAdminPage() {
                             </button>
                             <button
                                 onClick={() => setActiveTab('integrations')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${activeTab === 'integrations'
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'integrations'
                                     ? 'bg-stone-800 text-white shadow-sm'
                                     : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
                                     }`}
@@ -915,20 +923,19 @@ export default function SuperAdminPage() {
             </div>
 
             {/* Content */}
-            <div className="p-8">
+            <div className="p-4 md:p-8">
                 {/* Analytics Tab */}
                 {activeTab === 'analytics' && <AnalyticsDashboard />}
 
                 {/* Overview Tab */}
                 {activeTab === 'overview' && (() => {
-                    // Calculate metrics
-                    const trialHouses = stats.allHouses.filter(h => {
-                        // Assuming houses have a trial_end field or subscription_status
-                        return (h as any).subscription_status === 'trial' || !(h as any).subscription_active;
-                    });
-                    const activeHouses = stats.totalHouses - trialHouses.length;
+                    // Calculate metrics locally for display
+                    const trialHouses = stats.allHouses.filter(h =>
+                        (h as any).subscription_status === 'trial' || !(h as any).subscription_active
+                    );
+                    const activeHousesCount = stats.totalHouses - trialHouses.length;
 
-                    // Trials expiring soon (within 3 days)
+                    // Trials expiring soon
                     const now = new Date();
                     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
                     const expiringTrials = trialHouses.filter(h => {
@@ -938,65 +945,75 @@ export default function SuperAdminPage() {
                         return endDate <= threeDaysFromNow && endDate >= now;
                     });
 
-                    // Basic MRR (exclude demo houses)
+                    // MRR Calculation
                     const demoHouseNames = ['Sumarbústaður við Þingvallavatn', 'Demo House'];
                     const paidHouses = stats.allHouses.filter(h =>
                         !demoHouseNames.includes(h.name || '') &&
-                        (h as any).subscription_status === 'active'
+                        ((h as any).subscription_status === 'active' || (h as any).subscription_active)
                     );
-                    const estimatedMRR = paidHouses.length * 2490; // 2,490 ISK per house/month
+                    const estimatedMRR = paidHouses.length * 1990;
 
                     return (
-                        <div className="space-y-8">
-                            {/* Primary Metrics Grid - Responsive */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+                        <div className="space-y-6">
+                            {/* Primary Metrics Grid - Mobile Optimized (2 cols on mobile) */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
                                 {/* Total Houses */}
-                                <div className="bg-white border border-stone-200 rounded-xl p-6 md:p-8 transition-shadow hover:shadow-sm">
-                                    <div className="flex items-center gap-3 mb-4 md:mb-6">
-                                        <Home className="w-5 h-5 text-stone-400" />
-                                        <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Heildarfjöldi húsa</p>
+                                <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center">
+                                            <Home className="w-4 h-4 text-stone-500" />
+                                        </div>
+                                        <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Hús</p>
                                     </div>
-                                    <p className="text-4xl md:text-5xl font-serif font-bold text-charcoal mb-4">{stats.totalHouses}</p>
-                                    <p className="text-xs text-stone-400">
-                                        {activeHouses} virk • {trialHouses.length} prufa
-                                    </p>
+                                    <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalHouses}</p>
+                                    <div className="flex items-center gap-2 text-[10px] md:text-xs text-stone-400">
+                                        <span className="text-green-600 font-medium">{activeHousesCount} virk</span>
+                                        <span className="w-1 h-1 bg-stone-300 rounded-full"></span>
+                                        <span>{trialHouses.length} prufa</span>
+                                    </div>
                                 </div>
 
                                 {/* Total Users */}
-                                <div className="bg-white border border-stone-200 rounded-xl p-6 md:p-8 transition-shadow hover:shadow-sm">
-                                    <div className="flex items-center gap-3 mb-4 md:mb-6">
-                                        <Users className="w-5 h-5 text-stone-400" />
-                                        <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Heildarfjöldi notenda</p>
+                                <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center">
+                                            <Users className="w-4 h-4 text-stone-500" />
+                                        </div>
+                                        <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Notendur</p>
                                     </div>
-                                    <p className="text-4xl md:text-5xl font-serif font-bold text-charcoal mb-4">{stats.totalUsers}</p>
-                                    <p className="text-xs text-stone-400">
-                                        {stats.totalHouses > 0 ? (stats.totalUsers / stats.totalHouses).toFixed(1) : 0} meðaltal
+                                    <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalUsers}</p>
+                                    <p className="text-[10px] md:text-xs text-stone-400">
+                                        {stats.totalHouses > 0 ? (stats.totalUsers / stats.totalHouses).toFixed(1) : 0} að meðaltali
                                     </p>
                                 </div>
 
-                                {/* Trials Expiring Soon */}
-                                <div className="bg-white border border-stone-200 rounded-xl p-6 md:p-8 transition-shadow hover:shadow-sm">
-                                    <div className="flex items-center gap-3 mb-4 md:mb-6">
-                                        <Activity className="w-5 h-5 text-stone-400" />
-                                        <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Rennur út fljótlega</p>
+                                {/* Trials Expiring */}
+                                <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
+                                            <Activity className="w-4 h-4 text-amber" />
+                                        </div>
+                                        <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Rennur út</p>
                                     </div>
-                                    <p className="text-4xl md:text-5xl font-serif font-bold text-charcoal mb-4">{expiringTrials.length}</p>
-                                    <p className="text-xs text-stone-400">
+                                    <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{expiringTrials.length}</p>
+                                    <p className={`text-[10px] md:text-xs font-medium ${expiringTrials.length > 0 ? 'text-amber' : 'text-green-600'}`}>
                                         {expiringTrials.length > 0 ? 'Aðgerð nauðsynleg' : 'Allt í lagi'}
                                     </p>
                                 </div>
 
-                                {/* Estimated MRR */}
-                                <div className="bg-white border border-stone-200 rounded-xl p-6 md:p-8 transition-shadow hover:shadow-sm">
-                                    <div className="flex items-center gap-3 mb-4 md:mb-6">
-                                        <TrendingUp className="w-5 h-5 text-stone-400" />
-                                        <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Áætlaðar MRR</p>
+                                {/* MRR */}
+                                <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center">
+                                            <TrendingUp className="w-4 h-4 text-green-600" />
+                                        </div>
+                                        <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">MRR</p>
                                     </div>
-                                    <p className="text-4xl md:text-5xl font-serif font-bold text-charcoal mb-4">
-                                        {estimatedMRR.toLocaleString('is-IS')} kr
+                                    <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1 tracking-tight">
+                                        {estimatedMRR.toLocaleString('is-IS')}
                                     </p>
-                                    <p className="text-xs text-stone-400">
-                                        {paidHouses.length} greið. hús
+                                    <p className="text-[10px] md:text-xs text-stone-400">
+                                        {paidHouses.length} greiðandi hús
                                     </p>
                                 </div>
                             </div>
@@ -1004,723 +1021,739 @@ export default function SuperAdminPage() {
                     );
                 })()}
 
+                {/* Houses Tab Start */}
+
                 {/* Houses Tab */}
-                {activeTab === 'houses' && (
-                    <div className="bg-white border border-stone-200 rounded-lg p-6">
-                        <h2 className="text-lg font-serif font-semibold mb-6">Húsaskrá</h2>
-                        <DataTable
-                            columns={[
-                                { key: 'name', label: 'Nafn hús', sortable: true },
-                                {
-                                    key: 'subscription_status',
-                                    label: 'Staða',
-                                    render: (row) => {
-                                        const status = row.subscription_status || 'trial';
-                                        const statusLabels = { free: 'Frítt', active: 'Virkt', trial: 'Prufa', expired: 'Útrunnið' };
-                                        const colors = {
-                                            free: 'bg-green-100 text-green-700 border-green-200',
-                                            active: 'bg-blue-100 text-blue-700 border-blue-200',
-                                            trial: 'bg-amber-100 text-amber-700 border-amber-200',
-                                            expired: 'bg-red-100 text-red-700 border-red-200'
-                                        };
-                                        return (
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold border uppercase ${colors[status] || colors.trial}`}>
-                                                {statusLabels[status] || statusLabels.trial}
-                                            </span>
-                                        );
-                                    }
-                                },
-                                {
-                                    key: 'address',
-                                    label: 'Staðsetning',
-                                    sortable: true,
-                                    render: (row) => row.address || '—'
-                                },
-                                {
-                                    key: 'days_left',
-                                    label: 'Dagar eftir',
-                                    render: (row) => {
-                                        if (row.subscription_status === 'free') return <span className="text-green-600 font-bold uppercase text-[10px]">Lifetime</span>;
-                                        if (row.subscription_status === 'active') return <span className="text-blue-600 font-bold uppercase text-[10px]">Subscribed</span>;
-
-                                        if (!row.subscription_end) return <span className="text-stone-400">—</span>;
-
-                                        const now = new Date();
-                                        const endDate = (row.subscription_end as any).toDate ? (row.subscription_end as any).toDate() : new Date(row.subscription_end);
-                                        const diffTime = endDate.getTime() - now.getTime();
-                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                                        if (diffDays <= 0) return <span className="text-red-600 font-bold">Expired</span>;
-                                        if (diffDays <= 3) return <span className="text-amber-600 font-bold">{diffDays} dagar!</span>;
-                                        return <span className="text-stone-600">{diffDays} dagar</span>;
-                                    }
-                                },
-                                {
-                                    key: 'owner_ids',
-                                    label: 'Meðlimir',
-                                    render: (row) => (
-                                        <span className="font-mono">{row.owner_ids?.length || 0}</span>
-                                    )
-                                },
-                                {
-                                    key: 'manager_id',
-                                    label: 'Stjórnandi',
-                                    render: (row) => {
-                                        const manager = stats.allUsers.find(u => u.uid === row.manager_id);
-                                        return <span className="font-mono text-xs">{manager?.email || '—'}</span>;
-                                    }
-                                },
-                                {
-                                    key: 'created_at',
-                                    label: 'Búið til',
-                                    sortable: true,
-                                    render: (row) => {
-                                        if (!row.created_at) return '—';
-                                        const date = row.created_at as any;
-                                        const timestamp = date.seconds ? new Date(date.seconds * 1000) : new Date();
-                                        return timestamp.toLocaleDateString('is-IS');
-                                    }
-                                },
-                            ]}
-                            data={stats.allHouses}
-                            searchKeys={['name', 'address']}
-                            actions={(row) => (
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => handleExtendTrial(row.id!)}
-                                        disabled={actionLoading === row.id}
-                                        className="px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors disabled:opacity-50"
-                                        title="Lengja prufu"
-                                    >
-                                        {actionLoading === row.id ? 'Lengja...' : 'Lengja prufu'}
-                                    </button>
-                                    <button
-                                        onClick={() => handleToggleFree(row.id!)}
-                                        disabled={actionLoading === row.id}
-                                        className={`px-3 py-1.5 text-xs font-bold border rounded transition-colors disabled:opacity-50 ${row.subscription_status === 'free'
-                                            ? 'border-red-200 text-red-600 hover:bg-red-50'
-                                            : 'border-green-200 text-green-600 hover:bg-green-50'
-                                            }`}
-                                        title={row.subscription_status === 'free' ? 'Afturkalla frítt' : 'Veita frítt'}
-                                    >
-                                        {row.subscription_status === 'free' ? 'Afturkalla' : 'Veita frítt'}
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingHouse(row)}
-                                        className="p-1 hover:bg-stone-100 rounded"
-                                        title="Breyta"
-                                    >
-                                        <Edit className="w-4 h-4 text-stone-500" />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteHouse(row.id!)}
-                                        disabled={actionLoading === row.id}
-                                        className="p-1 hover:bg-red-100 rounded disabled:opacity-50"
-                                        title="Eyða húsi"
-                                    >
-                                        <Trash2 className="w-4 h-4 text-red-600" />
-                                    </button>
-                                </div>
-                            )}
-                        />
-                    </div>
-                )}
-
-                {/* Coupons Tab */}
-                {activeTab === 'coupons' && (
-                    <div className="space-y-8">
-                        {/* Create Coupon Form */}
-                        <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                <Tag className="w-5 h-5 text-amber" />
-                                Búa til nýjan afsláttarkóða
-                            </h3>
-                            <form onSubmit={handleCreateCoupon} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                                <div className="md:col-span-1">
-                                    <label className="block text-xs font-bold text-stone-500 mb-1">Kóði</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="input uppercase"
-                                        placeholder="SUMAR2025"
-                                        value={newCoupon.code}
-                                        onChange={e => setNewCoupon({ ...newCoupon, code: e.target.value })}
-                                    />
-                                </div>
-                                <div className="md:col-span-1">
-                                    <label className="block text-xs font-bold text-stone-500 mb-1">Tegund</label>
-                                    <select
-                                        className="input"
-                                        value={newCoupon.discount_type}
-                                        onChange={e => setNewCoupon({ ...newCoupon, discount_type: e.target.value as 'percent' | 'fixed' })}
-                                    >
-                                        <option value="percent">Prósenta (%)</option>
-                                        <option value="fixed">Fast upphæð (kr)</option>
-                                    </select>
-                                </div>
-                                <div className="md:col-span-1">
-                                    <label className="block text-xs font-bold text-stone-500 mb-1">Gildi</label>
-                                    <input
-                                        type="number"
-                                        required
-                                        className="input"
-                                        placeholder="20"
-                                        value={newCoupon.discount_value || ''}
-                                        onChange={e => setNewCoupon({ ...newCoupon, discount_value: parseInt(e.target.value) })}
-                                    />
-                                </div>
-                                <div className="md:col-span-1">
-                                    <label className="block text-xs font-bold text-stone-500 mb-1">Hámarks notkun (0 = ótakmarkað)</label>
-                                    <input
-                                        type="number"
-                                        className="input"
-                                        placeholder="0"
-                                        value={newCoupon.max_uses || ''}
-                                        onChange={e => setNewCoupon({ ...newCoupon, max_uses: parseInt(e.target.value) })}
-                                    />
-                                </div>
-                                <div className="md:col-span-1">
-                                    <button
-                                        type="submit"
-                                        className="btn btn-primary w-full h-[42px] flex items-center justify-center gap-2"
-                                        disabled={actionLoading === 'create-coupon'}
-                                    >
-                                        {actionLoading === 'create-coupon' ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Búa til'}
-                                    </button>
-                                </div>
-                                <div className="md:col-span-5">
-                                    <label className="block text-xs font-bold text-stone-500 mb-1">Lýsing (innri)</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="input"
-                                        placeholder="Summer campaign for Facebook ads"
-                                        value={newCoupon.description}
-                                        onChange={e => setNewCoupon({ ...newCoupon, description: e.target.value })}
-                                    />
-                                </div>
-                            </form>
-                        </div>
-
-                        {/* Coupons Table */}
-                        <div>
-                            <h2 className="text-2xl font-serif mb-6">Virkir afsláttarkóðar</h2>
+                {
+                    activeTab === 'houses' && (
+                        <div className="bg-white border border-stone-200 rounded-lg p-6">
+                            <h2 className="text-lg font-serif font-semibold mb-6">Húsaskrá</h2>
                             <DataTable
                                 columns={[
-                                    { key: 'code', label: 'Kóði', render: r => <span className="font-mono font-bold">{r.code}</span> },
+                                    { key: 'name', label: 'Nafn hús', sortable: true },
                                     {
-                                        key: 'discount',
-                                        label: 'Afsláttur',
-                                        render: r => r.discount_type === 'percent' ? `${r.discount_value}%` : `${r.discount_value} kr`
+                                        key: 'subscription_status',
+                                        label: 'Staða',
+                                        render: (row) => {
+                                            const status = row.subscription_status || 'trial';
+                                            const statusLabels = { free: 'Frítt', active: 'Virkt', trial: 'Prufa', expired: 'Útrunnið' };
+                                            const colors = {
+                                                free: 'bg-green-100 text-green-700 border-green-200',
+                                                active: 'bg-blue-100 text-blue-700 border-blue-200',
+                                                trial: 'bg-amber-100 text-amber-700 border-amber-200',
+                                                expired: 'bg-red-100 text-red-700 border-red-200'
+                                            };
+                                            return (
+                                                <span className={`px-2 py-1 rounded-full text-xs font-bold border uppercase ${colors[status] || colors.trial}`}>
+                                                    {statusLabels[status] || statusLabels.trial}
+                                                </span>
+                                            );
+                                        }
                                     },
-                                    { key: 'description', label: 'Lýsing' },
                                     {
-                                        key: 'usage',
-                                        label: 'Notkun',
-                                        render: r => `${r.used_count} / ${r.max_uses || '∞'}`
+                                        key: 'address',
+                                        label: 'Staðsetning',
+                                        sortable: true,
+                                        render: (row) => row.address || '—'
+                                    },
+                                    {
+                                        key: 'days_left',
+                                        label: 'Dagar eftir',
+                                        render: (row) => {
+                                            if (row.subscription_status === 'free') return <span className="text-green-600 font-bold uppercase text-[10px]">Lifetime</span>;
+                                            if (row.subscription_status === 'active') return <span className="text-blue-600 font-bold uppercase text-[10px]">Subscribed</span>;
+
+                                            if (!row.subscription_end) return <span className="text-stone-400">—</span>;
+
+                                            const now = new Date();
+                                            const endDate = (row.subscription_end as any).toDate ? (row.subscription_end as any).toDate() : new Date(row.subscription_end);
+                                            const diffTime = endDate.getTime() - now.getTime();
+                                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                            if (diffDays <= 0) return <span className="text-red-600 font-bold">Expired</span>;
+                                            if (diffDays <= 3) return <span className="text-amber-600 font-bold">{diffDays} dagar!</span>;
+                                            return <span className="text-stone-600">{diffDays} dagar</span>;
+                                        }
+                                    },
+                                    {
+                                        key: 'owner_ids',
+                                        label: 'Meðlimir',
+                                        render: (row) => (
+                                            <span className="font-mono">{row.owner_ids?.length || 0}</span>
+                                        )
+                                    },
+                                    {
+                                        key: 'manager_id',
+                                        label: 'Stjórnandi',
+                                        render: (row) => {
+                                            const manager = stats.allUsers.find(u => u.uid === row.manager_id);
+                                            return <span className="font-mono text-xs">{manager?.email || '—'}</span>;
+                                        }
                                     },
                                     {
                                         key: 'created_at',
                                         label: 'Búið til',
+                                        sortable: true,
                                         render: (row) => {
                                             if (!row.created_at) return '—';
-                                            const date = row.created_at instanceof Date ? row.created_at : new Date(row.created_at);
-                                            return date.toLocaleDateString('is-IS');
+                                            const date = row.created_at as any;
+                                            const timestamp = date.seconds ? new Date(date.seconds * 1000) : new Date();
+                                            return timestamp.toLocaleDateString('is-IS');
                                         }
-                                    }
+                                    },
                                 ]}
-                                data={stats.allCoupons}
-                                searchKeys={['code', 'description']}
+                                data={stats.allHouses}
+                                searchKeys={['name', 'address']}
                                 actions={(row) => (
-                                    <button
-                                        onClick={() => handleDeleteCoupon(row.id)}
-                                        className="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 rounded hover:bg-red-50"
-                                    >
-                                        Eyða
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleExtendTrial(row.id!)}
+                                            disabled={actionLoading === row.id}
+                                            className="px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors disabled:opacity-50"
+                                            title="Lengja prufu"
+                                        >
+                                            {actionLoading === row.id ? 'Lengja...' : 'Lengja prufu'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleToggleFree(row.id!)}
+                                            disabled={actionLoading === row.id}
+                                            className={`px-3 py-1.5 text-xs font-bold border rounded transition-colors disabled:opacity-50 ${row.subscription_status === 'free'
+                                                ? 'border-red-200 text-red-600 hover:bg-red-50'
+                                                : 'border-green-200 text-green-600 hover:bg-green-50'
+                                                }`}
+                                            title={row.subscription_status === 'free' ? 'Afturkalla frítt' : 'Veita frítt'}
+                                        >
+                                            {row.subscription_status === 'free' ? 'Afturkalla' : 'Veita frítt'}
+                                        </button>
+                                        <button
+                                            onClick={() => setEditingHouse(row)}
+                                            className="p-1 hover:bg-stone-100 rounded"
+                                            title="Breyta"
+                                        >
+                                            <Edit className="w-4 h-4 text-stone-500" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteHouse(row.id!)}
+                                            disabled={actionLoading === row.id}
+                                            className="p-1 hover:bg-red-100 rounded disabled:opacity-50"
+                                            title="Eyða húsi"
+                                        >
+                                            <Trash2 className="w-4 h-4 text-red-600" />
+                                        </button>
+                                    </div>
                                 )}
                             />
                         </div>
-                    </div>
-                )}
+                    )
+                }
+
+                {/* Coupons Tab */}
+                {
+                    activeTab === 'coupons' && (
+                        <div className="space-y-8">
+                            {/* Create Coupon Form */}
+                            <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                    <Tag className="w-5 h-5 text-amber" />
+                                    Búa til nýjan afsláttarkóða
+                                </h3>
+                                <form onSubmit={handleCreateCoupon} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                                    <div className="md:col-span-1">
+                                        <label className="block text-xs font-bold text-stone-500 mb-1">Kóði</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="input uppercase"
+                                            placeholder="SUMAR2025"
+                                            value={newCoupon.code}
+                                            onChange={e => setNewCoupon({ ...newCoupon, code: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="md:col-span-1">
+                                        <label className="block text-xs font-bold text-stone-500 mb-1">Tegund</label>
+                                        <select
+                                            className="input"
+                                            value={newCoupon.discount_type}
+                                            onChange={e => setNewCoupon({ ...newCoupon, discount_type: e.target.value as 'percent' | 'fixed' })}
+                                        >
+                                            <option value="percent">Prósenta (%)</option>
+                                            <option value="fixed">Fast upphæð (kr)</option>
+                                        </select>
+                                    </div>
+                                    <div className="md:col-span-1">
+                                        <label className="block text-xs font-bold text-stone-500 mb-1">Gildi</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            className="input"
+                                            placeholder="20"
+                                            value={newCoupon.discount_value || ''}
+                                            onChange={e => setNewCoupon({ ...newCoupon, discount_value: parseInt(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div className="md:col-span-1">
+                                        <label className="block text-xs font-bold text-stone-500 mb-1">Hámarks notkun (0 = ótakmarkað)</label>
+                                        <input
+                                            type="number"
+                                            className="input"
+                                            placeholder="0"
+                                            value={newCoupon.max_uses || ''}
+                                            onChange={e => setNewCoupon({ ...newCoupon, max_uses: parseInt(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div className="md:col-span-1">
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary w-full h-[42px] flex items-center justify-center gap-2"
+                                            disabled={actionLoading === 'create-coupon'}
+                                        >
+                                            {actionLoading === 'create-coupon' ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Búa til'}
+                                        </button>
+                                    </div>
+                                    <div className="md:col-span-5">
+                                        <label className="block text-xs font-bold text-stone-500 mb-1">Lýsing (innri)</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="input"
+                                            placeholder="Summer campaign for Facebook ads"
+                                            value={newCoupon.description}
+                                            onChange={e => setNewCoupon({ ...newCoupon, description: e.target.value })}
+                                        />
+                                    </div>
+                                </form>
+                            </div>
+
+                            {/* Coupons Table */}
+                            <div>
+                                <h2 className="text-2xl font-serif mb-6">Virkir afsláttarkóðar</h2>
+                                <DataTable
+                                    columns={[
+                                        { key: 'code', label: 'Kóði', render: r => <span className="font-mono font-bold">{r.code}</span> },
+                                        {
+                                            key: 'discount',
+                                            label: 'Afsláttur',
+                                            render: r => r.discount_type === 'percent' ? `${r.discount_value}%` : `${r.discount_value} kr`
+                                        },
+                                        { key: 'description', label: 'Lýsing' },
+                                        {
+                                            key: 'usage',
+                                            label: 'Notkun',
+                                            render: r => `${r.used_count} / ${r.max_uses || '∞'}`
+                                        },
+                                        {
+                                            key: 'created_at',
+                                            label: 'Búið til',
+                                            render: (row) => {
+                                                if (!row.created_at) return '—';
+                                                const date = row.created_at instanceof Date ? row.created_at : new Date(row.created_at);
+                                                return date.toLocaleDateString('is-IS');
+                                            }
+                                        }
+                                    ]}
+                                    data={stats.allCoupons}
+                                    searchKeys={['code', 'description']}
+                                    actions={(row) => (
+                                        <button
+                                            onClick={() => handleDeleteCoupon(row.id)}
+                                            className="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 rounded hover:bg-red-50"
+                                        >
+                                            Eyða
+                                        </button>
+                                    )}
+                                />
+                            </div>
+                        </div>
+                    )
+                }
 
 
                 {/* Users Tab */}
-                {activeTab === 'users' && (
-                    <div className="bg-white border border-stone-200 rounded-lg p-6">
-                        <h2 className="text-lg font-serif font-semibold mb-6">Notendaskrá</h2>
-                        <DataTable
-                            columns={[
-                                { key: 'name', label: 'Nafn', sortable: true },
-                                {
-                                    key: 'email',
-                                    label: 'Netfang',
-                                    sortable: true,
-                                    render: (row) => <span className="font-mono text-xs">{row.email}</span>
-                                },
-                                {
-                                    key: 'house_ids',
-                                    label: 'Hús',
-                                    render: (row) => (
-                                        <span className="font-mono">{row.house_ids?.length || 0}</span>
-                                    )
-                                },
-                                {
-                                    key: 'created_at',
-                                    label: 'Skráður',
-                                    sortable: true,
-                                    render: (row) => {
-                                        if (!row.created_at) return '—';
-                                        const date = row.created_at as any;
-                                        const timestamp = date.seconds ? new Date(date.seconds * 1000) : new Date();
-                                        return timestamp.toLocaleDateString('is-IS');
+                {
+                    activeTab === 'users' && (
+                        <div className="bg-white border border-stone-200 rounded-lg p-6">
+                            <h2 className="text-lg font-serif font-semibold mb-6">Notendaskrá</h2>
+                            <DataTable
+                                columns={[
+                                    { key: 'name', label: 'Nafn', sortable: true },
+                                    {
+                                        key: 'email',
+                                        label: 'Netfang',
+                                        sortable: true,
+                                        render: (row) => <span className="font-mono text-xs">{row.email}</span>
+                                    },
+                                    {
+                                        key: 'house_ids',
+                                        label: 'Hús',
+                                        render: (row) => (
+                                            <span className="font-mono">{row.house_ids?.length || 0}</span>
+                                        )
+                                    },
+                                    {
+                                        key: 'created_at',
+                                        label: 'Skráður',
+                                        sortable: true,
+                                        render: (row) => {
+                                            if (!row.created_at) return '—';
+                                            const date = row.created_at as any;
+                                            const timestamp = date.seconds ? new Date(date.seconds * 1000) : new Date();
+                                            return timestamp.toLocaleDateString('is-IS');
+                                        }
                                     }
-                                }
-                            ]}
-                            data={stats.allUsers}
-                            searchKeys={['name', 'email']}
-                            actions={(row) => (
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => handleImpersonate(row)}
-                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors"
-                                    >
-                                        <UserCog className="w-3 h-3" />
-                                        Líkja eftir
-                                    </button>
-                                    <button
-                                        onClick={() => handleSyncName(row)}
-                                        disabled={actionLoading === `sync-name-${row.uid}`}
-                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                        title="Samstilla nafn í öllu kerfinu"
-                                    >
-                                        <RefreshCw className={`w-3 h-3 ${actionLoading === `sync-name-${row.uid}` ? 'animate-spin' : ''}`} />
-                                        Sync
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteUser(row)}
-                                        disabled={actionLoading === `delete-user-${row.uid}`}
-                                        className="p-1.5 hover:bg-red-50 text-stone-400 hover:text-red-600 rounded transition-colors"
-                                        title="Eyða notanda"
-                                    >
-                                        {actionLoading === `delete-user-${row.uid}` ? (
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <Trash2 className="w-4 h-4" />
-                                        )}
-                                    </button>
-                                </div>
-                            )}
-                        />
-                    </div>
-                )}
+                                ]}
+                                data={stats.allUsers}
+                                searchKeys={['name', 'email']}
+                                actions={(row) => (
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleImpersonate(row)}
+                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors"
+                                        >
+                                            <UserCog className="w-3 h-3" />
+                                            Líkja eftir
+                                        </button>
+                                        <button
+                                            onClick={() => handleSyncName(row)}
+                                            disabled={actionLoading === `sync-name-${row.uid}`}
+                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                            title="Samstilla nafn í öllu kerfinu"
+                                        >
+                                            <RefreshCw className={`w-3 h-3 ${actionLoading === `sync-name-${row.uid}` ? 'animate-spin' : ''}`} />
+                                            Sync
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteUser(row)}
+                                            disabled={actionLoading === `delete-user-${row.uid}`}
+                                            className="p-1.5 hover:bg-red-50 text-stone-400 hover:text-red-600 rounded transition-colors"
+                                            title="Eyða notanda"
+                                        >
+                                            {actionLoading === `delete-user-${row.uid}` ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="w-4 h-4" />
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+                            />
+                        </div>
+                    )
+                }
 
                 {/* Contacts Tab */}
-                {activeTab === 'contacts' && (
-                    <div>
-                        <h2 className="text-2xl font-serif mb-6">Samskipti frá síðu</h2>
-                        <DataTable
-                            columns={[
-                                { key: 'name', label: 'Nafn' },
-                                { key: 'email', label: 'Netfang' },
-                                {
-                                    key: 'message',
-                                    label: 'Skila boð',
-                                    render: (row) => {
-                                        const msg = row.message || '';
-                                        return msg.length > 100 ? msg.substring(0, 100) + '...' : msg;
+                {
+                    activeTab === 'contacts' && (
+                        <div>
+                            <h2 className="text-2xl font-serif mb-6">Samskipti frá síðu</h2>
+                            <DataTable
+                                columns={[
+                                    { key: 'name', label: 'Nafn' },
+                                    { key: 'email', label: 'Netfang' },
+                                    {
+                                        key: 'message',
+                                        label: 'Skila boð',
+                                        render: (row) => {
+                                            const msg = row.message || '';
+                                            return msg.length > 100 ? msg.substring(0, 100) + '...' : msg;
+                                        }
+                                    },
+                                    {
+                                        key: 'created_at',
+                                        label: 'Dagsetning',
+                                        render: (row) => {
+                                            if (!row.created_at) return '—';
+                                            const date = row.created_at instanceof Date
+                                                ? row.created_at
+                                                : new Date(row.created_at);
+                                            return date.toLocaleDateString('is-IS');
+                                        }
+                                    },
+                                    {
+                                        key: 'status',
+                                        label: 'Staða',
+                                        render: (row) => {
+                                            const status = row.status || 'new';
+                                            const colors = {
+                                                new: 'bg-blue-100 text-blue-700',
+                                                read: 'bg-gray-100 text-gray-700',
+                                                replied: 'bg-green-100 text-green-700'
+                                            };
+                                            return (
+                                                <span className={`px-2 py-1 rounded text-xs font-medium ${colors[status as keyof typeof colors]}`}>
+                                                    {status}
+                                                </span>
+                                            );
+                                        }
                                     }
-                                },
-                                {
-                                    key: 'created_at',
-                                    label: 'Dagsetning',
-                                    render: (row) => {
-                                        if (!row.created_at) return '—';
-                                        const date = row.created_at instanceof Date
-                                            ? row.created_at
-                                            : new Date(row.created_at);
-                                        return date.toLocaleDateString('is-IS');
-                                    }
-                                },
-                                {
-                                    key: 'status',
-                                    label: 'Staða',
-                                    render: (row) => {
-                                        const status = row.status || 'new';
-                                        const colors = {
-                                            new: 'bg-blue-100 text-blue-700',
-                                            read: 'bg-gray-100 text-gray-700',
-                                            replied: 'bg-green-100 text-green-700'
-                                        };
-                                        return (
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${colors[status as keyof typeof colors]}`}>
-                                                {status}
-                                            </span>
-                                        );
-                                    }
-                                }
-                            ]}
-                            data={stats.allContacts}
-                            searchKeys={['name', 'email', 'message']}
-                        />
-                    </div>
-                )}
+                                ]}
+                                data={stats.allContacts}
+                                searchKeys={['name', 'email', 'message']}
+                            />
+                        </div>
+                    )
+                }
 
                 {/* Integrations Tab */}
-                {activeTab === 'integrations' && (
-                    <div className="max-w-4xl space-y-6">
-                        <h2 className="text-2xl font-serif mb-6">Integrations</h2>
+                {
+                    activeTab === 'integrations' && (
+                        <div className="max-w-4xl space-y-6">
+                            <h2 className="text-2xl font-serif mb-6">Integrations</h2>
 
-                        <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded bg-[#101010] flex items-center justify-center text-white font-mono text-xs">P</div>
-                                    Payday.is
-                                </h3>
-                                {paydayStatus?.success && (
-                                    <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                                        <CheckCircle className="w-3 h-3" /> Connected
-                                    </span>
-                                )}
-                            </div>
-
-                            <p className="text-stone-600 mb-6 text-sm">
-                                Connect to Payday to automatically generate invoices. This integration uses Client Credentials flow (Server-to-Server).
-                            </p>
-
-                            <div className="bg-stone-50 p-4 rounded mb-6 font-mono text-xs text-stone-500 border border-stone-100">
-                                <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
-                                    <span className="font-bold">Client ID:</span>
-                                    <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit">
-                                        {import.meta.env.VITE_PAYDAY_CLIENT_ID ? `${import.meta.env.VITE_PAYDAY_CLIENT_ID.substring(0, 10)}...` : 'Missing ❌'}
-                                    </span>
-                                    <span className="font-bold">Auth Method:</span>
-                                    <span className="text-charcoal">Client Credentials (Secret Key)</span>
-
-                                    <span className="font-bold mt-2">Plan (Monthly):</span>
-                                    <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit mt-2">
-                                        {import.meta.env.VITE_PAYDAY_PLAN_MONTHLY || '004'}
-                                    </span>
-                                    <span className="font-bold mt-2">Plan (Annual):</span>
-                                    <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit mt-2">
-                                        {import.meta.env.VITE_PAYDAY_PLAN_ANNUAL || '005'}
-                                    </span>
+                            <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded bg-[#101010] flex items-center justify-center text-white font-mono text-xs">P</div>
+                                        Payday.is
+                                    </h3>
+                                    {paydayStatus?.success && (
+                                        <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                                            <CheckCircle className="w-3 h-3" /> Connected
+                                        </span>
+                                    )}
                                 </div>
-                            </div>
 
-                            <button
-                                onClick={handleTestPayday}
-                                disabled={actionLoading === 'payday-test'}
-                                className="btn btn-secondary flex items-center gap-2"
-                            >
-                                {actionLoading === 'payday-test' ? <div className="w-4 h-4 border-2 border-stone-500/30 border-t-stone-500 rounded-full animate-spin" /> : <Activity className="w-4 h-4" />}
-                                {paydayStatus?.success ? 'Test Connection Again' : 'Test Connection'}
-                            </button>
+                                <p className="text-stone-600 mb-6 text-sm">
+                                    Connect to Payday to automatically generate invoices. This integration uses Client Credentials flow (Server-to-Server).
+                                </p>
 
-                            {paydayStatus && (
-                                <div className={`mt-4 p-4 rounded text-sm border ${paydayStatus.success ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                                    <div className="flex items-center gap-2 font-bold mb-1">
-                                        {paydayStatus.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                                        {paydayStatus.success ? 'Success' : 'Connection Failed'}
+                                <div className="bg-stone-50 p-4 rounded mb-6 font-mono text-xs text-stone-500 border border-stone-100">
+                                    <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
+                                        <span className="font-bold">Client ID:</span>
+                                        <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit">
+                                            {import.meta.env.VITE_PAYDAY_CLIENT_ID ? `${import.meta.env.VITE_PAYDAY_CLIENT_ID.substring(0, 10)}...` : 'Missing ❌'}
+                                        </span>
+                                        <span className="font-bold">Auth Method:</span>
+                                        <span className="text-charcoal">Client Credentials (Secret Key)</span>
+
+                                        <span className="font-bold mt-2">Plan (Monthly):</span>
+                                        <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit mt-2">
+                                            {import.meta.env.VITE_PAYDAY_PLAN_MONTHLY || '004'}
+                                        </span>
+                                        <span className="font-bold mt-2">Plan (Annual):</span>
+                                        <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit mt-2">
+                                            {import.meta.env.VITE_PAYDAY_PLAN_ANNUAL || '005'}
+                                        </span>
                                     </div>
-                                    {paydayStatus.message}
                                 </div>
-                            )}
 
-                            {/* Invoice Test Section */}
-                            {paydayStatus?.success && (
-                                <div className="mt-8 pt-8 border-t border-stone-200">
-                                    <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                        <Send className="w-5 h-5 text-amber" />
-                                        Test Invoice Creation
-                                    </h4>
-                                    <p className="text-stone-600 text-sm mb-4">
-                                        Create a test invoice for a house to verify the full integration.
-                                    </p>
+                                <button
+                                    onClick={handleTestPayday}
+                                    disabled={actionLoading === 'payday-test'}
+                                    className="btn btn-secondary flex items-center gap-2"
+                                >
+                                    {actionLoading === 'payday-test' ? <div className="w-4 h-4 border-2 border-stone-500/30 border-t-stone-500 rounded-full animate-spin" /> : <Activity className="w-4 h-4" />}
+                                    {paydayStatus?.success ? 'Test Connection Again' : 'Test Connection'}
+                                </button>
 
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-xs font-bold text-stone-500 mb-2">Select House</label>
-                                            <select
-                                                className="input"
-                                                value={selectedHouseForInvoice}
-                                                onChange={(e) => setSelectedHouseForInvoice(e.target.value)}
-                                            >
-                                                <option value="">-- Veldu hús --</option>
-                                                {stats.allHouses.map(house => {
-                                                    const manager = stats.allUsers.find(u => u.uid === house.manager_id);
-                                                    return (
-                                                        <option key={house.id} value={house.id}>
-                                                            {house.name} ({manager?.email || 'No email'})
-                                                        </option>
-                                                    );
-                                                })}
-                                            </select>
+                                {paydayStatus && (
+                                    <div className={`mt-4 p-4 rounded text-sm border ${paydayStatus.success ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                        <div className="flex items-center gap-2 font-bold mb-1">
+                                            {paydayStatus.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                                            {paydayStatus.success ? 'Success' : 'Connection Failed'}
                                         </div>
+                                        {paydayStatus.message}
+                                    </div>
+                                )}
 
-                                        <button
-                                            onClick={handleTestInvoice}
-                                            disabled={actionLoading === 'invoice-test' || !selectedHouseForInvoice}
-                                            className="btn btn-primary flex items-center gap-2"
-                                        >
-                                            {actionLoading === 'invoice-test' ? (
-                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            ) : (
-                                                <Send className="w-4 h-4" />
-                                            )}
-                                            {actionLoading === 'invoice-test' ? 'Creating Invoice...' : 'Create Test Invoice'}
-                                        </button>
+                                {/* Invoice Test Section */}
+                                {paydayStatus?.success && (
+                                    <div className="mt-8 pt-8 border-t border-stone-200">
+                                        <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                            <Send className="w-5 h-5 text-amber" />
+                                            Test Invoice Creation
+                                        </h4>
+                                        <p className="text-stone-600 text-sm mb-4">
+                                            Create a test invoice for a house to verify the full integration.
+                                        </p>
 
-                                        {invoiceTestResult && (
-                                            <div className={`p-4 rounded text-sm border ${invoiceTestResult.success ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                                                <div className="flex items-center gap-2 font-bold mb-2">
-                                                    {invoiceTestResult.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                                                    {invoiceTestResult.success ? 'Invoice Created!' : 'Failed'}
-                                                </div>
-                                                <p className="mb-2">{invoiceTestResult.message}</p>
-                                                {invoiceTestResult.invoice && (
-                                                    <div className="mt-3 pt-3 border-t border-green-200 font-mono text-xs">
-                                                        <div className="grid grid-cols-2 gap-2">
-                                                            <span className="text-green-600">Invoice ID:</span>
-                                                            <span className="font-bold">{invoiceTestResult.invoice.id || 'N/A'}</span>
-                                                            <span className="text-green-600">Amount:</span>
-                                                            <span className="font-bold">{invoiceTestResult.invoice.total || invoiceTestResult.invoice.amount || '4,490'} kr</span>
-                                                            <span className="text-green-600">Status:</span>
-                                                            <span className="font-bold">{invoiceTestResult.invoice.status || 'Sent'}</span>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-stone-500 mb-2">Select House</label>
+                                                <select
+                                                    className="input"
+                                                    value={selectedHouseForInvoice}
+                                                    onChange={(e) => setSelectedHouseForInvoice(e.target.value)}
+                                                >
+                                                    <option value="">-- Veldu hús --</option>
+                                                    {stats.allHouses.map(house => {
+                                                        const manager = stats.allUsers.find(u => u.uid === house.manager_id);
+                                                        return (
+                                                            <option key={house.id} value={house.id}>
+                                                                {house.name} ({manager?.email || 'No email'})
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                            </div>
+
+                                            <button
+                                                onClick={handleTestInvoice}
+                                                disabled={actionLoading === 'invoice-test' || !selectedHouseForInvoice}
+                                                className="btn btn-primary flex items-center gap-2"
+                                            >
+                                                {actionLoading === 'invoice-test' ? (
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                ) : (
+                                                    <Send className="w-4 h-4" />
+                                                )}
+                                                {actionLoading === 'invoice-test' ? 'Creating Invoice...' : 'Create Test Invoice'}
+                                            </button>
+
+                                            {invoiceTestResult && (
+                                                <div className={`p-4 rounded text-sm border ${invoiceTestResult.success ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                                    <div className="flex items-center gap-2 font-bold mb-2">
+                                                        {invoiceTestResult.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                                                        {invoiceTestResult.success ? 'Invoice Created!' : 'Failed'}
+                                                    </div>
+                                                    <p className="mb-2">{invoiceTestResult.message}</p>
+                                                    {invoiceTestResult.invoice && (
+                                                        <div className="mt-3 pt-3 border-t border-green-200 font-mono text-xs">
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                <span className="text-green-600">Invoice ID:</span>
+                                                                <span className="font-bold">{invoiceTestResult.invoice.id || 'N/A'}</span>
+                                                                <span className="text-green-600">Amount:</span>
+                                                                <span className="font-bold">{invoiceTestResult.invoice.total || invoiceTestResult.invoice.amount || '4,490'} kr</span>
+                                                                <span className="text-green-600">Status:</span>
+                                                                <span className="font-bold">{invoiceTestResult.invoice.status || 'Sent'}</span>
+                                                            </div>
                                                         </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                            </div>
+                        </div>
+                    )
+                }
+                {/* Emails Tab */}
+                {
+                    activeTab === 'emails' && (
+                        <div className="max-w-4xl space-y-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-serif">Email Templates</h2>
+                                <button onClick={fetchTemplates} className="btn btn-ghost btn-sm">Refresh</button>
+                            </div>
+
+                            {templates.length === 0 && !loading ? (
+                                <div className="text-center py-12 bg-white rounded-lg border border-stone-200">
+                                    <p className="text-stone-500 mb-4">No templates found.</p>
+                                    <button onClick={handleSeedTemplates} className="btn btn-secondary">
+                                        Seed Default Templates
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="grid gap-6">
+                                    {templates.map(tpl => (
+                                        <div key={tpl.id} className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="font-bold text-lg">{tpl.id}</h3>
+                                                        {tpl.active ? (
+                                                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                                                <CheckCircle className="w-3 h-3" /> Active
+                                                            </span>
+                                                        ) : (
+                                                            <span className="bg-stone-100 text-stone-500 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                                                <XCircle className="w-3 h-3" /> Inactive
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-sm text-stone-500 mt-1">{tpl.description}</p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleSendTestEmail(tpl)}
+                                                        disabled={actionLoading === `test-email-${tpl.id}`}
+                                                        className="btn btn-ghost btn-sm text-stone-500 hover:text-amber border border-stone-200"
+                                                        title="Senda prufupóst á sjálfan þig"
+                                                    >
+                                                        {actionLoading === `test-email-${tpl.id}` ? (
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                        ) : (
+                                                            <Send className="w-4 h-4" />
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setEditingTemplate(tpl)}
+                                                        className="btn btn-secondary btn-sm"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2 mb-4">
+                                                <div className="text-sm">
+                                                    <span className="font-bold text-stone-700">Subject:</span> {tpl.subject}
+                                                </div>
+                                                {tpl.variables && tpl.variables.length > 0 && (
+                                                    <div className="text-sm">
+                                                        <span className="font-bold text-stone-700">Variables:</span>
+                                                        <span className="font-mono text-xs bg-stone-100 px-1 ml-1 rounded text-stone-600">
+                                                            {tpl.variables.join(', ')}
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
-                                        )}
-                                    </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
 
-                        </div>
-                    </div>
-                )}
-                {/* Emails Tab */}
-                {activeTab === 'emails' && (
-                    <div className="max-w-4xl space-y-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-serif">Email Templates</h2>
-                            <button onClick={fetchTemplates} className="btn btn-ghost btn-sm">Refresh</button>
-                        </div>
+                            {/* Edit Modal / Overlay */}
+                            {editingTemplate && (
+                                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                                    <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+                                        <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-stone-50 rounded-t-lg">
+                                            <h3 className="font-bold text-xl">Edit Template: {editingTemplate.id}</h3>
+                                            <button onClick={() => setEditingTemplate(null)} className="text-stone-400 hover:text-stone-600">
+                                                <XCircle className="w-6 h-6" />
+                                            </button>
+                                        </div>
 
-                        {templates.length === 0 && !loading ? (
-                            <div className="text-center py-12 bg-white rounded-lg border border-stone-200">
-                                <p className="text-stone-500 mb-4">No templates found.</p>
-                                <button onClick={handleSeedTemplates} className="btn btn-secondary">
-                                    Seed Default Templates
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="grid gap-6">
-                                {templates.map(tpl => (
-                                    <div key={tpl.id} className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
-                                        <div className="flex justify-between items-start mb-4">
+                                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                                            <div className="flex items-center gap-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm">
+                                                <div className="flex-1">
+                                                    <strong>Status:</strong> {editingTemplate.active ? 'Ready to Send' : 'Draft (Not sending)'}
+                                                </div>
+                                                <button
+                                                    onClick={() => setEditingTemplate({ ...editingTemplate, active: !editingTemplate.active })}
+                                                    className={`px-3 py-1 rounded text-xs font-bold transition-colors ${editingTemplate.active ? 'bg-green-600 text-white' : 'bg-stone-300 text-stone-600'}`}
+                                                >
+                                                    {editingTemplate.active ? 'Active' : 'Set Active'}
+                                                </button>
+                                            </div>
+
                                             <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="font-bold text-lg">{tpl.id}</h3>
-                                                    {tpl.active ? (
-                                                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                                                            <CheckCircle className="w-3 h-3" /> Active
-                                                        </span>
-                                                    ) : (
-                                                        <span className="bg-stone-100 text-stone-500 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                                                            <XCircle className="w-3 h-3" /> Inactive
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-sm text-stone-500 mt-1">{tpl.description}</p>
+                                                <label className="label">Subject Line</label>
+                                                <input
+                                                    type="text"
+                                                    className="input font-bold"
+                                                    value={editingTemplate.subject}
+                                                    onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
+                                                />
                                             </div>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleSendTestEmail(tpl)}
-                                                    disabled={actionLoading === `test-email-${tpl.id}`}
-                                                    className="btn btn-ghost btn-sm text-stone-500 hover:text-amber border border-stone-200"
-                                                    title="Senda prufupóst á sjálfan þig"
-                                                >
-                                                    {actionLoading === `test-email-${tpl.id}` ? (
-                                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                                    ) : (
-                                                        <Send className="w-4 h-4" />
-                                                    )}
-                                                </button>
-                                                <button
-                                                    onClick={() => setEditingTemplate(tpl)}
-                                                    className="btn btn-secondary btn-sm"
-                                                >
-                                                    Edit
-                                                </button>
+
+                                            <div className="flex-1 flex flex-col">
+                                                <label className="label flex justify-between">
+                                                    <span>HTML Content</span>
+                                                    <span className="text-xs font-normal text-stone-500">Supports standard HTML tags</span>
+                                                </label>
+                                                <textarea
+                                                    className="input font-mono text-xs leading-relaxed min-h-[300px]"
+                                                    value={editingTemplate.html_content}
+                                                    onChange={(e) => setEditingTemplate({ ...editingTemplate, html_content: e.target.value })}
+                                                />
+                                            </div>
+
+                                            <div className="bg-stone-100 p-4 rounded text-xs">
+                                                <strong>Available Variables:</strong> {editingTemplate.variables?.map(v => `{${v}}`).join(', ') || 'None'}
                                             </div>
                                         </div>
 
-                                        <div className="space-y-2 mb-4">
-                                            <div className="text-sm">
-                                                <span className="font-bold text-stone-700">Subject:</span> {tpl.subject}
-                                            </div>
-                                            {tpl.variables && tpl.variables.length > 0 && (
-                                                <div className="text-sm">
-                                                    <span className="font-bold text-stone-700">Variables:</span>
-                                                    <span className="font-mono text-xs bg-stone-100 px-1 ml-1 rounded text-stone-600">
-                                                        {tpl.variables.join(', ')}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Edit Modal / Overlay */}
-                        {editingTemplate && (
-                            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                                <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-                                    <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-stone-50 rounded-t-lg">
-                                        <h3 className="font-bold text-xl">Edit Template: {editingTemplate.id}</h3>
-                                        <button onClick={() => setEditingTemplate(null)} className="text-stone-400 hover:text-stone-600">
-                                            <XCircle className="w-6 h-6" />
-                                        </button>
-                                    </div>
-
-                                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                                        <div className="flex items-center gap-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm">
-                                            <div className="flex-1">
-                                                <strong>Status:</strong> {editingTemplate.active ? 'Ready to Send' : 'Draft (Not sending)'}
-                                            </div>
+                                        <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-between items-center">
                                             <button
-                                                onClick={() => setEditingTemplate({ ...editingTemplate, active: !editingTemplate.active })}
-                                                className={`px-3 py-1 rounded text-xs font-bold transition-colors ${editingTemplate.active ? 'bg-green-600 text-white' : 'bg-stone-300 text-stone-600'}`}
+                                                onClick={() => handleSendTestEmail(editingTemplate)}
+                                                disabled={actionLoading === `test-email-${editingTemplate.id}`}
+                                                className="btn btn-ghost text-amber hover:bg-amber/5 font-bold flex items-center gap-2"
                                             >
-                                                {editingTemplate.active ? 'Active' : 'Set Active'}
+                                                {actionLoading === `test-email-${editingTemplate.id}` ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Send className="w-4 h-4" />
+                                                )}
+                                                {actionLoading === `test-email-${editingTemplate.id}` ? 'Sending...' : 'Send Test to Me'}
                                             </button>
-                                        </div>
-
-                                        <div>
-                                            <label className="label">Subject Line</label>
-                                            <input
-                                                type="text"
-                                                className="input font-bold"
-                                                value={editingTemplate.subject}
-                                                onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div className="flex-1 flex flex-col">
-                                            <label className="label flex justify-between">
-                                                <span>HTML Content</span>
-                                                <span className="text-xs font-normal text-stone-500">Supports standard HTML tags</span>
-                                            </label>
-                                            <textarea
-                                                className="input font-mono text-xs leading-relaxed min-h-[300px]"
-                                                value={editingTemplate.html_content}
-                                                onChange={(e) => setEditingTemplate({ ...editingTemplate, html_content: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div className="bg-stone-100 p-4 rounded text-xs">
-                                            <strong>Available Variables:</strong> {editingTemplate.variables?.map(v => `{${v}}`).join(', ') || 'None'}
-                                        </div>
-                                    </div>
-
-                                    <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-between items-center">
-                                        <button
-                                            onClick={() => handleSendTestEmail(editingTemplate)}
-                                            disabled={actionLoading === `test-email-${editingTemplate.id}`}
-                                            className="btn btn-ghost text-amber hover:bg-amber/5 font-bold flex items-center gap-2"
-                                        >
-                                            {actionLoading === `test-email-${editingTemplate.id}` ? (
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <Send className="w-4 h-4" />
-                                            )}
-                                            {actionLoading === `test-email-${editingTemplate.id}` ? 'Sending...' : 'Send Test to Me'}
-                                        </button>
-                                        <div className="flex gap-3">
-                                            <button onClick={() => setEditingTemplate(null)} className="btn btn-ghost">Cancel</button>
-                                            <button
-                                                onClick={() => handleSaveTemplate(editingTemplate)}
-                                                className="btn btn-primary"
-                                                disabled={actionLoading === 'saving-template'}
-                                            >
-                                                {actionLoading === 'saving-template' ? 'Saving...' : 'Save Changes'}
-                                            </button>
+                                            <div className="flex gap-3">
+                                                <button onClick={() => setEditingTemplate(null)} className="btn btn-ghost">Cancel</button>
+                                                <button
+                                                    onClick={() => handleSaveTemplate(editingTemplate)}
+                                                    className="btn btn-primary"
+                                                    disabled={actionLoading === 'saving-template'}
+                                                >
+                                                    {actionLoading === 'saving-template' ? 'Saving...' : 'Save Changes'}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                )}
+                            )}
+                        </div>
+                    )
+                }
 
                 {/* Edit House Modal */}
-                {editingHouse && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-                            <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-stone-50 rounded-t-lg">
-                                <h3 className="font-bold text-xl">Breyta húsi</h3>
-                                <button onClick={() => setEditingHouse(null)} className="text-stone-400 hover:text-stone-600">
-                                    <XCircle className="w-6 h-6" />
-                                </button>
-                            </div>
-                            <div className="p-6 space-y-4">
-                                <div>
-                                    <label className="text-xs font-bold text-stone-500 uppercase">Nafn húss</label>
-                                    <input
-                                        type="text"
-                                        className="input mt-1"
-                                        value={editingHouse.name}
-                                        onChange={e => setEditingHouse({ ...editingHouse, name: e.target.value })}
-                                    />
+                {
+                    editingHouse && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+                                <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-stone-50 rounded-t-lg">
+                                    <h3 className="font-bold text-xl">Breyta húsi</h3>
+                                    <button onClick={() => setEditingHouse(null)} className="text-stone-400 hover:text-stone-600">
+                                        <XCircle className="w-6 h-6" />
+                                    </button>
                                 </div>
-                                <div>
-                                    <label className="text-xs font-bold text-stone-500 uppercase">Heimilisfang</label>
-                                    <input
-                                        type="text"
-                                        className="input mt-1"
-                                        value={editingHouse.address || ''}
-                                        onChange={e => setEditingHouse({ ...editingHouse, address: e.target.value })}
-                                    />
+                                <div className="p-6 space-y-4">
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-500 uppercase">Nafn húss</label>
+                                        <input
+                                            type="text"
+                                            className="input mt-1"
+                                            value={editingHouse.name}
+                                            onChange={e => setEditingHouse({ ...editingHouse, name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-500 uppercase">Heimilisfang</label>
+                                        <input
+                                            type="text"
+                                            className="input mt-1"
+                                            value={editingHouse.address || ''}
+                                            onChange={e => setEditingHouse({ ...editingHouse, address: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-500 uppercase">Stjórnandi (UID)</label>
+                                        <input
+                                            type="text"
+                                            className="input mt-1 font-mono text-xs"
+                                            value={editingHouse.manager_id}
+                                            onChange={e => setEditingHouse({ ...editingHouse, manager_id: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-500 uppercase">Áskriftar staða</label>
+                                        <select
+                                            className="input mt-1"
+                                            value={editingHouse.subscription_status || 'trial'}
+                                            onChange={e => setEditingHouse({ ...editingHouse, subscription_status: e.target.value as any })}
+                                        >
+                                            <option value="trial">Trial</option>
+                                            <option value="active">Active</option>
+                                            <option value="free">Free (Lifetime)</option>
+                                            <option value="expired">Expired</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="text-xs font-bold text-stone-500 uppercase">Stjórnandi (UID)</label>
-                                    <input
-                                        type="text"
-                                        className="input mt-1 font-mono text-xs"
-                                        value={editingHouse.manager_id}
-                                        onChange={e => setEditingHouse({ ...editingHouse, manager_id: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-stone-500 uppercase">Áskriftar staða</label>
-                                    <select
-                                        className="input mt-1"
-                                        value={editingHouse.subscription_status || 'trial'}
-                                        onChange={e => setEditingHouse({ ...editingHouse, subscription_status: e.target.value as any })}
+                                <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-end gap-3">
+                                    <button onClick={() => setEditingHouse(null)} className="btn btn-ghost">Hætta við</button>
+                                    <button
+                                        onClick={() => handleUpdateHouse(editingHouse)}
+                                        className="btn btn-primary"
+                                        disabled={actionLoading === 'updating-house'}
                                     >
-                                        <option value="trial">Trial</option>
-                                        <option value="active">Active</option>
-                                        <option value="free">Free (Lifetime)</option>
-                                        <option value="expired">Expired</option>
-                                    </select>
+                                        {actionLoading === 'updating-house' ? 'Vistar...' : 'Vista breytingar'}
+                                    </button>
                                 </div>
-                            </div>
-                            <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-end gap-3">
-                                <button onClick={() => setEditingHouse(null)} className="btn btn-ghost">Hætta við</button>
-                                <button
-                                    onClick={() => handleUpdateHouse(editingHouse)}
-                                    className="btn btn-primary"
-                                    disabled={actionLoading === 'updating-house'}
-                                >
-                                    {actionLoading === 'updating-house' ? 'Vistar...' : 'Vista breytingar'}
-                                </button>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )
+                }
+            </div >
         </AdminLayout >
     );
 }
