@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw, MapPin } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -1026,123 +1026,206 @@ export default function SuperAdminPage() {
                 {/* Houses Tab */}
                 {
                     activeTab === 'houses' && (
-                        <div className="bg-white border border-stone-200 rounded-lg p-6">
-                            <h2 className="text-lg font-serif font-semibold mb-6">Húsaskrá</h2>
-                            <DataTable
-                                columns={[
-                                    { key: 'name', label: 'Nafn hús', sortable: true },
-                                    {
-                                        key: 'subscription_status',
-                                        label: 'Staða',
-                                        render: (row) => {
-                                            const status = row.subscription_status || 'trial';
-                                            const statusLabels = { free: 'Frítt', active: 'Virkt', trial: 'Prufa', expired: 'Útrunnið' };
-                                            const colors = {
-                                                free: 'bg-green-100 text-green-700 border-green-200',
-                                                active: 'bg-blue-100 text-blue-700 border-blue-200',
-                                                trial: 'bg-amber-100 text-amber-700 border-amber-200',
-                                                expired: 'bg-red-100 text-red-700 border-red-200'
-                                            };
-                                            return (
-                                                <span className={`px-2 py-1 rounded-full text-xs font-bold border uppercase ${colors[status] || colors.trial}`}>
+                        <div className="space-y-6">
+                            {/* Desktop Table */}
+                            <div className="hidden md:block bg-white border border-stone-200 rounded-lg p-6">
+                                <h2 className="text-lg font-serif font-semibold mb-6">Húsaskrá</h2>
+                                <DataTable
+                                    columns={[
+                                        { key: 'name', label: 'Nafn hús', sortable: true },
+                                        {
+                                            key: 'subscription_status',
+                                            label: 'Staða',
+                                            render: (row) => {
+                                                const status = row.subscription_status || 'trial';
+                                                const statusLabels = { free: 'Frítt', active: 'Virkt', trial: 'Prufa', expired: 'Útrunnið' };
+                                                const colors = {
+                                                    free: 'bg-green-100 text-green-700 border-green-200',
+                                                    active: 'bg-blue-100 text-blue-700 border-blue-200',
+                                                    trial: 'bg-amber-100 text-amber-700 border-amber-200',
+                                                    expired: 'bg-red-100 text-red-700 border-red-200'
+                                                };
+                                                return (
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-bold border uppercase ${colors[status] || colors.trial}`}>
+                                                        {statusLabels[status] || statusLabels.trial}
+                                                    </span>
+                                                );
+                                            }
+                                        },
+                                        {
+                                            key: 'address',
+                                            label: 'Staðsetning',
+                                            sortable: true,
+                                            render: (row) => row.address || '—'
+                                        },
+                                        {
+                                            key: 'days_left',
+                                            label: 'Dagar eftir',
+                                            render: (row) => {
+                                                if (row.subscription_status === 'free') return <span className="text-green-600 font-bold uppercase text-[10px]">Lifetime</span>;
+                                                if (row.subscription_status === 'active') return <span className="text-blue-600 font-bold uppercase text-[10px]">Subscribed</span>;
+
+                                                if (!row.subscription_end) return <span className="text-stone-400">—</span>;
+
+                                                const now = new Date();
+                                                const endDate = (row.subscription_end as any).toDate ? (row.subscription_end as any).toDate() : new Date(row.subscription_end);
+                                                const diffTime = endDate.getTime() - now.getTime();
+                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                                if (diffDays <= 0) return <span className="text-red-600 font-bold">Expired</span>;
+                                                if (diffDays <= 3) return <span className="text-amber-600 font-bold">{diffDays} dagar!</span>;
+                                                return <span className="text-stone-600">{diffDays} dagar</span>;
+                                            }
+                                        },
+                                        {
+                                            key: 'owner_ids',
+                                            label: 'Meðlimir',
+                                            render: (row) => (
+                                                <span className="font-mono">{row.owner_ids?.length || 0}</span>
+                                            )
+                                        },
+                                        {
+                                            key: 'manager_id',
+                                            label: 'Stjórnandi',
+                                            render: (row) => {
+                                                const manager = stats.allUsers.find(u => u.uid === row.manager_id);
+                                                return <span className="font-mono text-xs">{manager?.email || '—'}</span>;
+                                            }
+                                        },
+                                        {
+                                            key: 'created_at',
+                                            label: 'Búið til',
+                                            sortable: true,
+                                            render: (row) => {
+                                                if (!row.created_at) return '—';
+                                                const date = row.created_at as any;
+                                                const timestamp = date.seconds ? new Date(date.seconds * 1000) : new Date();
+                                                return timestamp.toLocaleDateString('is-IS');
+                                            }
+                                        },
+                                    ]}
+                                    data={stats.allHouses}
+                                    searchKeys={['name', 'address']}
+                                    actions={(row) => (
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleExtendTrial(row.id!)}
+                                                disabled={actionLoading === row.id}
+                                                className="px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors disabled:opacity-50"
+                                                title="Lengja prufu"
+                                            >
+                                                {actionLoading === row.id ? 'Lengja...' : 'Lengja prufu'}
+                                            </button>
+                                            <button
+                                                onClick={() => handleToggleFree(row.id!)}
+                                                disabled={actionLoading === row.id}
+                                                className={`px-3 py-1.5 text-xs font-bold border rounded transition-colors disabled:opacity-50 ${row.subscription_status === 'free'
+                                                    ? 'border-red-200 text-red-600 hover:bg-red-50'
+                                                    : 'border-green-200 text-green-600 hover:bg-green-50'
+                                                    }`}
+                                                title={row.subscription_status === 'free' ? 'Afturkalla frítt' : 'Veita frítt'}
+                                            >
+                                                {row.subscription_status === 'free' ? 'Afturkalla' : 'Veita frítt'}
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingHouse(row)}
+                                                className="p-1 hover:bg-stone-100 rounded"
+                                                title="Breyta"
+                                            >
+                                                <Edit className="w-4 h-4 text-stone-500" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteHouse(row.id!)}
+                                                disabled={actionLoading === row.id}
+                                                className="p-1 hover:bg-red-100 rounded disabled:opacity-50"
+                                                title="Eyða húsi"
+                                            >
+                                                <Trash2 className="w-4 h-4 text-red-600" />
+                                            </button>
+                                        </div>
+                                    )}
+                                />
+                            </div>
+
+                            {/* Mobile Cards */}
+                            <div className="md:hidden space-y-4">
+                                <h2 className="text-xl font-serif font-bold px-1">Húsaskrá ({stats.allHouses.length})</h2>
+                                {stats.allHouses.map((house) => {
+                                    const status = house.subscription_status || 'trial';
+                                    const statusLabels = { free: 'Frítt', active: 'Virkt', trial: 'Prufa', expired: 'Útrunnið' };
+                                    const colors = {
+                                        free: 'bg-green-100 text-green-700 border-green-200',
+                                        active: 'bg-blue-100 text-blue-700 border-blue-200',
+                                        trial: 'bg-amber-100 text-amber-700 border-amber-200',
+                                        expired: 'bg-red-100 text-red-700 border-red-200'
+                                    };
+
+                                    // Calculate days left
+                                    let daysLeftDisplay = null;
+                                    if (status === 'free') daysLeftDisplay = <span className="text-green-600 font-bold uppercase text-[10px]">Lifetime</span>;
+                                    else if (status === 'active') daysLeftDisplay = <span className="text-blue-600 font-bold uppercase text-[10px]">Subscribed</span>;
+                                    else if (house.subscription_end) {
+                                        const now = new Date();
+                                        const endDate = (house.subscription_end as any).toDate ? (house.subscription_end as any).toDate() : new Date(house.subscription_end);
+                                        const diffTime = endDate.getTime() - now.getTime();
+                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                        if (diffDays <= 0) daysLeftDisplay = <span className="text-red-600 font-bold text-xs">Expired</span>;
+                                        else if (diffDays <= 3) daysLeftDisplay = <span className="text-amber-600 font-bold text-xs">{diffDays} dagar!</span>;
+                                        else daysLeftDisplay = <span className="text-stone-600 text-xs">{diffDays} dagar</span>;
+                                    }
+
+                                    return (
+                                        <div key={house.id} className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <h3 className="font-serif font-bold text-lg text-charcoal">{house.name}</h3>
+                                                    <p className="text-sm text-stone-500 flex items-center gap-1 mt-1">
+                                                        <MapPin className="w-3 h-3" />
+                                                        {house.address || 'Engin staðsetning'}
+                                                    </p>
+                                                </div>
+                                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold border uppercase ${colors[status] || colors.trial}`}>
                                                     {statusLabels[status] || statusLabels.trial}
                                                 </span>
-                                            );
-                                        }
-                                    },
-                                    {
-                                        key: 'address',
-                                        label: 'Staðsetning',
-                                        sortable: true,
-                                        render: (row) => row.address || '—'
-                                    },
-                                    {
-                                        key: 'days_left',
-                                        label: 'Dagar eftir',
-                                        render: (row) => {
-                                            if (row.subscription_status === 'free') return <span className="text-green-600 font-bold uppercase text-[10px]">Lifetime</span>;
-                                            if (row.subscription_status === 'active') return <span className="text-blue-600 font-bold uppercase text-[10px]">Subscribed</span>;
+                                            </div>
 
-                                            if (!row.subscription_end) return <span className="text-stone-400">—</span>;
+                                            <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                                                <div>
+                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Stjórnandi</p>
+                                                    <p className="font-medium truncate">{stats.allUsers.find(u => u.uid === house.manager_id)?.email || '—'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Dagar eftir</p>
+                                                    <div>{daysLeftDisplay}</div>
+                                                </div>
+                                            </div>
 
-                                            const now = new Date();
-                                            const endDate = (row.subscription_end as any).toDate ? (row.subscription_end as any).toDate() : new Date(row.subscription_end);
-                                            const diffTime = endDate.getTime() - now.getTime();
-                                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                                            if (diffDays <= 0) return <span className="text-red-600 font-bold">Expired</span>;
-                                            if (diffDays <= 3) return <span className="text-amber-600 font-bold">{diffDays} dagar!</span>;
-                                            return <span className="text-stone-600">{diffDays} dagar</span>;
-                                        }
-                                    },
-                                    {
-                                        key: 'owner_ids',
-                                        label: 'Meðlimir',
-                                        render: (row) => (
-                                            <span className="font-mono">{row.owner_ids?.length || 0}</span>
-                                        )
-                                    },
-                                    {
-                                        key: 'manager_id',
-                                        label: 'Stjórnandi',
-                                        render: (row) => {
-                                            const manager = stats.allUsers.find(u => u.uid === row.manager_id);
-                                            return <span className="font-mono text-xs">{manager?.email || '—'}</span>;
-                                        }
-                                    },
-                                    {
-                                        key: 'created_at',
-                                        label: 'Búið til',
-                                        sortable: true,
-                                        render: (row) => {
-                                            if (!row.created_at) return '—';
-                                            const date = row.created_at as any;
-                                            const timestamp = date.seconds ? new Date(date.seconds * 1000) : new Date();
-                                            return timestamp.toLocaleDateString('is-IS');
-                                        }
-                                    },
-                                ]}
-                                data={stats.allHouses}
-                                searchKeys={['name', 'address']}
-                                actions={(row) => (
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleExtendTrial(row.id!)}
-                                            disabled={actionLoading === row.id}
-                                            className="px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors disabled:opacity-50"
-                                            title="Lengja prufu"
-                                        >
-                                            {actionLoading === row.id ? 'Lengja...' : 'Lengja prufu'}
-                                        </button>
-                                        <button
-                                            onClick={() => handleToggleFree(row.id!)}
-                                            disabled={actionLoading === row.id}
-                                            className={`px-3 py-1.5 text-xs font-bold border rounded transition-colors disabled:opacity-50 ${row.subscription_status === 'free'
-                                                ? 'border-red-200 text-red-600 hover:bg-red-50'
-                                                : 'border-green-200 text-green-600 hover:bg-green-50'
-                                                }`}
-                                            title={row.subscription_status === 'free' ? 'Afturkalla frítt' : 'Veita frítt'}
-                                        >
-                                            {row.subscription_status === 'free' ? 'Afturkalla' : 'Veita frítt'}
-                                        </button>
-                                        <button
-                                            onClick={() => setEditingHouse(row)}
-                                            className="p-1 hover:bg-stone-100 rounded"
-                                            title="Breyta"
-                                        >
-                                            <Edit className="w-4 h-4 text-stone-500" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteHouse(row.id!)}
-                                            disabled={actionLoading === row.id}
-                                            className="p-1 hover:bg-red-100 rounded disabled:opacity-50"
-                                            title="Eyða húsi"
-                                        >
-                                            <Trash2 className="w-4 h-4 text-red-600" />
-                                        </button>
-                                    </div>
-                                )}
-                            />
+                                            <div className="flex flex-wrap gap-2 pt-3 border-t border-stone-100">
+                                                <button
+                                                    onClick={() => handleExtendTrial(house.id!)}
+                                                    disabled={actionLoading === house.id}
+                                                    className="flex-1 px-3 py-2 text-xs font-semibold bg-amber/10 text-amber border border-amber/20 rounded-lg hover:bg-amber hover:text-charcoal transition-colors"
+                                                >
+                                                    Lengja prufu
+                                                </button>
+                                                <button
+                                                    onClick={() => setEditingHouse(house)}
+                                                    className="px-3 py-2 bg-stone-100 text-stone-600 rounded-lg"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteHouse(house.id!)}
+                                                    className="px-3 py-2 bg-red-50 text-red-600 rounded-lg"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )
                 }
@@ -1271,71 +1354,134 @@ export default function SuperAdminPage() {
                 {/* Users Tab */}
                 {
                     activeTab === 'users' && (
-                        <div className="bg-white border border-stone-200 rounded-lg p-6">
-                            <h2 className="text-lg font-serif font-semibold mb-6">Notendaskrá</h2>
-                            <DataTable
-                                columns={[
-                                    { key: 'name', label: 'Nafn', sortable: true },
-                                    {
-                                        key: 'email',
-                                        label: 'Netfang',
-                                        sortable: true,
-                                        render: (row) => <span className="font-mono text-xs">{row.email}</span>
-                                    },
-                                    {
-                                        key: 'house_ids',
-                                        label: 'Hús',
-                                        render: (row) => (
-                                            <span className="font-mono">{row.house_ids?.length || 0}</span>
-                                        )
-                                    },
-                                    {
-                                        key: 'created_at',
-                                        label: 'Skráður',
-                                        sortable: true,
-                                        render: (row) => {
-                                            if (!row.created_at) return '—';
-                                            const date = row.created_at as any;
-                                            const timestamp = date.seconds ? new Date(date.seconds * 1000) : new Date();
-                                            return timestamp.toLocaleDateString('is-IS');
+                        <div className="space-y-6">
+                            {/* Desktop Table */}
+                            <div className="hidden md:block bg-white border border-stone-200 rounded-lg p-6">
+                                <h2 className="text-lg font-serif font-semibold mb-6">Notendaskrá</h2>
+                                <DataTable
+                                    columns={[
+                                        { key: 'name', label: 'Nafn', sortable: true },
+                                        {
+                                            key: 'email',
+                                            label: 'Netfang',
+                                            sortable: true,
+                                            render: (row) => <span className="font-mono text-xs">{row.email}</span>
+                                        },
+                                        {
+                                            key: 'house_ids',
+                                            label: 'Hús',
+                                            render: (row) => (
+                                                <span className="font-mono">{row.house_ids?.length || 0}</span>
+                                            )
+                                        },
+                                        {
+                                            key: 'created_at',
+                                            label: 'Skráður',
+                                            sortable: true,
+                                            render: (row) => {
+                                                if (!row.created_at) return '—';
+                                                const date = row.created_at as any;
+                                                const timestamp = date.seconds ? new Date(date.seconds * 1000) : new Date();
+                                                return timestamp.toLocaleDateString('is-IS');
+                                            }
                                         }
-                                    }
-                                ]}
-                                data={stats.allUsers}
-                                searchKeys={['name', 'email']}
-                                actions={(row) => (
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleImpersonate(row)}
-                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors"
-                                        >
-                                            <UserCog className="w-3 h-3" />
-                                            Líkja eftir
-                                        </button>
-                                        <button
-                                            onClick={() => handleSyncName(row)}
-                                            disabled={actionLoading === `sync-name-${row.uid}`}
-                                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                            title="Samstilla nafn í öllu kerfinu"
-                                        >
-                                            <RefreshCw className={`w-3 h-3 ${actionLoading === `sync-name-${row.uid}` ? 'animate-spin' : ''}`} />
-                                            Sync
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteUser(row)}
-                                            disabled={actionLoading === `delete-user-${row.uid}`}
-                                            className="p-1.5 hover:bg-red-50 text-stone-400 hover:text-red-600 rounded transition-colors"
-                                            title="Eyða notanda"
-                                        >
-                                            {actionLoading === `delete-user-${row.uid}` ? (
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="w-4 h-4" />
-                                            )}
-                                        </button>
-                                    </div>
-                                )}
-                            />
+                                    ]}
+                                    data={stats.allUsers}
+                                    searchKeys={['name', 'email']}
+                                    actions={(row) => (
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleImpersonate(row)}
+                                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors"
+                                            >
+                                                <UserCog className="w-3 h-3" />
+                                                Líkja eftir
+                                            </button>
+                                            <button
+                                                onClick={() => handleSyncName(row)}
+                                                disabled={actionLoading === `sync-name-${row.uid}`}
+                                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                title="Samstilla nafn í öllu kerfinu"
+                                            >
+                                                <RefreshCw className={`w-3 h-3 ${actionLoading === `sync-name-${row.uid}` ? 'animate-spin' : ''}`} />
+                                                Sync
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteUser(row)}
+                                                disabled={actionLoading === `delete-user-${row.uid}`}
+                                                className="p-1.5 hover:bg-red-50 text-stone-400 hover:text-red-600 rounded transition-colors"
+                                                title="Eyða notanda"
+                                            >
+                                                {actionLoading === `delete-user-${row.uid}` ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
+                                />
+                            </div>
+
+                            {/* Mobile Cards */}
+                            <div className="md:hidden space-y-4">
+                                <h2 className="text-xl font-serif font-bold px-1">Notendaskrá ({stats.allUsers.length})</h2>
+                                {stats.allUsers.map((user) => {
+                                    const createdAt = user.created_at as any;
+                                    const timestamp = createdAt?.seconds ? new Date(createdAt.seconds * 1000) : new Date();
+
+                                    return (
+                                        <div key={user.uid} className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm">
+                                            <div className="flex items-start gap-4 mb-4">
+                                                <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-lg font-serif font-bold text-stone-500">
+                                                    {user.name?.[0]?.toUpperCase() || '?'}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-bold text-charcoal truncate">{user.name}</h3>
+                                                    <p className="text-xs text-stone-500 font-mono truncate">{user.email}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 text-sm mb-4 border-t border-stone-100 pt-3">
+                                                <div>
+                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Hús</p>
+                                                    <p className="font-mono">{user.house_ids?.length || 0}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Skráður</p>
+                                                    <p className="font-mono text-xs">{timestamp.toLocaleDateString('is-IS')}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2">
+                                                <button
+                                                    onClick={() => handleImpersonate(user)}
+                                                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-amber/10 text-amber border border-amber/20 rounded-lg text-xs font-bold hover:bg-amber hover:text-charcoal transition-colors"
+                                                >
+                                                    <UserCog className="w-3 h-3" />
+                                                    Líkja eftir
+                                                </button>
+                                                <button
+                                                    onClick={() => handleSyncName(user)}
+                                                    className="w-10 h-10 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg"
+                                                >
+                                                    <RefreshCw className={`w-4 h-4 ${actionLoading === `sync-name-${user.uid}` ? 'animate-spin' : ''}`} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteUser(user)}
+                                                    className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 rounded-lg"
+                                                >
+                                                    {actionLoading === `delete-user-${user.uid}` ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="w-4 h-4" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )
                 }
