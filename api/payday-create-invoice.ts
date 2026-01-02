@@ -78,8 +78,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let customerId = null;
 
         if (customersResponse.ok) {
-            const customers = await customersResponse.json();
-            const existingCustomer = customers.find((c: any) => c.email === invoiceData.customerEmail);
+            const customersData = await customersResponse.json();
+            // Handle both array and object responses
+            const customersList = Array.isArray(customersData) ? customersData : (customersData.items || customersData.data || customersData.customers || []);
+            const existingCustomer = customersList.find((c: any) => c.email === invoiceData.customerEmail);
             if (existingCustomer) {
                 customerId = existingCustomer.id;
             }
