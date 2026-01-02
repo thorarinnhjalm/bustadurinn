@@ -142,6 +142,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }))
         };
 
+        console.log('Creating invoice with payload:', JSON.stringify(invoicePayload, null, 2));
+
         const invoiceResponse = await fetch('https://api.payday.is/invoices', {
             method: 'POST',
             headers: {
