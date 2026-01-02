@@ -12,6 +12,7 @@ interface SearchConsoleData {
         clicks: number;
         impressions: number;
     }[];
+    error?: string;
 }
 
 export default function AnalyticsDashboard() {
@@ -159,28 +160,38 @@ export default function AnalyticsDashboard() {
                         Google Search (SEO)
                     </h2>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                        <MetricCard
-                            label="Smellir (Clicks)"
-                            value={searchData.clicks?.toLocaleString() || '0'}
-                            icon={<MousePointer className="w-5 h-5 text-blue-600" />}
-                        />
-                        <MetricCard
-                            label="Birtingar (Impressions)"
-                            value={searchData.impressions?.toLocaleString() || '0'}
-                            icon={<Eye className="w-5 h-5 text-purple-600" />}
-                        />
-                        <MetricCard
-                            label="CTR (Smellihlutfall)"
-                            value={`${searchData.ctr?.toFixed(1) || '0'}%`}
-                            icon={<TrendingUp className="w-5 h-5 text-green-600" />}
-                        />
-                        <MetricCard
-                            label="Meðal Staða"
-                            value={searchData.position?.toFixed(1) || '-'}
-                            icon={<Globe className="w-5 h-5 text-amber" />}
-                        />
-                    </div>
+                    {searchData.error ? (
+                        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-8">
+                            <h3 className="font-bold flex items-center gap-2">
+                                <span className="text-xl">⚠️</span> Connection Error
+                            </h3>
+                            <p className="mt-1 text-sm">{searchData.error}</p>
+                            <p className="text-xs text-red-500 mt-2">Check server logs for details.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                            <MetricCard
+                                label="Smellir (Clicks)"
+                                value={searchData.clicks?.toLocaleString() || '0'}
+                                icon={<MousePointer className="w-5 h-5 text-blue-600" />}
+                            />
+                            <MetricCard
+                                label="Birtingar (Impressions)"
+                                value={searchData.impressions?.toLocaleString() || '0'}
+                                icon={<Eye className="w-5 h-5 text-purple-600" />}
+                            />
+                            <MetricCard
+                                label="CTR (Smellihlutfall)"
+                                value={`${searchData.ctr?.toFixed(1) || '0'}%`}
+                                icon={<TrendingUp className="w-5 h-5 text-green-600" />}
+                            />
+                            <MetricCard
+                                label="Meðal Staða"
+                                value={searchData.position?.toFixed(1) || '-'}
+                                icon={<Globe className="w-5 h-5 text-amber" />}
+                            />
+                        </div>
+                    )}
 
                     <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
                         <h3 className="font-bold text-charcoal mb-4 flex items-center gap-2">

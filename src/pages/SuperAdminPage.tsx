@@ -854,7 +854,7 @@ export default function SuperAdminPage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={`
-                                    relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-300
+                                    relative flex-shrink-0 flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-300
                                     whitespace-nowrap rounded-t-lg select-none
                                     ${activeTab === tab.id
                                         ? 'text-charcoal'

@@ -35,13 +35,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!clientEmail || !privateKey) {
         console.warn('⚠️ Missing Google Auth Environment Variables');
-        return res.status(200).json(MOCK_DATA); // Fallback to mock data for now
+        return res.status(500).json({ error: 'Missing Google Auth Environment Variables' });
     }
 
     // 🧹 Cleanup Key (Same logic as analytics.ts)
+    // 1. Handle literal "\n" from JSON copy-paste
     privateKey = privateKey.replace(/\\n/g, '\n');
+
+    // 2. Handle surrounding quotes
     if (privateKey.startsWith('"')) privateKey = privateKey.slice(1);
     if (privateKey.endsWith('"')) privateKey = privateKey.slice(0, -1);
+
+    // 3. Ensure Headers have newlines (Fixes "space instead of newline" issues)
+    const beginHeader = '-----BEGIN PRIVATE KEY-----';
+    const endHeader = '-----END PRIVATE KEY-----';
+
+    if (privateKey.includes(beginHeader) && !privateKey.includes(beginHeader + '\n')) {
+        privateKey = privateKey.replace(beginHeader, beginHeader + '\n');
+    }
+    if (privateKey.includes(endHeader) && !privateKey.includes('\n' + endHeader)) {
+        privateKey = privateKey.replace(endHeader, '\n' + endHeader);
+    }
 
     try {
         const jwtClient = new google.auth.JWT({
@@ -112,8 +126,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             console.error('Error Details:', JSON.stringify(e.response.data, null, 2));
         }
 
-        // Graceful fallback to mock data so dashboard doesn't crash
-        console.warn('⚠️ Falling back to mock data due to API error.');
-        return res.status(200).json(MOCK_DATA);
+        // Return actual error so we can debug
+        return res.status(500).json({
+            error: e.message,
+            details: e.response?.data
+        });
     }
 }
