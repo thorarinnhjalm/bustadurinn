@@ -76,6 +76,9 @@ export default function SuperAdminPage() {
     });
 
     const [paydayStatus, setPaydayStatus] = useState<{ success: boolean; message: string } | null>(null);
+    const [invoiceTestResult, setInvoiceTestResult] = useState<{ success: boolean; message: string; invoice?: any } | null>(null);
+    const [selectedHouseForInvoice, setSelectedHouseForInvoice] = useState<string>('');
+
 
     const [stats, setStats] = useState<Stats>({
         totalHouses: 0,
@@ -318,6 +321,71 @@ export default function SuperAdminPage() {
             setActionLoading(null);
         }
     };
+
+    const handleTestInvoice = async () => {
+        if (!selectedHouseForInvoice) {
+            alert('Veldu hús til að búa til reikning');
+            return;
+        }
+
+        setActionLoading('invoice-test');
+        setInvoiceTestResult(null);
+
+        try {
+            // Get house details
+            const house = stats.allHouses.find(h => h.id === selectedHouseForInvoice);
+            if (!house) {
+                setInvoiceTestResult({ success: false, message: 'Hús fannst ekki' });
+                return;
+            }
+
+            // Get manager details
+            const manager = stats.allUsers.find(u => u.uid === house.manager_id);
+            if (!manager) {
+                setInvoiceTestResult({ success: false, message: 'Stjórnandi fannst ekki' });
+                return;
+            }
+
+            const productId = import.meta.env.VITE_PAYDAY_PRODUCT_MONTHLY || '004';
+
+            // Create invoice via API
+            const res = await fetch('/api/payday-create-invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customerName: house.name || manager.name || 'Viðskiptavinur',
+                    customerEmail: manager.email,
+                    lineItems: [{
+                        productCode: productId,
+                        description: `Bústaðurinn.is - Mánaðarleg áskrift fyrir ${house.name}`,
+                        quantity: 1,
+                        unitPrice: 4490
+                    }],
+                    notes: `Test invoice for ${house.name} (${house.address || 'Enging staðsetning'})`
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                setInvoiceTestResult({
+                    success: true,
+                    message: `Reikningur stofnaður! Send á ${manager.email}`,
+                    invoice: data.invoice
+                });
+            } else {
+                setInvoiceTestResult({
+                    success: false,
+                    message: data.error || data.details?.error_description || 'Mistókst að búa til reikning'
+                });
+            }
+        } catch (err: any) {
+            setInvoiceTestResult({ success: false, message: err.message });
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
 
     const handleUpdateHouse = async (houseData: House) => {
         if (!houseData.id) return;
@@ -1358,6 +1426,76 @@ export default function SuperAdminPage() {
                                     {paydayStatus.message}
                                 </div>
                             )}
+
+                            {/* Invoice Test Section */}
+                            {paydayStatus?.success && (
+                                <div className="mt-8 pt-8 border-t border-stone-200">
+                                    <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                        <Send className="w-5 h-5 text-amber" />
+                                        Test Invoice Creation
+                                    </h4>
+                                    <p className="text-stone-600 text-sm mb-4">
+                                        Create a test invoice for a house to verify the full integration.
+                                    </p>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-stone-500 mb-2">Select House</label>
+                                            <select
+                                                className="input"
+                                                value={selectedHouseForInvoice}
+                                                onChange={(e) => setSelectedHouseForInvoice(e.target.value)}
+                                            >
+                                                <option value="">-- Veldu hús --</option>
+                                                {stats.allHouses.map(house => {
+                                                    const manager = stats.allUsers.find(u => u.uid === house.manager_id);
+                                                    return (
+                                                        <option key={house.id} value={house.id}>
+                                                            {house.name} ({manager?.email || 'No email'})
+                                                        </option>
+                                                    );
+                                                })}
+                                            </select>
+                                        </div>
+
+                                        <button
+                                            onClick={handleTestInvoice}
+                                            disabled={actionLoading === 'invoice-test' || !selectedHouseForInvoice}
+                                            className="btn btn-primary flex items-center gap-2"
+                                        >
+                                            {actionLoading === 'invoice-test' ? (
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            ) : (
+                                                <Send className="w-4 h-4" />
+                                            )}
+                                            {actionLoading === 'invoice-test' ? 'Creating Invoice...' : 'Create Test Invoice'}
+                                        </button>
+
+                                        {invoiceTestResult && (
+                                            <div className={`p-4 rounded text-sm border ${invoiceTestResult.success ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                                <div className="flex items-center gap-2 font-bold mb-2">
+                                                    {invoiceTestResult.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                                                    {invoiceTestResult.success ? 'Invoice Created!' : 'Failed'}
+                                                </div>
+                                                <p className="mb-2">{invoiceTestResult.message}</p>
+                                                {invoiceTestResult.invoice && (
+                                                    <div className="mt-3 pt-3 border-t border-green-200 font-mono text-xs">
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <span className="text-green-600">Invoice ID:</span>
+                                                            <span className="font-bold">{invoiceTestResult.invoice.id || 'N/A'}</span>
+                                                            <span className="text-green-600">Amount:</span>
+                                                            <span className="font-bold">{invoiceTestResult.invoice.total || invoiceTestResult.invoice.amount || '4,490'} kr</span>
+                                                            <span className="text-green-600">Status:</span>
+                                                            <span className="font-bold">{invoiceTestResult.invoice.status || 'Sent'}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                         </div>
                     </div>
                 )}
