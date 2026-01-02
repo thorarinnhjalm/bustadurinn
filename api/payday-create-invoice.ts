@@ -62,30 +62,85 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'No access token received from Payday' });
         }
 
-        // Step 2: Create invoice
+        // Step 2: Get or create customer
         const invoiceData: CreateInvoiceRequest = req.body;
 
-        // Build invoice payload according to Payday API format
+        // First, try to find existing customer by email
+        const customersResponse = await fetch('https://api.payday.is/customers', {
+            method: 'GET',
+            headers: {
+                'Api-Version': 'alpha',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        let customerId = null;
+
+        if (customersResponse.ok) {
+            const customers = await customersResponse.json();
+            const existingCustomer = customers.find((c: any) => c.email === invoiceData.customerEmail);
+            if (existingCustomer) {
+                customerId = existingCustomer.id;
+            }
+        }
+
+        // If customer doesn't exist, create it
+        if (!customerId) {
+            const createCustomerResponse = await fetch('https://api.payday.is/customers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Api-Version': 'alpha',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({
+                    name: invoiceData.customerName,
+                    email: invoiceData.customerEmail,
+                    phone: invoiceData.customerPhone || '',
+                    kennitala: invoiceData.customerKennitala || ''
+                })
+            });
+
+            if (!createCustomerResponse.ok) {
+                const errorData = await createCustomerResponse.json();
+                return res.status(createCustomerResponse.status).json({
+                    error: 'Failed to create customer in Payday',
+                    details: errorData
+                });
+            }
+
+            const customerData = await createCustomerResponse.json();
+            customerId = customerData.id;
+        }
+
+        // Step 3: Create invoice with proper format
+        const today = new Date();
+        const dueDate = invoiceData.dueDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
         const invoicePayload = {
             customer: {
-                name: invoiceData.customerName,
-                email: invoiceData.customerEmail,
-                phone: invoiceData.customerPhone,
-                kennitala: invoiceData.customerKennitala
+                id: customerId
             },
-            lineItems: invoiceData.lineItems.map(item => ({
-                productCode: item.productCode,
+            description: invoiceData.notes || `Bústaðurinn.is - Mánaðarleg áskrift`,
+            invoiceDate: today.toISOString().split('T')[0],
+            dueDate: dueDate,
+            finalDueDate: dueDate,
+            currencyCode: 'ISK',
+            sendEmail: true,
+            createClaim: true,
+            lines: invoiceData.lineItems.map(item => ({
                 description: item.description,
                 quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                discount: item.discount || 0
-            })),
-            dueDate: invoiceData.dueDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 14 days from now
-            notes: invoiceData.notes || '',
-            sendEmail: true // Automatically send invoice email to customer
+                unitPriceIncludingVat: item.unitPrice,
+                vatPercentage: 24.0, // Standard Icelandic VAT
+                discountPercentage: item.discount || 0,
+                productId: item.productCode // This should be a GUID from Payday
+            }))
         };
 
-        const invoiceResponse = await fetch('https://api.payday.is/api/sales/invoices', {
+        const invoiceResponse = await fetch('https://api.payday.is/invoices', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -99,6 +154,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const invoiceResult = await invoiceResponse.json();
 
         if (!invoiceResponse.ok) {
+            console.error('Payday invoice error:', invoiceResult);
             return res.status(invoiceResponse.status).json({
                 error: 'Failed to create invoice',
                 details: invoiceResult
@@ -109,11 +165,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({
             success: true,
             invoice: invoiceResult,
+            customerId: customerId,
             message: 'Invoice created successfully and sent to customer'
         });
 
     } catch (error: any) {
         console.error('Payday invoice creation error:', error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message, stack: error.stack });
     }
 }
