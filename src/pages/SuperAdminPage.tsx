@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw, MapPin } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw, MapPin, Shield, LogOut, LayoutDashboard, Calendar } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -782,142 +782,95 @@ export default function SuperAdminPage() {
             userHouses={userHouses}
             onHouseSelect={handleHouseSwitch}
         >
-            {/* Header */}
-            <div className="border-b border-stone-200 bg-white sticky top-0 z-10 shadow-sm">
-                <div className="px-4 py-4 md:px-8 md:py-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 md:mb-0">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h1 className="text-xl md:text-2xl font-serif font-bold text-charcoal">Stjórnborð</h1>
-                                <p className="text-xs md:text-sm text-stone-500 mt-1">Kerfisstjórn & greining</p>
+            {/* Premium Sticky Header & Navigation */}
+            <div className="sticky top-0 z-50 flex flex-col bg-white/80 backdrop-blur-xl border-b border-stone-200/60 shadow-sm transition-all duration-300">
+                <div className="max-w-7xl mx-auto w-full px-4 md:px-8">
+                    {/* Top Bar */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between py-4 md:h-20 gap-4 md:gap-0">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 md:gap-4">
+                                <div className={`p-2.5 rounded-xl bg-gradient-to-br from-charcoal to-stone-800 text-white shadow-lg shadow-charcoal/20 transition-transform duration-500 hover:rotate-180`}>
+                                    <Shield className={`w-5 h-5 md:w-6 md:h-6`} />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl md:text-2xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-charcoal to-stone-600">
+                                        Super Admin
+                                    </h1>
+                                    <p className="text-[10px] md:text-xs text-stone-500 font-medium tracking-wide">
+                                        v1.2.0 • <span className="text-green-600 flex-inline items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block"></span>Online</span>
+                                    </p>
+                                </div>
                             </div>
-                            {/* Mobile Admin Badge */}
-                            <div className="md:hidden px-2 py-1 bg-amber/10 text-amber border border-amber/20 rounded text-[10px] font-medium font-mono">
-                                ADMIN
+
+                            {/* Mobile Actions */}
+                            <div className="flex md:hidden gap-2">
+                                <button
+                                    onClick={() => window.location.href = '/'}
+                                    className="p-2 text-stone-400 hover:text-charcoal transition-colors"
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        {/* Desktop Actions */}
+                        <div className="hidden md:flex items-center gap-3">
                             <button
                                 onClick={handleSeedDemo}
-                                disabled={seeding}
-                                className="hidden md:flex btn btn-secondary text-sm items-center gap-2"
+                                disabled={actionLoading === 'seed'}
+                                className="flex items-center gap-2 px-4 py-2 bg-stone-100/50 hover:bg-stone-100 text-stone-600 rounded-lg text-sm font-medium transition-all hover:scale-105 active:scale-95"
                             >
-                                <Database className="w-4 h-4" />
-                                {seeding ? 'Hleður...' : 'Fylla prufugögn'}
+                                <Database className={`w-4 h-4 ${actionLoading === 'seed' ? 'animate-spin' : ''}`} />
+                                <span className="font-bold">Seed Data</span>
                             </button>
-                            <div className="hidden md:block px-3 py-2 bg-amber/10 text-amber border border-amber/20 rounded text-xs font-medium font-mono">
-                                ADMIN MODE
-                            </div>
+
+                            <div className="h-8 w-px bg-stone-200 mx-2"></div>
+
+                            <button
+                                onClick={() => window.location.href = '/'}
+                                className="group flex items-center gap-2 px-4 py-2 text-stone-500 hover:text-red-600 transition-colors"
+                            >
+                                <span className="text-sm font-medium group-hover:underline decoration-red-600/30 underline-offset-4">Hætta</span>
+                                <LogOut className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </button>
                         </div>
                     </div>
 
-                    {/* Unified Mobile-First Tabs - Horizontal Scroll */}
-                    <div className="mt-4 md:mt-6 -mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto no-scrollbar">
-                        <div className="flex gap-2 min-w-max pb-2">
-                            {/* Core Tabs */}
+                    {/* Scrollable Navigation Tabs */}
+                    <div className="flex items-center gap-1 md:gap-2 pb-0 overflow-x-auto no-scrollbar [mask-image:linear-gradient(to_right,transparent,black_10px,black_calc(100%-10px),transparent)]">
+                        {/* Primary Tabs */}
+                        {[
+                            { id: 'overview', icon: LayoutDashboard, label: 'Yfirlit' },
+                            { id: 'houses', icon: Home, label: 'Hús' },
+                            { id: 'users', icon: Users, label: 'Notendur' },
+                            { id: 'analytics', icon: BarChart2, label: 'Greining' },
+                            { id: 'bookings', icon: Calendar, label: 'Bókanir' },
+                            { id: 'integrations', icon: Settings, label: 'Tengingar' },
+                            { id: 'coupons', icon: Tag, label: 'Afslættir' },
+                            { id: 'contacts', icon: Mail, label: 'Samskipti' },
+                            { id: 'emails', icon: Send, label: 'Póstlisti' }
+                        ].map(tab => (
                             <button
-                                onClick={() => setActiveTab('overview')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'overview'
-                                    ? 'bg-amber text-charcoal shadow-sm'
-                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
-                                    }`}
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as any)}
+                                className={`
+                                    relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-300
+                                    whitespace-nowrap rounded-t-lg select-none
+                                    ${activeTab === tab.id
+                                        ? 'text-charcoal'
+                                        : 'text-stone-500 hover:text-stone-700 hover:bg-stone-50/50'
+                                    }
+                                `}
                             >
-                                <BarChart2 className="w-4 h-4" />
-                                <span>Yfirlit</span>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('analytics')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'analytics'
-                                    ? 'bg-amber text-charcoal shadow-sm'
-                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
-                                    }`}
-                            >
-                                <TrendingUp className="w-4 h-4" />
-                                <span>Greining</span>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('houses')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'houses'
-                                    ? 'bg-amber text-charcoal shadow-sm'
-                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
-                                    }`}
-                            >
-                                <Home className="w-4 h-4" />
-                                <span>Hús</span>
-                                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'houses' ? 'bg-charcoal/10' : 'bg-stone-200 text-stone-600'}`}>
-                                    {stats.totalHouses}
-                                </span>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('users')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'users'
-                                    ? 'bg-amber text-charcoal shadow-sm'
-                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
-                                    }`}
-                            >
-                                <Users className="w-4 h-4" />
-                                <span>Notendur</span>
-                                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'users' ? 'bg-charcoal/10' : 'bg-stone-200 text-stone-600'}`}>
-                                    {stats.totalUsers}
-                                </span>
-                            </button>
+                                <tab.icon className={`w-4 h-4 transition-transform duration-300 ${activeTab === tab.id ? 'scale-110 text-amber' : 'group-hover:scale-110'}`} />
+                                {tab.label}
 
-                            {/* Divider for desktop */}
-                            <div className="w-px h-8 bg-stone-200 mx-2 hidden md:block"></div>
-
-                            {/* Secondary Tabs */}
-                            <button
-                                onClick={() => setActiveTab('contacts')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'contacts'
-                                    ? 'bg-stone-800 text-white shadow-sm'
-                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
-                                    }`}
-                            >
-                                <Send className="w-4 h-4" />
-                                <span>Samskipti</span>
-                                {stats.allContacts.length > 0 && (
-                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'contacts' ? 'bg-white/20' : 'bg-stone-200 text-stone-600'}`}>
-                                        {stats.allContacts.length}
-                                    </span>
+                                {/* Active Indicator Line */}
+                                {activeTab === tab.id && (
+                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber to-orange-500 shadow-[0_0_10px_rgba(251,191,36,0.5)]" />
                                 )}
                             </button>
-                            <button
-                                onClick={() => setActiveTab('coupons')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'coupons'
-                                    ? 'bg-stone-800 text-white shadow-sm'
-                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
-                                    }`}
-                            >
-                                <Tag className="w-4 h-4" />
-                                <span>Afsláttarkóðar</span>
-                                {stats.allCoupons.length > 0 && (
-                                    <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'coupons' ? 'bg-white/20' : 'bg-stone-200 text-stone-600'}`}>
-                                        {stats.allCoupons.length}
-                                    </span>
-                                )}
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('emails')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'emails'
-                                    ? 'bg-stone-800 text-white shadow-sm'
-                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
-                                    }`}
-                            >
-                                <Mail className="w-4 h-4" />
-                                <span>Tölvupóstur</span>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('integrations')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${activeTab === 'integrations'
-                                    ? 'bg-stone-800 text-white shadow-sm'
-                                    : 'text-stone-600 hover:bg-stone-50 hover:text-charcoal'
-                                    }`}
-                            >
-                                <Settings className="w-4 h-4" />
-                                <span>Tengingar</span>
-                            </button>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -952,6 +905,18 @@ export default function SuperAdminPage() {
                         ((h as any).subscription_status === 'active' || (h as any).subscription_active)
                     );
                     const estimatedMRR = paidHouses.length * 1990;
+
+                    // Activity Calculation
+                    const unifiedActivity = [
+                        ...stats.allHouses.map(h => {
+                            const date = (h.created_at as any)?.toDate ? (h.created_at as any).toDate() : new Date(h.created_at || Date.now());
+                            return { type: 'house', data: h, date };
+                        }),
+                        ...stats.allUsers.map(u => {
+                            const date = (u.created_at as any)?.toDate ? (u.created_at as any).toDate() : new Date(u.created_at || Date.now());
+                            return { type: 'user', data: u, date };
+                        })
+                    ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
 
                     return (
                         <div className="space-y-6">
@@ -1015,6 +980,42 @@ export default function SuperAdminPage() {
                                     <p className="text-[10px] md:text-xs text-stone-400">
                                         {paidHouses.length} greiðandi hús
                                     </p>
+                                </div>
+                            </div>
+
+                            {/* Recent Activity Feed */}
+                            <div className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm">
+                                <h3 className="text-lg font-serif font-bold mb-4 flex items-center gap-2">
+                                    <Activity className="w-4 h-4 text-stone-400" />
+                                    Nýleg virkni
+                                </h3>
+                                <div className="space-y-4">
+                                    {unifiedActivity.map((item: any, idx: number) => (
+                                        <div key={idx} className="flex items-start gap-3 pb-4 border-b border-stone-100 last:border-0 last:pb-0">
+                                            <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center ${item.type === 'house' ? 'bg-amber/10 text-amber' : 'bg-blue-50 text-blue-600'
+                                                }`}>
+                                                {item.type === 'house' ? <Home className="w-4 h-4" /> : <Users className="w-4 h-4" />}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-charcoal">
+                                                    {item.type === 'house'
+                                                        ? `Nýtt hús skráð: ${item.data.name}`
+                                                        : `Nýr notandi skráður: ${item.data.name}`
+                                                    }
+                                                </p>
+                                                <p className="text-xs text-stone-500">
+                                                    {item.date.toLocaleDateString('is-IS', {
+                                                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                                    })}
+                                                    {item.type === 'house' && item.data.address && ` • ${item.data.address}`}
+                                                    {item.type === 'user' && ` • ${item.data.email}`}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {unifiedActivity.length === 0 && (
+                                        <p className="text-stone-500 text-sm italic">Engin nýleg virkni fundin.</p>
+                                    )}
                                 </div>
                             </div>
                         </div>

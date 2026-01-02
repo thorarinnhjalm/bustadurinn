@@ -44,12 +44,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (privateKey.endsWith('"')) privateKey = privateKey.slice(0, -1);
 
     try {
-        const jwtClient = new google.auth.JWT(
-            clientEmail,
-            undefined,
-            privateKey,
-            ['https://www.googleapis.com/auth/webmasters.readonly']
-        );
+        const jwtClient = new google.auth.JWT({
+            email: clientEmail,
+            key: privateKey,
+            scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
+        });
 
         await jwtClient.authorize();
 
