@@ -136,7 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 description: item.description,
                 quantity: item.quantity,
                 unitPriceIncludingVat: item.unitPrice,
-                vatPercentage: 24.0, // Standard Icelandic VAT
+                vatPercentage: 0, // Company not VAT registered
                 discountPercentage: item.discount || 0,
                 productId: item.productCode // This should be a GUID from Payday
             }))
