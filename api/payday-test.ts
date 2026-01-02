@@ -8,27 +8,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const clientId = process.env.VITE_PAYDAY_CLIENT_ID;
     const clientSecret = process.env.PAYDAY_SECRET_KEY;
-    const tokenUrl = process.env.PAYDAY_TOKEN_URL || 'https://api.payday.is/oauth/token';
+    const tokenUrl = process.env.PAYDAY_TOKEN_URL || 'https://api.payday.is/auth/token';
 
     if (!clientId || !clientSecret) {
         return res.status(500).json({ error: 'Missing Payday credentials in environment' });
     }
 
     try {
-        // Exchange credentials for token (Client Credentials Flow)
-        // If this fails, it might require Authorization Code flow (User Login)
-        const params = new URLSearchParams();
-        params.append('grant_type', 'client_credentials');
-        params.append('client_id', clientId);
-        params.append('client_secret', clientSecret);
-        params.append('scope', 'invoices'); // Adjust scope as needed
-
+        // Payday uses a custom API authentication (not standard OAuth2)
+        // Requires JSON body with Api-Version header
         const response = await fetch(tokenUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json',
+                'Api-Version': 'alpha',  // Required by Payday API
+                'Accept': 'application/json'
             },
-            body: params
+            body: JSON.stringify({
+                clientId: clientId,
+                clientSecret: clientSecret
+            })
         });
 
         const data = await response.json();
@@ -37,8 +36,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(response.status).json({ error: 'Failed to connect to Payday', details: data });
         }
 
+        // Extract token info (Payday uses camelCase)
+        const expiresIn = data.expiresIn || data.expires_in || 86400; // 24 hours default
+
         // Return success (don't expose full token to frontend in production, but for test it's ok)
-        return res.status(200).json({ success: true, message: 'Connection successful', expires_in: data.expires_in });
+        return res.status(200).json({
+            success: true,
+            message: 'Connection successful',
+            expires_in: expiresIn,
+            token_type: data.tokenType || data.token_type || 'bearer'
+        });
 
     } catch (error: any) {
         console.error('Payday connection error:', error);
