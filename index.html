@@ -32,7 +32,26 @@
     content="Allt á einum stað: Bókanir, verkefni, tengiliðir og eiginleikar. Íslenskur hugbúnaður fyrir íslensk sumarhús." />
   <meta property="twitter:image" content="https://bustadurinn.is/og-image.png" />
 
+  <!-- Facebook In-App Browser Fix & iOS Polyfill -->
+  <script>
+    (function () {
+      // 1. Prevent 'window.webkit is undefined' crash in FB/IG IAB on iOS
+      if (typeof window.webkit === 'undefined') {
+        window.webkit = { messageHandlers: {} };
+      } else if (typeof window.webkit.messageHandlers === 'undefined') {
+        window.webkit.messageHandlers = {};
+      }
 
+      // 2. Detect In-App Browsers (FB, IG, Messenger)
+      var ua = navigator.userAgent || navigator.vendor || window.opera;
+      var isIAB = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1);
+
+      if (isIAB) {
+        window.isInsideAppBrowser = true;
+        console.log("IAB Detected: Application may experience session loss or Auth issues.");
+      }
+    })();
+  </script>
 </head>
 
 <body>

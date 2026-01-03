@@ -184,6 +184,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/join" element={<JoinPage />} />
+            <Route path="/join/:houseId/:code" element={<JoinPage />} />
             <Route path="/guest/:token" element={<GuestPage />} />
             <Route path="/eiginleikar" element={<FeaturesPage />} />
             <Route path="/spurt-og-svarad" element={<FAQPage />} />

@@ -189,6 +189,12 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin();
       allow create: if true;
     }
+
+    // Invitations Collection
+    match /invitations/{invitationId} {
+      allow read: if true; // We filter by token in the frontend for security
+      allow write: if isSuperAdmin();
+    }
     
     // Coupons Collection (discount codes)
     match /coupons/{couponId} {

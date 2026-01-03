@@ -1,16 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
+import { doc, getDoc, updateDoc, arrayUnion, collection, query, where, limit, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
-import { Home, Loader2, CheckCircle, AlertTriangle, X, Calendar, DollarSign, ListTodo, ArrowRight } from 'lucide-react';
+import { Home, Loader2, CheckCircle, AlertTriangle, X, Calendar, DollarSign, ListTodo, ArrowRight, ExternalLink } from 'lucide-react';
 import type { House, User } from '@/types/models';
 
 export default function JoinPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const houseId = searchParams.get('houseId');
-    const code = searchParams.get('code');
+    const { houseId: pathHouseId, code: pathCode } = useParams();
+
+    // Support both query params and path params
+    const houseIdParam = searchParams.get('houseId') || pathHouseId;
+    const codeParam = searchParams.get('code') || pathCode;
+    const tokenParam = searchParams.get('token');
+
     const { currentUser } = useAppStore();
 
     const [loading, setLoading] = useState(true);
@@ -19,22 +24,66 @@ export default function JoinPage() {
     const [error, setError] = useState('');
     const [status, setStatus] = useState<'idle' | 'joining' | 'requested' | 'joined'>('idle');
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+    const [isIAB, setIsIAB] = useState(false);
 
     useEffect(() => {
+        if ((window as any).isInsideAppBrowser) {
+            setIsIAB(true);
+        }
         const checkHouse = async () => {
-            if (!houseId || !code) {
+            // Case 1: Handle Token (from email)
+            if (tokenParam) {
+                try {
+                    console.log("Checking token:", tokenParam);
+                    const q = query(collection(db, 'invitations'), where('token', '==', tokenParam), limit(1));
+                    const snap = await getDocs(q);
+
+                    if (!snap.empty) {
+                        const inviteData = snap.docs[0].data();
+                        const hId = inviteData.house_id;
+
+                        const houseSnap = await getDoc(doc(db, 'houses', hId));
+                        if (houseSnap.exists()) {
+                            const houseData = { id: houseSnap.id, ...houseSnap.data() } as House;
+                            setHouse(houseData);
+
+                            // Set inviter info from invitation if available
+                            if (inviteData.invited_by_name) {
+                                setInviter({ name: inviteData.invited_by_name } as User);
+                            }
+
+                            if (currentUser && houseData.owner_ids?.includes(currentUser.uid)) {
+                                setStatus('joined');
+                            }
+                        } else {
+                            setError('Sumarhús fannst ekki lengur.');
+                        }
+                    } else {
+                        setError('Boðstengill er útrunninn eða ógildur.');
+                    }
+                } catch (err) {
+                    console.error("Token check error:", err);
+                    setError('Villa við að staðfesta boð.');
+                } finally {
+                    setLoading(false);
+                }
+                return;
+            }
+
+            // Case 2: Handle houseId + code (direct sharing)
+            if (!houseIdParam || !codeParam) {
                 setError('Ógildur boðshlekkur.');
                 setLoading(false);
                 return;
             }
 
             try {
-                const docRef = doc(db, 'houses', houseId);
+                const docRef = doc(db, 'houses', houseIdParam);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
                     const houseData = docSnap.data() as House;
-                    if (houseData.invite_code === code) {
+                    if (houseData.invite_code === codeParam) {
                         setHouse({ ...houseData, id: docSnap.id });
 
                         // Fetch inviter (manager) info
@@ -69,7 +118,7 @@ export default function JoinPage() {
         };
 
         checkHouse();
-    }, [houseId, code, currentUser]);
+    }, [houseIdParam, codeParam, tokenParam, currentUser]);
 
     const handleJoinHouse = async () => {
         if (!currentUser || !house) return;
@@ -94,6 +143,20 @@ export default function JoinPage() {
             useAppStore.getState().setCurrentHouse(house);
 
             setStatus('joined');
+
+            // 4. Cleanup invitation if using token
+            if (tokenParam) {
+                try {
+                    const q = query(collection(db, 'invitations'), where('token', '==', tokenParam));
+                    const snap = await getDocs(q);
+                    if (!snap.empty) {
+                        await deleteDoc(doc(db, 'invitations', snap.docs[0].id));
+                    }
+                } catch (cleanupErr) {
+                    console.error("Failed to cleanup invitation:", cleanupErr);
+                }
+            }
+
             // Show welcome modal instead of immediately redirecting
             setShowWelcomeModal(true);
         } catch (err) {
@@ -166,6 +229,30 @@ export default function JoinPage() {
                 <Home className="w-12 h-12 text-amber mx-auto mb-4" />
                 <h1 className="text-2xl font-serif mb-2">{house?.name}</h1>
                 <p className="text-grey-mid mb-2">{house?.address}</p>
+
+                {isIAB && (
+                    <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-left">
+                        <div className="flex items-center gap-2 text-amber-800 font-bold mb-1">
+                            <AlertTriangle size={18} />
+                            <span>Vefskoðun í forriti (In-App Browser)</span>
+                        </div>
+                        <p className="text-xs text-amber-700 leading-relaxed mb-3">
+                            Þú ert að skoða þessa síðu inni í öðru forriti (t.d. Messenger). Innskráning getur verið óstöðug hér.
+                        </p>
+                        <button
+                            onClick={() => {
+                                // Simple trick to try and force open in external browser
+                                const url = window.location.href;
+                                navigator.clipboard.writeText(url);
+                                alert("Hlekkur afritaður! Opnaðu hann í Safari eða Chrome fyrir bestu upplifun.");
+                            }}
+                            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-200/50 px-2 py-1 rounded"
+                        >
+                            <ExternalLink size={12} />
+                            Afrita hlekk og opna í vafra
+                        </button>
+                    </div>
+                )}
 
                 {inviter && (
                     <p className="text-sm text-grey-mid mb-4">
