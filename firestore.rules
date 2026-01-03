@@ -3,34 +3,37 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // DEFINITIVE ADMIN CHECK
+    // DEFINITIVE ADMIN CHECK - Using safest access methods
     function isSuperAdmin() {
       return request.auth != null && (
         request.auth.uid == 'sxcToczAAwT3Fmh8FPXa1P6hMHB3' || 
-        request.auth.token.email == 'thorarinnhjalmarsson@gmail.com'
+        request.auth.token.get('email', '') == 'thorarinnhjalmarsson@gmail.com' ||
+        request.auth.token.get('email', '') == 'thorarinnhjalm@gmail.com'
       );
     }
 
     // 1. NEWSLETTER & CONTACTS (Priority rules)
-    match /newsletter_subscribers/{id} {
-      allow create: if true; // Anyone can sign up
-      allow read, write: if isSuperAdmin(); // Only you can see the list
+    // These must be explicitly defined and allow PUBLIC creation
+    match /newsletter_subscribers/{subscriberId} {
+      allow create: if true;
+      allow read, write: if isSuperAdmin();
     }
     
-    match /contact_submissions/{id} {
+    match /contact_submissions/{submissionId} {
       allow create: if true;
       allow read, write: if isSuperAdmin();
     }
 
-    // 2. MASTER BYPASS (For all other collections)
+    // 2. MASTER BYPASS (For everything else)
     match /{document=**} {
       allow read, write: if isSuperAdmin();
     }
 
-    // 3. PUBLIC & USER RULES (Fallback)
+    // 3. PUBLIC FALLBACKS
     match /guest_views/{id} { allow read: if true; }
     match /guestbook/{id} { allow read, create: if true; }
     
+    // 4. USER SPECIFIC RULES (Only evaluated if not super admin)
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
@@ -47,5 +50,6 @@ service cloud.firestore {
     match /bookings/{id} { allow read, write: if request.auth != null; }
     match /tasks/{id} { allow read, write: if request.auth != null; }
     match /coupons/{id} { allow read: if request.auth != null; }
+    match /email_templates/{id} { allow read: if true; }
   }
 }
