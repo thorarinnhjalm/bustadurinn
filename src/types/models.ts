@@ -15,6 +15,7 @@ export interface House {
         lng: number;
     };
     image_url?: string;
+    gallery_urls?: string[];
     rules?: string;
     wifi_ssid?: string;
     wifi_password?: string;

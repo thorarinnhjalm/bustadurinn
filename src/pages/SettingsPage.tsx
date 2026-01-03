@@ -24,7 +24,9 @@ import {
     Link as LinkIcon,
     Bell,
     Mail,
-    Check
+    Check,
+    Trash2,
+    Plus
 } from 'lucide-react';
 import { requestPushPermission } from '@/utils/pushNotifications';
 import ImageCropper from '@/components/ImageCropper';
@@ -95,6 +97,7 @@ export default function SettingsPage() {
     const [imageFile, setImageFile] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [cropMode, setCropMode] = useState<'main' | 'gallery'>('main');
 
     // Invite State
     const [inviteEmail, setInviteEmail] = useState('');
@@ -290,26 +293,87 @@ export default function SettingsPage() {
         if (!house) return;
         try {
             setUploadingImage(true);
-            const storageRef = ref(storage, `houses/${house.id}/image.jpg`);
+            const fileName = cropMode === 'main' ? 'image.jpg' : `gallery_${Date.now()}.jpg`;
+            const storageRef = ref(storage, `houses/${house.id}/${fileName}`);
             await uploadBytes(storageRef, blob);
             const downloadURL = await getDownloadURL(storageRef);
 
-            await updateDoc(doc(db, 'houses', house.id), {
-                image_url: downloadURL,
-                updated_at: serverTimestamp()
-            });
+            let updatedHouse: House;
+            if (cropMode === 'main') {
+                await updateDoc(doc(db, 'houses', house.id), {
+                    image_url: downloadURL,
+                    updated_at: serverTimestamp()
+                });
+                updatedHouse = { ...house, image_url: downloadURL };
+            } else {
+                const currentGallery = house.gallery_urls || [];
+                const newGallery = [...currentGallery, downloadURL];
+                await updateDoc(doc(db, 'houses', house.id), {
+                    gallery_urls: newGallery,
+                    updated_at: serverTimestamp()
+                });
+                updatedHouse = { ...house, gallery_urls: newGallery };
+            }
 
-            const updatedHouse = { ...house, image_url: downloadURL };
             setHouse(updatedHouse);
             setCurrentHouse(updatedHouse);
             setShowCropper(false);
             setImageFile(null);
             setSuccess('Mynd vistuð!');
+
+            // Sync with Guest View if token exists
+            if (updatedHouse.guest_token) {
+                try {
+                    await updateDoc(doc(db, 'guest_views', updatedHouse.guest_token), {
+                        image_url: updatedHouse.image_url || '',
+                        gallery_urls: updatedHouse.gallery_urls || [],
+                        updated_at: serverTimestamp()
+                    });
+                } catch (guestErr) {
+                    console.error("Error syncing with guest view:", guestErr);
+                }
+            }
         } catch (error) {
             console.error('Error uploading image:', error);
             setError('Villa við að vista mynd.');
         } finally {
             setUploadingImage(false);
+        }
+    };
+
+    const handleRemoveGalleryImage = async (url: string) => {
+        if (!house || !house.gallery_urls) return;
+        if (!confirm('Ertu viss um að þú viljir eyða þessari mynd úr galleríinu?')) return;
+
+        try {
+            setLoading(true);
+            const newGallery = house.gallery_urls.filter(item => item !== url);
+            await updateDoc(doc(db, 'houses', house.id), {
+                gallery_urls: newGallery,
+                updated_at: serverTimestamp()
+            });
+
+            const updatedHouse = { ...house, gallery_urls: newGallery };
+            setHouse(updatedHouse);
+            setCurrentHouse(updatedHouse);
+            setSuccess('Mynd eytt!');
+
+            // Sync with Guest View if token exists
+            if (updatedHouse.guest_token) {
+                try {
+                    await updateDoc(doc(db, 'guest_views', updatedHouse.guest_token), {
+                        gallery_urls: newGallery,
+                        updated_at: serverTimestamp()
+                    });
+                } catch (guestErr) {
+                    console.error("Error syncing gallery deletion with guest view:", guestErr);
+                }
+            }
+        } catch (error) {
+            console.error("Error removing gallery image", error);
+            setError('Gat ekki eytt mynd.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -736,28 +800,77 @@ export default function SettingsPage() {
                                 <div className="bg-white p-6 rounded-lg shadow-sm">
                                     <div className="flex items-center gap-2 mb-6">
                                         <ImageIcon className="w-6 h-6 text-amber" />
-                                        <h2 className="text-xl font-serif">Mynd af húsinu</h2>
+                                        <h2 className="text-xl font-serif">Myndir af húsinu</h2>
                                     </div>
 
-                                    <div className="space-y-4">
-                                        {house.image_url ? (
-                                            <div className="relative aspect-video rounded-lg overflow-hidden border border-stone-200">
-                                                <img src={house.image_url} alt={house.name} className="w-full h-full object-cover" />
-                                                {/* All co-owners (anyone in owner_ids) can change the picture */}
-                                                <label className="absolute top-4 right-4 btn btn-secondary text-sm cursor-pointer">
-                                                    <Upload className="w-4 h-4 mr-2" />
-                                                    Skipta um mynd
-                                                    <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+                                    <div className="space-y-6">
+                                        {/* MAIN IMAGE */}
+                                        <div>
+                                            <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 mb-3">Aðalmynd (Cover)</h3>
+                                            {house.image_url ? (
+                                                <div className="relative aspect-video rounded-lg overflow-hidden border border-stone-200 group">
+                                                    <img src={house.image_url} alt={house.name} className="w-full h-full object-cover" />
+                                                    <label className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs font-bold text-stone-600 border border-stone-200 cursor-pointer hover:bg-white transition-all shadow-sm opacity-0 group-hover:opacity-100">
+                                                        <span className="flex items-center gap-2">
+                                                            <Upload className="w-3 h-3" /> Skipta um mynd
+                                                        </span>
+                                                        <input type="file" accept="image/*" onChange={(e) => {
+                                                            setCropMode('main');
+                                                            handleImageSelect(e);
+                                                        }} className="hidden" />
+                                                    </label>
+                                                </div>
+                                            ) : (
+                                                <label className="border-2 border-dashed border-stone-300 rounded-lg p-12 flex flex-col items-center justify-center cursor-pointer hover:border-amber transition-colors bg-stone-50">
+                                                    <Upload className="w-8 h-8 text-stone-400 mb-3" />
+                                                    <p className="text-stone-600 font-medium mb-1">Hlaða upp aðalmynd</p>
+                                                    <p className="text-stone-400 text-xs text-center">Þessi mynd birtist á stjórnborði og gestasíðu.</p>
+                                                    <input type="file" accept="image/*" onChange={(e) => {
+                                                        setCropMode('main');
+                                                        handleImageSelect(e);
+                                                    }} className="hidden" />
+                                                </label>
+                                            )}
+                                        </div>
+
+                                        {/* GALLERY */}
+                                        <div className="pt-6 border-t border-stone-100">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500">Gallerí</h3>
+                                                <label className="text-xs font-bold text-amber hover:underline cursor-pointer flex items-center gap-1.5">
+                                                    <Plus className="w-3.5 h-3.5" /> Bæta við myndum
+                                                    <input type="file" accept="image/*" onChange={(e) => {
+                                                        setCropMode('gallery');
+                                                        handleImageSelect(e);
+                                                    }} className="hidden" />
                                                 </label>
                                             </div>
-                                        ) : (
-                                            <label className="border-2 border-dashed border-stone-300 rounded-lg p-12 flex flex-col items-center justify-center cursor-pointer hover:border-amber transition-colors">
-                                                <Upload className="w-12 h-12 text-stone-400 mb-4" />
-                                                <p className="text-stone-600 font-medium mb-1">Smelltu hér til að hlaða upp mynd</p>
-                                                <p className="text-stone-400 text-sm">JPG, PNG eða WebP (16:9 hlutfall mælt með)</p>
-                                                <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
-                                            </label>
-                                        )}
+
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                                {house.gallery_urls?.map((url, idx) => (
+                                                    <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-stone-100 group shadow-sm bg-stone-100">
+                                                        <img src={url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                                                        <button
+                                                            onClick={() => handleRemoveGalleryImage(url)}
+                                                            className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+
+                                                {/* ADD BOX */}
+                                                <label className="aspect-square border-2 border-dashed border-stone-200 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-amber hover:bg-amber-50/30 transition-all text-stone-400">
+                                                    <Plus size={20} />
+                                                    <span className="text-[10px] font-bold mt-1 uppercase tracking-tight">Ný mynd</span>
+                                                    <input type="file" accept="image/*" onChange={(e) => {
+                                                        setCropMode('gallery');
+                                                        handleImageSelect(e);
+                                                    }} className="hidden" />
+                                                </label>
+                                            </div>
+                                        </div>
+
                                     </div>
                                 </div>
 

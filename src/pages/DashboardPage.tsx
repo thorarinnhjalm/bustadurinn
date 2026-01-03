@@ -4,7 +4,8 @@ import {
     Calendar, CheckSquare, Sun,
     Plus, Users, Wallet, Bell,
     ChevronRight, Loader2, Shield,
-    ChevronDown, Home, LogOut
+    ChevronDown, Home, LogOut,
+    X, Image as ImageIcon
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import { useNavigate } from 'react-router-dom';
@@ -59,6 +60,7 @@ const UserDashboard = () => {
     const [checkoutMessage, setCheckoutMessage] = useState('');
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [isCheckedIn, setIsCheckedIn] = useState(false);
+    const [selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
 
     useEffect(() => {
         if (currentUser && (!currentUser.house_ids || currentUser.house_ids.length === 0)) {
@@ -76,179 +78,211 @@ const UserDashboard = () => {
                 const todayStart = new Date(now.setHours(0, 0, 0, 0));
 
                 // 0. Fetch Notifications
-                const notifsRef = collection(db, 'notifications');
-                const qNotifs = query(
-                    notifsRef,
-                    where('house_id', '==', currentHouse.id),
-                    where('user_id', '==', currentUser.uid),
-                    orderBy('created_at', 'desc'),
-                    limit(20)
-                );
-                const notifsSnap = await getDocs(qNotifs);
-                const notifsData = notifsSnap.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    created_at: doc.data().created_at?.toDate() || new Date()
-                } as AppNotification));
-                setNotifications(notifsData);
+                try {
+                    const notifsRef = collection(db, 'notifications');
+                    const qNotifs = query(
+                        notifsRef,
+                        where('house_id', '==', currentHouse.id),
+                        where('user_id', '==', currentUser.uid),
+                        limit(40)
+                    );
+                    const notifsSnap = await getDocs(qNotifs);
+                    const notifsData = notifsSnap.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        created_at: doc.data().created_at?.toDate() || new Date()
+                    } as AppNotification))
+                        .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
+                        .slice(0, 20);
 
-                // 1. Fetch Next Booking (using top-level collection)
-                const bookingsRef = collection(db, 'bookings');
-                const qNext = query(
-                    bookingsRef,
-                    where('house_id', '==', currentHouse.id),
-                    where('start', '>=', Timestamp.fromDate(todayStart)),
-                    orderBy('start', 'asc'),
-                    limit(1)
-                );
-                const bookingSnap = await getDocs(qNext);
-                if (!bookingSnap.empty) {
-                    const bData = bookingSnap.docs[0].data();
-                    setNextBooking({
-                        id: bookingSnap.docs[0].id,
-                        ...bData,
-                        start: bData.start.toDate(),
-                        end: bData.end.toDate(),
-                        created_at: bData.created_at?.toDate() || new Date()
-                    } as Booking);
+                    setNotifications(notifsData);
+                } catch (e) {
+                    console.error("Error fetching notifications:", e);
                 }
 
-                // 2. Check Occupancy (Current Booking)
-                const qActive = query(
-                    bookingsRef,
-                    where('house_id', '==', currentHouse.id),
-                    where('end', '>=', Timestamp.fromDate(now)),
-                    orderBy('end', 'asc')
-                );
-                const activeSnap = await getDocs(qActive);
-                const active = activeSnap.docs.find(doc => {
-                    const data = doc.data();
-                    return data.start.toDate() <= now && data.end.toDate() >= now;
-                });
-                setIsOccupied(!!active);
+                // 1. Fetch Next Booking
+                try {
+                    const bookingsRef = collection(db, 'bookings');
+                    const qNext = query(
+                        bookingsRef,
+                        where('house_id', '==', currentHouse.id),
+                        where('start', '>=', Timestamp.fromDate(todayStart)),
+                        orderBy('start', 'asc'),
+                        limit(1)
+                    );
+                    const bookingSnap = await getDocs(qNext);
+                    if (!bookingSnap.empty) {
+                        const bData = bookingSnap.docs[0].data();
+                        setNextBooking({
+                            id: bookingSnap.docs[0].id,
+                            ...bData,
+                            start: bData.start.toDate(),
+                            end: bData.end.toDate(),
+                            created_at: bData.created_at?.toDate() || new Date()
+                        } as Booking);
+                    }
+                } catch (e) {
+                    console.error("Error fetching next booking:", e);
+                }
 
-                // 3. Fetch Top 3 Tasks (Pending/In Progress) - using top-level collection
-                const tasksRef = collection(db, 'tasks');
-                const qTasks = query(
-                    tasksRef,
-                    where('house_id', '==', currentHouse.id),
-                    where('status', 'in', ['pending', 'in_progress']),
-                    orderBy('created_at', 'desc'),
-                    limit(3)
-                );
-                const tasksSnap = await getDocs(qTasks);
-                const tasksData = tasksSnap.docs.map(doc => {
-                    const d = doc.data();
-                    return {
-                        id: doc.id,
-                        ...d,
-                        created_at: d.created_at?.toDate()
-                    } as Task;
-                });
-                setTasks(tasksData);
+                // 2. Check Occupancy
+                try {
+                    const bookingsRef = collection(db, 'bookings');
+                    const qActive = query(
+                        bookingsRef,
+                        where('house_id', '==', currentHouse.id),
+                        where('end', '>=', Timestamp.fromDate(now)),
+                        orderBy('end', 'asc')
+                    );
+                    const activeSnap = await getDocs(qActive);
+                    const active = activeSnap.docs.find(doc => {
+                        const data = doc.data();
+                        return data.start.toDate() <= now && data.end.toDate() >= now;
+                    });
+                    setIsOccupied(!!active);
+                } catch (e) {
+                    console.error("Error checking occupancy:", e);
+                }
+
+                // 3. Fetch Top 3 Tasks (Pending/In Progress)
+                try {
+                    const tasksRef = collection(db, 'tasks');
+                    const qTasks = query(
+                        tasksRef,
+                        where('house_id', '==', currentHouse.id),
+                        where('status', 'in', ['pending', 'in_progress']),
+                        orderBy('created_at', 'desc'),
+                        limit(3)
+                    );
+                    const tasksSnap = await getDocs(qTasks);
+                    const tasksData = tasksSnap.docs.map(doc => {
+                        const d = doc.data();
+                        return {
+                            id: doc.id,
+                            ...d,
+                            created_at: d.created_at?.toDate()
+                        } as Task;
+                    });
+                    setTasks(tasksData);
+                } catch (e) {
+                    console.error("Error fetching tasks:", e);
+                }
 
                 // 4. Fetch Shopping List Items
-                const shoppingRef = collection(db, 'shopping_list');
-                const qShopping = query(
-                    shoppingRef,
-                    where('house_id', '==', currentHouse.id),
-                    orderBy('checked', 'asc'),
-                    orderBy('created_at', 'desc')
-                );
-                const shoppingSnap = await getDocs(qShopping);
-                const shoppingData = shoppingSnap.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    created_at: doc.data().created_at?.toDate() || new Date(),
-                    checked_at: doc.data().checked_at?.toDate()
-                })) as ShoppingItem[];
-                setShoppingItems(shoppingData);
+                try {
+                    const shoppingRef = collection(db, 'shopping_list');
+                    const qShopping = query(
+                        shoppingRef,
+                        where('house_id', '==', currentHouse.id),
+                        orderBy('checked', 'asc'),
+                        orderBy('created_at', 'desc')
+                    );
+                    const shoppingSnap = await getDocs(qShopping);
+                    const shoppingData = shoppingSnap.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        created_at: doc.data().created_at?.toDate() || new Date(),
+                        checked_at: doc.data().checked_at?.toDate()
+                    })) as ShoppingItem[];
+                    setShoppingItems(shoppingData);
+                } catch (e) {
+                    console.error("Error fetching shopping items:", e);
+                }
 
                 // 5. Fetch Recent Internal Logs
-                const logsRef = collection(db, 'internal_logs');
-                const qLogs = query(
-                    logsRef,
-                    where('house_id', '==', currentHouse.id),
-                    orderBy('created_at', 'desc'),
-                    limit(10)
-                );
-                const logsSnap = await getDocs(qLogs);
-                const logsData = logsSnap.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    created_at: doc.data().created_at?.toDate() || new Date()
-                })) as InternalLog[];
-                setLogs(logsData);
+                try {
+                    const logsRef = collection(db, 'internal_logs');
+                    const qLogs = query(
+                        logsRef,
+                        where('house_id', '==', currentHouse.id),
+                        orderBy('created_at', 'desc'),
+                        limit(10)
+                    );
+                    const logsSnap = await getDocs(qLogs);
+                    const logsData = logsSnap.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        created_at: doc.data().created_at?.toDate() || new Date()
+                    })) as InternalLog[];
+                    setLogs(logsData);
 
-                // Check if user is checked in
-                if (currentUser?.uid) {
-                    const userLogs = logsData.filter(log => log.user_id === currentUser.uid);
-                    if (userLogs.length > 0) {
-                        // Check if last action was check-in or check-out
-                        // Simple logic: Look for "skráði komu" vs "skráði brottför" in the text
-                        const lastLog = userLogs[0];
-                        if (lastLog.text.includes('skráði komu')) {
-                            setIsCheckedIn(true);
-                        } else if (lastLog.text.includes('skráði brottför')) {
-                            setIsCheckedIn(false);
+                    // Check if user is checked in
+                    if (currentUser?.uid) {
+                        const userLogs = logsData.filter(log => log.user_id === currentUser.uid);
+                        if (userLogs.length > 0) {
+                            const lastLog = userLogs[0];
+                            if (lastLog.text.includes('skráði komu')) {
+                                setIsCheckedIn(true);
+                            } else if (lastLog.text.includes('skráði brottför')) {
+                                setIsCheckedIn(false);
+                            }
                         }
                     }
+                } catch (e) {
+                    console.error("Error fetching logs:", e);
                 }
 
                 // 6. Fetch Weather
-                if (currentHouse.location?.lat && currentHouse.location?.lng) {
-                    const wData = await fetchWeather(currentHouse.location.lat, currentHouse.location.lng);
-                    if (wData) {
-                        setWeather({
-                            temp: wData.temp,
-                            wind: wData.windSpeed,
-                            condition: wData.condition
-                        });
+                try {
+                    if (currentHouse.location?.lat && currentHouse.location?.lng) {
+                        const wData = await fetchWeather(currentHouse.location.lat, currentHouse.location.lng);
+                        if (wData) {
+                            setWeather({
+                                temp: wData.temp,
+                                wind: wData.windSpeed,
+                                condition: wData.condition
+                            });
+                        }
+                    } else {
+                        setWeather({ temp: "?", wind: 0, condition: "Vantar staðsetningu" });
                     }
-                } else {
-                    setWeather({ temp: "?", wind: 0, condition: "Vantar staðsetningu" });
+                } catch (e) {
+                    console.error("Error fetching weather:", e);
                 }
 
                 // 7. Fetch Finance Data (Hússjóður)
-                const financeRef = collection(db, 'finance_entries');
-                const qFinance = query(
-                    financeRef,
-                    where('house_id', '==', currentHouse.id)
-                );
-                const financeSnap = await getDocs(qFinance);
-                const financeEntries = financeSnap.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        ...data,
-                        date: data.date?.toDate() || new Date(),
-                        created_at: data.created_at?.toDate() || new Date()
-                    } as LedgerEntry;
-                });
+                try {
+                    const financeRef = collection(db, 'finance_entries');
+                    const qFinance = query(
+                        financeRef,
+                        where('house_id', '==', currentHouse.id)
+                    );
+                    const financeSnap = await getDocs(qFinance);
+                    const financeEntries = financeSnap.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            ...data,
+                            date: data.date?.toDate() || new Date(),
+                            created_at: data.created_at?.toDate() || new Date()
+                        } as LedgerEntry;
+                    });
 
-                const totalIncome = financeEntries
-                    .filter(e => e.type !== 'expense')
-                    .reduce((sum, e) => sum + e.amount, 0);
-                const totalExpense = financeEntries
-                    .filter(e => e.type === 'expense')
-                    .reduce((sum, e) => sum + e.amount, 0);
-                const balance = totalIncome - totalExpense;
+                    const totalIncome = financeEntries
+                        .filter(e => e.type !== 'expense')
+                        .reduce((sum, e) => sum + e.amount, 0);
+                    const totalExpense = financeEntries
+                        .filter(e => e.type === 'expense')
+                        .reduce((sum, e) => sum + e.amount, 0);
+                    const balance = totalIncome - totalExpense;
 
-                let lastAction = "Ekkert að frétta";
-                if (financeEntries.length > 0) {
-                    // Sort by date desc (latest first)
-                    financeEntries.sort((a, b) => b.date.getTime() - a.date.getTime());
-                    const latest = financeEntries[0];
-                    const amountStr = latest.amount.toLocaleString('is-IS');
-                    const action = latest.type === 'expense' ? 'Greiddi' : 'Lagði inn';
-                    const who = latest.paid_by_name ? latest.paid_by_name.split(' ')[0] : 'Sjóðurinn';
-                    lastAction = `${who} ${action.toLowerCase()} ${amountStr} kr.`;
+                    let lastAction = "Ekkert að frétta";
+                    if (financeEntries.length > 0) {
+                        financeEntries.sort((a, b) => b.date.getTime() - a.date.getTime());
+                        const latest = financeEntries[0];
+                        const amountStr = latest.amount.toLocaleString('is-IS');
+                        const action = latest.type === 'expense' ? 'Greiddi' : 'Lagði inn';
+                        const who = latest.paid_by_name ? latest.paid_by_name.split(' ')[0] : 'Sjóðurinn';
+                        lastAction = `${who} ${action.toLowerCase()} ${amountStr} kr.`;
+                    }
+
+                    setFinances({ balance, lastAction });
+                } catch (e) {
+                    console.error("Error fetching finance data:", e);
                 }
 
-                setFinances({ balance, lastAction });
-
             } catch (error) {
-                console.error("Dashboard data fetch error:", error);
+                console.error("Major dashboard data fetch error:", error);
             } finally {
                 setLoading(false);
             }
@@ -615,6 +649,17 @@ const UserDashboard = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/20 to-transparent opacity-90"></div>
 
+                    {/* Gallery Preview Button */}
+                    {currentHouse?.gallery_urls && currentHouse.gallery_urls.length > 0 && (
+                        <button
+                            onClick={() => setSelectedGalleryImage(currentHouse.image_url || currentHouse.gallery_urls![0])}
+                            className="absolute top-6 right-6 bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/20 transition-all flex items-center gap-2"
+                        >
+                            <ImageIcon size={14} />
+                            Skoða myndasafn ({currentHouse.gallery_urls.length + (currentHouse.image_url ? 1 : 0)})
+                        </button>
+                    )}
+
                     {/* Greeting & Weather */}
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div>
@@ -935,6 +980,39 @@ const UserDashboard = () => {
                             >
                                 {checkoutLoading ? 'Skrái...' : 'Staðfesta Brottför'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Gallery Modal */}
+            {selectedGalleryImage && (
+                <div
+                    className="fixed inset-0 z-50 bg-[#1a1a1a]/95 flex flex-col items-center justify-center p-4 md:p-8"
+                    onClick={() => setSelectedGalleryImage(null)}
+                >
+                    <button className="absolute top-8 right-8 text-white p-2 hover:bg-white/10 rounded-full transition-colors">
+                        <X size={32} />
+                    </button>
+
+                    <div className="w-full max-w-5xl aspect-video relative group" onClick={e => e.stopPropagation()}>
+                        <img
+                            src={selectedGalleryImage}
+                            alt="Full view"
+                            className="w-full h-full object-contain rounded-xl"
+                        />
+
+                        {/* Simple gallery thumbnails inside modal */}
+                        <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-2 overflow-x-auto py-2">
+                            {[currentHouse?.image_url, ...(currentHouse?.gallery_urls || [])].filter(Boolean).map((url, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setSelectedGalleryImage(url!)}
+                                    className={`w-12 h-12 rounded-md overflow-hidden border-2 transition-all ${selectedGalleryImage === url ? 'border-amber scale-110 shadow-lg' : 'border-white/20 opacity-50 hover:opacity-100'}`}
+                                >
+                                    <img src={url!} className="w-full h-full object-cover" />
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>

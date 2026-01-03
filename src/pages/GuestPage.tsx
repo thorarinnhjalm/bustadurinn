@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 import {
     Wifi, MapPin, Key, Copy, BookOpen,
     Sun, Phone, Heart, Share2, Mail,
-    Tv, Droplets, Flame, ArrowRight, Loader2, Navigation
+    Tv, Droplets, Flame, ArrowRight, Loader2, Navigation, X
 } from 'lucide-react';
 import { fetchWeather } from '@/utils/weather';
 
@@ -24,6 +24,7 @@ export default function GuestPage() {
     const [error, setError] = useState('');
     const [copied, setCopied] = useState('');
     const [weather, setWeather] = useState<{ temp: number | string, condition: string }>({ temp: '—', condition: 'Hleður...' });
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchView = async () => {
@@ -261,6 +262,28 @@ export default function GuestPage() {
                     </div>
                 </div>
 
+                {/* GALLERY SECTION */}
+                {data.gallery_urls && data.gallery_urls.length > 0 && (
+                    <div className="bg-white p-1 rounded-2xl shadow-xl shadow-stone-200 border border-stone-100 overflow-hidden">
+                        <div className="px-5 py-4 flex justify-between items-center">
+                            <h3 className="font-serif text-lg font-bold">Myndir</h3>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 underline decoration-amber underline-offset-4">{data.gallery_urls.length} myndir</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 p-1">
+                            {data.gallery_urls.map((url: string, i: number) => (
+                                <div key={i} className={`relative overflow-hidden ${i === 0 && data.gallery_urls.length % 2 !== 0 ? 'col-span-2 aspect-video' : 'aspect-square'}`}>
+                                    <img
+                                        src={url}
+                                        alt={`House view ${i + 1}`}
+                                        className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-500"
+                                        onClick={() => setSelectedImage(url)}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* GUIDES GRID */}
                 <div className="grid grid-cols-2 gap-3">
                     {/* Directions Button (Dynamic based on GPS) */}
@@ -430,6 +453,23 @@ export default function GuestPage() {
                 </div>
 
             </main>
+
+            {/* Image Modal */}
+            {selectedImage && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <button className="absolute top-6 right-6 text-white p-2">
+                        <X size={28} />
+                    </button>
+                    <img
+                        src={selectedImage}
+                        alt="Full Screen View"
+                        className="max-w-full max-h-full rounded-lg shadow-2xl object-contain"
+                    />
+                </div>
+            )}
         </div>
     );
 }
