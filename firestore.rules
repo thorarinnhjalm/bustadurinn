@@ -12,13 +12,13 @@ service cloud.firestore {
     function isSuperAdmin() {
       return isAuthenticated() && (
         request.auth.uid == 'sxcToczAAwT3Fmh8FPXa1P6hMHB3' || 
-        request.auth.token.get('email', '') == 'thorarinnhjalmarsson@gmail.com' ||
-        request.auth.token.get('email', '') == 'thorarinnhjalm@gmail.com'
+        request.auth.token.email == 'thorarinnhjalmarsson@gmail.com' ||
+        request.auth.token.email == 'thorarinnhjalm@gmail.com'
       );
     }
     
-    // GLOBAL ADMIN BYPASS - MUST BE AT THE TOP
-    match /{allDocuments=**} {
+    // GLOBAL ADMIN BYPASS
+    match /{document=**} {
       allow read, write: if isSuperAdmin();
     }
     

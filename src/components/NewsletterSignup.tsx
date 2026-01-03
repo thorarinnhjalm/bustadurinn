@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { CheckCircle, ArrowRight, Loader2, Mail } from 'lucide-react';
 
 interface NewsletterSignupProps {
@@ -20,16 +20,8 @@ export default function NewsletterSignup({ variant = 'full' }: NewsletterSignupP
         setError('');
 
         try {
-            // Check if already subscribed (optional but nice)
-            const q = query(collection(db, 'newsletter_subscribers'), where('email', '==', email.toLowerCase().trim()));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                setStatus('success');
-                return;
-            }
-
-            // Save to Firestore
+            // Save to Firestore directly
+            // Public users don't have read access to check if exists, so we just add
             await addDoc(collection(db, 'newsletter_subscribers'), {
                 email: email.toLowerCase().trim(),
                 created_at: serverTimestamp(),
