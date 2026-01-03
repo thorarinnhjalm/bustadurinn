@@ -117,40 +117,29 @@ export default function SuperAdminPage() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
+                setLoading(true);
                 setError(null);
-                console.log('📊 Starting fetchStats...');
 
-                // Fetch all houses
-                console.log('1. Fetching houses...');
-                const housesSnap = await getDocs(collection(db, 'houses'));
+                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap] = await Promise.all([
+                    getDocs(collection(db, 'houses')),
+                    getDocs(collection(db, 'users')),
+                    getDocs(collection(db, 'bookings')),
+                    getDocs(collection(db, 'tasks')),
+                    getDocs(collection(db, 'contact_submissions')),
+                    getDocs(collection(db, 'coupons')),
+                    getDocs(collection(db, 'newsletter_subscribers'))
+                ]);
+
                 const houses = housesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as House));
-
-                // Fetch all users
-                console.log('2. Fetching users...');
-                const usersSnap = await getDocs(collection(db, 'users'));
                 const users = usersSnap.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
-
-                // Fetch bookings
-                console.log('3. Fetching bookings...');
-                const bookingsSnap = await getDocs(collection(db, 'bookings'));
-
-                // Fetch tasks
-                console.log('4. Fetching tasks...');
-                const tasksSnap = await getDocs(collection(db, 'tasks'));
                 const activeTasks = tasksSnap.docs.filter(doc => doc.data().status !== 'completed').length;
 
-                // Fetch contact submissions
-                console.log('5. Fetching contacts...');
-                const contactsSnap = await getDocs(collection(db, 'contact_submissions'));
                 const contacts = contactsSnap.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
                     created_at: doc.data().created_at?.toDate() || new Date()
                 } as ContactSubmission));
 
-                // Fetch coupons
-                console.log('6. Fetching coupons...');
-                const couponsSnap = await getDocs(collection(db, 'coupons'));
                 const coupons = couponsSnap.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
@@ -158,17 +147,11 @@ export default function SuperAdminPage() {
                     valid_until: (doc.data().valid_until as any)?.toDate() || undefined
                 } as Coupon));
 
-                // Fetch newsletter subscribers
-                console.log('7. Fetching newsletter subscribers...');
-                const subRef = collection(db, 'newsletter_subscribers');
-                const subSnap = await getDocs(subRef);
                 const subscribers = subSnap.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
                     created_at: (doc.data().created_at as any)?.toDate() || new Date()
                 } as NewsletterSubscriber));
-
-                console.log('✅ All fetches completed!');
 
                 setStats({
                     totalHouses: houses.length,
