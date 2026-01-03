@@ -654,20 +654,19 @@ export default function SettingsPage() {
                                         {house.image_url ? (
                                             <div className="relative aspect-video rounded-lg overflow-hidden border border-stone-200">
                                                 <img src={house.image_url} alt={house.name} className="w-full h-full object-cover" />
-                                                {isManager && (
-                                                    <label className="absolute top-4 right-4 btn btn-secondary text-sm cursor-pointer">
-                                                        <Upload className="w-4 h-4 mr-2" />
-                                                        Skipta um mynd
-                                                        <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
-                                                    </label>
-                                                )}
+                                                {/* All co-owners (anyone in owner_ids) can change the picture */}
+                                                <label className="absolute top-4 right-4 btn btn-secondary text-sm cursor-pointer">
+                                                    <Upload className="w-4 h-4 mr-2" />
+                                                    Skipta um mynd
+                                                    <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+                                                </label>
                                             </div>
                                         ) : (
                                             <label className="border-2 border-dashed border-stone-300 rounded-lg p-12 flex flex-col items-center justify-center cursor-pointer hover:border-amber transition-colors">
                                                 <Upload className="w-12 h-12 text-stone-400 mb-4" />
                                                 <p className="text-stone-600 font-medium mb-1">Smelltu hér til að hlaða upp mynd</p>
                                                 <p className="text-stone-400 text-sm">JPG, PNG eða WebP (16:9 hlutfall mælt með)</p>
-                                                <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" disabled={!isManager} />
+                                                <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
                                             </label>
                                         )}
                                     </div>

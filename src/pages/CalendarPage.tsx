@@ -35,7 +35,8 @@ interface CustomToolbarProps {
     localizer: { messages: any };
 }
 
-const CustomToolbar = ({ label, onNavigate, onView, view }: CustomToolbarProps) => {
+// Simplified toolbar - only navigation since view toggle is now external
+const CustomToolbar = ({ label, onNavigate }: CustomToolbarProps) => {
     return (
         <div className="flex flex-col gap-4 mb-6">
             <div className="flex items-center justify-between">
@@ -66,89 +67,145 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: CustomToolbarProps) 
                     Í dag
                 </button>
             </div>
-
-            {/* View Switcher - Segmented Control Style (Month and List only) */}
-            <div className="flex p-1 bg-stone-100 rounded-lg self-center md:self-start w-full md:w-auto">
-                <button
-                    onClick={() => onView('month')}
-                    className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${view === 'month'
-                        ? 'bg-white text-charcoal shadow-sm'
-                        : 'text-stone-500 hover:text-stone-700'
-                        }`}
-                >
-                    Mánuður
-                </button>
-                <button
-                    onClick={() => onView('agenda')}
-                    className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${view === 'agenda'
-                        ? 'bg-white text-charcoal shadow-sm'
-                        : 'text-stone-500 hover:text-stone-700'
-                        }`}
-                >
-                    Listi
-                </button>
-            </div>
         </div>
     );
 };
 
-const CustomAgendaEvent = ({ event }: { event: BookingEvent }) => {
+// Custom Booking Card for the list view - shows ONE card per booking with full date range
+const BookingCard = ({ booking, onClick, getTypeLabel }: {
+    booking: Booking;
+    onClick: (booking: Booking) => void;
+    getTypeLabel: (type: BookingType) => string;
+}) => {
     // Format date range nicely: "17. - 20. júní"
     const formatDateRange = (start: Date, end: Date) => {
         const startDay = start.getDate();
         const endDay = end.getDate();
         const sameMonth = start.getMonth() === end.getMonth();
+        const sameYear = start.getFullYear() === end.getFullYear();
 
-        if (sameMonth) {
+        if (sameMonth && sameYear) {
             const month = start.toLocaleDateString('is-IS', { month: 'long' });
+            if (startDay === endDay) {
+                return `${startDay}. ${month}`;
+            }
             return `${startDay}. - ${endDay}. ${month}`;
-        } else {
+        } else if (sameYear) {
             const startMonth = start.toLocaleDateString('is-IS', { month: 'short' });
             const endMonth = end.toLocaleDateString('is-IS', { month: 'short' });
             return `${startDay}. ${startMonth} - ${endDay}. ${endMonth}`;
+        } else {
+            return `${start.toLocaleDateString('is-IS')} - ${end.toLocaleDateString('is-IS')}`;
         }
     };
 
+    // Calculate number of nights
+    const nights = Math.max(1, Math.ceil((booking.end.getTime() - booking.start.getTime()) / (1000 * 60 * 60 * 24)));
+
+    const typeColors = {
+        personal: { bg: 'bg-amber/10', text: 'text-amber-700', border: 'border-l-amber' },
+        rental: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-l-green-500' },
+        maintenance: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-l-red-500' },
+        guest: { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-l-indigo-500' }
+    };
+
+    const colors = typeColors[booking.type] || typeColors.personal;
+
     return (
-        <div className="flex flex-col py-3 px-2 border-l-4" style={{
-            borderLeftColor: event.booking.type === 'personal' ? '#e8b058' :
-                event.booking.type === 'rental' ? '#10b981' :
-                    event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1'
-        }}>
-            <div className="flex items-center justify-between mb-2">
-                <span className="font-bold text-charcoal text-lg">
-                    {event.booking.user_name}
-                </span>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${event.booking.type === 'personal' ? 'bg-amber/10 text-amber-dark' :
-                    event.booking.type === 'rental' ? 'bg-green-100 text-green-700' :
-                        event.booking.type === 'maintenance' ? 'bg-red-100 text-red-700' :
-                            'bg-indigo-100 text-indigo-700'
-                    }`}>
-                    {event.title.split(' - ')[1] || event.title}
-                </span>
+        <div
+            onClick={() => onClick(booking)}
+            className={`bg-white rounded-lg border border-stone-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all border-l-4 ${colors.border}`}
+        >
+            <div className="flex items-start justify-between mb-3">
+                <div>
+                    <h3 className="font-bold text-charcoal text-lg">{booking.user_name}</h3>
+                    <span className={`inline-block text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider mt-1 ${colors.bg} ${colors.text}`}>
+                        {getTypeLabel(booking.type)}
+                    </span>
+                </div>
+                <div className="text-right">
+                    <span className="text-2xl font-bold text-charcoal">{nights}</span>
+                    <span className="text-xs text-stone-500 block">{nights === 1 ? 'nótt' : 'nætur'}</span>
+                </div>
             </div>
 
-            {/* Date Range - More Prominent */}
-            <div className="flex items-center gap-2 mb-2">
-                <CalendarIcon className="w-4 h-4 text-amber" />
+            {/* Date Range - Prominent */}
+            <div className="flex items-center gap-2 mb-2 bg-stone-50 rounded-lg p-3">
+                <CalendarIcon className="w-5 h-5 text-amber flex-shrink-0" />
                 <span className="text-base font-semibold text-stone-700">
-                    {formatDateRange(event.start, event.end)}
+                    {formatDateRange(booking.start, booking.end)}
                 </span>
             </div>
 
-            {event.booking.notes && (
-                <p className="text-sm text-stone-600 bg-stone-50 rounded p-2 mb-2">
-                    {event.booking.notes}
+            {booking.notes && (
+                <p className="text-sm text-stone-600 bg-stone-50 rounded p-2 mb-2 mt-2">
+                    {booking.notes}
                 </p>
             )}
 
             {/* Created date */}
-            {event.booking.created_at && (
-                <div className="flex items-center text-xs text-stone-400 mt-1">
+            {booking.created_at && (
+                <div className="flex items-center text-xs text-stone-400 mt-2">
                     <Clock className="w-3 h-3 mr-1" />
-                    Bókað: {event.booking.created_at.toLocaleDateString('is-IS', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    Bókað: {booking.created_at.toLocaleDateString('is-IS', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </div>
             )}
+        </div>
+    );
+};
+
+// Custom Bookings List View - shows all bookings as cards (one per booking)
+const BookingsListView = ({
+    bookings,
+    onSelectBooking,
+    getTypeLabel
+}: {
+    bookings: Booking[];
+    onSelectBooking: (booking: Booking) => void;
+    getTypeLabel: (type: BookingType) => string;
+}) => {
+    // Sort bookings by start date (upcoming first)
+    const sortedBookings = [...bookings].sort((a, b) => a.start.getTime() - b.start.getTime());
+
+    // Group by month
+    const groupedByMonth: { [key: string]: Booking[] } = {};
+    sortedBookings.forEach(booking => {
+        const monthKey = booking.start.toLocaleDateString('is-IS', { month: 'long', year: 'numeric' });
+        if (!groupedByMonth[monthKey]) {
+            groupedByMonth[monthKey] = [];
+        }
+        groupedByMonth[monthKey].push(booking);
+    });
+
+    if (bookings.length === 0) {
+        return (
+            <div className="text-center py-12">
+                <CalendarIcon className="w-12 h-12 text-stone-300 mx-auto mb-4" />
+                <p className="text-stone-500 text-lg">Engar bókanir ennþá</p>
+                <p className="text-stone-400 text-sm">Smelltu á "Ný bókun" til að bóka dvöl</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            {Object.entries(groupedByMonth).map(([month, monthBookings]) => (
+                <div key={month}>
+                    <h3 className="text-lg font-serif font-bold text-charcoal mb-3 capitalize sticky top-0 bg-white py-2 z-10">
+                        {month}
+                    </h3>
+                    <div className="space-y-3">
+                        {monthBookings.map(booking => (
+                            <BookingCard
+                                key={booking.id}
+                                booking={booking}
+                                onClick={onSelectBooking}
+                                getTypeLabel={getTypeLabel}
+                            />
+                        ))}
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };
@@ -551,9 +608,26 @@ export default function CalendarPage() {
         }
     };
 
-    // Custom day cell style to highlight holidays
+    // Custom day cell style to highlight holidays AND booked days
     const dayPropGetter = useCallback((date: Date) => {
+        // Check if this day has any bookings
+        const dayStart = new Date(date);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(date);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const hasBooking = bookings.some(booking => {
+            const bookingStart = new Date(booking.start);
+            bookingStart.setHours(0, 0, 0, 0);
+            const bookingEnd = new Date(booking.end);
+            bookingEnd.setHours(23, 59, 59, 999);
+            // Check if this date falls within the booking range
+            return dayStart >= bookingStart && dayStart <= bookingEnd;
+        });
+
         const holiday = isHoliday(date);
+
+        // Priority: Holiday styles take precedence, then booked days
         if (holiday) {
             return {
                 style: {
@@ -562,8 +636,19 @@ export default function CalendarPage() {
                 }
             };
         }
+
+        // If the day has a booking, give it a subtle background
+        if (hasBooking) {
+            return {
+                style: {
+                    backgroundColor: '#f0fdf4', // Very light green to indicate occupied
+                    borderLeft: '3px solid #22c55e'
+                }
+            };
+        }
+
         return {};
-    }, []);
+    }, [bookings]);
 
     return (
         <div className="min-h-screen bg-bone">
@@ -624,6 +709,28 @@ export default function CalendarPage() {
                     </div>
                 )}
 
+                {/* View Toggle - Controls Month vs List View */}
+                <div className="flex p-1 bg-stone-100 rounded-lg mb-4 w-full md:w-auto md:inline-flex">
+                    <button
+                        onClick={() => setView('month')}
+                        className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${view === 'month'
+                            ? 'bg-white text-charcoal shadow-sm'
+                            : 'text-stone-500 hover:text-stone-700'
+                            }`}
+                    >
+                        Mánuður
+                    </button>
+                    <button
+                        onClick={() => setView('agenda')}
+                        className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${view === 'agenda'
+                            ? 'bg-white text-charcoal shadow-sm'
+                            : 'text-stone-500 hover:text-stone-700'
+                            }`}
+                    >
+                        Listi
+                    </button>
+                </div>
+
                 <div className="bg-white rounded-lg shadow-sm p-2 md:p-6 overflow-hidden">
                     <div
                         onTouchStart={onTouchStart}
@@ -632,53 +739,59 @@ export default function CalendarPage() {
                         className="h-full calendar-container"
                         style={{ overflowY: 'auto' }}
                     >
-                        <BigCalendar
-                            localizer={localizer}
-                            events={events}
-                            startAccessor="start"
-                            endAccessor="end"
-                            className="h-[65vh] md:h-[700px] font-sans"
-                            onSelectSlot={handleSelectSlot}
-                            onSelectEvent={handleSelectEvent}
-                            selectable
-                            popup
-                            components={{
-                                toolbar: CustomToolbar,
-                                agenda: {
-                                    event: CustomAgendaEvent
-                                }
-                            }}
-                            views={['month', 'agenda']}
-                            view={view}
-                            onView={handleViewChange}
-                            date={date}
-                            onNavigate={handleNavigate}
-                            culture={language}
-                            messages={calendarMessages[language]}
-                            dayPropGetter={dayPropGetter}
-                            eventPropGetter={(event: BookingEvent) => ({
-                                style: {
-                                    backgroundColor: event.booking.type === 'personal' ? '#e8b058' :
-                                        event.booking.type === 'rental' ? '#10b981' :
-                                            event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1',
-                                    // Agenda view color override (since we provide custom component, this usually affects the dot or line)
-                                    borderLeft: view === 'agenda' ? `4px solid ${event.booking.type === 'personal' ? '#e8b058' :
-                                        event.booking.type === 'rental' ? '#10b981' :
-                                            event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1'
-                                        }` : undefined,
-                                    borderRadius: '4px',
-                                    opacity: 1,
-                                    color: 'white',
-                                    border: '0px',
-                                    display: 'block',
-                                    padding: '2px 5px',
-                                    fontSize: '13px',
-                                    fontWeight: 500,
-                                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                                }
-                            })}
-                        // All-day events only, no time slots needed
-                        />
+                        {/* Show Month Calendar OR List View based on selected view */}
+                        {view === 'month' ? (
+                            <BigCalendar
+                                localizer={localizer}
+                                events={events}
+                                startAccessor="start"
+                                endAccessor="end"
+                                className="h-[65vh] md:h-[700px] font-sans"
+                                onSelectSlot={handleSelectSlot}
+                                onSelectEvent={handleSelectEvent}
+                                selectable
+                                popup
+                                components={{
+                                    toolbar: CustomToolbar
+                                }}
+                                views={['month']}
+                                view="month"
+                                onView={handleViewChange}
+                                date={date}
+                                onNavigate={handleNavigate}
+                                culture={language}
+                                messages={calendarMessages[language]}
+                                dayPropGetter={dayPropGetter}
+                                eventPropGetter={(event: BookingEvent) => ({
+                                    style: {
+                                        backgroundColor: event.booking.type === 'personal' ? '#e8b058' :
+                                            event.booking.type === 'rental' ? '#10b981' :
+                                                event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1',
+                                        borderRadius: '4px',
+                                        opacity: 1,
+                                        color: 'white',
+                                        border: '0px',
+                                        display: 'block',
+                                        padding: '2px 5px',
+                                        fontSize: '13px',
+                                        fontWeight: 500,
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                                    }
+                                })}
+                            />
+                        ) : (
+                            /* Custom List View - Shows one card per booking with full date range */
+                            <div className="min-h-[65vh] md:min-h-[700px]">
+                                <h2 className="text-xl font-serif font-bold text-charcoal mb-4">
+                                    Allar bókanir
+                                </h2>
+                                <BookingsListView
+                                    bookings={bookings}
+                                    onSelectBooking={(booking) => setSelectedBooking(booking)}
+                                    getTypeLabel={getBookingTypeLabel}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
 
