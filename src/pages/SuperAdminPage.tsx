@@ -36,20 +36,30 @@ interface ContactSubmission {
     status: 'new' | 'read' | 'replied';
 }
 
+interface NewsletterSubscriber {
+    id: string;
+    email: string;
+    created_at: Date;
+    source?: string;
+    status: string;
+}
+
 interface Stats {
     totalHouses: number;
     totalUsers: number;
     totalBookings: number;
+    totalSubscribers: number;
     activeTasks: number;
     allHouses: House[];
     allUsers: User[];
     allContacts: ContactSubmission[];
     allCoupons: Coupon[];
+    allSubscribers: NewsletterSubscriber[];
 }
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'houses' | 'users' | 'contacts' | 'coupons' | 'integrations' | 'emails'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'houses' | 'users' | 'contacts' | 'coupons' | 'integrations' | 'emails' | 'newsletter'>('overview');
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [editingHouse, setEditingHouse] = useState<House | null>(null);
@@ -84,11 +94,13 @@ export default function SuperAdminPage() {
         totalHouses: 0,
         totalUsers: 0,
         totalBookings: 0,
+        totalSubscribers: 0,
         activeTasks: 0,
         allHouses: [],
         allUsers: [],
         allContacts: [],
-        allCoupons: []
+        allCoupons: [],
+        allSubscribers: []
     });
 
     // Email Templates Logic - Define BEFORE useEffect
@@ -139,15 +151,25 @@ export default function SuperAdminPage() {
                     valid_until: (doc.data().valid_until as any)?.toDate() || undefined
                 } as Coupon));
 
+                // Fetch newsletter subscribers
+                const subSnap = await getDocs(collection(db, 'newsletter_subscribers'));
+                const subscribers = subSnap.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    created_at: (doc.data().created_at as any)?.toDate() || new Date()
+                } as NewsletterSubscriber));
+
                 setStats({
                     totalHouses: houses.length,
                     totalUsers: users.length,
                     totalBookings: bookingsSnap.size,
+                    totalSubscribers: subSnap.size,
                     activeTasks,
                     allHouses: houses,
                     allUsers: users,
                     allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
-                    allCoupons: coupons
+                    allCoupons: coupons,
+                    allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
                 });
             } catch (error: any) {
                 console.error('Error fetching stats:', error);
@@ -848,7 +870,7 @@ export default function SuperAdminPage() {
                             { id: 'integrations', icon: Settings, label: 'Tengingar' },
                             { id: 'coupons', icon: Tag, label: 'Afslættir' },
                             { id: 'contacts', icon: Mail, label: 'Samskipti' },
-                            { id: 'emails', icon: Send, label: 'Póstlisti' }
+                            { id: 'newsletter', icon: Send, label: 'Póstlisti' }
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -920,8 +942,8 @@ export default function SuperAdminPage() {
 
                     return (
                         <div className="space-y-6">
-                            {/* Primary Metrics Grid - Mobile Optimized (2 cols on mobile) */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+                            {/* Primary Metrics Grid - Mobile Optimized */}
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6">
                                 {/* Total Houses */}
                                 <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
                                     <div className="flex items-center gap-2 mb-3">
@@ -979,6 +1001,20 @@ export default function SuperAdminPage() {
                                     </p>
                                     <p className="text-[10px] md:text-xs text-stone-400">
                                         {paidHouses.length} greiðandi hús
+                                    </p>
+                                </div>
+
+                                {/* Newsletter Subscribers */}
+                                <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                                            <Send className="w-4 h-4 text-blue-600" />
+                                        </div>
+                                        <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Póstlisti</p>
+                                    </div>
+                                    <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalSubscribers}</p>
+                                    <p className="text-[10px] md:text-xs text-stone-400">
+                                        Væntanlegir viðskiptavinir
                                     </p>
                                 </div>
                             </div>
@@ -1675,10 +1711,85 @@ export default function SuperAdminPage() {
                         </div>
                     )
                 }
-                {/* Emails Tab */}
+                {/* Newsletter Tab */}
+                {
+                    activeTab === 'newsletter' && (
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-2xl font-serif">Póstlisti</h2>
+                                <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-bold border border-blue-100">
+                                    {stats.totalSubscribers} skráðir
+                                </div>
+                            </div>
+
+                            <DataTable
+                                columns={[
+                                    {
+                                        key: 'email',
+                                        label: 'Netfang',
+                                        render: (row) => <span className="font-medium text-charcoal">{row.email}</span>
+                                    },
+                                    {
+                                        key: 'created_at',
+                                        label: 'Skráður þann',
+                                        render: (row) => row.created_at.toLocaleDateString('is-IS', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })
+                                    },
+                                    {
+                                        key: 'source',
+                                        label: 'Uppruni',
+                                        render: (row) => (
+                                            <span className="text-xs bg-stone-100 text-stone-500 px-2 py-0.5 rounded">
+                                                {row.source || '/'}
+                                            </span>
+                                        )
+                                    },
+                                    {
+                                        key: 'status',
+                                        label: 'Staða',
+                                        render: (row) => (
+                                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold uppercase">
+                                                {row.status || 'active'}
+                                            </span>
+                                        )
+                                    },
+                                    {
+                                        key: 'actions',
+                                        label: '',
+                                        render: (row) => (
+                                            <button
+                                                onClick={async () => {
+                                                    if (!confirm(`Eyða ${row.email} af póstlista?`)) return;
+                                                    await deleteDoc(doc(db, 'newsletter_subscribers', row.id));
+                                                    setStats(prev => ({
+                                                        ...prev,
+                                                        allSubscribers: prev.allSubscribers.filter(s => s.id !== row.id),
+                                                        totalSubscribers: prev.totalSubscribers - 1
+                                                    }));
+                                                }}
+                                                className="text-stone-400 hover:text-red-500 transition-colors p-1"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )
+                                    }
+                                ]}
+                                data={stats.allSubscribers}
+                                searchKeys={['email']}
+                            />
+                        </div>
+                    )
+                }
+
+                {/* Emails Tab (Old Templates - keeping for logic) */}
                 {
                     activeTab === 'emails' && (
-                        <div className="max-w-4xl space-y-6">
+                        <div className="max-w-4xl space-y-8">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-serif">Email Templates</h2>
                                 <button onClick={fetchTemplates} className="btn btn-ghost btn-sm">Refresh</button>

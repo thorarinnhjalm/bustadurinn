@@ -1,6 +1,7 @@
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import Logo from '@/components/Logo';
 import { Helmet } from 'react-helmet-async';
+import NewsletterSignup from '@/components/NewsletterSignup';
 
 interface MarketingLayoutProps {
     children: React.ReactNode;
@@ -37,7 +38,7 @@ export default function MarketingLayout({ children, title, description }: Market
                     </div>
 
                     <div className="flex gap-4">
-                        <button onClick={() => navigate('/login')} className="btn btn-ghost hover:bg-amber/10">Innskrá</button>
+                        <button onClick={() => navigate('/login')} className="btn btn-ghost hover:bg-amber/10 text-charcoal">Innskrá</button>
                         <button onClick={() => navigate('/signup')} className="btn btn-primary">Byrja núna</button>
                     </div>
                 </div>
@@ -47,24 +48,43 @@ export default function MarketingLayout({ children, title, description }: Market
                 {children}
             </main>
 
-            <footer className="bg-charcoal text-bone py-12 border-t border-white/5">
-                <div className="container mx-auto text-center">
-                    <div className="mb-8 flex justify-center">
-                        <Logo size={48} className="text-white opacity-20" />
+            <footer className="bg-charcoal text-bone py-20 border-t border-white/5">
+                <div className="container mx-auto px-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16 items-start">
+                        {/* Company Info */}
+                        <div className="space-y-6">
+                            <Link to="/" className="flex items-center gap-3">
+                                <Logo size={32} className="text-bone opacity-90" />
+                                <span className="text-2xl font-serif font-bold">Bústaðurinn.is</span>
+                            </Link>
+                            <p className="text-stone-400 max-w-sm text-lg leading-relaxed">
+                                Við færum utanumhald sumarhússins úr flóknum Excel skjölum yfir í fágað og nútímalegt viðmót.
+                            </p>
+                        </div>
+
+                        {/* Newsletter Mini */}
+                        <div className="bg-white/5 p-8 rounded-2xl border border-white/10">
+                            <h4 className="text-lg font-bold mb-2">Fréttabréf og ráð</h4>
+                            <p className="text-stone-400 text-sm mb-6">Fáðu tilkynningu þegar við bætum við nýjum eiginleikum.</p>
+                            <NewsletterSignup variant="compact" />
+                        </div>
                     </div>
-                    <div className="flex flex-wrap justify-center gap-8 mb-10 text-stone-300 font-semibold whitespace-nowrap">
-                        <Link to="/eiginleikar" className="text-inherit hover:text-white transition-colors text-base">Eiginleikar</Link>
-                        <Link to="/spurt-og-svarad" className="text-inherit hover:text-white transition-colors text-base">Algengar spurningar</Link>
-                        <Link to="/um-okkur" className="text-inherit hover:text-white transition-colors text-base">Um Okkur</Link>
-                        <Link to="/hafa-samband" className="text-inherit hover:text-white transition-colors text-base">Hafa samband</Link>
-                        <Link to="/personuvernd" className="text-inherit hover:text-white transition-colors text-base">Persónuvernd</Link>
-                        <Link to="/skilmalar" className="text-inherit hover:text-white transition-colors text-base">Skilmálar</Link>
+
+                    <div className="border-t border-white/10 pt-10 text-center">
+                        <div className="flex flex-wrap justify-center gap-8 mb-10 text-stone-300 font-semibold whitespace-nowrap">
+                            <Link to="/eiginleikar" className="text-inherit hover:text-white transition-colors text-base">Eiginleikar</Link>
+                            <Link to="/spurt-og-svarad" className="text-inherit hover:text-white transition-colors text-base">Algengar spurningar</Link>
+                            <Link to="/um-okkur" className="text-inherit hover:text-white transition-colors text-base">Um Okkur</Link>
+                            <Link to="/hafa-samband" className="text-inherit hover:text-white transition-colors text-base">Hafa samband</Link>
+                            <Link to="/personuvernd" className="text-inherit hover:text-white transition-colors text-base">Persónuvernd</Link>
+                            <Link to="/skilmalar" className="text-inherit hover:text-white transition-colors text-base">Skilmálar</Link>
+                        </div>
+                        <p className="text-white/40 mb-6 font-serif italic text-lg">Betra skipulag fyrir sumarhúsið.</p>
+                        <p className="text-xs text-stone-500 uppercase tracking-widest font-medium">
+                            © {new Date().getFullYear()} Bústaðurinn.is.<br />
+                            <span className="opacity-70">Útgefið af Neðri Hóll Hugmyndahús ehf.</span>
+                        </p>
                     </div>
-                    <p className="text-white/40 mb-6 font-serif italic text-lg">Betra skipulag fyrir sumarhúsið.</p>
-                    <p className="text-xs text-stone-500 uppercase tracking-widest font-medium">
-                        © {new Date().getFullYear()} Bústaðurinn.is.<br />
-                        <span className="opacity-70">Útgefið af Neðri Hóll Hugmyndahús ehf.</span>
-                    </p>
                 </div>
             </footer>
         </div >

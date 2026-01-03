@@ -213,5 +213,11 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow read: if isSuperAdmin();
     }
+    
+    // Newsletter Subscribers Collection
+    match /newsletter_subscribers/{subscriberId} {
+      allow create: if true;
+      allow read, write: if isSuperAdmin();
+    }
   }
 }

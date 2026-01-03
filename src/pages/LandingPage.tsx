@@ -4,6 +4,7 @@ import { Calendar, TrendingUp, CheckCircle, ArrowRight, Users } from 'lucide-rea
 import SEO from '@/components/SEO';
 import MarketingLayout from '@/components/MarketingLayout';
 import { useAppStore } from '@/store/appStore';
+import NewsletterSignup from '@/components/NewsletterSignup';
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -321,6 +322,20 @@ export default function LandingPage() {
                             </button>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            {/* Newsletter Section */}
+            <section className="py-24 bg-bone relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-stone-200 to-transparent"></div>
+                <div className="container mx-auto px-6">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl md:text-4xl font-serif mb-4">Vertu með á listanum</h2>
+                        <p className="text-stone-500 max-w-xl mx-auto">
+                            Við sendum sjaldan, en þegar við gerum það eru það hagnýt ráð eða spennandi uppfærslur sem einfalda lífið í bústaðnum.
+                        </p>
+                    </div>
+                    <NewsletterSignup />
                 </div>
             </section>
 

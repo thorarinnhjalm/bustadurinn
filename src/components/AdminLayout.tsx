@@ -3,7 +3,6 @@
  * Desktop-first, high-density professional interface
  */
 
-import { useState, type ReactNode } from 'react';
 import {
     Home,
     Users,
@@ -13,8 +12,10 @@ import {
     Mail,
     Menu,
     X,
-    LogOut
+    LogOut,
+    Send
 } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import type { House } from '@/types/models';
 
 interface AdminLayoutProps {
@@ -41,6 +42,7 @@ export default function AdminLayout({
         { name: 'Hús', id: 'houses', icon: Home },
         { name: 'Notendur', id: 'users', icon: Users },
         { name: 'Samskipti', id: 'contacts', icon: Mail },
+        { name: 'Póstlisti', id: 'newsletter', icon: Send },
     ];
 
     const handleTabClick = (id: string) => {
