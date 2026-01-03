@@ -19,6 +19,7 @@ dist-ssr
 
 # Firebase service account key (sensitive!)
 serviceAccountKey.json
+gsc-key.json
 
 # Editor directories and files
 .vscode/*

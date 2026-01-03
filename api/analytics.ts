@@ -1,6 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 
+import fs from 'fs';
+import path from 'path';
+
 interface AnalyticsData {
     activeUsers: number;
     sessions: number;
@@ -31,8 +34,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 1. Check for configuration
     const propertyId = process.env.GA4_PROPERTY_ID;
-    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL; // From service account
+    let clientEmail = process.env.GOOGLE_CLIENT_EMAIL; // From service account
     let privateKey = process.env.GOOGLE_PRIVATE_KEY;
+
+    // Try reading from gsc-key.json if env vars are missing
+    if (!clientEmail || !privateKey) {
+        try {
+            const keyPath = path.join(process.cwd(), 'gsc-key.json');
+            if (fs.existsSync(keyPath)) {
+                const keyFile = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
+                clientEmail = keyFile.client_email;
+                privateKey = keyFile.private_key;
+            }
+        } catch (e) {
+            console.warn('Could not read gsc-key.json');
+        }
+    }
 
     if (!propertyId || !clientEmail || !privateKey) {
         console.warn('⚠️ Missing GA4 Environment Variables');

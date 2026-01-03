@@ -1,6 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { google } from 'googleapis';
 
+import fs from 'fs';
+import path from 'path';
+
 interface SearchConsoleData {
     clicks: number;
     impressions: number;
@@ -30,12 +33,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 1. Check for configuration
     const propertyUrl = 'https://bustadurinn.is/'; // Your verified site in Search Console
-    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+
+    let clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
     let privateKey = process.env.GOOGLE_PRIVATE_KEY;
 
+    // Try reading from gsc-key.json if env vars are missing
     if (!clientEmail || !privateKey) {
-        console.warn('⚠️ Missing Google Auth Environment Variables');
-        return res.status(500).json({ error: 'Missing Google Auth Environment Variables' });
+        try {
+            const keyPath = path.join(process.cwd(), 'gsc-key.json');
+            if (fs.existsSync(keyPath)) {
+                const keyFile = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
+                clientEmail = keyFile.client_email;
+                privateKey = keyFile.private_key;
+            }
+        } catch (e) {
+            console.warn('Could not read gsc-key.json');
+        }
+    }
+
+    if (!clientEmail || !privateKey) {
+        console.warn('⚠️ Missing Google Auth Configuration (Env or File)');
+        return res.status(500).json({ error: 'Missing Google Auth Configuration' });
     }
 
     // 🧹 Cleanup Key (Same logic as analytics.ts)
