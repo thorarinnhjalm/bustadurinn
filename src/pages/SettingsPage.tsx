@@ -286,20 +286,30 @@ export default function SettingsPage() {
                 setShowCropper(true);
             };
             reader.readAsDataURL(file);
+            // Reset input so the same file can be selected again
+            e.target.value = '';
         }
     };
 
     const handleCroppedImage = async (blob: Blob) => {
-        if (!house) return;
+        if (!house) {
+            console.error("No house object found in handleCroppedImage");
+            return;
+        }
         try {
+            console.log("Saving cropped image for house:", house.id, "cropMode:", cropMode);
             setUploadingImage(true);
             const fileName = cropMode === 'main' ? 'image.jpg' : `gallery_${Date.now()}.jpg`;
             const storageRef = ref(storage, `houses/${house.id}/${fileName}`);
-            await uploadBytes(storageRef, blob);
+
+            // Added explicit metadata
+            const metadata = { contentType: 'image/jpeg' };
+            await uploadBytes(storageRef, blob, metadata);
             const downloadURL = await getDownloadURL(storageRef);
 
             let updatedHouse: House;
             if (cropMode === 'main') {
+                console.log("Updating main image_url to:", downloadURL);
                 await updateDoc(doc(db, 'houses', house.id), {
                     image_url: downloadURL,
                     updated_at: serverTimestamp()
@@ -308,6 +318,7 @@ export default function SettingsPage() {
             } else {
                 const currentGallery = house.gallery_urls || [];
                 const newGallery = [...currentGallery, downloadURL];
+                console.log("Updating gallery_urls, new count:", newGallery.length);
                 await updateDoc(doc(db, 'houses', house.id), {
                     gallery_urls: newGallery,
                     updated_at: serverTimestamp()
@@ -321,21 +332,25 @@ export default function SettingsPage() {
             setImageFile(null);
             setSuccess('Mynd vistuð!');
 
-            // Sync with Guest View if token exists
+            // Clear success after 3s
+            setTimeout(() => setSuccess(''), 3000);
+
+            // Sync with Guest View if token exists (Use setDoc merge for robustness)
             if (updatedHouse.guest_token) {
+                console.log("Syncing image with guest view:", updatedHouse.guest_token);
                 try {
-                    await updateDoc(doc(db, 'guest_views', updatedHouse.guest_token), {
+                    await setDoc(doc(db, 'guest_views', updatedHouse.guest_token), {
                         image_url: updatedHouse.image_url || '',
                         gallery_urls: updatedHouse.gallery_urls || [],
                         updated_at: serverTimestamp()
-                    });
+                    }, { merge: true });
                 } catch (guestErr) {
                     console.error("Error syncing with guest view:", guestErr);
                 }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error uploading image:', error);
-            setError('Villa við að vista mynd.');
+            setError(`Villa við að vista mynd: ${error.message}`);
         } finally {
             setUploadingImage(false);
         }
@@ -532,6 +547,7 @@ export default function SettingsPage() {
                         lng: houseForm.lng
                     },
                     image_url: house.image_url || '',
+                    gallery_urls: house.gallery_urls || [],
                     updated_at: new Date()
                 }, { merge: true });
             }
@@ -706,7 +722,7 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            <div className="container mx-auto px-6 py-8">
+            <div className="container mx-auto px-6 py-8 pb-32">
                 <div className="flex flex-col md:flex-row gap-8">
 
                     {/* Sidebar Navigation */}
@@ -1416,7 +1432,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="card p-6 border-2 border-stone-100">
-                                        <form onSubmit={handleSaveHouse} className="space-y-6">
+                                        <form onSubmit={handleSaveHouse} className="space-y-6 pb-24">
                                             <div className="grid md:grid-cols-2 gap-4">
                                                 <div>
                                                     <label className="label">Innritun (kl.)</label>
