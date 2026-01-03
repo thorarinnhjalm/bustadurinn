@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { period = '30d' } = req.query;
 
     // 1. Check for configuration
-    const propertyUrl = 'https://bustadurinn.is/'; // Your verified site in Search Console
+    const propertyUrl = 'sc-domain:bustadurinn.is'; // Your verified domain property in Search Console
 
     let clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
     let privateKey = process.env.GOOGLE_PRIVATE_KEY;
