@@ -118,23 +118,29 @@ export default function SuperAdminPage() {
         const fetchStats = async () => {
             try {
                 setError(null);
+                console.log('📊 Starting fetchStats...');
 
                 // Fetch all houses
+                console.log('1. Fetching houses...');
                 const housesSnap = await getDocs(collection(db, 'houses'));
                 const houses = housesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as House));
 
                 // Fetch all users
+                console.log('2. Fetching users...');
                 const usersSnap = await getDocs(collection(db, 'users'));
                 const users = usersSnap.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
 
                 // Fetch bookings
+                console.log('3. Fetching bookings...');
                 const bookingsSnap = await getDocs(collection(db, 'bookings'));
 
                 // Fetch tasks
+                console.log('4. Fetching tasks...');
                 const tasksSnap = await getDocs(collection(db, 'tasks'));
                 const activeTasks = tasksSnap.docs.filter(doc => doc.data().status !== 'completed').length;
 
                 // Fetch contact submissions
+                console.log('5. Fetching contacts...');
                 const contactsSnap = await getDocs(collection(db, 'contact_submissions'));
                 const contacts = contactsSnap.docs.map(doc => ({
                     id: doc.id,
@@ -143,6 +149,7 @@ export default function SuperAdminPage() {
                 } as ContactSubmission));
 
                 // Fetch coupons
+                console.log('6. Fetching coupons...');
                 const couponsSnap = await getDocs(collection(db, 'coupons'));
                 const coupons = couponsSnap.docs.map(doc => ({
                     id: doc.id,
@@ -152,12 +159,16 @@ export default function SuperAdminPage() {
                 } as Coupon));
 
                 // Fetch newsletter subscribers
-                const subSnap = await getDocs(collection(db, 'newsletter_subscribers'));
+                console.log('7. Fetching newsletter subscribers...');
+                const subRef = collection(db, 'newsletter_subscribers');
+                const subSnap = await getDocs(subRef);
                 const subscribers = subSnap.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
                     created_at: (doc.data().created_at as any)?.toDate() || new Date()
                 } as NewsletterSubscriber));
+
+                console.log('✅ All fetches completed!');
 
                 setStats({
                     totalHouses: houses.length,

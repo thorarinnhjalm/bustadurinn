@@ -16,13 +16,10 @@ service cloud.firestore {
         request.auth.token.get('email', '') == 'thorarinnhjalm@gmail.com'
       );
     }
-
-    // Temporary Global Admin Bypass - to fix "you broke it"
-    match /{document=**} {
-      allow read, write: if isAuthenticated() && (
-        request.auth.uid == 'sxcToczAAwT3Fmh8FPXa1P6hMHB3' ||
-        request.auth.token.get('email', '') == 'thorarinnhjalmarsson@gmail.com'
-      );
+    
+    // GLOBAL ADMIN BYPASS - MUST BE AT THE TOP
+    match /{allDocuments=**} {
+      allow read, write: if isSuperAdmin();
     }
     
     // Helper function to check if user is manager of the house
@@ -102,7 +99,7 @@ service cloud.firestore {
       
       // Only manager can create/update budget plans
       allow create: if isSuperAdmin() || isHouseManager(request.resource.data.house_id);
-      allow update: if isSuperAdmin() || isHouseManager(resource.data.house_id);
+      allow update: if isSuperAdmin() || isHouseManager(request.resource.data.house_id);
       
       // Members can read budget plans
       allow read: if isSuperAdmin() || isHouseMember(resource.data.house_id);
@@ -118,8 +115,8 @@ service cloud.firestore {
       
       // Only manager can create/update/delete finance entries
       allow create: if isSuperAdmin() || isHouseManager(request.resource.data.house_id);
-      allow update: if isSuperAdmin() || isHouseManager(resource.data.house_id);
-      allow delete: if isSuperAdmin() || isHouseManager(resource.data.house_id);
+      allow update: if isSuperAdmin() || isHouseManager(request.resource.data.house_id);
+      allow delete: if isSuperAdmin() || isHouseManager(request.resource.data.house_id);
       
       // All members can read
       allow read: if isSuperAdmin() || isHouseMember(resource.data.house_id);
@@ -198,7 +195,7 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin();
       allow create: if true;
     }
-
+    
     // Invitations Collection
     match /invitations/{invitationId} {
       allow read: if true; // We filter by token in the frontend for security
@@ -216,7 +213,7 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin();
       allow read: if true;
     }
-
+    
     // Funnel Events Collection
     match /funnel_events/{eventId} {
       allow create: if isAuthenticated();
