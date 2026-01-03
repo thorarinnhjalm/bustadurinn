@@ -14,7 +14,7 @@ import { db } from '@/lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
-import type { Booking, BookingType } from '@/types/models';
+import type { Booking, BookingType, User } from '@/types/models';
 import { dateLocales, calendarMessages, bookingTypeLabels, type SupportedLanguage } from '@/utils/i18n';
 import { getIcelandicHolidays, isHoliday, includesMajorHoliday } from '@/utils/icelandicHolidays';
 import { analytics } from '@/utils/analytics';
@@ -503,7 +503,7 @@ export default function CalendarPage() {
         }
 
         try {
-            await addDoc(collection(db, 'bookings'), {
+            const docRef = await addDoc(collection(db, 'bookings'), {
                 house_id: houseId,
                 user_id: currentUser.uid,
                 user_name: currentUser.name || currentUser.email,
@@ -514,41 +514,72 @@ export default function CalendarPage() {
                 created_at: serverTimestamp()
             });
 
-            // Send email notification (don't block on this)
+            const bookingId = docRef.id;
+
+            // Send notifications (don't block on this)
             try {
-                // Fetch house to get owner emails
+                // Fetch house to get owner IDs
                 const houseDoc = await getDoc(doc(db, 'houses', houseId));
                 const house = houseDoc.data();
 
                 if (house && house.owner_ids) {
-                    // Fetch owner emails
                     const ownerEmails: string[] = [];
+                    const houseName = house.name || 'Sumarhús';
+
                     for (const ownerId of house.owner_ids) {
+                        // Don't notify the person who made the booking
+                        if (ownerId === currentUser.uid) continue;
+
                         const userDoc = await getDoc(doc(db, 'users', ownerId));
-                        const userData = userDoc.data();
-                        if (userData?.email) {
+                        const userData = userDoc.data() as User;
+                        if (!userData) continue;
+
+                        // Check Notification Settings
+                        const settings = userData.notification_settings;
+
+                        // 1. In-App Notification (Respecting Settings)
+                        const inAppEnabled = settings?.in_app?.new_bookings ?? true; // Default to true if not set
+                        if (inAppEnabled) {
+                            await addDoc(collection(db, 'notifications'), {
+                                user_id: ownerId,
+                                house_id: houseId,
+                                title: 'Ný bókun',
+                                message: `${currentUser.name} bókaði ${houseName}`,
+                                type: 'booking',
+                                read: false,
+                                data: {
+                                    booking_id: bookingId
+                                },
+                                created_at: serverTimestamp()
+                            });
+                        }
+
+                        // 2. Email Notification (Respecting Settings)
+                        const emailEnabled = settings?.emails?.new_bookings ?? true;
+                        if (emailEnabled && userData.email) {
                             ownerEmails.push(userData.email);
                         }
                     }
 
-                    // Send notification
-                    await fetch('/api/booking-notification', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            houseName: house.name || 'Sumarhús',
-                            userName: currentUser.name || currentUser.email,
-                            startDate: newBooking.start.toISOString(),
-                            endDate: newBooking.end.toISOString(),
-                            bookingType: newBooking.type,
-                            ownerEmails,
-                            language: currentUser.language || 'is'
-                        })
-                    });
+                    // Send gathered emails via API
+                    if (ownerEmails.length > 0) {
+                        await fetch('/api/booking-notification', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                houseName,
+                                userName: currentUser.name || currentUser.email,
+                                startDate: newBooking.start.toISOString(),
+                                endDate: newBooking.end.toISOString(),
+                                bookingType: newBooking.type,
+                                ownerEmails,
+                                language: 'is' // Logic for individual languages could be added here
+                            })
+                        });
+                    }
                 }
-            } catch (emailError) {
-                console.error('Failed to send booking notification:', emailError);
-                // Don't fail the booking if email fails
+            } catch (notifyError) {
+                console.error('Failed to send booking notifications:', notifyError);
             }
 
             // Reload bookings

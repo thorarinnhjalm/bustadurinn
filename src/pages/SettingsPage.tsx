@@ -21,7 +21,9 @@ import {
     AlertTriangle,
     Copy,
     RefreshCw,
-    Link as LinkIcon
+    Link as LinkIcon,
+    Bell,
+    Mail
 } from 'lucide-react';
 import ImageCropper from '@/components/ImageCropper';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -36,7 +38,7 @@ import {
 import MagicLinkGenerator from '@/components/guest/MagicLinkGenerator';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
-import type { House, User } from '@/types/models';
+import type { House, User, NotificationSettings } from '@/types/models';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { MapPin } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
@@ -129,12 +131,29 @@ export default function SettingsPage() {
 
     // Profile State
     const [userName, setUserName] = useState('');
+    const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+        emails: {
+            new_bookings: true,
+            task_reminders: true,
+            system_updates: true,
+            member_activity: true
+        },
+        in_app: {
+            new_bookings: true,
+            task_assignments: true,
+            guestbook_entries: true,
+            shopping_list_updates: true
+        }
+    });
 
     useEffect(() => {
         if (currentUser?.name) {
             setUserName(currentUser.name);
         }
-    }, [currentUser?.name]);
+        if (currentUser?.notification_settings) {
+            setNotificationSettings(currentUser.notification_settings);
+        }
+    }, [currentUser]);
 
     const handleSaveProfile = async () => {
         if (!currentUser || !userName.trim()) return;
@@ -184,6 +203,72 @@ export default function SettingsPage() {
             setError('Gat ekki sent tölvupóst. Reyndu aftur síðar.');
         }
     };
+
+    const handleUpdateNotificationSettings = async (
+        category: 'emails' | 'in_app',
+        setting: string,
+        value: boolean
+    ) => {
+        if (!currentUser) return;
+
+        const newSettings = {
+            ...notificationSettings,
+            [category]: {
+                ...notificationSettings[category],
+                [setting]: value
+            }
+        };
+
+        setNotificationSettings(newSettings);
+
+        try {
+            await updateDoc(doc(db, 'users', currentUser.uid), {
+                notification_settings: newSettings
+            });
+
+            // Update global state
+            setCurrentUser({
+                ...currentUser,
+                notification_settings: newSettings
+            });
+        } catch (err) {
+            console.error('Error updating notification settings:', err);
+            setError('Gat ekki uppfært tilkynningastillingar.');
+            // Revert on error
+            setNotificationSettings(notificationSettings);
+        }
+    };
+
+    const Toggle = ({ label, description, checked, onChange }: {
+        label: string,
+        description: string,
+        checked: boolean,
+        onChange: (val: boolean) => void
+    }) => (
+        <div className="flex items-start justify-between py-2">
+            <div className="flex-1 mr-4">
+                <p className="text-sm font-bold text-charcoal">{label}</p>
+                <p className="text-xs text-stone-500">{description}</p>
+            </div>
+            <button
+                type="button"
+                onClick={() => onChange(!checked)}
+                className={`
+                    relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
+                    transition-colors duration-200 ease-in-out focus:outline-none 
+                    ${checked ? 'bg-amber' : 'bg-stone-200'}
+                `}
+            >
+                <span
+                    className={`
+                        pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 
+                        transition duration-200 ease-in-out
+                        ${checked ? 'translate-x-5' : 'translate-x-0'}
+                    `}
+                />
+            </button>
+        </div>
+    );
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -1416,6 +1501,75 @@ export default function SettingsPage() {
                                             </button>
                                         </div>
                                         <p className="text-xs text-grey-mid mt-1">Hér getur þú breytt nafninu þínu sem birtist öðrum notendum.</p>
+                                    </div>
+
+                                    {/* Granular Notification Settings */}
+                                    <div className="pt-8 border-t border-stone-200">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="p-2 bg-amber-50 rounded-lg text-amber">
+                                                <Bell size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-serif text-lg font-bold">Tilkynningar</h3>
+                                                <p className="text-xs text-stone-500">Stjórnaðu hvernig og hvenær þú færð tilkynningar.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid md:grid-cols-2 gap-8">
+                                            {/* Email Notifications */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Mail size={16} className="text-stone-400" />
+                                                    <h4 className="text-sm font-bold uppercase tracking-wider text-stone-600">Tölvupóstur</h4>
+                                                </div>
+
+                                                <Toggle
+                                                    label="Nýjar bókanir"
+                                                    description="Fá tölvupóst þegar húsfélagsmeðlimur bókar"
+                                                    checked={notificationSettings.emails.new_bookings}
+                                                    onChange={(val) => handleUpdateNotificationSettings('emails', 'new_bookings', val)}
+                                                />
+                                                <Toggle
+                                                    label="Áminningar um verkefni"
+                                                    description="Viku fyrir dagssetningu eða þegar muna þarf eftir"
+                                                    checked={notificationSettings.emails.task_reminders}
+                                                    onChange={(val) => handleUpdateNotificationSettings('emails', 'task_reminders', val)}
+                                                />
+                                                <Toggle
+                                                    label="Kerfisuppfærslur"
+                                                    description="Nýir eiginleikar og mikilvægar upplýsingar"
+                                                    checked={notificationSettings.emails.system_updates}
+                                                    onChange={(val) => handleUpdateNotificationSettings('emails', 'system_updates', val)}
+                                                />
+                                            </div>
+
+                                            {/* In-App Notifications */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Bell size={16} className="text-stone-400" />
+                                                    <h4 className="text-sm font-bold uppercase tracking-wider text-stone-600">Í forritinu</h4>
+                                                </div>
+
+                                                <Toggle
+                                                    label="Nýjar bókanir"
+                                                    description="Tilkynning á stjórnborði þegar ný bókun kemur"
+                                                    checked={notificationSettings.in_app.new_bookings}
+                                                    onChange={(val) => handleUpdateNotificationSettings('in_app', 'new_bookings', val)}
+                                                />
+                                                <Toggle
+                                                    label="Úthlutuð verkefni"
+                                                    description="Þegar þér er úthlutað nýju verkefni"
+                                                    checked={notificationSettings.in_app.task_assignments}
+                                                    onChange={(val) => handleUpdateNotificationSettings('in_app', 'task_assignments', val)}
+                                                />
+                                                <Toggle
+                                                    label="Gestabók"
+                                                    description="Tilkynning þegar ný færsla kemur í gestabók"
+                                                    checked={notificationSettings.in_app.guestbook_entries}
+                                                    onChange={(val) => handleUpdateNotificationSettings('in_app', 'guestbook_entries', val)}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="pt-4 border-t border-grey-warm">

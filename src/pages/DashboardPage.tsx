@@ -12,9 +12,9 @@ import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
-import { collection, query, where, orderBy, limit, getDocs, Timestamp, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, getDoc, Timestamp, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry } from '@/types/models';
+import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, AppNotification } from '@/types/models';
 import ShoppingList from '@/components/ShoppingList';
 import InternalLogbook from '@/components/InternalLogbook';
 import { fetchWeather } from '@/utils/weather';
@@ -52,6 +52,7 @@ const UserDashboard = () => {
     const [finances, setFinances] = useState({ balance: 0, lastAction: "—" });
 
     const [showNotifications, setShowNotifications] = useState(false);
+    const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
     // Checkout State
     const [showCheckoutModal, setShowCheckoutModal] = useState(false);
@@ -66,13 +67,30 @@ const UserDashboard = () => {
         }
 
         const fetchData = async () => {
-            if (!currentHouse) {
+            if (!currentHouse || !currentUser) {
                 return;
             }
 
             try {
                 const now = new Date();
                 const todayStart = new Date(now.setHours(0, 0, 0, 0));
+
+                // 0. Fetch Notifications
+                const notifsRef = collection(db, 'notifications');
+                const qNotifs = query(
+                    notifsRef,
+                    where('house_id', '==', currentHouse.id),
+                    where('user_id', '==', currentUser.uid),
+                    orderBy('created_at', 'desc'),
+                    limit(20)
+                );
+                const notifsSnap = await getDocs(qNotifs);
+                const notifsData = notifsSnap.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    created_at: doc.data().created_at?.toDate() || new Date()
+                } as AppNotification));
+                setNotifications(notifsData);
 
                 // 1. Fetch Next Booking (using top-level collection)
                 const bookingsRef = collection(db, 'bookings');
@@ -311,6 +329,29 @@ const UserDashboard = () => {
 
             const docRef = await addDoc(collection(db, 'shopping_list'), newItem);
 
+            // Notify other co-owners
+            if (currentHouse.owner_ids) {
+                for (const ownerId of currentHouse.owner_ids) {
+                    if (ownerId === currentUser.uid) continue;
+
+                    const userDoc = await getDoc(doc(db, 'users', ownerId));
+                    const userData = userDoc.data();
+                    if (!userData) continue;
+
+                    if (userData.notification_settings?.in_app?.shopping_list_updates !== false) {
+                        await addDoc(collection(db, 'notifications'), {
+                            user_id: ownerId,
+                            house_id: currentHouse.id,
+                            title: 'Vantar í bústaðinn',
+                            message: `${currentUser.name} bætti ${itemName} á listann`,
+                            type: 'shopping',
+                            read: false,
+                            created_at: serverTimestamp()
+                        });
+                    }
+                }
+            }
+
             // Optimistic update
             setShoppingItems(prev => [{
                 id: docRef.id,
@@ -484,24 +525,80 @@ const UserDashboard = () => {
                         className="relative text-stone-400 hover:text-[#1a1a1a] transition-colors"
                     >
                         <Bell size={20} />
-                        {/* Only show dot if we actually had notifications (commented out for now) */}
-                        {/* <span className="absolute top-0 right-0 w-2 h-2 bg-[#e8b058] rounded-full"></span> */}
+                        {notifications.some(n => !n.read) && (
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-[#FDFCF8] rounded-full"></span>
+                        )}
                     </button>
 
                     {/* Notification Dropdown */}
                     {showNotifications && (
-                        <div className="absolute top-12 right-0 w-64 bg-white border border-stone-100 rounded-xl shadow-xl p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
-                            <h4 className="font-bold text-sm mb-2 text-[#1a1a1a]">Tilkynningar</h4>
-                            <div className="text-center py-4 text-stone-400 text-xs">
-                                <Bell size={16} className="mx-auto mb-2 opacity-50" />
-                                <p>Engar nýjar tilkynningar</p>
+                        <div className="absolute top-12 right-0 w-80 bg-white border border-stone-100 rounded-xl shadow-2xl p-0 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                            <div className="p-4 border-b border-stone-50 flex items-center justify-between bg-stone-50/50">
+                                <h4 className="font-bold text-sm text-[#1a1a1a]">Tilkynningar</h4>
+                                {notifications.some(n => !n.read) && (
+                                    <button
+                                        onClick={async () => {
+                                            const unread = notifications.filter(n => !n.read);
+                                            await Promise.all(unread.map(n => updateDoc(doc(db, 'notifications', n.id), { read: true })));
+                                            setNotifications(notifications.map(n => ({ ...n, read: true })));
+                                        }}
+                                        className="text-[10px] font-bold text-amber hover:underline uppercase tracking-wider"
+                                    >
+                                        Lesa allt
+                                    </button>
+                                )}
+                            </div>
+                            <div className="max-h-[400px] overflow-y-auto">
+                                {notifications.length === 0 ? (
+                                    <div className="text-center py-8 text-stone-400 text-xs">
+                                        <Bell size={16} className="mx-auto mb-2 opacity-50" />
+                                        <p>Engar tilkynningar</p>
+                                    </div>
+                                ) : (
+                                    <div className="divide-y divide-stone-50">
+                                        {notifications.map(notif => (
+                                            <div
+                                                key={notif.id}
+                                                onClick={async () => {
+                                                    if (!notif.read) {
+                                                        await updateDoc(doc(db, 'notifications', notif.id), { read: true });
+                                                        setNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                                                    }
+                                                    // Handle navigation based on type
+                                                    if (notif.type === 'booking') navigate('/calendar');
+                                                    if (notif.type === 'task') navigate('/tasks');
+                                                    if (notif.type === 'guestbook') navigate('/settings?tab=guestbook');
+                                                    setShowNotifications(false);
+                                                }}
+                                                className={`p-4 hover:bg-stone-50 cursor-pointer transition-colors relative flex gap-3 ${!notif.read ? 'bg-amber/5' : ''}`}
+                                            >
+                                                {!notif.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber"></div>}
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.type === 'booking' ? 'bg-green-100 text-green-600' :
+                                                    notif.type === 'task' ? 'bg-blue-100 text-blue-600' :
+                                                        'bg-amber-100 text-amber'
+                                                    }`}>
+                                                    {notif.type === 'booking' ? <Calendar size={14} /> :
+                                                        notif.type === 'task' ? <CheckSquare size={14} /> :
+                                                            <Bell size={14} />}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-charcoal leading-tight mb-0.5">{notif.title}</p>
+                                                    <p className="text-xs text-stone-500 line-clamp-2">{notif.message}</p>
+                                                    <p className="text-[10px] text-stone-400 mt-1 uppercase font-medium">
+                                                        {format(notif.created_at, 'd. MMMM', { locale: is })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
 
                     <div
                         className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:bg-stone-800"
-                        onClick={() => navigate('/settings')}
+                        onClick={() => navigate('/settings?tab=profile')}
                     >
                         {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}
                     </div>

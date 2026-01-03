@@ -361,6 +361,30 @@ export default function GuestPage() {
                                     created_at: serverTimestamp()
                                 });
 
+                                // Notify owners
+                                const houseDoc = await getDoc(doc(db, 'houses', data.houseId));
+                                const houseData = houseDoc.data();
+                                if (houseData && houseData.owner_ids) {
+                                    for (const ownerId of houseData.owner_ids) {
+                                        const userDoc = await getDoc(doc(db, 'users', ownerId));
+                                        const userData = userDoc.data();
+                                        if (!userData) continue;
+
+                                        // Respect in-app notification settings
+                                        if (userData.notification_settings?.in_app?.guestbook_entries !== false) {
+                                            await addDoc(collection(db, 'notifications'), {
+                                                user_id: ownerId,
+                                                house_id: data.houseId,
+                                                title: 'Ný gestabókarfærsla',
+                                                message: `${author} skráði í gestabókina í ${houseName}`,
+                                                type: 'guestbook',
+                                                read: false,
+                                                created_at: serverTimestamp()
+                                            });
+                                        }
+                                    }
+                                }
+
                                 alert('Takk fyrir að skrifa í gestabókina! 🙏');
                                 e.currentTarget.reset();
                             } catch (error) {

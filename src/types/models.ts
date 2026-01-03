@@ -48,6 +48,21 @@ export interface House {
     updated_at: Date;
 }
 
+export interface NotificationSettings {
+    emails: {
+        new_bookings: boolean;
+        task_reminders: boolean;
+        system_updates: boolean;
+        member_activity: boolean;
+    };
+    in_app: {
+        new_bookings: boolean;
+        task_assignments: boolean;
+        guestbook_entries: boolean;
+        shopping_list_updates: boolean;
+    };
+}
+
 export interface User {
     uid: string;
     email: string;
@@ -55,6 +70,7 @@ export interface User {
     avatar?: string;
     house_ids: string[];
     language?: 'is' | 'en' | 'de' | 'fr' | 'es'; // Preferred language
+    notification_settings?: NotificationSettings;
     created_at: Date;
     last_login?: Date;
 }
@@ -202,3 +218,19 @@ export interface InternalLog {
     created_at: Date;
 }
 
+// Notifications
+export interface AppNotification {
+    id: string;
+    user_id: string;
+    house_id: string;
+    title: string;
+    message: string;
+    type: 'booking' | 'task' | 'guestbook' | 'shopping' | 'system';
+    read: boolean;
+    data?: {
+        booking_id?: string;
+        task_id?: string;
+        guest_access_id?: string;
+    };
+    created_at: Date;
+}
