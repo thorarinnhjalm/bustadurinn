@@ -3,15 +3,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // THE MASTER RULE - Unconditional access for you
+    // NUCLEAR MASTER RULE
+    // If this is you (by UID), you have access to EVERYTHING.
+    // No email checks, no complex logic. Just the raw UID.
     match /{document=**} {
-      allow read, write: if request.auth != null && (
-        request.auth.uid == 'sxcToczAAwT3Fmh8FPXa1P6hMHB3' || 
-        request.auth.token.email == 'thorarinnhjalmarsson@gmail.com'
-      );
+      allow read, write: if request.auth != null && request.auth.uid == 'sxcToczAAwT3Fmh8FPXa1P6hMHB3';
     }
     
-    // PUBLIC RULES
+    // Secondary Admin bypass (by email as fallback)
+    match /{document=**} {
+      allow read, write: if request.auth != null && request.auth.token.get('email', '') == 'thorarinnhjalmarsson@gmail.com';
+    }
+
+    // PUBLIC RULES (For everyone else)
     match /newsletter_subscribers/{id} {
       allow create: if true;
     }
@@ -25,7 +29,7 @@ service cloud.firestore {
       allow read: if true;
     }
 
-    // USER RULES
+    // NORMAL USER RULES
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -42,7 +46,7 @@ service cloud.firestore {
       );
     }
     
-    // FALLBACKS
+    // Default fallback rules for authenticated users
     match /bookings/{id} { allow read, write: if isAuthenticated(); }
     match /tasks/{id} { allow read, write: if isAuthenticated(); }
     match /coupons/{id} { allow read: if isAuthenticated(); }
