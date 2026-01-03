@@ -120,44 +120,54 @@ export default function SuperAdminPage() {
                 setLoading(true);
                 setError(null);
 
+                const safeFetch = async (collName: string) => {
+                    try {
+                        const snap = await getDocs(collection(db, collName));
+                        return snap;
+                    } catch (e) {
+                        console.error(`Error fetching ${collName}:`, e);
+                        return null;
+                    }
+                };
+
                 const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap] = await Promise.all([
-                    getDocs(collection(db, 'houses')),
-                    getDocs(collection(db, 'users')),
-                    getDocs(collection(db, 'bookings')),
-                    getDocs(collection(db, 'tasks')),
-                    getDocs(collection(db, 'contact_submissions')),
-                    getDocs(collection(db, 'coupons')),
-                    getDocs(collection(db, 'newsletter_subscribers'))
+                    safeFetch('houses'),
+                    safeFetch('users'),
+                    safeFetch('bookings'),
+                    safeFetch('tasks'),
+                    safeFetch('contact_submissions'),
+                    safeFetch('coupons'),
+                    safeFetch('newsletter_subscribers')
                 ]);
 
-                const houses = housesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as House));
-                const users = usersSnap.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
-                const activeTasks = tasksSnap.docs.filter(doc => doc.data().status !== 'completed').length;
+                const houses = housesSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as House)) || [];
+                const users = usersSnap?.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User)) || [];
+                const activeTasks = tasksSnap?.docs.filter(doc => doc.data().status !== 'completed').length || 0;
 
-                const contacts = contactsSnap.docs.map(doc => ({
+                const contacts = contactsSnap?.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
                     created_at: doc.data().created_at?.toDate() || new Date()
-                } as ContactSubmission));
+                } as ContactSubmission)) || [];
 
-                const coupons = couponsSnap.docs.map(doc => ({
+                const coupons = couponsSnap?.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
                     created_at: (doc.data().created_at as any)?.toDate() || new Date(),
                     valid_until: (doc.data().valid_until as any)?.toDate() || undefined
-                } as Coupon));
+                } as Coupon)) || [];
 
-                const subscribers = subSnap.docs.map(doc => ({
+                const subscribers = subSnap?.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
                     created_at: (doc.data().created_at as any)?.toDate() || new Date()
-                } as NewsletterSubscriber));
+                } as NewsletterSubscriber)) || [];
 
                 setStats({
                     totalHouses: houses.length,
                     totalUsers: users.length,
-                    totalBookings: bookingsSnap.size,
-                    totalSubscribers: subSnap.size,
+                    totalBookings: bookingsSnap?.size || 0,
+                    totalSubscribers: subSnap?.size || 0,
                     activeTasks,
                     allHouses: houses,
                     allUsers: users,
@@ -165,8 +175,12 @@ export default function SuperAdminPage() {
                     allCoupons: coupons,
                     allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
                 });
+
+                if (!housesSnap && !usersSnap) {
+                    setError("Sum gögn gáfu ekki aðgang. Vinsamlegast athugaðu Console.");
+                }
             } catch (error: any) {
-                console.error('Error fetching stats:', error);
+                console.error('Global fetch stats error:', error);
                 setError(error.message || 'Failed to load data');
             } finally {
                 setLoading(false);
