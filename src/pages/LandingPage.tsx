@@ -170,6 +170,84 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* Mobile App Section */}
+            <section className="py-24 bg-stone-100 overflow-hidden border-y border-stone-200">
+                <div className="container max-w-6xl mx-auto px-6">
+                    <div className="flex flex-col lg:flex-row items-center gap-16">
+                        {/* Mockup */}
+                        <div className="w-full lg:w-1/2 relative">
+                            {/* Decorative Blobs */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 md:w-96 md:h-96 bg-amber/20 rounded-full blur-3xl z-0"></div>
+
+                            {/* Phone Mockup Frame (CSS) */}
+                            <div className="relative z-10 mx-auto w-[280px] md:w-[320px] aspect-[9/19.5] bg-charcoal rounded-[3rem] p-3 shadow-2xl ring-8 ring-charcoal/10 transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
+                                {/* Speaker/Sensors */}
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-charcoal rounded-b-2xl z-20"></div>
+
+                                {/* Inner Screen */}
+                                <div className="w-full h-full bg-bone rounded-[2.5rem] overflow-hidden relative shadow-inner">
+                                    <img
+                                        src="/mobile-app-screenshot.jpg"
+                                        alt="Bústaðurinn App Screenshot"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Text Content */}
+                        <div className="w-full lg:w-1/2 space-y-8">
+                            <div>
+                                <h2 className="text-4xl md:text-5xl font-serif mb-6 leading-tight">Sumarhúsið í vasanum</h2>
+                                <p className="text-xl text-stone-600 leading-relaxed font-light">
+                                    Við höfum hannað Bústaðinn til að vera alltaf við höndina. Ekki bara vefsíða, heldur öflugt tól sem einfaldar lífið í hvert sinn sem þú hugsar um sumarhúsið.
+                                </p>
+                            </div>
+
+                            <ul className="space-y-6">
+                                <li className="flex items-start gap-4 group">
+                                    <div className="mt-1 w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center shrink-0 group-hover:bg-amber group-hover:text-charcoal transition-colors">
+                                        <CheckCircle className="w-5 h-5 text-amber group-hover:text-inherit" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-bold mb-1">Settu sumarhúsið á símann þinn</h4>
+                                        <p className="text-stone-500">Bættu Bústaðnum á heimaskjáinn þinn á augabragði. Engin þörf á App Store – virkar eins og app, beint í gegnum vafrann.</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-4 group">
+                                    <div className="mt-1 w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center shrink-0 group-hover:bg-amber group-hover:text-charcoal transition-colors">
+                                        <CheckCircle className="w-5 h-5 text-amber group-hover:text-inherit" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-bold mb-1">Rauntíma tilkynningar</h4>
+                                        <p className="text-stone-500">Fáðu tilkynningu um leið og einhver bókar næstu helgi, bætir við á innkaupalistann eða þegar nýtt verkefni er stofnað.</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-4 group">
+                                    <div className="mt-1 w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center shrink-0 group-hover:bg-amber group-hover:text-charcoal transition-colors">
+                                        <CheckCircle className="w-5 h-5 text-amber group-hover:text-inherit" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-bold mb-1">Allt á hreinu á staðnum</h4>
+                                        <p className="text-stone-500">Skráðu komu, athugaðu veðurspána eða finndu WiFi lykilorðið með einum smelli þegar þú mætir í bústaðinn.</p>
+                                    </div>
+                                </li>
+                            </ul>
+
+                            <div className="pt-4">
+                                <button
+                                    onClick={() => navigate('/signup')}
+                                    className="btn btn-primary text-lg px-8 py-4 flex items-center gap-2 group"
+                                >
+                                    Byrjaðu að nota kerfið
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Pricing Section */}
             <section className="py-24 bg-white">
                 <div className="container max-w-5xl mx-auto px-6">
