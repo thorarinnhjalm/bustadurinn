@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw, MapPin, Shield, LogOut, LayoutDashboard, Calendar } from 'lucide-react';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
@@ -118,6 +118,7 @@ export default function SuperAdminPage() {
         const fetchStats = async () => {
             try {
                 setError(null);
+                console.log('👤 DEBUG: auth.currentUser', auth.currentUser?.email, auth.currentUser?.uid);
 
                 // Fetch all houses
                 const housesSnap = await getDocs(collection(db, 'houses'));
