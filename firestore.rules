@@ -3,53 +3,49 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // NUCLEAR MASTER RULE
-    // If this is you (by UID), you have access to EVERYTHING.
-    // No email checks, no complex logic. Just the raw UID.
-    match /{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == 'sxcToczAAwT3Fmh8FPXa1P6hMHB3';
+    // DEFINITIVE ADMIN CHECK
+    function isSuperAdmin() {
+      return request.auth != null && (
+        request.auth.uid == 'sxcToczAAwT3Fmh8FPXa1P6hMHB3' || 
+        request.auth.token.email == 'thorarinnhjalmarsson@gmail.com'
+      );
+    }
+
+    // 1. NEWSLETTER & CONTACTS (Priority rules)
+    match /newsletter_subscribers/{id} {
+      allow create: if true; // Anyone can sign up
+      allow read, write: if isSuperAdmin(); // Only you can see the list
     }
     
-    // Secondary Admin bypass (by email as fallback)
-    match /{document=**} {
-      allow read, write: if request.auth != null && request.auth.token.get('email', '') == 'thorarinnhjalmarsson@gmail.com';
-    }
-
-    // PUBLIC RULES (For everyone else)
-    match /newsletter_subscribers/{id} {
-      allow create: if true;
-    }
     match /contact_submissions/{id} {
       allow create: if true;
-    }
-    match /guestbook/{id} {
-      allow read, create: if true;
-    }
-    match /guest_views/{id} {
-      allow read: if true;
+      allow read, write: if isSuperAdmin();
     }
 
-    // NORMAL USER RULES
-    function isAuthenticated() {
-      return request.auth != null;
+    // 2. MASTER BYPASS (For all other collections)
+    match /{document=**} {
+      allow read, write: if isSuperAdmin();
     }
 
+    // 3. PUBLIC & USER RULES (Fallback)
+    match /guest_views/{id} { allow read: if true; }
+    match /guestbook/{id} { allow read, create: if true; }
+    
     match /users/{userId} {
-      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-
+    
     match /houses/{houseId} {
       allow get: if true;
-      allow read, write: if isAuthenticated() && (
+      allow read, write: if request.auth != null && (
         resource.data.owner_ids.hasAny([request.auth.uid]) ||
         request.resource.data.manager_id == request.auth.uid
       );
     }
-    
-    // Default fallback rules for authenticated users
-    match /bookings/{id} { allow read, write: if isAuthenticated(); }
-    match /tasks/{id} { allow read, write: if isAuthenticated(); }
-    match /coupons/{id} { allow read: if isAuthenticated(); }
-    match /email_templates/{id} { allow read: if true; }
+
+    // Generic fallback for authenticated users
+    match /bookings/{id} { allow read, write: if request.auth != null; }
+    match /tasks/{id} { allow read, write: if request.auth != null; }
+    match /coupons/{id} { allow read: if request.auth != null; }
   }
 }
