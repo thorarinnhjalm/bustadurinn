@@ -7,6 +7,7 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { initializeFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import { getStorage } from 'firebase/storage';
+import { getMessaging } from 'firebase/messaging';
 import firebaseConfig from '@/config/firebase';
 
 // Initialize Firebase
@@ -23,6 +24,7 @@ export const db = initializeFirestore(app, {
 
 export const functions = getFunctions(app);
 export const storage = getStorage(app);
+export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 export const googleProvider = new GoogleAuthProvider();
 
 export default app;

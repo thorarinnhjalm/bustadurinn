@@ -524,6 +524,7 @@ export default function CalendarPage() {
 
                 if (house && house.owner_ids) {
                     const ownerEmails: string[] = [];
+                    const allTokens: string[] = [];
                     const houseName = house.name || 'Sumarhús';
 
                     for (const ownerId of house.owner_ids) {
@@ -552,6 +553,11 @@ export default function CalendarPage() {
                                 },
                                 created_at: serverTimestamp()
                             });
+
+                            // Collect tokens for push if in-app is enabled
+                            if (userData.fcm_tokens && userData.fcm_tokens.length > 0) {
+                                allTokens.push(...userData.fcm_tokens);
+                            }
                         }
 
                         // 2. Email Notification (Respecting Settings)
@@ -574,6 +580,23 @@ export default function CalendarPage() {
                                 bookingType: newBooking.type,
                                 ownerEmails,
                                 language: 'is' // Logic for individual languages could be added here
+                            })
+                        });
+                    }
+
+                    // Send Push Notifications via API
+                    if (allTokens.length > 0) {
+                        await fetch('/api/push-notification', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                tokens: allTokens,
+                                title: 'Ný bókun 🏠',
+                                body: `${currentUser.name} bókaði ${houseName} (${newBooking.start.toLocaleDateString('is-IS')} - ${newBooking.end.toLocaleDateString('is-IS')})`,
+                                data: {
+                                    link: 'https://bustadurinn.is/calendar',
+                                    booking_id: bookingId
+                                }
                             })
                         });
                     }

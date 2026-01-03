@@ -71,6 +71,7 @@ export interface User {
     house_ids: string[];
     language?: 'is' | 'en' | 'de' | 'fr' | 'es'; // Preferred language
     notification_settings?: NotificationSettings;
+    fcm_tokens?: string[];
     created_at: Date;
     last_login?: Date;
 }

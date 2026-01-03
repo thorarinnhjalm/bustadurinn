@@ -23,8 +23,10 @@ import {
     RefreshCw,
     Link as LinkIcon,
     Bell,
-    Mail
+    Mail,
+    Check
 } from 'lucide-react';
+import { requestPushPermission } from '@/utils/pushNotifications';
 import ImageCropper from '@/components/ImageCropper';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import {
@@ -239,19 +241,21 @@ export default function SettingsPage() {
         }
     };
 
-    const Toggle = ({ label, description, checked, onChange }: {
+    const Toggle = ({ label, description, checked, onChange, disabled }: {
         label: string,
         description: string,
         checked: boolean,
-        onChange: (val: boolean) => void
+        onChange: (val: boolean) => void,
+        disabled?: boolean
     }) => (
-        <div className="flex items-start justify-between py-2">
+        <div className={`flex items-start justify-between py-2 ${disabled ? 'opacity-50' : ''}`}>
             <div className="flex-1 mr-4">
                 <p className="text-sm font-bold text-charcoal">{label}</p>
                 <p className="text-xs text-stone-500">{description}</p>
             </div>
             <button
                 type="button"
+                disabled={disabled}
                 onClick={() => onChange(!checked)}
                 className={`
                     relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
@@ -1515,7 +1519,7 @@ export default function SettingsPage() {
                                             </div>
                                         </div>
 
-                                        <div className="grid md:grid-cols-2 gap-8">
+                                        <div className="grid md:grid-cols-3 gap-8">
                                             {/* Email Notifications */}
                                             <div className="space-y-4">
                                                 <div className="flex items-center gap-2 mb-2">
@@ -1530,16 +1534,10 @@ export default function SettingsPage() {
                                                     onChange={(val) => handleUpdateNotificationSettings('emails', 'new_bookings', val)}
                                                 />
                                                 <Toggle
-                                                    label="Áminningar um verkefni"
-                                                    description="Viku fyrir dagssetningu eða þegar muna þarf eftir"
+                                                    label="Verkefni"
+                                                    description="Áminningar um verkefni sem eiga að klárast"
                                                     checked={notificationSettings.emails.task_reminders}
                                                     onChange={(val) => handleUpdateNotificationSettings('emails', 'task_reminders', val)}
-                                                />
-                                                <Toggle
-                                                    label="Kerfisuppfærslur"
-                                                    description="Nýir eiginleikar og mikilvægar upplýsingar"
-                                                    checked={notificationSettings.emails.system_updates}
-                                                    onChange={(val) => handleUpdateNotificationSettings('emails', 'system_updates', val)}
                                                 />
                                             </div>
 
@@ -1557,17 +1555,50 @@ export default function SettingsPage() {
                                                     onChange={(val) => handleUpdateNotificationSettings('in_app', 'new_bookings', val)}
                                                 />
                                                 <Toggle
-                                                    label="Úthlutuð verkefni"
-                                                    description="Þegar þér er úthlutað nýju verkefni"
-                                                    checked={notificationSettings.in_app.task_assignments}
-                                                    onChange={(val) => handleUpdateNotificationSettings('in_app', 'task_assignments', val)}
-                                                />
-                                                <Toggle
                                                     label="Gestabók"
-                                                    description="Tilkynning þegar ný færsla kemur í gestabók"
+                                                    description="Þegar gestir skrifa í gestabókina"
                                                     checked={notificationSettings.in_app.guestbook_entries}
                                                     onChange={(val) => handleUpdateNotificationSettings('in_app', 'guestbook_entries', val)}
                                                 />
+                                            </div>
+
+                                            {/* Push Notifications */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="w-4 h-4 rounded-full bg-amber flex items-center justify-center">
+                                                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                                    </div>
+                                                    <h4 className="text-sm font-bold uppercase tracking-wider text-stone-600">Push-tilkynningar</h4>
+                                                </div>
+
+                                                <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
+                                                    <p className="text-xs text-stone-500 mb-4">
+                                                        Virkaðu push-tilkynningar til að fá skilaboð beint í símann þinn (eins og "native" app).
+                                                    </p>
+
+                                                    {currentUser?.fcm_tokens && currentUser.fcm_tokens.length > 0 ? (
+                                                        <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100">
+                                                            <Check size={14} />
+                                                            <span className="text-xs font-bold">Virkjað á þessu tæki</span>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (!currentUser) return;
+                                                                const token = await requestPushPermission(currentUser);
+                                                                if (token) {
+                                                                    setSuccess('Push-tilkynningar virkjaðar!');
+                                                                    // We need to refresh the UI state or rely on currentUser from store updating
+                                                                } else {
+                                                                    setError('Gat ekki virkjað tilkynningar. Athugaðu leyfi í vafranum.');
+                                                                }
+                                                            }}
+                                                            className="w-full btn btn-primary text-xs py-2"
+                                                        >
+                                                            Virkja í þessum síma/vafra
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

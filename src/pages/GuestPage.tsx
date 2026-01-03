@@ -381,6 +381,22 @@ export default function GuestPage() {
                                                 read: false,
                                                 created_at: serverTimestamp()
                                             });
+
+                                            // Push notification
+                                            if (userData.fcm_tokens && userData.fcm_tokens.length > 0) {
+                                                await fetch('/api/push-notification', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({
+                                                        tokens: userData.fcm_tokens,
+                                                        title: 'Ný gestabókarfærsla 📖',
+                                                        body: `${author} skráði í gestabókina í ${houseName}`,
+                                                        data: {
+                                                            link: 'https://bustadurinn.is/settings?tab=guestbook'
+                                                        }
+                                                    })
+                                                });
+                                            }
                                         }
                                     }
                                 }
