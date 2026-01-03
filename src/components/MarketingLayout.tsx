@@ -52,18 +52,18 @@ export default function MarketingLayout({ children, title, description }: Market
                     <div className="mb-8 flex justify-center">
                         <Logo size={48} className="text-white opacity-20" />
                     </div>
-                    <div className="flex flex-wrap justify-center gap-8 mb-8 text-grey-warm font-medium">
-                        <Link to="/eiginleikar" className="hover:text-white transition-colors">Eiginleikar</Link>
-                        <Link to="/spurt-og-svarad" className="hover:text-white transition-colors">Algengar spurningar</Link>
-                        <Link to="/um-okkur" className="hover:text-white transition-colors">Um Okkur</Link>
-                        <Link to="/hafa-samband" className="hover:text-white transition-colors">Hafa samband</Link>
-                        <Link to="/personuvernd" className="hover:text-white transition-colors">Persónuvernd</Link>
-                        <Link to="/skilmalar" className="hover:text-white transition-colors">Skilmálar</Link>
+                    <div className="flex flex-wrap justify-center gap-8 mb-10 text-stone-300 font-semibold whitespace-nowrap">
+                        <Link to="/eiginleikar" className="text-inherit hover:text-white transition-colors text-base">Eiginleikar</Link>
+                        <Link to="/spurt-og-svarad" className="text-inherit hover:text-white transition-colors text-base">Algengar spurningar</Link>
+                        <Link to="/um-okkur" className="text-inherit hover:text-white transition-colors text-base">Um Okkur</Link>
+                        <Link to="/hafa-samband" className="text-inherit hover:text-white transition-colors text-base">Hafa samband</Link>
+                        <Link to="/personuvernd" className="text-inherit hover:text-white transition-colors text-base">Persónuvernd</Link>
+                        <Link to="/skilmalar" className="text-inherit hover:text-white transition-colors text-base">Skilmálar</Link>
                     </div>
-                    <p className="text-grey-warm mb-6 font-serif italic">Betra skipulag fyrir sumarhúsið.</p>
-                    <p className="text-sm text-grey-mid">
+                    <p className="text-white/40 mb-6 font-serif italic text-lg">Betra skipulag fyrir sumarhúsið.</p>
+                    <p className="text-xs text-stone-500 uppercase tracking-widest font-medium">
                         © {new Date().getFullYear()} Bústaðurinn.is.<br />
-                        Útgefið af Neðri Hóll Hugmyndahús ehf.
+                        <span className="opacity-70">Útgefið af Neðri Hóll Hugmyndahús ehf.</span>
                     </p>
                 </div>
             </footer>

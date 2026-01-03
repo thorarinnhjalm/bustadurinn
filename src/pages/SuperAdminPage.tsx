@@ -909,11 +909,11 @@ export default function SuperAdminPage() {
                     // Activity Calculation
                     const unifiedActivity = [
                         ...stats.allHouses.map(h => {
-                            const date = (h.created_at as any)?.toDate ? (h.created_at as any).toDate() : new Date(h.created_at || Date.now());
+                            const date = (h.created_at as any)?.toDate ? (h.created_at as any).toDate() : new Date(h.created_at || 0);
                             return { type: 'house', data: h, date };
                         }),
                         ...stats.allUsers.map(u => {
-                            const date = (u.created_at as any)?.toDate ? (u.created_at as any).toDate() : new Date(u.created_at || Date.now());
+                            const date = (u.created_at as any)?.toDate ? (u.created_at as any).toDate() : new Date(u.created_at || 0);
                             return { type: 'user', data: u, date };
                         })
                     ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
