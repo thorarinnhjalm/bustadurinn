@@ -10,6 +10,7 @@ import { getWeatherForecast, shouldShowWeather, getForecastReliability } from '@
 import { generatePackingSuggestions, getWeatherSummary } from '@/utils/packingSuggestions';
 import { WEATHER_ICONS, WEATHER_LABELS_IS } from '@/types/weather';
 import type { WeatherForecast, PackingSuggestion } from '@/types/weather';
+import { getRoadConditions, getRoadSummary, type RoadCondition } from '@/services/roadService';
 
 interface BookingWeatherCardProps {
     bookingId: string;
