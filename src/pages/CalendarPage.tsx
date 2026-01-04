@@ -793,8 +793,8 @@ export default function CalendarPage() {
                         onTouchStart={onTouchStart}
                         onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
-                        className="h-full calendar-container"
-                        style={{ overflowY: view === 'month' ? 'visible' : 'auto' }}
+                        className="calendar-container"
+                        style={{ height: view === 'month' ? (window.innerWidth < 768 ? '600px' : '800px') : 'auto', minHeight: '600px' }}
                     >
                         {/* Show Month Calendar OR List View based on selected view */}
                         {view === 'month' ? (
@@ -803,7 +803,8 @@ export default function CalendarPage() {
                                 events={events}
                                 startAccessor="start"
                                 endAccessor="end"
-                                className="h-[65vh] md:h-[700px] font-sans"
+                                className="h-full font-sans"
+                                style={{ minHeight: '100%' }}
                                 onSelectSlot={handleSelectSlot}
                                 onSelectEvent={handleSelectEvent}
                                 selectable
