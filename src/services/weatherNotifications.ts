@@ -4,8 +4,8 @@
  * Only sends when there's genuinely valuable information to share
  */
 
-import type { WeatherForecast, PackingSuggestion } from '@/types/weather';
-import { generatePackingSuggestions, getWeatherSummary } from '@/utils/packingSuggestions';
+import type { WeatherForecast } from '@/types/weather';
+import { generatePackingSuggestions } from '@/utils/packingSuggestions';
 
 interface BookingNotificationData {
     bookingId: string;
@@ -118,9 +118,7 @@ export function generateWeatherNotification(data: BookingNotificationData): {
     if (totalPrecip > 20) {
         return {
             title: '☔ Mikil rigning á dagskrá',
-            body: `${Math.round(totalPrecip)}mm rigning spáð fyrir helgina. Fullkomin afsökun til að taka með góða bók og eit
-
-ta kaffi ☕📚`,
+            body: `${Math.round(totalPrecip)}mm rigning spáð fyrir helgina. Fullkomin afsökun til að taka með góða bók og heitta kaffi ☕📚`,
             priority: 'medium',
             actionable: false
         };

@@ -64,6 +64,8 @@ const UserDashboard = () => {
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
+    const [showBookingDetailModal, setShowBookingDetailModal] = useState(false);
+
 
     useEffect(() => {
         if (currentUser && (!currentUser.house_ids || currentUser.house_ids.length === 0)) {
@@ -767,7 +769,10 @@ const UserDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
 
                     {/* NEXT BOOKING CARD */}
-                    <section onClick={() => navigate('/calendar')} className="group cursor-pointer">
+                    <section
+                        onClick={() => nextBooking && setShowBookingDetailModal(true)}
+                        className={nextBooking ? "group cursor-pointer" : ""}
+                    >
                         <div className="flex justify-between items-center mb-4 px-1">
                             <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Næst á dagskrá</h3>
                             <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-amber group-hover:text-white transition-colors">
@@ -998,6 +1003,95 @@ const UserDashboard = () => {
                             >
                                 {checkoutLoading ? 'Skrái...' : 'Staðfesta Brottför'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Booking Detail Modal with Weather */}
+            {showBookingDetailModal && nextBooking && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+                    onClick={() => setShowBookingDetailModal(false)}
+                >
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+                            <div>
+                                <h2 className="text-2xl font-serif font-bold text-charcoal">{nextBooking.user_name}</h2>
+                                <p className="text-sm text-stone-500">
+                                    {nextBooking.start.toLocaleDateString('is-IS', { weekday: 'long', day: 'numeric', month: 'long' })} - {nextBooking.end.toLocaleDateString('is-IS', { day: 'numeric', month: 'long' })}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowBookingDetailModal(false)}
+                                className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6 text-stone-400" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 space-y-6">
+                            {/* Booking Info */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-stone-50 rounded-lg p-4">
+                                    <p className="text-xs uppercase font-bold text-stone-400 tracking-wider mb-1">Tegund</p>
+                                    <p className="text-lg font-semibold text-charcoal capitalize">
+                                        {nextBooking.type === 'personal' ? 'Einkanot' : nextBooking.type === 'rental' ? 'Útleiga' : 'Fjölskylda'}
+                                    </p>
+                                </div>
+                                <div className="bg-stone-50 rounded-lg p-4">
+                                    <p className="text-xs uppercase font-bold text-stone-400 tracking-wider mb-1">Lengd</p>
+                                    <p className="text-lg font-semibold text-charcoal">
+                                        {Math.ceil((nextBooking.end.getTime() - nextBooking.start.getTime()) / (1000 * 60 * 60 * 24))} nætur
+                                    </p>
+                                </div>
+                            </div>
+
+                            {nextBooking.notes && (
+                                <div className="bg-amber/5 border border-amber/20 rounded-lg p-4">
+                                    <p className="text-xs uppercase font-bold text-amber-700 tracking-wider mb-2">Athugasemdir</p>
+                                    <p className="text-stone-700">{nextBooking.notes}</p>
+                                </div>
+                            )}
+
+                            {/* Weather Forecast */}
+                            {currentHouse?.location && shouldShowWeather(nextBooking.start) && (
+                                <div>
+                                    <h3 className="text-lg font-serif font-bold text-charcoal mb-3">Veðurspá fyrir ferðina</h3>
+                                    <BookingWeatherCard
+                                        bookingId={nextBooking.id}
+                                        startDate={nextBooking.start}
+                                        endDate={nextBooking.end}
+                                        houseLatitude={currentHouse.location.lat}
+                                        houseLongitude={currentHouse.location.lng}
+                                        houseName={currentHouse.name}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex gap-3 pt-4 border-t border-stone-200">
+                                <button
+                                    onClick={() => {
+                                        setShowBookingDetailModal(false);
+                                        navigate('/calendar');
+                                    }}
+                                    className="btn btn-secondary flex-1"
+                                >
+                                    Opna dagatal
+                                </button>
+                                <button
+                                    onClick={() => setShowBookingDetailModal(false)}
+                                    className="btn btn-primary flex-1"
+                                >
+                                    Loka
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

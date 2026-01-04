@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Cloud, Droplets, Wind, Thermometer, AlertTriangle, CheckCircle, Loader2, Calendar } from 'lucide-react';
+import { Cloud, Droplets, Wind, AlertTriangle, Loader2, Calendar } from 'lucide-react';
 import { getWeatherForecast, shouldShowWeather, getForecastReliability } from '@/services/weatherService';
 import { generatePackingSuggestions, getWeatherSummary } from '@/utils/packingSuggestions';
 import { WEATHER_ICONS, WEATHER_LABELS_IS } from '@/types/weather';
@@ -180,8 +180,8 @@ export default function BookingWeatherCard({
                                     <div
                                         key={idx}
                                         className={`flex items-start gap-3 p-2 rounded-lg transition-all duration-300 ${sug.priority === 'high'
-                                                ? 'bg-amber-50 border border-amber-200'
-                                                : 'bg-stone-50'
+                                            ? 'bg-amber-50 border border-amber-200'
+                                            : 'bg-stone-50'
                                             }`}
                                     >
                                         <span className="text-xl flex-shrink-0">{sug.icon}</span>
