@@ -7,7 +7,6 @@
 import { useState, useEffect } from 'react';
 import { Cloud, Droplets, Wind, AlertTriangle, Loader2, Calendar } from 'lucide-react';
 import { getWeatherForecast, shouldShowWeather, getForecastReliability } from '@/services/weatherService';
-import { generatePackingSuggestions, getWeatherSummary } from '@/utils/packingSuggestions';
 import { WEATHER_ICONS, WEATHER_LABELS_IS } from '@/types/weather';
 import type { WeatherForecast, PackingSuggestion } from '@/types/weather';
 import { getRoadConditions, getRoadSummary, type RoadCondition } from '@/services/roadService';
@@ -30,10 +29,9 @@ export default function BookingWeatherCard({
     houseName
 }: BookingWeatherCardProps) {
     const [forecast, setForecast] = useState<WeatherForecast | null>(null);
-    const [suggestions, setSuggestions] = useState<PackingSuggestion[]>([]);
+    const [roadConditions, setRoadConditions] = useState<RoadCondition[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [expanded, setExpanded] = useState(false);
 
     // Don't render if booking is too far away
     if (!shouldShowWeather(startDate)) {
@@ -49,11 +47,14 @@ export default function BookingWeatherCard({
         setError(null);
 
         try {
-            const weatherData = await getWeatherForecast(houseLatitude, houseLongitude, startDate);
+            const [weatherData, roadData] = await Promise.all([
+                getWeatherForecast(houseLatitude, houseLongitude, startDate),
+                getRoadConditions(houseLatitude, houseLongitude)
+            ]);
             setForecast(weatherData);
+            setRoadConditions(roadData);
 
             if (weatherData) {
-                const packingSuggestions = generatePackingSuggestions(weatherData);
                 setSuggestions(packingSuggestions);
             }
         } catch (err) {
@@ -106,7 +107,6 @@ export default function BookingWeatherCard({
     return (
         <div
             className={`relative overflow-hidden rounded-2xl border border-stone-200/50 bg-gradient-to-br ${getGradientForWeather()} p-6 shadow-lg hover:shadow-xl transition-all duration-500 cursor-pointer backdrop-blur-sm`}
-            onClick={() => setExpanded(!expanded)}
         >
             {/* Decorative gradient orbs */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-amber/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
@@ -134,6 +134,29 @@ export default function BookingWeatherCard({
                 <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/50 shadow-sm">
                     <p className="text-sm font-medium text-charcoal/90 leading-relaxed">{summary}</p>
                 </div>
+
+                {/* Road Conditions */}
+                {roadConditions.length > 0 && (
+                    <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/50 shadow-sm">
+                        <h4 className="text-xs font-bold text-stone-600 uppercase tracking-wider mb-2 flex items-center gap-1">
+                            🚗 Vegaastand
+                        </h4>
+                        <div className="space-y-2">
+                            {roadConditions.slice(0, 2).map((road, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-sm">
+                                    <span className="text-stone-700 font-medium">{road.route}</span>
+                                    <span className={`text-xs font-semibold ${
+                                        road.severity === 'high' ? 'text-red-600' :
+                                        road.severity === 'medium' ? 'text-amber-600' :
+                                        'text-green-600'
+                                    }`}>
+                                        {road.description}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Daily Forecast - Show first 3 days */}
                 <div className="grid grid-cols-3 gap-3 mb-4">
@@ -168,47 +191,6 @@ export default function BookingWeatherCard({
                     ))}
                 </div>
 
-                {/* Packing Suggestions - Expandable */}
-                {suggestions.length > 0 && (
-                    <div className={`transition-all duration-500 ${expanded ? 'max-h-96' : 'max-h-0'} overflow-hidden`}>
-                        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/60">
-                            <h4 className="text-sm font-bold text-charcoal mb-3 flex items-center gap-2">
-                                <span>🎒</span>
-                                Mælt með að pakka
-                            </h4>
-                            <div className="space-y-2">
-                                {suggestions.slice(0, 5).map((sug, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`flex items-start gap-3 p-2 rounded-lg transition-all duration-300 ${sug.priority === 'high'
-                                            ? 'bg-amber-50 border border-amber-200'
-                                            : 'bg-stone-50'
-                                            }`}
-                                    >
-                                        <span className="text-xl flex-shrink-0">{sug.icon}</span>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-charcoal">{sug.item}</p>
-                                            <p className="text-xs text-stone-600">{sug.reason}</p>
-                                        </div>
-                                        {sug.priority === 'high' && (
-                                            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Expand/Collapse Indicator */}
-                <div className="text-center mt-3">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setExpanded(!expanded);
-                        }}
-                        className="text-xs text-stone-500 hover:text-charcoal font-medium transition-colors inline-flex items-center gap-1"
-                    >
                         {expanded ? '▲ Loka' : suggestions.length > 0 ? `▼ Sjá pakkalista (${suggestions.length})` : '▼ Nánar'}
                     </button>
                 </div>
