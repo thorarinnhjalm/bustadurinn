@@ -4,11 +4,11 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // NUCLEAR ADMISSION - Open everything for these two methods while we debug
-    match /newsletter_subscribers/{id} {
+    match /newsletter_subscribers/{id=**} {
       allow read, write: if true;
     }
     
-    match /contact_submissions/{id} {
+    match /contact_submissions/{id=**} {
       allow read, write: if true;
     }
 
@@ -16,10 +16,8 @@ service cloud.firestore {
     function isSuperAdmin() {
       return request.auth != null && (
         request.auth.uid == 'sxcToczAAwT3Fmh8FPXa1P6hMHB3' || 
-        ('email' in request.auth.token && (
-          request.auth.token.email == 'thorarinnhjalmarsson@gmail.com' ||
-          request.auth.token.email == 'thorarinnhjalm@gmail.com'
-        ))
+        request.auth.token.get('email', '') == 'thorarinnhjalmarsson@gmail.com' ||
+        request.auth.token.get('email', '') == 'thorarinnhjalm@gmail.com'
       );
     }
 
