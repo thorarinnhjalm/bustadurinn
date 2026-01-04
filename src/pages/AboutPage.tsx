@@ -52,14 +52,15 @@ export default function AboutPage() {
                             Þegar allar reglur eru skýrar, bókanir gagnsæjar og fjármálin á hreinu, þá geta allir slakað á og notið dvalarinnar.
                         </p>
 
-                        <div className="bg-charcoal text-bone p-10 rounded-3xl my-16 not-prose relative overflow-hidden">
+                        <div className="bg-charcoal text-bone p-10 md:p-14 rounded-[2.5rem] my-20 not-prose relative overflow-hidden shadow-2xl border border-white/5">
                             <div className="relative z-10">
-                                <h3 className="text-2xl font-serif mb-4">Hvað er næst?</h3>
-                                <p className="text-grey-warm mb-0">
+                                <h3 className="text-3xl font-serif mb-6 text-white tracking-tight">Hvað er næst?</h3>
+                                <p className="text-stone-200 text-lg leading-relaxed mb-0 opacity-95">
                                     Við erum stöðugt að bæta kerfið í samstarfi við okkar notendur. Framundan eru spennandi nýjungar eins og snjalltenginar við rafmagnsmæla og enn dýpri samþætting við íslenska banka.
                                 </p>
                             </div>
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-amber/10 rounded-full -mr-32 -mt-32 blur-[100px]"></div>
+                            <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber/5 rounded-full -ml-24 -mb-24 blur-[80px]"></div>
                         </div>
 
                         <h3 className="text-2xl font-serif text-charcoal mt-12 mb-6 text-center">Hafið samband</h3>

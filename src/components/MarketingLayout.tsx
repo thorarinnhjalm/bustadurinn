@@ -146,24 +146,24 @@ export default function MarketingLayout({ children, title, description }: Market
                         </div>
                     </div>
 
-                    <div className="border-t border-white/15 pt-12">
+                    <div className="border-t border-white/20 pt-12">
                         <div className="grid grid-cols-2 md:flex md:flex-wrap justify-center gap-x-12 gap-y-6 mb-12">
-                            <Link to="/eiginleikar" className="text-white hover:text-amber transition-colors text-base font-medium">Eiginleikar</Link>
-                            <Link to="/spurt-og-svarad" className="text-white hover:text-amber transition-colors text-base font-medium whitespace-nowrap">Algengar spurningar</Link>
-                            <Link to="/um-okkur" className="text-white hover:text-amber transition-colors text-base font-medium">Um Okkur</Link>
-                            <Link to="/hafa-samband" className="text-white hover:text-amber transition-colors text-base font-medium whitespace-nowrap">Hafa samband</Link>
-                            <Link to="/personuvernd" className="text-white hover:text-amber transition-colors text-base font-medium">Persónuvernd</Link>
-                            <Link to="/skilmalar" className="text-white hover:text-amber transition-colors text-base font-medium">Skilmálar</Link>
+                            <Link to="/eiginleikar" className="text-white hover:text-amber transition-colors text-base font-bold">Eiginleikar</Link>
+                            <Link to="/spurt-og-svarad" className="text-white hover:text-amber transition-colors text-base font-bold whitespace-nowrap">Algengar spurningar</Link>
+                            <Link to="/um-okkur" className="text-white hover:text-amber transition-colors text-base font-bold">Um Okkur</Link>
+                            <Link to="/hafa-samband" className="text-white hover:text-amber transition-colors text-base font-bold whitespace-nowrap">Hafa samband</Link>
+                            <Link to="/personuvernd" className="text-white hover:text-amber transition-colors text-base font-bold">Persónuvernd</Link>
+                            <Link to="/skilmalar" className="text-white hover:text-amber transition-colors text-base font-bold">Skilmálar</Link>
                         </div>
 
-                        <div className="text-center space-y-8">
-                            <p className="text-white/90 font-serif italic text-xl">Betra skipulag fyrir sumarhúsið.</p>
+                        <div className="text-center space-y-12">
+                            <p className="text-white font-serif italic text-2xl tracking-wide">Betra skipulag fyrir sumarhúsið.</p>
 
                             <div className="space-y-4">
-                                <p className="text-[11px] text-stone-200 uppercase tracking-[0.25em] font-bold">
+                                <p className="text-[12px] text-white uppercase tracking-[0.3em] font-black opacity-90">
                                     © {new Date().getFullYear()} Bústaðurinn.is.
                                 </p>
-                                <p className="text-[11px] text-stone-300 uppercase tracking-widest font-semibold opacity-80">
+                                <p className="text-[11px] text-stone-200 uppercase tracking-[0.2em] font-bold opacity-80">
                                     Útgefið af Neðri Hóll Hugmyndahús ehf.
                                 </p>
                             </div>
