@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { signOut, sendPasswordResetEmail } from 'firebase/auth';
 import { db, storage, auth } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -38,28 +38,45 @@ import {
     updateDoc,
     setDoc,
     deleteDoc,
-    serverTimestamp
+    serverTimestamp,
+    collection,
+    query,
+    where,
+    orderBy,
+    getDocs,
+    addDoc,
+    onSnapshot
 } from 'firebase/firestore';
 import MagicLinkGenerator from '@/components/guest/MagicLinkGenerator';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
-import type { House, User, NotificationSettings } from '@/types/models';
+import type { House, User, NotificationSettings, ShoppingItem, InternalLog } from '@/types/models';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { MapPin } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import GuestbookViewer from '@/components/GuestbookViewer';
+import ShoppingList from '@/components/ShoppingList';
+import InternalLogbook from '@/components/InternalLogbook';
 import { updateUserNameInAllCollections } from '@/services/userService';
+import { ShoppingBag, ClipboardList } from 'lucide-react'; // Ensure imports
 
-type Tab = 'house' | 'members' | 'profile' | 'guests' | 'guestbook';
+type Tab = 'house' | 'members' | 'profile' | 'guests' | 'guestbook' | 'shopping' | 'logs';
 
+
+// ... other imports
 
 export default function SettingsPage() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user: currentUser, isImpersonating } = useEffectiveUser();
     const { startImpersonation } = useImpersonation();
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
     const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
-    const [activeTab, setActiveTab] = useState<Tab>('house');
+
+    const [activeTab, setActiveTab] = useState<Tab>(() => {
+        const state = location.state as { initialTab?: Tab };
+        return state?.initialTab || 'house';
+    });
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
@@ -92,6 +109,7 @@ export default function SettingsPage() {
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [debounceTimer, setDebounceTimer] = useState<any>(null);
     const [members, setMembers] = useState<User[]>([]);
+    const [invitations, setInvitations] = useState<any[]>([]);
     const [loadingMembers, setLoadingMembers] = useState(false);
     const [membersError, setMembersError] = useState('');
     const [isEditingLocation, setIsEditingLocation] = useState(false);
@@ -101,9 +119,95 @@ export default function SettingsPage() {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [cropMode, setCropMode] = useState<'main' | 'gallery'>('main');
 
+    // Shopping & Logs State
+    const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
+    const [logs, setLogs] = useState<InternalLog[]>([]);
+
+    // Fetch Shopping List
+    useEffect(() => {
+        if (activeTab === 'shopping' && house?.id) {
+            const q = query(
+                collection(db, 'shopping_list'),
+                where('house_id', '==', house.id),
+                orderBy('created_at', 'desc')
+            );
+            // Use onSnapshot for realtime updates
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShoppingItem));
+                setShoppingItems(items);
+            });
+            return () => unsubscribe();
+        }
+    }, [activeTab, house?.id]);
+
+    // Fetch Internal Logs
+    useEffect(() => {
+        if (activeTab === 'logs' && house?.id) {
+            const fetchLogs = async () => {
+                const q = query(
+                    collection(db, 'internal_logs'),
+                    where('house_id', '==', house.id),
+                    orderBy('created_at', 'desc')
+                );
+                const snapshot = await getDocs(q);
+                const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InternalLog));
+                setLogs(items);
+            };
+            fetchLogs();
+        }
+    }, [activeTab, house?.id]);
+
+    // Shopping handlers
+    const handleToggleShoppingItem = async (item: ShoppingItem) => {
+        await updateDoc(doc(db, 'shopping_list', item.id), { checked: !item.checked });
+    };
+
+    const handleDeleteShoppingItem = async (item: ShoppingItem) => {
+        await deleteDoc(doc(db, 'shopping_list', item.id));
+    };
+
+    const handleAddShoppingItem = async (text: string) => {
+        if (!house || !currentUser) return;
+        await addDoc(collection(db, 'shopping_list'), {
+            house_id: house.id,
+            item: text,
+            checked: false,
+            created_at: new Date(),
+            added_by: currentUser.uid,
+            added_by_name: currentUser.name
+        });
+    };
+
+    // Log handlers
+    const handleAddLog = async (text: string) => {
+        if (!house || !currentUser) return;
+        const newLog = {
+            house_id: house.id,
+            user_id: currentUser.uid,
+            user_name: currentUser.name || 'Óþekktur',
+            text: text,
+            created_at: new Date()
+        };
+        const docRef = await addDoc(collection(db, 'internal_logs'), newLog);
+        setLogs(prev => [{ id: docRef.id, ...newLog } as InternalLog, ...prev]);
+    };
+
     // Invite State
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteLoading, setInviteLoading] = useState(false);
+
+    const handleRevokeInvite = async (inviteId: string) => {
+        if (!confirm('Ertu viss um að þú viljir afturkalla þetta boð?')) return;
+        try {
+            await deleteDoc(doc(db, 'invitations', inviteId));
+            setInvitations(prev => prev.filter(i => i.id !== inviteId));
+            setSuccess('Boð afturkallað.');
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (e) {
+            console.error('Error revoking invite:', e);
+            setError('Gat ekki afturkallað boð.');
+        }
+    };
 
     const handleSendInvite = async () => {
         if (!inviteEmail.trim() || !house || !currentUser) return;
@@ -504,6 +608,13 @@ export default function SettingsPage() {
                     }).filter((u): u is User => u !== null);
 
                     setMembers(users);
+
+                    // Also fetch invitations
+                    const qInvites = query(collection(db, 'invitations'), where('house_id', '==', house.id));
+                    const inviteSnap = await getDocs(qInvites);
+                    const invites = inviteSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    setInvitations(invites);
+
                 } catch (err) {
                     console.error("Error fetching members", err);
                     setMembersError('Gat ekki sótt lista yfir meðeigendur.');
@@ -763,6 +874,28 @@ export default function SettingsPage() {
                             </button>
 
                             <button
+                                onClick={() => setActiveTab('shopping')}
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'shopping'
+                                    ? 'bg-amber text-charcoal font-bold'
+                                    : 'text-grey-dark hover:bg-bone'
+                                    }`}
+                            >
+                                <ShoppingBag className="w-5 h-5" />
+                                <span>Innkaupalisti</span>
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab('logs')}
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'logs'
+                                    ? 'bg-amber text-charcoal font-bold'
+                                    : 'text-grey-dark hover:bg-bone'
+                                    }`}
+                            >
+                                <ClipboardList className="w-5 h-5" />
+                                <span>Rekstrarbók</span>
+                            </button>
+
+                            <button
                                 onClick={() => setActiveTab('members')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'members'
                                     ? 'bg-charcoal text-white'
@@ -828,6 +961,33 @@ export default function SettingsPage() {
                         {error && (
                             <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
                                 {error}
+                            </div>
+                        )}
+
+                        {/* TAB: SHOPPING */}
+                        {activeTab === 'shopping' && (
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <h2 className="text-xl font-serif font-bold mb-4">Innkaupalisti</h2>
+                                <p className="text-stone-500 mb-6">Hvað vantar í bústaðinn?</p>
+                                <ShoppingList
+                                    items={shoppingItems}
+                                    onToggle={handleToggleShoppingItem}
+                                    onDelete={handleDeleteShoppingItem}
+                                    onAdd={handleAddShoppingItem}
+                                />
+                            </div>
+                        )}
+
+                        {/* TAB: LOGS */}
+                        {activeTab === 'logs' && (
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <h2 className="text-xl font-serif font-bold mb-4">Rekstrarbók</h2>
+                                <p className="text-stone-500 mb-6">Skráðu niður verkefni, viðhald eða ábendingar.</p>
+                                <InternalLogbook
+                                    logs={logs}
+                                    currentUserName={currentUser?.name || ''}
+                                    onAddLog={handleAddLog}
+                                />
                             </div>
                         )}
 
@@ -1221,6 +1381,33 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
                                         ))
+                                    )}
+                                    {/* Pending Invitations */}
+                                    {invitations.length > 0 && (
+                                        <div className="mt-6 border-t border-stone-100 pt-4">
+                                            <h3 className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-2">Í bið</h3>
+                                            <div className="space-y-2">
+                                                {invitations.map(invite => (
+                                                    <div key={invite.id} className="flex items-center justify-between p-3 border border-stone-200 border-dashed rounded-lg bg-stone-50">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-stone-400">
+                                                                <Users size={14} />
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-semibold text-sm text-stone-600">{invite.email}</p>
+                                                                <p className="text-xs text-stone-400">Boðið {new Date(invite.created_at?.seconds * 1000).toLocaleDateString('is-IS')}</p>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleRevokeInvite(invite.id)}
+                                                            className="text-xs text-red-500 hover:text-red-700 font-medium hover:underline"
+                                                        >
+                                                            Afturkalla
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
                                     )}
 
                                     {/* Invite Section */}

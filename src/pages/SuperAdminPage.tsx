@@ -772,7 +772,7 @@ export default function SuperAdminPage() {
         );
     }
 
-    // Empty state
+    // Empty state with Debug Info
     const isEmpty = stats.totalHouses === 0 && stats.totalUsers === 0;
     if (isEmpty) {
         return (
@@ -788,16 +788,34 @@ export default function SuperAdminPage() {
                         <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Database className="w-8 h-8 text-stone-400" />
                         </div>
-                        <h2 className="text-xl font-serif font-bold text-charcoal mb-2">No Data Yet</h2>
-                        <p className="text-stone-600 mb-6">Seed demo data to get started with testing.</p>
-                        <button
-                            onClick={handleSeedDemo}
-                            disabled={seeding}
-                            className="btn btn-primary flex items-center gap-2 mx-auto"
-                        >
-                            <Database className="w-4 h-4" />
-                            {seeding ? 'Seeding...' : 'Seed Demo Data'}
-                        </button>
+                        <h2 className="text-xl font-serif font-bold text-charcoal mb-2">No Data Found</h2>
+                        <p className="text-stone-600 mb-6">Database seems empty or access was denied.</p>
+
+                        <div className="bg-stone-50 p-4 rounded-lg mb-6 text-left text-xs font-mono text-stone-500 break-all border border-stone-200">
+                            <p className="font-bold text-stone-700 mb-2">Debug Info:</p>
+                            <p>UID: {currentUser?.uid}</p>
+                            <p>Email: {currentUser?.email}</p>
+                            <p className="mt-2 text-amber-600">
+                                Verify this UID exists in firestore.rules "isSuperAdmin()" function.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3 justify-center">
+                            <button
+                                onClick={handleSeedDemo}
+                                disabled={seeding}
+                                className="btn btn-primary flex items-center gap-2"
+                            >
+                                <Database className="w-4 h-4" />
+                                {seeding ? 'Seeding...' : 'Seed Demo Data'}
+                            </button>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="px-4 py-2 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors font-medium text-stone-600"
+                            >
+                                Refresh Page
+                            </button>
+                        </div>
                     </div>
                 </div>
             </AdminLayout>

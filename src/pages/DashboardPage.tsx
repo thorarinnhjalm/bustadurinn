@@ -14,11 +14,9 @@ import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
-import { collection, query, where, orderBy, limit, getDocs, getDoc, Timestamp, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, Timestamp, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, AppNotification } from '@/types/models';
-import ShoppingList from '@/components/ShoppingList';
-import InternalLogbook from '@/components/InternalLogbook';
 import { fetchWeather } from '@/utils/weather';
 import BookingWeatherCard from '@/components/BookingWeatherCard';
 import { shouldShowWeather } from '@/services/weatherService';
@@ -53,7 +51,6 @@ const UserDashboard = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isOccupied, setIsOccupied] = useState(false);
     const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
-    const [logs, setLogs] = useState<InternalLog[]>([]);
     const [weather, setWeather] = useState({ temp: "--" as string | number, wind: 0, condition: "—" });
     const [finances, setFinances] = useState({ balance: 0, lastAction: "—" });
 
@@ -211,7 +208,7 @@ const UserDashboard = () => {
                         ...doc.data(),
                         created_at: doc.data().created_at?.toDate() || new Date()
                     })) as InternalLog[];
-                    setLogs(logsData);
+                    // setLogs(logsData); // Removed state
 
                     // Check if user is checked in
                     if (currentUser?.uid) {
@@ -321,114 +318,7 @@ const UserDashboard = () => {
         return `Eftir ${diff} daga`;
     };
 
-    // Shopping List Handlers
-    const handleToggleShoppingItem = async (item: ShoppingItem) => {
-        if (!currentHouse || !currentUser) return;
-
-        try {
-            const newChecked = !item.checked;
-            await updateDoc(doc(db, 'shopping_list', item.id), {
-                checked: newChecked,
-                checked_by: newChecked ? currentUser.uid : null,
-                checked_by_name: newChecked ? currentUser.name : null,
-                checked_at: newChecked ? serverTimestamp() : null
-            });
-
-            // Optimistic update
-            setShoppingItems(prev => prev.map(i => i.id === item.id ? {
-                ...i,
-                checked: newChecked,
-                checked_by: newChecked ? currentUser.uid : undefined,
-                checked_by_name: newChecked ? currentUser.name : undefined
-            } : i));
-        } catch (error) {
-            console.error('Error toggling shopping item:', error);
-        }
-    };
-
-    const handleDeleteShoppingItem = async (item: ShoppingItem) => {
-        try {
-            await deleteDoc(doc(db, 'shopping_list', item.id));
-            setShoppingItems(prev => prev.filter(i => i.id !== item.id));
-        } catch (error) {
-            console.error('Error deleting shopping item:', error);
-        }
-    };
-
-    const handleAddShoppingItem = async (itemName: string) => {
-        if (!currentHouse || !currentUser) return;
-
-        try {
-            const newItem = {
-                house_id: currentHouse.id,
-                item: itemName,
-                checked: false,
-                added_by: currentUser.uid,
-                added_by_name: currentUser.name,
-                created_at: serverTimestamp()
-            };
-
-            const docRef = await addDoc(collection(db, 'shopping_list'), newItem);
-
-            // Notify other co-owners
-            if (currentHouse.owner_ids) {
-                for (const ownerId of currentHouse.owner_ids) {
-                    if (ownerId === currentUser.uid) continue;
-
-                    const userDoc = await getDoc(doc(db, 'users', ownerId));
-                    const userData = userDoc.data();
-                    if (!userData) continue;
-
-                    if (userData.notification_settings?.in_app?.shopping_list_updates !== false) {
-                        await addDoc(collection(db, 'notifications'), {
-                            user_id: ownerId,
-                            house_id: currentHouse.id,
-                            title: 'Vantar í bústaðinn',
-                            message: `${currentUser.name} bætti ${itemName} á listann`,
-                            type: 'shopping',
-                            read: false,
-                            created_at: serverTimestamp()
-                        });
-                    }
-                }
-            }
-
-            // Optimistic update
-            setShoppingItems(prev => [{
-                id: docRef.id,
-                ...newItem,
-                created_at: new Date()
-            } as ShoppingItem, ...prev]);
-        } catch (error) {
-            console.error('Error adding shopping item:', error);
-        }
-    };
-
-    // Internal Log Handlers
-    const handleAddLog = async (text: string) => {
-        if (!currentHouse || !currentUser) return;
-
-        try {
-            const newLog = {
-                house_id: currentHouse.id,
-                user_id: currentUser.uid,
-                user_name: currentUser.name,
-                text,
-                created_at: serverTimestamp()
-            };
-
-            const docRef = await addDoc(collection(db, 'internal_logs'), newLog);
-
-            // Optimistic update
-            setLogs(prev => [{
-                id: docRef.id,
-                ...newLog,
-                created_at: new Date()
-            } as InternalLog, ...prev]);
-        } catch (error) {
-            console.error('Error adding log:', error);
-        }
-    };
+    // Shopping List Handlers and Log Handlers Removed
 
     const handleCheckout = async () => {
         if (!currentHouse || !currentUser) return;
@@ -453,14 +343,9 @@ const UserDashboard = () => {
                 text,
                 created_at: serverTimestamp()
             };
-            const docRef = await addDoc(collection(db, 'internal_logs'), newLog);
+            await addDoc(collection(db, 'internal_logs'), newLog);
 
-            // Optimistic Log Update
-            setLogs(prev => [{
-                id: docRef.id,
-                ...newLog,
-                created_at: new Date()
-            } as InternalLog, ...prev]);
+            // Optimistic Log Update Removed
 
             setShowCheckoutModal(false);
             setCheckoutMessage('');
@@ -648,7 +533,7 @@ const UserDashboard = () => {
 
             {/* --- HERO IMAGE & STATUS --- */}
             <div className="pt-16 max-w-5xl mx-auto">
-                <div className="relative h-56 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50">
+                <div className="relative h-64 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50">
                     <img
                         src={currentHouse?.image_url || "https://images.unsplash.com/photo-1542718610-a1d656d1884c?q=80&w=2670&auto=format&fit=crop"}
                         alt={currentHouse?.name || "Cabin"}
@@ -748,8 +633,8 @@ const UserDashboard = () => {
                                         text,
                                         created_at: serverTimestamp()
                                     };
-                                    const docRef = await addDoc(collection(db, 'internal_logs'), newLog);
-                                    setLogs(prev => [{ id: docRef.id, ...newLog, created_at: new Date() } as InternalLog, ...prev]);
+                                    await addDoc(collection(db, 'internal_logs'), newLog);
+                                    // setLogs(prev => [{ id: docRef.id, ...newLog, created_at: new Date() } as InternalLog, ...prev]);
                                     setIsCheckedIn(true);
                                 } catch (error) {
                                     console.error('Error logging check-in:', error);
@@ -886,7 +771,7 @@ const UserDashboard = () => {
                                         <div className="mt-4 pt-4 border-t border-stone-100">
                                             {shoppingItems.filter(item => !item.checked).length > 0 ? (
                                                 <div
-                                                    onClick={(e) => { e.stopPropagation(); navigate('/dashboard'); }}
+                                                    onClick={(e) => { e.stopPropagation(); navigate('/settings', { state: { initialTab: 'shopping' } }); }}
                                                     className="flex items-center justify-between p-3 bg-amber/10 rounded-xl border border-amber/20 hover:bg-amber/15 transition-colors cursor-pointer"
                                                 >
                                                     <div className="flex items-center gap-3">
@@ -974,42 +859,6 @@ const UserDashboard = () => {
 
                 </div>
             </main>
-
-            {/* ROW 2: Shopping List & Logbook */}
-            <div className="max-w-5xl mx-auto px-4 mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-
-                    {/* SHOPPING LIST */}
-                    <section>
-                        <div className="flex justify-between items-center mb-4 px-1">
-                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Vantar í bústaðinn</h3>
-                        </div>
-                        <div className="bg-white rounded-2xl border border-stone-100 shadow-xl shadow-stone-200/50 overflow-hidden p-1">
-                            <ShoppingList
-                                items={shoppingItems}
-                                onToggle={handleToggleShoppingItem}
-                                onDelete={handleDeleteShoppingItem}
-                                onAdd={handleAddShoppingItem}
-                            />
-                        </div>
-                    </section>
-
-                    {/* INTERNAL LOGBOOK */}
-                    <section>
-                        <div className="flex justify-between items-center mb-4 px-1">
-                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Gestapósturinn</h3>
-                        </div>
-                        <div className="bg-white rounded-2xl border border-stone-100 shadow-xl shadow-stone-200/50 overflow-hidden">
-                            <InternalLogbook
-                                logs={logs}
-                                currentUserName={currentUser?.name || ''}
-                                onAddLog={handleAddLog}
-                            />
-                        </div>
-                    </section>
-
-                </div>
-            </div>
 
             {/* --- FOOTER --- */}
             <footer className="max-w-5xl mx-auto px-4 py-8 mt-12 text-center border-t border-stone-100 hidden md:block">
