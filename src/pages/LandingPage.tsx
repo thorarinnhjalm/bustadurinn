@@ -330,10 +330,24 @@ export default function LandingPage() {
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-stone-200 to-transparent"></div>
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl md:text-4xl font-serif mb-4">Vertu með á listanum</h2>
-                        <p className="text-stone-500 max-w-xl mx-auto">
-                            Við sendum sjaldan, en þegar við gerum það eru það hagnýt ráð eða spennandi uppfærslur sem einfalda lífið í bústaðnum.
+                        <h2 className="text-3xl md:text-4xl font-serif mb-4">Langar þig að byrja strax?</h2>
+                        <p className="text-stone-500 max-w-xl mx-auto mb-8">
+                            Þú getur stofnað aðgang á tveimur mínútum og byrjað að skipuleggja sumarhúsið í dag.
                         </p>
+                        <button
+                            onClick={() => navigate('/signup')}
+                            className="btn btn-primary mb-12 px-10 py-4 text-lg"
+                        >
+                            Stofna Aðgang Núna
+                        </button>
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-stone-200" />
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-4 bg-bone text-stone-400 uppercase tracking-widest font-bold">Eða fylgstu með nýjungum</span>
+                            </div>
+                        </div>
                     </div>
                     <NewsletterSignup />
                 </div>

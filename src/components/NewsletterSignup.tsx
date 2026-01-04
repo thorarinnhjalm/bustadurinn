@@ -51,25 +51,26 @@ export default function NewsletterSignup({ variant = 'full' }: NewsletterSignupP
     if (variant === 'compact') {
         return (
             <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="relative">
+                <div className="relative group">
                     <input
                         type="email"
                         required
                         placeholder="Netfangið þitt"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-charcoal/50 border border-white/10 rounded-lg px-4 py-3 text-bone placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-amber/50 transition-all"
+                        className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3.5 text-white placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber/50 focus:bg-white/15 transition-all duration-300"
                     />
                     <button
                         disabled={status === 'loading'}
-                        className="absolute right-2 top-1.5 p-1.5 bg-amber text-charcoal rounded-md hover:bg-amber-dark transition-colors disabled:opacity-50"
+                        className="absolute right-2 top-2 p-2 bg-amber text-charcoal rounded-lg hover:bg-amber-dark transition-all duration-300 disabled:opacity-50 shadow-lg active:scale-95"
+                        aria-label="Skrá mig"
                     >
                         {status === 'loading' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                     </button>
                 </div>
-                {error && <p className="text-red-400 text-xs">{error}</p>}
-                <p className="text-[10px] text-stone-500 text-center">
-                    Enginn ruslpóstur. Aðeins mikilvægar uppfærslur.
+                {error && <p className="text-red-300 text-xs font-medium animate-shake text-center">{error}</p>}
+                <p className="text-[10px] text-stone-300 text-center opacity-70 tracking-wide font-medium">
+                    Enginn ruslpóstur. Hægt er að afskrá sig hvenær sem er.
                 </p>
             </form>
         );
