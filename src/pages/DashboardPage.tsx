@@ -800,7 +800,7 @@ const UserDashboard = () => {
 
                                     <div className="flex items-center gap-4 text-stone-500">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Komutími</span>
+                                            <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Dagsetningar</span>
                                             <span className="font-medium text-[#1a1a1a]">{formatBookingDates(nextBooking.start, nextBooking.end)}</span>
                                         </div>
                                         <div className="w-px h-8 bg-stone-200"></div>
@@ -810,17 +810,14 @@ const UserDashboard = () => {
                                                 {nextBooking.type === 'personal' ? 'Einkanot' : (nextBooking.type === 'rental' ? 'Útleiga' : 'Fjölskylda')}
                                             </span>
                                         </div>
-                                        
+
                                         {/* Weather Status Badge */}
                                         {currentHouse?.location && shouldShowWeather(nextBooking.start) && (
                                             <>
                                                 <div className="w-px h-8 bg-stone-200"></div>
                                                 <div className="flex flex-col">
                                                     <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Veður</span>
-                                                    <span className="font-medium text-amber flex items-center gap-1 text-sm">
-                                                        <Sun className="w-4 h-4" />
-                                                        Spá tilbúin
-                                                    </span>
+                                                    <span className="font-medium text-[#1a1a1a]">Sjá spá</span>
                                                 </div>
                                             </>
                                         )}
