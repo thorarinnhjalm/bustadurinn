@@ -55,12 +55,14 @@ export interface NotificationSettings {
         task_reminders: boolean;
         system_updates: boolean;
         member_activity: boolean;
+        weather_alerts: boolean;
     };
     in_app: {
         new_bookings: boolean;
         task_assignments: boolean;
         guestbook_entries: boolean;
         shopping_list_updates: boolean;
+        weather_alerts: boolean;
     };
 }
 

@@ -47,6 +47,11 @@ export default function LandingPage() {
             icon: Users,
             title: "Gestaaðgangur",
             description: "Sendu sjálfvirka \"Töfrahlekki\" á gesti sem opna upplýsingar um bústaðinn, veður og reglur. Virkar eins og stafræn gestabók og leiðarvísir í einu."
+        },
+        {
+            icon: TrendingUp, // Replacing with a more appropriate icon if needed, but keeping for now
+            title: "Öryggi í forgangi",
+            description: "Rauntíma vöktun á veðri og færð á vegum beint að þínu sumarhúsi. Við látum þig vita ef það stefnir í ófærð eða vonskuveður."
         }
     ];
 
@@ -147,7 +152,7 @@ export default function LandingPage() {
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8 mb-12">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
                         {features.map((feature, index) => (
                             <div key={index} className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                                 <feature.icon className="w-10 h-10 text-amber mb-6" />
@@ -350,6 +355,43 @@ export default function LandingPage() {
                         </div>
                     </div>
                     <NewsletterSignup />
+                </div>
+            </section>
+
+            {/* Q&A Section */}
+            <section className="py-24 bg-white border-t border-stone-100">
+                <div className="container max-w-4xl mx-auto px-6">
+                    <h2 className="text-3xl md:text-4xl font-serif text-center mb-16">Algengar spurningar</h2>
+
+                    <div className="space-y-8">
+                        <div>
+                            <h3 className="text-xl font-bold mb-3">Hvernig virka veðurviðvaranirnar?</h3>
+                            <p className="text-stone-600 leading-relaxed font-light">
+                                Við tengjumst beint við kerfi Veðurstofunnar og Vegagerðarinnar. Kerfið vakta sjálfkrafa GPS hnitin sem þú skráir á bústaðinn þinn og lætur þig vita með fyrirvara ef spáin sýnir óveður, mikinn kulda eða ófærð á nærliggjandi þjóðvegum.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h3 className="text-xl font-bold mb-3">Er erfitt að flytja gögn úr Excel?</h3>
+                            <p className="text-stone-600 leading-relaxed font-light">
+                                Alls ekki. Þú byrjar á því að hlaða inn grunnupplýsingum og bjóða meðeigendum þínum. Það tekur innan við 5 mínútur að setja upp nýtt hús og flestar fjölskyldur eru komnar á fullt skrið strax fyrsta daginn.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h3 className="text-xl font-bold mb-3">Hvað ef ég hætti að nota kerfið?</h3>
+                            <p className="text-stone-600 leading-relaxed font-light">
+                                Þú átt þín gögn. Ef þú ákveður að hætta getur þú hvenær sem er flutt út allar bókanir og söguleg gögn. Við trúum því að þú verðir áfram vegna gæðanna, ekki vegna þess að þú sért læst(ur) inni.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h3 className="text-xl font-bold mb-3">Þurfa allir eigendur að borga?</h3>
+                            <p className="text-stone-600 leading-relaxed font-light">
+                                Nei, áskriftin er greidd fyrir hvert hús, ekki hvern notanda. Þú getur boðið ótakmörkuðum fjölda meðeigenda og fjölskyldumeðlima í kerfið án aukakostnaðar.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </section>
 

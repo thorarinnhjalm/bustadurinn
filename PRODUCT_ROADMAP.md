@@ -8,6 +8,22 @@ Bústaðurinn.is aims to eliminate the friction and conflict that comes with co-
 
 ---
 
+## ✅ Completed / Core Features (USPs)
+
+### 0. **Weather & Road Intelligence** 🌤️🚗
+**The Implementation**:
+- Hyper-local weather forecasts based on house GPS coordinates.
+- Real-time road conditions from Vegagerðin for major access routes.
+- Proactive alerts (In-App & Email) for severe weather or deteriorating road status.
+- Granular user controls for notification preferences.
+
+**Why it's a USP**:
+- Vital for travel safety in the Icelandic climate.
+- Proactive intelligence reduces anxiety for co-owners and guests.
+- Differentiates the platform from generic booking apps.
+
+---
+
 ## 🔥 High Priority - Obvious Next Steps
 
 ### 1. **Automated Expense Splitting**
@@ -142,16 +158,6 @@ Bústaðurinn.is aims to eliminate the friction and conflict that comes with co-
 
 ---
 
-### 8. **Weather & Road Conditions Widget**
-- Current weather at summer house location
-- 5-day forecast
-- Road conditions from Reykjavík (Vegagerðin API)
-- Wind/storm warnings
-- Packing suggestions based on forecast
-
-**Complexity**: Low | **Value**: Medium
-
----
 
 ### 9. **Voting & Decision Making**
 - Propose changes to house (renovations, rules, etc.)

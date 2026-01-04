@@ -1,15 +1,16 @@
 /**
  * BookingWeatherCard Component
- * Premium UI component displaying weather forecast, road conditions, and packing suggestions
+ * Premium UI component displaying weather forecast and road conditions.
  * Design: Glassmorphism with gradient backgrounds, smooth animations, mobile-first
  */
 
 import { useState, useEffect } from 'react';
-import { Cloud, Droplets, Wind, AlertTriangle, Loader2, Calendar } from 'lucide-react';
+import { Cloud, Droplets, Wind, Loader2, Calendar } from 'lucide-react';
 import { getWeatherSummary } from '@/utils/packingSuggestions';
 import { getWeatherForecast, shouldShowWeather, getForecastReliability } from '@/services/weatherService';
 import { WEATHER_ICONS, WEATHER_LABELS_IS } from '@/types/weather';
-import { getRoadConditions, getRoadSummary, type RoadCondition } from '@/services/roadService';
+import type { WeatherForecast } from '@/types/weather';
+import { getRoadConditions, type RoadCondition } from '@/services/roadService';
 
 interface BookingWeatherCardProps {
     bookingId: string;
@@ -17,7 +18,6 @@ interface BookingWeatherCardProps {
     endDate: Date;
     houseLatitude: number;
     houseLongitude: number;
-    houseName: string;
 }
 
 export default function BookingWeatherCard({
@@ -25,8 +25,7 @@ export default function BookingWeatherCard({
     startDate,
     endDate,
     houseLatitude,
-    houseLongitude,
-    houseName
+    houseLongitude
 }: BookingWeatherCardProps) {
     const [forecast, setForecast] = useState<WeatherForecast | null>(null);
     const [roadConditions, setRoadConditions] = useState<RoadCondition[]>([]);
@@ -39,28 +38,28 @@ export default function BookingWeatherCard({
     }
 
     useEffect(() => {
+        const fetchWeatherData = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const [weatherData, roadData] = await Promise.all([
+                    getWeatherForecast(houseLatitude, houseLongitude, startDate),
+                    getRoadConditions(houseLatitude, houseLongitude)
+                ]);
+                setForecast(weatherData);
+                setRoadConditions(roadData);
+
+            } catch (err) {
+                console.error('Failed to fetch weather:', err);
+                setError('Gat ekki sótt veðurspá');
+            } finally {
+                setLoading(false);
+            }
+        };
+
         fetchWeatherData();
-    }, [bookingId, houseLatitude, houseLongitude]);
-
-    const fetchWeatherData = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const [weatherData, roadData] = await Promise.all([
-                getWeatherForecast(houseLatitude, houseLongitude, startDate),
-                getRoadConditions(houseLatitude, houseLongitude)
-            ]);
-            setForecast(weatherData);
-            setRoadConditions(roadData);
-
-        } catch (err) {
-            console.error('Failed to fetch weather:', err);
-            setError('Gat ekki sótt veðurspá');
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [bookingId, houseLatitude, houseLongitude, startDate]);
 
     const getGradientForWeather = () => {
         if (!forecast || forecast.days.length === 0) return 'from-stone-100 to-stone-50';
@@ -79,7 +78,7 @@ export default function BookingWeatherCard({
             'wind': 'from-cyan-50 via-blue-100 to-slate-100'
         };
 
-        return gradients[dominantCondition] || 'from-stone-100 to-stone-50';
+        return (gradients as any)[dominantCondition] || 'from-stone-100 to-stone-50';
     };
 
     if (loading) {
@@ -97,12 +96,14 @@ export default function BookingWeatherCard({
         return null; // Fail gracefully
     }
 
+    const summary = getWeatherSummary(forecast);
     const reliability = getForecastReliability(startDate);
-    const bookingDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const durationMs = endDate.getTime() - startDate.getTime();
+    const bookingDays = Math.max(1, Math.ceil(durationMs / (1000 * 60 * 60 * 24)));
 
     return (
         <div
-            className={`relative overflow-hidden rounded-2xl border border-stone-200/50 bg-gradient-to-br ${getGradientForWeather()} p-6 shadow-lg hover:shadow-xl transition-all duration-500 cursor-pointer backdrop-blur-sm`}
+            className={`relative overflow-hidden rounded-2xl border border-stone-200/50 bg-gradient-to-br ${getGradientForWeather()} p-6 shadow-lg hover:shadow-xl transition-all duration-500 backdrop-blur-sm`}
         >
             {/* Decorative gradient orbs */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-amber/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
@@ -138,14 +139,13 @@ export default function BookingWeatherCard({
                             🚗 Vegaastand
                         </h4>
                         <div className="space-y-2">
-                            {roadConditions.slice(0, 2).map((road, idx) => (
+                            {roadConditions.map((road, idx) => (
                                 <div key={idx} className="flex items-center justify-between text-sm">
                                     <span className="text-stone-700 font-medium">{road.route}</span>
-                                    <span className={`text-xs font-semibold ${
-                                        road.severity === 'high' ? 'text-red-600' :
+                                    <span className={`text-xs font-semibold ${road.severity === 'high' ? 'text-red-600' :
                                         road.severity === 'medium' ? 'text-amber-600' :
-                                        'text-green-600'
-                                    }`}>
+                                            'text-green-600'
+                                        }`}>
                                         {road.description}
                                     </span>
                                 </div>
@@ -159,13 +159,13 @@ export default function BookingWeatherCard({
                     {forecast.days.slice(0, 3).map((day, idx) => (
                         <div
                             key={idx}
-                            className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-white/60 hover:bg-white/90 transition-all duration-300 hover:scale-105"
+                            className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-white/60 transition-all duration-300 hover:scale-105"
                         >
                             <p className="text-xs font-bold text-stone-600 mb-2">
                                 {idx === 0 ? 'Í dag' : idx === 1 ? 'Á morgun' : new Date(day.date).toLocaleDateString('is-IS', { weekday: 'short' })}
                             </p>
-                            <div className="text-3xl mb-2">{WEATHER_ICONS[day.condition]}</div>
-                            <p className="text-xs text-stone-500 mb-1">{WEATHER_LABELS_IS[day.condition]}</p>
+                            <div className="text-3xl mb-2">{(WEATHER_ICONS as any)[day.condition]}</div>
+                            <p className="text-xs text-stone-500 mb-1">{(WEATHER_LABELS_IS as any)[day.condition]}</p>
                             <div className="flex items-center justify-center gap-1 text-xs font-bold">
                                 <span className="text-stone-700">{Math.round(day.tempHigh)}°</span>
                                 <span className="text-stone-400">/</span>
@@ -186,7 +186,6 @@ export default function BookingWeatherCard({
                         </div>
                     ))}
                 </div>
-
 
                 {/* Data source attribution */}
                 <p className="text-[10px] text-stone-400 text-center mt-3">

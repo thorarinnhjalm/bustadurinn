@@ -28,20 +28,25 @@ export async function getRoadConditions(
     }
 
     try {
-        // For development: Use a CORS proxy
-        // For production: Use serverless function
-        const isDev = window.location.hostname === 'localhost';
+        // Use our internal proxy (stable, bypassed CORS)
+        // Fallback to public proxy only if internal proxy is not yet deployed/available (locally)
+        let response;
+        try {
+            response = await fetch('/api/road-conditions');
+            if (!response.ok) throw new Error('Internal proxy not available');
+        } catch (e) {
+            const apiUrl = 'https://gagnaveita.vegagerdin.is/api/faerd2017_1';
+            // Use .get instead of .raw for better stability on allorigins
+            const fallbackUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+            const fallbackRes = await fetch(fallbackUrl);
+            const fallbackData = await fallbackRes.json();
 
-        // Vegagerðin API endpoint
-        const apiUrl = 'https://api.vegagerdin.is/v1/conditions';
-        const url = isDev
-            ? `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`
-            : `/api/road-conditions`;
+            // Re-wrap to match Expected format (allorigins returns {contents: "..."})
+            const data = JSON.parse(fallbackData.contents);
+            const conditions = parseRoadConditions(data, latitude, longitude);
 
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`Road API error: ${response.status}`);
+            roadCache = { data: conditions, timestamp: Date.now() };
+            return conditions;
         }
 
         const data = await response.json();
@@ -62,23 +67,31 @@ export async function getRoadConditions(
 
 /**
  * Parse Vegagerðin API response
- * Filter to routes relevant to the location
+ * Data uses Icelandic keys: NAFN (name), ASTAND (status), LYSING (description)
  */
-function parseRoadConditions(data: any, lat: number, lon: number): RoadCondition[] {
+function parseRoadConditions(data: any, _lat: number, _lon: number): RoadCondition[] {
     if (!data || !Array.isArray(data)) {
         return [];
     }
 
-    // Get major routes that might be relevant
-    // In a real implementation, we'd use geographic filtering
+    // Filter to major routes or those with actual warnings
+    // For now, let's take roads with identifiers (usually shorter numbers are main roads)
     const relevantRoutes = data
-        .filter((item: any) => item.roadNumber && item.roadNumber <= 100) // Major routes only
-        .slice(0, 3) // Top 3 most relevant
+        .filter((item: any) => item.NAFN && !item.NAFN.includes('Stofnvegur'))
+        .sort((a: any, b: any) => {
+            // Sort by severity (put warnings first)
+            const sevA = getSeverity(a);
+            const sevB = getSeverity(b);
+            if (sevA === 'high') return -1;
+            if (sevB === 'high') return 1;
+            return 0;
+        })
+        .slice(0, 4) // Show top 4
         .map((item: any) => ({
-            route: `Þjóðvegur ${item.roadNumber}`,
-            routeNumber: item.roadNumber,
+            route: item.NAFN,
+            routeNumber: 0, // Not always provided in this API
             condition: mapRoadCondition(item),
-            description: getConditionDescription(item),
+            description: item.LYSING || item.ASTAND || 'Óþekktarástand',
             severity: getSeverity(item)
         }));
 
@@ -89,35 +102,19 @@ function parseRoadConditions(data: any, lat: number, lon: number): RoadCondition
  * Map API condition to our simplified types
  */
 function mapRoadCondition(item: any): RoadCondition['condition'] {
-    const condition = item.condition?.toLowerCase() || '';
-    const text = item.text?.toLowerCase() || '';
+    const astand = (item.ASTAND || '').toLowerCase();
+    const lysing = (item.LYSING || '').toLowerCase();
 
-    if (text.includes('loka') || condition.includes('closed')) return 'closed';
-    if (text.includes('hálka') || condition.includes('icy')) return 'icy';
-    if (text.includes('snjó') || condition.includes('snow')) return 'snow';
-    if (text.includes('bleytu') || text.includes('slydda')) return 'slippery';
-    if (text.includes('blautur') || condition.includes('wet')) return 'wet';
+    if (astand.includes('loka') || lysing.includes('loka')) return 'closed';
+    if (astand.includes('hálka') || lysing.includes('hálka')) return 'icy';
+    if (astand.includes('snjó') || lysing.includes('snjó')) return 'snow';
+    if (astand.includes('hált') || lysing.includes('hált')) return 'slippery';
+    if (astand.includes('blaut') || lysing.includes('blaut')) return 'wet';
 
     return 'clear';
 }
 
-/**
- * Get Icelandic description
- */
-function getConditionDescription(item: any): string {
-    const condition = mapRoadCondition(item);
 
-    const descriptions: Record<RoadCondition['condition'], string> = {
-        'clear': 'Góð akstursskilyrði',
-        'wet': 'Blautur vegur',
-        'icy': 'Hálka',
-        'snow': 'Snjór á vegum',
-        'slippery': 'Hált á köflum',
-        'closed': 'Vegur lokaður'
-    };
-
-    return descriptions[condition];
-}
 
 /**
  * Determine severity level
@@ -146,5 +143,5 @@ export function getRoadSummary(conditions: RoadCondition[]): string {
     if (hasHigh) return 'Erfiðar aðstæður';
     if (hasMedium) return 'Varúð á vegum';
 
-    return 'Góð veð';
+    return 'Greiðfært';
 }

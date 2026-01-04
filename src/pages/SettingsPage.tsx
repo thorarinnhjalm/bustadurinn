@@ -141,13 +141,15 @@ export default function SettingsPage() {
             new_bookings: true,
             task_reminders: true,
             system_updates: true,
-            member_activity: true
+            member_activity: true,
+            weather_alerts: true
         },
         in_app: {
             new_bookings: true,
             task_assignments: true,
             guestbook_entries: true,
-            shopping_list_updates: true
+            shopping_list_updates: true,
+            weather_alerts: true
         }
     });
 
@@ -1668,6 +1670,12 @@ export default function SettingsPage() {
                                                     checked={notificationSettings.emails.task_reminders}
                                                     onChange={(val) => handleUpdateNotificationSettings('emails', 'task_reminders', val)}
                                                 />
+                                                <Toggle
+                                                    label="Veðurviðvaranir"
+                                                    description="Fá sjarmerandi veðuráminningar fyrir dvalir"
+                                                    checked={notificationSettings.emails.weather_alerts}
+                                                    onChange={(val) => handleUpdateNotificationSettings('emails', 'weather_alerts', val)}
+                                                />
                                             </div>
 
                                             {/* In-App Notifications */}
@@ -1688,6 +1696,12 @@ export default function SettingsPage() {
                                                     description="Þegar gestir skrifa í gestabókina"
                                                     checked={notificationSettings.in_app.guestbook_entries}
                                                     onChange={(val) => handleUpdateNotificationSettings('in_app', 'guestbook_entries', val)}
+                                                />
+                                                <Toggle
+                                                    label="Veðurviðvaranir"
+                                                    description="Veðurspá og aðstæður á stjórnborði"
+                                                    checked={notificationSettings.in_app.weather_alerts}
+                                                    onChange={(val) => handleUpdateNotificationSettings('in_app', 'weather_alerts', val)}
                                                 />
                                             </div>
 
