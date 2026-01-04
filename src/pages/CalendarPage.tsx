@@ -234,6 +234,8 @@ export default function CalendarPage() {
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [successBooking, setSuccessBooking] = useState<{ user_name: string, start: Date, end: Date } | null>(null);
 
     // Language preference (default to Icelandic, but can be changed)
     const [language] = useState<SupportedLanguage>('is');
@@ -581,8 +583,24 @@ export default function CalendarPage() {
             // Track in Google Analytics
             analytics.bookingCreated(newBooking.type);
 
-            // Close modal
+            // Store booking info for success modal
+            setSuccessBooking({
+                user_name: currentUser.name || currentUser.email || 'Þú',
+                start: newBooking.start,
+                end: newBooking.end
+            });
+
+            // Close booking modal and show success
             setShowModal(false);
+            setShowSuccess(true);
+
+            // Confetti celebration!
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
             setNewBooking({
                 start: new Date(),
                 end: new Date(),
@@ -1007,6 +1025,40 @@ export default function CalendarPage() {
                                 </button>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Success Modal */}
+            {showSuccess && successBooking && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 text-center animate-in zoom-in-95 duration-300 overflow-hidden">
+                        {/* Success Icon */}
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 pb-6">
+                            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 relative">
+                                <Check className="w-10 h-10 text-green-600" strokeWidth={3} />
+                                <div className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-20"></div>
+                            </div>
+                            <h3 className="text-2xl font-serif font-bold text-charcoal mb-2">Bókun staðfest! 🎉</h3>
+                            <p className="text-stone-600">
+                                <span className="font-bold">{successBooking.user_name}</span>
+                                <br />
+                                {successBooking.start.toLocaleDateString('is-IS', { day: 'numeric', month: 'long' })} - {successBooking.end.toLocaleDateString('is-IS', { day: 'numeric', month: 'long' })}
+                            </p>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="p-6 bg-white space-y-3">
+                            <p className="text-sm text-stone-500 mb-4">
+                                Staðfesting hefur verið send í tölvupósti til allra meðeigenda
+                            </p>
+                            <button
+                                onClick={() => setShowSuccess(false)}
+                                className="w-full px-6 py-3 bg-gradient-to-r from-charcoal to-stone-800 text-white rounded-xl font-bold hover:from-stone-800 hover:to-charcoal transition-all shadow-lg active:scale-[0.98]"
+                            >
+                                Loka
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
