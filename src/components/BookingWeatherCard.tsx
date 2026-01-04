@@ -6,9 +6,9 @@
 
 import { useState, useEffect } from 'react';
 import { Cloud, Droplets, Wind, AlertTriangle, Loader2, Calendar } from 'lucide-react';
+import { getWeatherSummary } from '@/utils/packingSuggestions';
 import { getWeatherForecast, shouldShowWeather, getForecastReliability } from '@/services/weatherService';
 import { WEATHER_ICONS, WEATHER_LABELS_IS } from '@/types/weather';
-import type { WeatherForecast, PackingSuggestion } from '@/types/weather';
 import { getRoadConditions, getRoadSummary, type RoadCondition } from '@/services/roadService';
 
 interface BookingWeatherCardProps {
@@ -54,9 +54,6 @@ export default function BookingWeatherCard({
             setForecast(weatherData);
             setRoadConditions(roadData);
 
-            if (weatherData) {
-                setSuggestions(packingSuggestions);
-            }
         } catch (err) {
             console.error('Failed to fetch weather:', err);
             setError('Gat ekki sótt veðurspá');
@@ -100,7 +97,6 @@ export default function BookingWeatherCard({
         return null; // Fail gracefully
     }
 
-    const summary = getWeatherSummary(forecast);
     const reliability = getForecastReliability(startDate);
     const bookingDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -191,9 +187,6 @@ export default function BookingWeatherCard({
                     ))}
                 </div>
 
-                        {expanded ? '▲ Loka' : suggestions.length > 0 ? `▼ Sjá pakkalista (${suggestions.length})` : '▼ Nánar'}
-                    </button>
-                </div>
 
                 {/* Data source attribution */}
                 <p className="text-[10px] text-stone-400 text-center mt-3">
