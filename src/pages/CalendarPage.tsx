@@ -255,47 +255,7 @@ export default function CalendarPage() {
     };
 
     // Touch handling for pull-to-refresh only
-    const [touchStartY, setTouchStartY] = useState<number | null>(null);
-    const [scrollTop, setScrollTop] = useState(0);
-
-    const onTouchStart = (e: React.TouchEvent) => {
-        setTouchStartY(e.targetTouches[0].clientY);
-
-        // Store current scroll position
-        const scrollableElement = document.querySelector('.calendar-container');
-        setScrollTop(scrollableElement?.scrollTop || 0);
-    };
-
-    const onTouchMove = (e: React.TouchEvent) => {
-        // Handle pull-to-refresh only (vertical pull from top)
-        if (touchStartY !== null && scrollTop === 0) {
-            const currentY = e.targetTouches[0].clientY;
-            const pullDist = currentY - touchStartY;
-
-            // Only trigger when pulling down (positive distance) and at top of page
-            if (pullDist > 0 && pullDist < 150) {
-                setIsPulling(true);
-                setPullDistance(pullDist);
-                e.preventDefault(); // Prevent default scroll when pulling
-            }
-        }
-    };
-
-    const onTouchEnd = async () => {
-        // Handle pull-to-refresh only
-        if (isPulling && pullDistance > 80) {
-            setIsRefreshing(true);
-            await loadBookings();
-            setTimeout(() => {
-                setIsRefreshing(false);
-                setIsPulling(false);
-                setPullDistance(0);
-            }, 500);
-        } else {
-            setIsPulling(false);
-            setPullDistance(0);
-        }
-    };
+    // Touch handling for pull-to-refresh removed for now to cleanup
 
     // House Settings for Booking Rules
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -745,7 +705,8 @@ export default function CalendarPage() {
                         className="fixed top-0 left-0 right-0 flex justify-center items-center transition-all duration-200 z-40"
                         style={{
                             transform: `translateY(${isPulling ? pullDistance - 40 : 0}px)`,
-                            opacity: isPulling ? Math.min(pullDistance / 80, 1) : 0
+                            opacity: isPulling ? Math.min(pullDistance / 80, 1) : 0,
+                            display: isPulling || isRefreshing ? 'flex' : 'none'
                         }}
                     >
                         <div className="bg-white rounded-full shadow-lg p-3 flex items-center gap-2">
@@ -788,13 +749,10 @@ export default function CalendarPage() {
                     </button>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm p-2 md:p-6 overflow-hidden">
+                <div className="bg-white rounded-lg shadow-sm p-2 md:p-6 mb-8">
                     <div
-                        onTouchStart={onTouchStart}
-                        onTouchMove={onTouchMove}
-                        onTouchEnd={onTouchEnd}
-                        className="calendar-container"
-                        style={{ height: view === 'month' ? (window.innerWidth < 768 ? '600px' : '800px') : 'auto', minHeight: '600px' }}
+                        className="calendar-wrapper"
+                        style={{ height: view === 'month' ? '750px' : 'auto', minHeight: '600px' }}
                     >
                         {/* Show Month Calendar OR List View based on selected view */}
                         {view === 'month' ? (
@@ -803,8 +761,8 @@ export default function CalendarPage() {
                                 events={events}
                                 startAccessor="start"
                                 endAccessor="end"
-                                className="h-full font-sans"
-                                style={{ minHeight: '100%' }}
+                                className="font-sans"
+                                style={{ height: '100%' }}
                                 onSelectSlot={handleSelectSlot}
                                 onSelectEvent={handleSelectEvent}
                                 selectable
