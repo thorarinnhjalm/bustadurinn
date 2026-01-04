@@ -1,11 +1,12 @@
 
+
 import { useState, useEffect } from 'react';
 import {
     Calendar, CheckSquare, Sun,
     Plus, Users, Wallet, Bell,
     ChevronRight, Loader2, Shield,
     ChevronDown, Home, LogOut,
-    X, Image as ImageIcon
+    X, Image as ImageIcon, ShoppingBag, Check
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +22,7 @@ import InternalLogbook from '@/components/InternalLogbook';
 import { fetchWeather } from '@/utils/weather';
 import BookingWeatherCard from '@/components/BookingWeatherCard';
 import { shouldShowWeather } from '@/services/weatherService';
+import { canViewBookingDetails } from '@/utils/permissions';
 
 
 const ADMIN_EMAILS = [
@@ -646,7 +648,7 @@ const UserDashboard = () => {
 
             {/* --- HERO IMAGE & STATUS --- */}
             <div className="pt-16 max-w-5xl mx-auto">
-                <div className="relative h-72 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50">
+                <div className="relative h-56 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50">
                     <img
                         src={currentHouse?.image_url || "https://images.unsplash.com/photo-1542718610-a1d656d1884c?q=80&w=2670&auto=format&fit=crop"}
                         alt={currentHouse?.name || "Cabin"}
@@ -768,6 +770,60 @@ const UserDashboard = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
 
+                    {/* FINANCE SNAPSHOT - MOVED TO FIRST POSITION FOR VISIBILITY */}
+                    <section onClick={() => navigate('/finance')} className="group cursor-pointer">
+                        <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Hússjóður</h3>
+                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-[#1a1a1a] group-hover:text-white transition-colors">
+                                <ChevronRight size={18} />
+                            </div>
+                        </div>
+                        <div className="bg-[#1a1a1a] p-6 rounded-2xl text-white shadow-xl shadow-stone-200 relative overflow-hidden group hover:shadow-2xl hover:scale-[1.01] transition-all duration-300">
+                            {/* Decorative Gradients */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-amber/20 to-transparent opacity-50 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="p-1.5 bg-white/10 rounded-md">
+                                        <Wallet size={16} className="text-amber" />
+                                    </div>
+                                    <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Staða sjóðs</p>
+                                </div>
+
+                                <h4 className="text-4xl font-serif text-white mb-6 tracking-tight">
+                                    {finances.balance.toLocaleString('is-IS')} <span className="text-xl text-stone-500 font-sans font-normal">kr.</span>
+                                </h4>
+
+                                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
+                                    <div className="flex items-center gap-3 text-sm">
+                                        <div className={`w-2 h-2 rounded-full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-stone-300 text-xs uppercase tracking-wide font-bold mb-0.5">Síðasta færsla</p>
+                                            <p className="text-white font-medium truncate">{finances.lastAction}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Empty State Overlay */}
+                            {finances.balance === 0 && finances.lastAction === "Ekkert að frétta" && (
+                                <div className="absolute inset-0 bg-charcoal/95 backdrop-blur-sm flex items-center justify-center z-20 rounded-2xl">
+                                    <div className="text-center p-6">
+                                        <Wallet size={32} className="mx-auto mb-3 text-amber" />
+                                        <p className="text-white font-bold mb-2">Sjóðurinn er tómur</p>
+                                        <p className="text-stone-400 text-sm mb-4">Byrjaðu með að bæta við fyrstu færslunni</p>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); navigate('/finance'); }}
+                                            className="px-4 py-2 bg-amber text-charcoal rounded-lg font-bold text-sm hover:bg-amber/90 transition-colors"
+                                        >
+                                            Opna Hússjóð
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
                     {/* NEXT BOOKING CARD */}
                     <section
                         onClick={() => nextBooking && setShowBookingDetailModal(true)}
@@ -811,18 +867,60 @@ const UserDashboard = () => {
                                             </span>
                                         </div>
 
-                                        {/* Weather Status Badge */}
-                                        {currentHouse?.location && shouldShowWeather(nextBooking.start) && (
-                                            <>
-                                                <div className="w-px h-8 bg-stone-200"></div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Veður</span>
-                                                    <span className="font-medium text-[#1a1a1a]">Sjá spá</span>
-                                                </div>
-                                            </>
-                                        )}
-
+                                        {/* Weather Status Badge - PRIVACY CONTROLLED */}
+                                        {canViewBookingDetails(nextBooking, currentUser, currentHouse) &&
+                                            currentHouse?.location &&
+                                            shouldShowWeather(nextBooking.start) && (
+                                                <>
+                                                    <div className="w-px h-8 bg-stone-200"></div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Veður</span>
+                                                        <span className="font-medium text-[#1a1a1a]">Sjá spá</span>
+                                                    </div>
+                                                </>
+                                            )}
                                     </div>
+
+                                    {/* Shopping List Integration - Only for booking owner */}
+                                    {canViewBookingDetails(nextBooking, currentUser, currentHouse) && (
+                                        <div className="mt-4 pt-4 border-t border-stone-100">
+                                            {shoppingItems.filter(item => !item.checked).length > 0 ? (
+                                                <div
+                                                    onClick={(e) => { e.stopPropagation(); navigate('/dashboard'); }}
+                                                    className="flex items-center justify-between p-3 bg-amber/10 rounded-xl border border-amber/20 hover:bg-amber/15 transition-colors cursor-pointer"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-amber/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                                            <ShoppingBag size={16} className="text-amber" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-sm text-amber-900">
+                                                                {shoppingItems.filter(item => !item.checked).length} {shoppingItems.filter(item => !item.checked).length === 1 ? 'hlutur' : 'hlutir'} á innkaupalista
+                                                            </p>
+                                                            <p className="text-xs text-amber-700">
+                                                                Til að búa til fyrir komuna þína
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <ChevronRight size={20} className="text-amber flex-shrink-0" />
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-green-600">
+                                                    <Check size={16} />
+                                                    <p className="text-sm font-medium">Allt til reiðu fyrir komuna!</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Privacy Notice for non-booking users */}
+                                    {!canViewBookingDetails(nextBooking, currentUser, currentHouse) && (
+                                        <div className="mt-4 pt-4 border-t border-stone-100">
+                                            <p className="text-xs text-stone-400 italic flex items-center gap-1">
+                                                🔒 Veðurupplýsingar og smáatriði sýnileg aðeins bókanda
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-8 text-stone-400 relative z-10">
@@ -833,44 +931,6 @@ const UserDashboard = () => {
                                     <button className="mt-4 text-sm font-bold text-amber hover:underline">Bóka núna</button>
                                 </div>
                             )}
-                        </div>
-                    </section>
-
-
-                    {/* FINANCE SNAPSHOT */}
-                    <section onClick={() => navigate('/finance')} className="group cursor-pointer">
-                        <div className="flex justify-between items-center mb-4 px-1">
-                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Hússjóður</h3>
-                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-[#1a1a1a] group-hover:text-white transition-colors">
-                                <ChevronRight size={18} />
-                            </div>
-                        </div>
-                        <div className="bg-[#1a1a1a] p-6 rounded-2xl text-white shadow-xl shadow-stone-200 relative overflow-hidden group hover:shadow-2xl hover:scale-[1.01] transition-all duration-300">
-                            {/* Decorative Gradients */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-amber/20 to-transparent opacity-50 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
-
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="p-1.5 bg-white/10 rounded-md">
-                                        <Wallet size={16} className="text-amber" />
-                                    </div>
-                                    <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Staða sjóðs</p>
-                                </div>
-
-                                <h4 className="text-4xl font-serif text-white mb-6 tracking-tight">
-                                    {finances.balance.toLocaleString('is-IS')} <span className="text-xl text-stone-500 font-sans font-normal">kr.</span>
-                                </h4>
-
-                                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
-                                    <div className="flex items-center gap-3 text-sm">
-                                        <div className={`w-2 h-2 rounded-full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-stone-300 text-xs uppercase tracking-wide font-bold mb-0.5">Síðasta færsla</p>
-                                            <p className="text-white font-medium truncate">{finances.lastAction}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </section>
 
@@ -1050,25 +1110,40 @@ const UserDashboard = () => {
                                 </div>
                             </div>
 
-                            {nextBooking.notes && (
+                            {nextBooking.notes && canViewBookingDetails(nextBooking, currentUser, currentHouse) && (
                                 <div className="bg-amber/5 border border-amber/20 rounded-lg p-4">
                                     <p className="text-xs uppercase font-bold text-amber-700 tracking-wider mb-2">Athugasemdir</p>
                                     <p className="text-stone-700">{nextBooking.notes}</p>
                                 </div>
                             )}
 
-                            {/* Weather Forecast */}
-                            {currentHouse?.location && shouldShowWeather(nextBooking.start) && (
-                                <div>
-                                    <h3 className="text-lg font-serif font-bold text-charcoal mb-3">Veðurspá fyrir ferðina</h3>
-                                    <BookingWeatherCard
-                                        bookingId={nextBooking.id}
-                                        startDate={nextBooking.start}
-                                        endDate={nextBooking.end}
-                                        houseLatitude={currentHouse.location.lat}
-                                        houseLongitude={currentHouse.location.lng}
-                                        houseName={currentHouse.name}
-                                    />
+                            {/* Weather Forecast - PRIVACY CONTROLLED */}
+                            {canViewBookingDetails(nextBooking, currentUser, currentHouse) &&
+                                currentHouse?.location &&
+                                shouldShowWeather(nextBooking.start) && (
+                                    <div>
+                                        <h3 className="text-lg font-serif font-bold text-charcoal mb-3">Veðurspá fyrir ferðina</h3>
+                                        <BookingWeatherCard
+                                            bookingId={nextBooking.id}
+                                            startDate={nextBooking.start}
+                                            endDate={nextBooking.end}
+                                            houseLatitude={currentHouse.location.lat}
+                                            houseLongitude={currentHouse.location.lng}
+                                            houseName={currentHouse.name}
+                                        />
+                                    </div>
+                                )}
+
+                            {/* Privacy Notice for other users */}
+                            {!canViewBookingDetails(nextBooking, currentUser, currentHouse) && (
+                                <div className="bg-stone-50 border border-stone-200 rounded-lg p-6 text-center">
+                                    <div className="w-12 h-12 bg-stone-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <span className="text-2xl">🔒</span>
+                                    </div>
+                                    <p className="font-bold text-stone-700 mb-1">Einkaupplýsingar</p>
+                                    <p className="text-sm text-stone-500">
+                                        Veðurspá, athugasemdir og frekari smáatriði eru aðeins sýnileg bókanda og hússtjóra
+                                    </p>
                                 </div>
                             )}
 

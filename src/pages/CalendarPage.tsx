@@ -8,7 +8,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css'; // Add base styles
 import { format, parse, startOfWeek, getDay } from 'date-fns';
-import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock, Trash2 } from 'lucide-react';
+import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock, Trash2, Check } from 'lucide-react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +19,7 @@ import { dateLocales, calendarMessages, bookingTypeLabels, type SupportedLanguag
 import { getIcelandicHolidays, isHoliday, includesMajorHoliday } from '@/utils/icelandicHolidays';
 import { analytics } from '@/utils/analytics';
 import MobileNav from '@/components/MobileNav';
+import confetti from 'canvas-confetti';
 
 // View type derived from string as generic View type import is tricky
 type CalendarView = 'month' | 'week' | 'work_week' | 'day' | 'agenda';

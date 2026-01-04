@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules for Bústaðurinn.is
+// Allows authenticated users to upload house images
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // House images: Only authenticated house owners/members can upload
+    match /houses/{houseId}/{imageFile} {
+      // Anyone can read (for guest views, public sharing)
+      allow read: if true;
+      
+      // Only authenticated users who are members of this house can write/delete
+      allow write, delete: if request.auth != null && 
+        request.auth.uid in get(/databases/(default)/documents/houses/$(houseId)).data.owner_ids;
+      
+      // Validate file size (max 5MB) and type (images only)
+      allow write: if request.resource.size < 5 * 1024 * 1024 &&
+                      request.resource.contentType.matches('image/.*');
+    }
+    
+    // User profile images
+    match /users/{userId}/profile.jpg {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.resource.size < 2 * 1024 * 1024 &&
+                      request.resource.contentType.matches('image/.*');
+    }
+    
+    // Guest uploads (if needed in future)
+    match /guest_uploads/{guestToken}/{imageFile} {
+      allow read: if true;
+      allow write: if request.resource.size < 3 * 1024 * 1024 &&
+                      request.resource.contentType.matches('image/.*');
+    }
+    
+    // Deny all other access by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

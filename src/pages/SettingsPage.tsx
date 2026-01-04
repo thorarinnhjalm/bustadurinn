@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, sendPasswordResetEmail } from 'firebase/auth';
 import { db, storage, auth } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import {
     Home,
     Users,
@@ -17,6 +17,7 @@ import {
     Edit2,
     X,
     Upload,
+    Loader2,
     Image as ImageIcon,
     AlertTriangle,
     Copy,
@@ -97,6 +98,7 @@ export default function SettingsPage() {
     const [imageFile, setImageFile] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const [cropMode, setCropMode] = useState<'main' | 'gallery'>('main');
 
     // Invite State
@@ -301,12 +303,30 @@ export default function SettingsPage() {
         try {
             console.log("Saving cropped image for house:", house.id, "cropMode:", cropMode);
             setUploadingImage(true);
+            setUploadProgress(0);
             const fileName = cropMode === 'main' ? 'image.jpg' : `gallery_${Date.now()}.jpg`;
             const storageRef = ref(storage, `houses/${house.id}/${fileName}`);
 
             // Added explicit metadata
             const metadata = { contentType: 'image/jpeg' };
-            await uploadBytes(storageRef, blob, metadata);
+
+            // Use uploadBytesResumable for progress tracking
+            const uploadTask = uploadBytesResumable(storageRef, blob, metadata);
+
+            // Track upload progress
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    setUploadProgress(Math.round(progress));
+                },
+                (error) => {
+                    console.error('Upload error:', error);
+                    throw error;
+                }
+            );
+
+            // Wait for upload to complete
+            await uploadTask;
             const downloadURL = await getDownloadURL(storageRef);
 
             let updatedHouse: House;
@@ -355,6 +375,7 @@ export default function SettingsPage() {
             setError(`Villa við að vista mynd: ${error.message}`);
         } finally {
             setUploadingImage(false);
+            setUploadProgress(0);
         }
     };
 
@@ -1806,13 +1827,22 @@ export default function SettingsPage() {
                 )
             }
 
-            {/* Upload Loading Overlay */}
+            {/* Upload Progress Overlay */}
             {
                 uploadingImage && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-                        <div className="bg-white p-6 rounded-lg text-center">
-                            <div className="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                            <p className="font-bold">Vista mynd...</p>
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber/20 flex items-center justify-center">
+                                <Loader2 className="w-8 h-8 text-amber animate-spin" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">Hleður upp mynd...</h3>
+                            <div className="w-full bg-stone-200 rounded-full h-3 mb-2 overflow-hidden">
+                                <div
+                                    className="bg-gradient-to-r from-amber to-orange-500 h-3 rounded-full transition-all duration-300 ease-out"
+                                    style={{ width: `${uploadProgress}%` }}
+                                />
+                            </div>
+                            <p className="text-sm text-stone-500 font-medium">{uploadProgress}%</p>
                         </div>
                     </div>
                 )

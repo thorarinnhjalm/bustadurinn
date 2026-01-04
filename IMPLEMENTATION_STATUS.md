@@ -80,18 +80,43 @@ firebase deploy --only firestore:rules
 - [x] Budget/Finance data models
 - [x] Updated Firestore security rules
 
-### ⚠️ **PENDING IMPLEMENTATION**
-- [ ] **Holiday Booking Mode Toggle** (Settings page)
+### ✅ **COMPLETED** (Recently Finished)
+- [x] **Holiday Booking Mode Toggle** (Settings page)
   - Sanngirnisregla (Fairness rotation)
   - vs Fyrstur kemur, fyrstur fær (First come first served)
-- [ ] **Finance UI**
+- [x] **Finance UI**
   - Budget Playground (Rekstrarhermir)
   - Simple Ledger (Bókhald)
   - Variance Analysis widget
-- [ ] **Tasks Module**
-- [ ] **Settings Page** (with booking mode selector)
-- [ ] **Guest Magic Link system**
-- [ ] **Manager role transfer UI**
+  - Monthly Breakdown widget
+  - Income/Expense tracking
+- [x] **Tasks Module**
+  - Task Board with Kanban view
+  - List view
+  - Create, update, delete tasks
+  - Assign to members
+- [x] **Settings Page** (with booking mode selector)
+  - House details editing
+  - Google Maps autocomplete
+  - Member management
+  - Multi-language support (5 languages)
+  - Notification preferences
+  - Guest access token generation
+  - Guestbook viewer
+- [x] **Guest Magic Link system**
+  - Time-restricted tokens
+  - Guest-only view with access codes
+  - WiFi credentials
+  - Weather widget
+  - Gallery support
+  - Guestbook entry form
+  - Google Maps directions
+- [x] **Manager role transfer UI**
+- [x] **Icelandic Holidays Integration**
+  - All official holidays calculated dynamically
+  - Easter calculations (Computus algorithm)
+  - Holiday highlighting in calendar
+  - Fairness logic for major holidays
 
 ---
 
@@ -209,8 +234,11 @@ Before deploying to Vercel:
 
 ---
 
-**Status:** Booking Calendar is LIVE and working! Just need to deploy Firestore rules to Firebase Console.
+**Status:** All major features are COMPLETE! 🎉
 
-**Ready for:** Finance Module implementation, then Settings page with Holiday Mode toggle.
+**Ready for:** Final polish, testing, and production deployment.
 
-**Total Progress:** ~65% of full feature set complete
+**Total Progress:** ~90% of full feature set complete
+
+**Remaining:** Advanced features, optimization, and polish
+
