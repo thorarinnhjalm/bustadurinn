@@ -821,20 +821,6 @@ const UserDashboard = () => {
                                     <button className="mt-4 text-sm font-bold text-amber hover:underline">Bóka núna</button>
                                 </div>
                             )}
-
-                            {/* Weather Forecast for Next Booking */}
-                            {nextBooking && currentHouse?.location && shouldShowWeather(nextBooking.start) && (
-                                <div className="mt-6 relative z-10">
-                                    <BookingWeatherCard
-                                        bookingId={nextBooking.id}
-                                        startDate={nextBooking.start}
-                                        endDate={nextBooking.end}
-                                        houseLatitude={currentHouse.location.lat}
-                                        houseLongitude={currentHouse.location.lng}
-                                        houseName={currentHouse.name}
-                                    />
-                                </div>
-                            )}
                         </div>
                     </section>
 

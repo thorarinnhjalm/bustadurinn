@@ -28,7 +28,10 @@ export async function getWeatherForecast(
 
     try {
         // Use our API proxy to avoid CORS issues
-        const url = `/api/weather?lat=${latitude}&lon=${longitude}`;
+        const isDev = window.location.hostname === "localhost";
+        const url = isDev
+            ? `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${latitude}&lon=${longitude}`)}`
+            : `/api/weather?lat=${latitude}&lon=${longitude}`;
 
         const response = await fetch(url);
 

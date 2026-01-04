@@ -94,7 +94,7 @@ export function generateWeatherNotification(data: BookingNotificationData): {
     if (minTemp < -10) {
         return {
             title: `🥶 Mikill kuldi spáður (${Math.round(minTemp)}°C)`,
-            body: `Mælt með að setja hitann í gang fyrir komu í ${houseName}. Mundu eftir aukakubbi og hlýjum teppum!`,
+            body: `Mælt með að setja hitann í gang fyrir komu í ${houseName}. Mundu eftir hlýjum teppum og sokkabuxum!`,
             priority: 'high',
             actionable: true
         };
@@ -207,7 +207,7 @@ export const NOTIFICATION_EXAMPLES = {
     },
     extreme_cold: {
         title: '🥶 Frost og mínushiti (-12°C)',
-        body: 'Mælt með að kveikja á hita fyrir komu. Mundu eftir aukakubbi, hlýjum sokkabuxum og fersku bragði fyrir kakóið! ☕🧣'
+        body: 'Mælt með að kveikja á hita fyrir komu. Mundu eftir hlýjum sokkabuxum og fersku bragði fyrir kakóið! ☕🧣'
     },
     heavy_rain: {
         title: '☔ Mikil rigning um helgina',

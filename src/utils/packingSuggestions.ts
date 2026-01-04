@@ -24,10 +24,10 @@ export function generatePackingSuggestions(forecast: WeatherForecast | null): Pa
     if (minTemp < 0) {
         suggestions.push({
             category: 'comfort',
-            item: 'Aukaeldivið',
-            reason: 'Mínushiti spáð',
+            item: 'Kveiktu á hita fyrir komu',
+            reason: 'Mínushiti spáð - betra að koma í hlýtt hús',
             priority: 'high',
-            icon: '🪵'
+            icon: '🔥'
         });
 
         suggestions.push({
