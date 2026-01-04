@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // DEFINITIVE ADMIN CHECK - Using safest access methods
+    // THE MASTER KEY
     function isSuperAdmin() {
       return request.auth != null && (
         request.auth.uid == 'sxcToczAAwT3Fmh8FPXa1P6hMHB3' || 
@@ -12,28 +12,28 @@ service cloud.firestore {
       );
     }
 
-    // 1. NEWSLETTER & CONTACTS (Priority rules)
-    // These must be explicitly defined and allow PUBLIC creation
-    match /newsletter_subscribers/{subscriberId} {
+    // NEWSLETTER - Open up read access to authenticated users for debugging
+    match /newsletter_subscribers/{docId} {
       allow create: if true;
-      allow read, write: if isSuperAdmin();
+      allow read: if request.auth != null; 
+      allow write: if isSuperAdmin();
     }
     
-    match /contact_submissions/{submissionId} {
+    match /contact_submissions/{docId} {
       allow create: if true;
       allow read, write: if isSuperAdmin();
     }
 
-    // 2. MASTER BYPASS (For everything else)
+    // GLOBAL ADMIN BYPASS
     match /{document=**} {
       allow read, write: if isSuperAdmin();
     }
 
-    // 3. PUBLIC FALLBACKS
+    // PUBLIC ACCESS
     match /guest_views/{id} { allow read: if true; }
     match /guestbook/{id} { allow read, create: if true; }
     
-    // 4. USER SPECIFIC RULES (Only evaluated if not super admin)
+    // USER ACCESS
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
@@ -46,7 +46,6 @@ service cloud.firestore {
       );
     }
 
-    // Generic fallback for authenticated users
     match /bookings/{id} { allow read, write: if request.auth != null; }
     match /tasks/{id} { allow read, write: if request.auth != null; }
     match /coupons/{id} { allow read: if request.auth != null; }
