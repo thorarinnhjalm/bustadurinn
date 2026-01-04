@@ -64,7 +64,7 @@ export function generateWeatherNotification(data: BookingNotificationData): {
     const days = forecast.days;
     const minTemp = Math.min(...days.map(d => d.tempLow));
     const maxWind = Math.max(...days.map(d => d.windSpeed));
-    const totalPrecip = days.reduce((sum, d => sum + d.precipitation, 0);
+    const totalPrecip = days.reduce((sum, d) => sum + d.precipitation, 0);
     const hasSnow = days.some(d => d.condition === 'snow');
     const hasIce = hasSnow || minTemp < 0;
     const daysUntil = Math.ceil((bookingStart.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
