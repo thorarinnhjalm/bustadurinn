@@ -234,16 +234,25 @@ export default function CalendarPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Pull-to-refresh state
-    const [isPulling, setIsPulling] = useState(false);
-    const [pullDistance, setPullDistance] = useState(0);
-    const [isRefreshing, setIsRefreshing] = useState(false);
-
     // Language preference (default to Icelandic, but can be changed)
     const [language] = useState<SupportedLanguage>('is');
     // Only use month and agenda views (no week view with hours)
     const [view, setView] = useState<CalendarView>(window.innerWidth < 768 ? 'agenda' : 'month');
     const [date, setDate] = useState(new Date());
+
+    // Handle window resize to switch views
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 768 && view === 'agenda') {
+                setView('month');
+            } else if (window.innerWidth < 768 && view === 'month') {
+                setView('agenda');
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [view]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleViewChange = (newView: any) => {
@@ -699,34 +708,6 @@ export default function CalendarPage() {
 
             {/* Calendar */}
             <div className="container mx-auto px-4 py-4 md:px-6 md:py-8 pb-24 md:pb-8">
-                {/* Pull-to-refresh indicator */}
-                {(isPulling || isRefreshing) && (
-                    <div
-                        className="fixed top-0 left-0 right-0 flex justify-center items-center transition-all duration-200 z-40"
-                        style={{
-                            transform: `translateY(${isPulling ? pullDistance - 40 : 0}px)`,
-                            opacity: isPulling ? Math.min(pullDistance / 80, 1) : 0,
-                            display: isPulling || isRefreshing ? 'flex' : 'none'
-                        }}
-                    >
-                        <div className="bg-white rounded-full shadow-lg p-3 flex items-center gap-2">
-                            {isRefreshing ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-amber border-t-transparent rounded-full animate-spin"></div>
-                                    <span className="text-sm font-medium text-stone-600">Hleð inn...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="w-5 h-5 text-amber">↓</div>
-                                    <span className="text-sm font-medium text-stone-600">
-                                        {pullDistance > 80 ? 'Sleppa til að endurnýja' : 'Draga niður'}
-                                    </span>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                )}
-
                 {/* View Toggle - Controls Month vs List View */}
                 <div className="flex p-1 bg-stone-100 rounded-lg mb-4 w-full md:w-auto md:inline-flex">
                     <button
@@ -762,11 +743,11 @@ export default function CalendarPage() {
                                 startAccessor="start"
                                 endAccessor="end"
                                 className="font-sans"
-                                style={{ height: '100%' }}
+                                style={{ height: '100%', minHeight: '600px' }}
                                 onSelectSlot={handleSelectSlot}
                                 onSelectEvent={handleSelectEvent}
-                                selectable
-                                popup
+                                selectable={true}
+                                popup={true}
                                 components={{
                                     toolbar: CustomToolbar
                                 }}

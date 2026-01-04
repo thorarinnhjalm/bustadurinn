@@ -533,3 +533,28 @@
     background-color: #f3f4f6;
   }
 }
+/* Desktop Calendar Interactivity Enhancements */
+@media (min-width: 769px) {
+  .rbc-day-bg {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .rbc-day-bg:hover {
+    background-color: rgba(232, 176, 88, 0.05) !important;
+  }
+
+  .rbc-event {
+    cursor: pointer;
+    transition: transform 0.1s ease, filter 0.1s ease;
+  }
+
+  .rbc-event:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
+
+  .rbc-date-cell {
+    cursor: pointer;
+  }
+}
