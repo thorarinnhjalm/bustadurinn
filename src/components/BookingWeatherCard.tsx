@@ -18,6 +18,7 @@ interface BookingWeatherCardProps {
     endDate: Date;
     houseLatitude: number;
     houseLongitude: number;
+    houseName?: string;
 }
 
 export default function BookingWeatherCard({
@@ -25,7 +26,8 @@ export default function BookingWeatherCard({
     startDate,
     endDate,
     houseLatitude,
-    houseLongitude
+    houseLongitude,
+    houseName
 }: BookingWeatherCardProps) {
     const [forecast, setForecast] = useState<WeatherForecast | null>(null);
     const [roadConditions, setRoadConditions] = useState<RoadCondition[]>([]);
@@ -115,7 +117,9 @@ export default function BookingWeatherCard({
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <Cloud className="w-5 h-5 text-charcoal/70" />
-                            <h3 className="text-base font-bold text-charcoal">Veðurspá fyrir ferðina</h3>
+                            <h3 className="text-base font-bold text-charcoal">
+                                Veðurspá {houseName ? `við ${houseName}` : 'fyrir ferðina'}
+                            </h3>
                         </div>
                         <p className="text-xs text-stone-600 font-medium">{reliability}</p>
                     </div>

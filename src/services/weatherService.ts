@@ -16,7 +16,7 @@ const weatherCache = new Map<string, { data: WeatherForecast; timestamp: number 
 export async function getWeatherForecast(
     latitude: number,
     longitude: number,
-    startDate: Date
+    _startDate: Date
 ): Promise<WeatherForecast | null> {
     const cacheKey = `${latitude},${longitude}`;
 

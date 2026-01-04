@@ -48,7 +48,7 @@ export async function getWeatherWarnings(region?: string): Promise<WeatherWarnin
  * Note: In production, you'd use a proper XML parser
  * For now, this is a simplified version
  */
-function parseWeatherWarningsXML(xml: string): WeatherWarning[] {
+function parseWeatherWarningsXML(_xml: string): WeatherWarning[] {
     // This is a simplified parser - in production use DOMParser or xml2js
     const warnings: WeatherWarning[] = [];
 
@@ -253,8 +253,8 @@ export const WARNING_LABELS_IS: Record<WarningLevel, string> = {
  */
 export function isLocationAffected(
     warning: WeatherWarning,
-    houseLatitude: number,
-    houseLongitude: number
+    _houseLatitude: number,
+    _houseLongitude: number
 ): boolean {
     // If no specific regions, assume it affects all of Iceland
     if (!warning.regions || warning.regions.length === 0) {
