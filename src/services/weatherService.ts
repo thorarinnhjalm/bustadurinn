@@ -27,14 +27,10 @@ export async function getWeatherForecast(
     }
 
     try {
-        // Use met.no LocationForecast API (free, covers Iceland)
-        const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${latitude}&lon=${longitude}`;
+        // Use our API proxy to avoid CORS issues
+        const url = `/api/weather?lat=${latitude}&lon=${longitude}`;
 
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Bustadurinn.is/1.0 contact@bustadurinn.is'
-            }
-        });
+        const response = await fetch(url);
 
         if (!response.ok) {
             throw new Error(`Weather API error: ${response.status}`);
