@@ -23,25 +23,18 @@ export function generatePackingSuggestions(forecast: WeatherForecast | null): Pa
     // Cold weather gear
     if (minTemp < 0) {
         suggestions.push({
-            category: 'comfort',
-            item: 'Kveiktu á hita fyrir komu',
-            reason: 'Mínushiti spáð - betra að koma í hlýtt hús',
+            category: 'clothing',
+            item: 'Klæðstu hlýlega',
+            reason: `Kuldi spáður, niður í ${Math.round(minTemp)}°C`,
             priority: 'high',
-            icon: '🔥'
+            icon: '🧥'
         });
 
-        suggestions.push({
-            category: 'clothing',
-            item: 'Heitar teppi og sokkabuxur',
-            reason: `Niður í ${Math.round(minTemp)}°C`,
-            priority: 'high',
-            icon: '🧣'
-        });
     } else if (minTemp < 5) {
         suggestions.push({
             category: 'clothing',
             item: 'Hlý föt',
-            reason: 'Kalt veður fram undan',
+            reason: 'Kalt veður',
             priority: 'medium',
             icon: '🧥'
         });
