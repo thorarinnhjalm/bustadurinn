@@ -627,11 +627,14 @@ export default function CalendarPage() {
         }
     };
 
-    const handleSelectSlot = useCallback(({ start, end }: { start: Date; end: Date }) => {
+    const handleSelectSlot = useCallback((slotInfo: any) => {
+        const { start, end } = slotInfo;
+        if (!start || !end) return;
+
         setNewBooking(prev => ({
             ...prev,
-            start,
-            end
+            start: new Date(start),
+            end: new Date(end)
         }));
         setShowModal(true);
     }, []);
@@ -707,7 +710,7 @@ export default function CalendarPage() {
     return (
         <div className="min-h-screen bg-bone">
             {/* Header */}
-            <div className="bg-white border-b border-grey-warm">
+            <div className="bg-white border-b border-grey-warm sticky top-0 z-30 shadow-sm">
                 <div className="container mx-auto px-6 py-6">
                     <div className="flex flex-wrap md:flex-nowrap justify-between items-center gap-4">
                         <div className="w-full md:w-auto">
@@ -791,7 +794,7 @@ export default function CalendarPage() {
                         onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
                         className="h-full calendar-container"
-                        style={{ overflowY: 'auto' }}
+                        style={{ overflowY: view === 'month' ? 'visible' : 'auto' }}
                     >
                         {/* Show Month Calendar OR List View based on selected view */}
                         {view === 'month' ? (
@@ -922,7 +925,10 @@ export default function CalendarPage() {
                                         className="input"
                                         value={newBooking.start.toISOString().split('T')[0]}
                                         onChange={(e) => {
+                                            if (!e.target.value) return;
                                             const newStart = new Date(e.target.value);
+                                            if (isNaN(newStart.getTime())) return;
+
                                             // If new start is after current end, update end to match start
                                             let newEnd = newBooking.end;
                                             if (newStart > newBooking.end) {
