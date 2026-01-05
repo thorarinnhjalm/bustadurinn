@@ -8,6 +8,7 @@ import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, db } from '@/lib/firebase';
 import { LogIn } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import SEO from '@/components/SEO';
 
 import { useSearchParams } from 'react-router-dom';
 
@@ -107,6 +108,11 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-bone flex items-center justify-center p-6">
+            <SEO
+                title="Innskráning - Bústaðurinn.is"
+                description="Skráðu þig inn á Bústaðurinn.is til að stjórna sumarhúsinu þínu."
+                canonical="https://bustadurinn.is/login"
+            />
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-serif mb-2">Bústaðurinn.is</h1>

@@ -1,6 +1,5 @@
 import MarketingLayout from '@/components/MarketingLayout';
 import { Calendar, User, Wallet, Wifi, Bell, Shield, CheckCircle2, ArrowRight, Home } from 'lucide-react';
-import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 
 export default function FeaturesPage() {
@@ -166,47 +165,32 @@ export default function FeaturesPage() {
 
     return (
         <>
-            <Helmet>
-                <title>Eiginleikar - Bústaðurinn.is | Bókunarkerfi, Fjármál og Verkefni fyrir Sumarhús</title>
-                <meta name="description" content="Yfirlit yfir alla eiginleika Bústaðurinn.is: Bókunardagatal með sanngirnisreglu, fjárhagsyfirlit, hlutverkastýring, gestaaðgangur, tilkynningar og fleira. Hannað fyrir íslensk sumarhús í sameign." />
-                <meta name="keywords" content="sumarhús eiginleikar, bókunarkerfi, fjárhagskerfi, verkefnastjórnun, gestaaðgangur, sanngirnisregla, íslensk sumarhús" />
-                <link rel="canonical" href="https://bustadurinn.is/eiginleikar" />
-
-                {/* Open Graph */}
-                <meta property="og:title" content="Eiginleikar - Bústaðurinn.is" />
-                <meta property="og:description" content="Yfirlit yfir alla eiginleika fyrir stjórnun íslenskra sumarhúsa: Dagatal, fjármál, verkefni og fleira." />
-                <meta property="og:type" content="website" />
-                <meta property="og:url" content="https://bustadurinn.is/eiginleikar" />
-
-                {/* Structured Data - SoftwareApplication */}
-                <script type="application/ld+json">
-                    {JSON.stringify({
-                        "@context": "https://schema.org",
-                        "@type": "SoftwareApplication",
-                        "name": "Bústaðurinn.is",
-                        "applicationCategory": "BusinessApplication",
-                        "operatingSystem": "Web",
-                        "offers": {
-                            "@type": "Offer",
-                            "price": "1990",
-                            "priceCurrency": "ISK"
-                        },
-                        "featureList": [
-                            "Bókunardagatal með sanngirnisreglu",
-                            "Fjárhagsyfirlit fyrir hússjóð",
-                            "Verkefnastjórnun",
-                            "Hlutverkastýring fyrir meðeigendur",
-                            "Stafrænn gestaaðgangur",
-                            "Tilkynningar og áminningar"
-                        ],
-                        "description": "Stjórnunarkerfi fyrir íslensk sumarhús í meðeign"
-                    })}
-                </script>
-            </Helmet>
-
             <MarketingLayout
-                title="Eiginleikar"
-                description="Yfirlit yfir alla eiginleika Bústaðurinn.is. Bókunarkerfi, fjármál, verkefnastaða og fleira."
+                title="Eiginleikar - Bústaðurinn.is | Bókunarkerfi, Fjármál og Verkefni fyrir Sumarhús"
+                description="Yfirlit yfir alla eiginleika Bústaðurinn.is: Bókunardagatal með sanngirnisreglu, fjárhagsyfirlit, hlutverkastýring, gestaaðgangur, tilkynningar og fleira. Hannað fyrir íslensk sumarhús í sameign."
+                keywords="sumarhús eiginleikar, bókunarkerfi, fjárhagskerfi, verkefnastjórnun, gestaaðgangur, sanngirnisregla, íslensk sumarhús"
+                canonical="https://bustadurinn.is/eiginleikar"
+                structuredData={{
+                    "@context": "https://schema.org",
+                    "@type": "SoftwareApplication",
+                    "name": "Bústaðurinn.is",
+                    "applicationCategory": "BusinessApplication",
+                    "operatingSystem": "Web",
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "1990",
+                        "priceCurrency": "ISK"
+                    },
+                    "featureList": [
+                        "Bókunardagatal með sanngirnisreglu",
+                        "Fjárhagsyfirlit fyrir hússjóð",
+                        "Verkefnastjórnun",
+                        "Hlutverkastýring fyrir meðeigendur",
+                        "Stafrænn gestaaðgangur",
+                        "Tilkynningar og áminningar"
+                    ],
+                    "description": "Stjórnunarkerfi fyrir íslensk sumarhús í meðeign"
+                }}
             >
                 {/* Hero */}
                 <div className="bg-bone py-24">

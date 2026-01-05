@@ -10,6 +10,7 @@ import { UserPlus } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { analytics } from '@/utils/analytics';
 import { useEffect } from 'react';
+import SEO from '@/components/SEO';
 
 import { useSearchParams } from 'react-router-dom';
 
@@ -136,6 +137,11 @@ export default function SignupPage() {
 
     return (
         <div className="min-h-screen bg-bone flex items-center justify-center p-6">
+            <SEO
+                title="Búa til aðgang - Bústaðurinn.is"
+                description="Búðu til aðgang að Bústaðurinn.is og byrjaðu að skipuleggja sumarhúsið betur. Frítt í 30 daga."
+                canonical="https://bustadurinn.is/signup"
+            />
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-serif mb-2">Bústaðurinn.is</h1>

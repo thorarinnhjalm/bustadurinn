@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Calendar, TrendingUp, CheckCircle, ArrowRight, Users } from 'lucide-react';
-import SEO from '@/components/SEO';
 import MarketingLayout from '@/components/MarketingLayout';
 import { useAppStore } from '@/store/appStore';
 import NewsletterSignup from '@/components/NewsletterSignup';
@@ -59,8 +58,8 @@ export default function LandingPage() {
         <MarketingLayout
             title="Betra skipulag fyrir sumarhúsið"
             description="Við færum utanumhald sameignarinnar úr flóknum Excel skjölum og Facebook hópum yfir í fágað viðmót sem hæfir nútíma sumarhúsum."
+            structuredData={softwareAppSchema}
         >
-            <SEO structuredData={softwareAppSchema} />
 
             {/* Hero Section */}
             <section className="relative min-h-[90vh] flex items-center overflow-hidden">

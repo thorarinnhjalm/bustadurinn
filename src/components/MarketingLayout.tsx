@@ -1,6 +1,6 @@
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import Logo from '@/components/Logo';
-import { Helmet } from 'react-helmet-async';
+import SEO from '@/components/SEO';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
@@ -9,9 +9,19 @@ interface MarketingLayoutProps {
     children: React.ReactNode;
     title?: string;
     description?: string;
+    keywords?: string;
+    structuredData?: object;
+    canonical?: string;
 }
 
-export default function MarketingLayout({ children, title, description }: MarketingLayoutProps) {
+export default function MarketingLayout({
+    children,
+    title,
+    description,
+    keywords,
+    structuredData,
+    canonical
+}: MarketingLayoutProps) {
     const navigate = useNavigate();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,11 +51,13 @@ export default function MarketingLayout({ children, title, description }: Market
 
     return (
         <div className="min-h-screen bg-bone flex flex-col">
-            <Helmet>
-                <title>{title ? `${title} | Bústaðurinn.is` : 'Bústaðurinn.is - Betra skipulag fyrir sumarhús'}</title>
-                <meta name="description" content={description || "Betra skipulag fyrir sameignarhúsið. Bókunardagatal, gagnsær fjármál og stafræn lyklakippa."} />
-                <link rel="canonical" href={`https://bustadurinn.is${location.pathname}`} />
-            </Helmet>
+            <SEO
+                title={title}
+                description={description}
+                keywords={keywords}
+                structuredData={structuredData}
+                canonical={canonical}
+            />
 
             <nav className="fixed top-0 left-0 right-0 bg-bone/95 backdrop-blur-md z-[100] border-b border-grey-warm h-20 flex items-center">
                 <div className="container mx-auto px-6 flex justify-between items-center relative">
