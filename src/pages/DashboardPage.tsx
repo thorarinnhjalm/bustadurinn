@@ -727,6 +727,21 @@ const UserDashboard = () => {
                                             )}
                                     </div>
 
+                                    {/* Link to full Calendar */}
+                                    <div className="mt-4 pt-3 border-t border-stone-100 flex justify-between items-center">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); navigate('/calendar'); }}
+                                            className="text-xs font-bold text-stone-500 hover:text-amber flex items-center gap-1 transition-colors uppercase tracking-wide"
+                                        >
+                                            <Calendar size={12} />
+                                            Skoða allt dagatalið
+                                        </button>
+
+                                        <span className="text-[10px] text-stone-400">
+                                            Smelltu á spjaldið til að sjá nánar
+                                        </span>
+                                    </div>
+
                                     {/* Shopping List Integration - Only for booking owner */}
                                     {canViewBookingDetails(nextBooking, currentUser, currentHouse) && (
                                         <div className="mt-4 pt-4 border-t border-stone-100">
