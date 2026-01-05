@@ -1,5 +1,5 @@
 # Bústaðurinn.is - Current Project Status
-**Last Updated**: 2026-01-01 22:56 UTC  
+**Last Updated**: 2026-01-05 18:48 UTC  
 **Version**: 1.2.0  
 **Environment**: Production
 
@@ -171,6 +171,17 @@
 - Clear separation of information
 - Better typography scaling
 
+### SEO & Indexing (v1.2.1)
+✅ **Canonical URL Standardization**
+- Automatic generation of self-referencing canonicals
+- Trailing slash handling
+- Resolution of GSC "Redirect error"
+
+✅ **Metadata Optimization**
+- Fixed missing SEO on Login/Signup pages
+- Centralized meta tag management in marketing layout
+- JSON-LD structured data improvements
+
 ---
 
 ## 🏗️ Technical Status
@@ -338,6 +349,11 @@ Statistics (as of 2026-01-01):
 ---
 
 ## 📈 Version History
+
+### v1.2.1 (2026-01-05)
+- ✅ SEO & Canonical URL fixes
+- ✅ Page indexing improvements
+- ✅ Metadata standardization
 
 ### v1.2.0 (2026-01-01)
 - ✅ Enhanced calendar booking UX
