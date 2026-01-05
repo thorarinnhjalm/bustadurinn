@@ -7,12 +7,12 @@ import {
     List,
     Layout
 } from 'lucide-react';
+import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { db } from '@/lib/firebase';
 import {
     collection,
     query,
-    where,
     onSnapshot,
     addDoc,
     updateDoc,
@@ -29,20 +29,18 @@ import MobileNav from '@/components/MobileNav';
 export default function TasksPage() {
     const navigate = useNavigate();
     const { user: currentUser } = useEffectiveUser();
+    const currentHouse = useAppStore((state) => state.currentHouse);
     const [view, setView] = useState<'list' | 'board'>('list');
     const [filter, setFilter] = useState<'all' | 'mine'>('all');
     const [tasks, setTasks] = useState<Task[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const houseId = currentUser?.house_ids?.[0];
-
     useEffect(() => {
-        if (!houseId) return;
+        if (!currentHouse?.id) return;
 
         const q = query(
-            collection(db, 'tasks'),
-            where('house_id', '==', houseId)
+            collection(db, 'houses', currentHouse.id, 'tasks')
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -60,15 +58,15 @@ export default function TasksPage() {
         });
 
         return () => unsubscribe();
-    }, [houseId]);
+    }, [currentHouse?.id]);
 
     const handleCreateTask = async (taskData: Partial<Task>) => {
-        if (!houseId || !currentUser) return;
+        if (!currentHouse?.id || !currentUser) return;
 
         try {
-            await addDoc(collection(db, 'tasks'), {
+            await addDoc(collection(db, 'houses', currentHouse.id, 'tasks'), {
                 ...taskData,
-                house_id: houseId,
+                house_id: currentHouse.id,
                 created_by: currentUser.uid,
                 created_at: serverTimestamp(),
                 status: 'pending'
@@ -80,8 +78,9 @@ export default function TasksPage() {
     };
 
     const handleUpdateStatus = async (task: Task, newStatus: TaskStatus) => {
+        if (!currentHouse?.id) return;
         try {
-            await updateDoc(doc(db, 'tasks', task.id), {
+            await updateDoc(doc(db, 'houses', currentHouse.id, 'tasks', task.id), {
                 status: newStatus,
                 completed_at: newStatus === 'completed' ? serverTimestamp() : null
             });
@@ -91,9 +90,10 @@ export default function TasksPage() {
     };
 
     const handleDeleteTask = async (task: Task) => {
+        if (!currentHouse?.id) return;
         if (!confirm('Ertu viss um að þú viljir eyða þessu verkefni?')) return;
         try {
-            await deleteDoc(doc(db, 'tasks', task.id));
+            await deleteDoc(doc(db, 'houses', currentHouse.id, 'tasks', task.id));
         } catch (error) {
             console.error('Error deleting task:', error);
         }

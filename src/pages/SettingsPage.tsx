@@ -127,8 +127,7 @@ export default function SettingsPage() {
     useEffect(() => {
         if (activeTab === 'shopping' && house?.id) {
             const q = query(
-                collection(db, 'shopping_list'),
-                where('house_id', '==', house.id),
+                collection(db, 'houses', house.id, 'shopping_list'),
                 orderBy('created_at', 'desc')
             );
             // Use onSnapshot for realtime updates
@@ -145,8 +144,7 @@ export default function SettingsPage() {
         if (activeTab === 'logs' && house?.id) {
             const fetchLogs = async () => {
                 const q = query(
-                    collection(db, 'internal_logs'),
-                    where('house_id', '==', house.id),
+                    collection(db, 'houses', house.id, 'internal_logs'),
                     orderBy('created_at', 'desc')
                 );
                 const snapshot = await getDocs(q);
@@ -159,16 +157,18 @@ export default function SettingsPage() {
 
     // Shopping handlers
     const handleToggleShoppingItem = async (item: ShoppingItem) => {
-        await updateDoc(doc(db, 'shopping_list', item.id), { checked: !item.checked });
+        if (!house) return;
+        await updateDoc(doc(db, 'houses', house.id, 'shopping_list', item.id), { checked: !item.checked });
     };
 
     const handleDeleteShoppingItem = async (item: ShoppingItem) => {
-        await deleteDoc(doc(db, 'shopping_list', item.id));
+        if (!house) return;
+        await deleteDoc(doc(db, 'houses', house.id, 'shopping_list', item.id));
     };
 
     const handleAddShoppingItem = async (text: string) => {
         if (!house || !currentUser) return;
-        await addDoc(collection(db, 'shopping_list'), {
+        await addDoc(collection(db, 'houses', house.id, 'shopping_list'), {
             house_id: house.id,
             item: text,
             checked: false,
@@ -188,7 +188,7 @@ export default function SettingsPage() {
             text: text,
             created_at: new Date()
         };
-        const docRef = await addDoc(collection(db, 'internal_logs'), newLog);
+        const docRef = await addDoc(collection(db, 'houses', house.id, 'internal_logs'), newLog);
         setLogs(prev => [{ id: docRef.id, ...newLog } as InternalLog, ...prev]);
     };
 

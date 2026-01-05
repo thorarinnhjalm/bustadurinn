@@ -35,6 +35,16 @@ service cloud.firestore {
       allow read, write: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
     }
     
+    // House Member Check Helper
+    function isHouseMember(houseId) {
+      let houseData = get(/databases/$(database)/documents/houses/$(houseId)).data;
+      return request.auth != null && (
+        houseData.owner_ids.hasAny([request.auth.uid]) ||
+        houseData.manager_id == request.auth.uid ||
+        isSuperAdmin()
+      );
+    }
+
     match /houses/{houseId} {
       allow get: if true;
       allow read, write: if request.auth != null && (
@@ -42,11 +52,40 @@ service cloud.firestore {
         request.resource.data.manager_id == request.auth.uid ||
         isSuperAdmin()
       );
+
+      // Subcollections
+      match /bookings/{bookingId} {
+        allow read, write: if isHouseMember(houseId);
+      }
+      match /tasks/{taskId} {
+        allow read, write: if isHouseMember(houseId);
+      }
+      match /shopping_list/{itemId} {
+        allow read, write: if isHouseMember(houseId);
+      }
+      match /internal_logs/{logId} {
+        allow read, write: if isHouseMember(houseId);
+      }
+      match /budget_plans/{planId} {
+        allow read, write: if isHouseMember(houseId);
+      }
+      match /finance_entries/{entryId} {
+        allow read, write: if isHouseMember(houseId);
+      }
     }
 
+    // LEGACY / TOP-LEVEL (Keep for migration)
     match /bookings/{id} { allow read, write: if request.auth != null; }
     match /tasks/{id} { allow read, write: if request.auth != null; }
+    match /shopping_list/{id} { allow read, write: if request.auth != null; }
+    match /internal_logs/{id} { allow read, write: if request.auth != null; }
+    match /finance_entries/{id} { allow read, write: if request.auth != null; }
+    match /budget_plans/{id} { allow read, write: if request.auth != null; }
+
     match /coupons/{id} { allow read: if request.auth != null; }
     match /email_templates/{id} { allow read: if true; }
+    match /invitations/{id} { allow read, write: if request.auth != null; }
+    match /notifications/{id} { allow read, write: if request.auth != null; }
+    match /funnel_events/{id} { allow create: if true; }
   }
 }

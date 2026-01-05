@@ -322,7 +322,7 @@ export default function CalendarPage() {
         if (!houseId) return;
 
         try {
-            const q = query(collection(db, 'bookings'), where('house_id', '==', houseId));
+            const q = query(collection(db, 'houses', houseId, 'bookings'));
             const snapshot = await getDocs(q);
 
             const bookingsData = snapshot.docs.map(doc => {
@@ -376,6 +376,8 @@ export default function CalendarPage() {
 
     // Check fairness helper
     const checkFairness = useCallback(async (start: Date, end: Date, userId: string): Promise<{ allowed: boolean; reason?: string }> => {
+        if (!houseId) return { allowed: true };
+
         // Only apply if house is in 'fairness' mode
         if (houseSettings?.holiday_mode !== 'fairness') {
             return { allowed: true };
@@ -395,8 +397,7 @@ export default function CalendarPage() {
             const endOfLastYear = new Date(lastYear, 11, 31, 23, 59, 59);
 
             const q = query(
-                collection(db, 'bookings'),
-                where('house_id', '==', houseId),
+                collection(db, 'houses', houseId, 'bookings'),
                 where('user_id', '==', userId),
                 where('start', '>=', startOfLastYear),
                 where('start', '<=', endOfLastYear)
@@ -475,7 +476,7 @@ export default function CalendarPage() {
         }
 
         try {
-            const docRef = await addDoc(collection(db, 'bookings'), {
+            const docRef = await addDoc(collection(db, 'houses', houseId, 'bookings'), {
                 house_id: houseId,
                 user_id: currentUser.uid,
                 user_name: currentUser.name || currentUser.email,
@@ -632,12 +633,12 @@ export default function CalendarPage() {
     }, []);
 
     const handleDeleteBooking = async () => {
-        if (!selectedBooking) return;
+        if (!selectedBooking || !houseId) return;
         if (!confirm('Ertu viss um að þú viljir eyða þessari bókun?')) return;
 
         setLoading(true);
         try {
-            await deleteDoc(doc(db, 'bookings', selectedBooking.id));
+            await deleteDoc(doc(db, 'houses', houseId, 'bookings', selectedBooking.id));
 
             // Reload bookings
             await loadBookings();

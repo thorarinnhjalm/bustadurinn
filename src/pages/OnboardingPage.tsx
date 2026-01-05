@@ -309,6 +309,32 @@ export default function OnboardingPage() {
                 subscription_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
             };
 
+            // Initialize Subcollections with Defaults
+            try {
+                // 1. Sample Task
+                await addDoc(collection(db, 'houses', houseRef.id, 'tasks'), {
+                    title: 'Kl klára uppsetningu',
+                    description: 'Farðu í stillingar og fylltu út húsreglur, WiFi og aðrar upplýsingar.',
+                    status: 'pending',
+                    house_id: houseRef.id,
+                    created_by: currentUser.uid,
+                    created_at: serverTimestamp(),
+                    priority: 'high'
+                });
+
+                // 2. Initial Log Entry
+                await addDoc(collection(db, 'houses', houseRef.id, 'internal_logs'), {
+                    text: 'Hús stofnað.',
+                    house_id: houseRef.id,
+                    user_id: currentUser.uid,
+                    user_name: currentUser.name || currentUser.email,
+                    created_at: serverTimestamp()
+                });
+            } catch (initErr) {
+                console.error("Error initializing default data:", initErr);
+                // Non-critical, continue
+            }
+
             // Update local state with created house metadata
             setHouseData(prev => ({
                 ...prev,

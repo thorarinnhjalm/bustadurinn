@@ -14,7 +14,7 @@ import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
-import { collection, query, where, orderBy, limit, getDocs, Timestamp, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, Timestamp, addDoc, updateDoc, doc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, AppNotification } from '@/types/models';
 import { fetchWeather } from '@/utils/weather';
@@ -72,16 +72,17 @@ const UserDashboard = () => {
             return;
         }
 
-        const fetchData = async () => {
-            if (!currentHouse || !currentUser) {
-                return;
-            }
+        const unsubscribes: (() => void)[] = [];
+
+        const setupListeners = async () => {
+            if (!currentHouse || !currentUser) return;
 
             try {
+                setLoading(true);
                 const now = new Date();
                 const todayStart = new Date(now.setHours(0, 0, 0, 0));
 
-                // 0. Fetch Notifications
+                // 0. Notifications (User-specific, top-level for now)
                 try {
                     const notifsRef = collection(db, 'notifications');
                     const qNotifs = query(
@@ -90,209 +91,159 @@ const UserDashboard = () => {
                         where('user_id', '==', currentUser.uid),
                         limit(40)
                     );
-                    const notifsSnap = await getDocs(qNotifs);
-                    const notifsData = notifsSnap.docs.map(doc => ({
+                    // Using onSnapshot for notifications too for consistency
+                    unsubscribes.push(onSnapshot(qNotifs, (snapshot) => {
+                        const notifsData = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data(),
+                            created_at: doc.data().created_at?.toDate() || new Date()
+                        } as AppNotification))
+                            .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
+                            .slice(0, 20);
+                        setNotifications(notifsData);
+                    }));
+                } catch (e) {
+                    console.error("Error setting up notification listener:", e);
+                }
+
+                // 1. Bookings & Occupancy (Subcollection)
+                const qBookings = query(
+                    collection(db, 'houses', currentHouse.id, 'bookings'),
+                    where('end', '>=', todayStart),
+                    orderBy('end', 'asc'),
+                    limit(5)
+                );
+
+                unsubscribes.push(onSnapshot(qBookings, (snapshot) => {
+                    const bookingsData = snapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data(),
-                        created_at: doc.data().created_at?.toDate() || new Date()
-                    } as AppNotification))
-                        .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
-                        .slice(0, 20);
+                        start: doc.data().start?.toDate(),
+                        end: doc.data().end?.toDate(),
+                        created_at: doc.data().created_at?.toDate()
+                    })) as Booking[];
 
-                    setNotifications(notifsData);
-                } catch (e) {
-                    console.error("Error fetching notifications:", e);
-                }
+                    // Set Next Booking
+                    setNextBooking(bookingsData.length > 0 ? bookingsData[0] : null);
 
-                // 1. Fetch Next Booking
-                try {
-                    const bookingsRef = collection(db, 'bookings');
-                    const qNext = query(
-                        bookingsRef,
-                        where('house_id', '==', currentHouse.id),
-                        where('start', '>=', Timestamp.fromDate(todayStart)),
-                        orderBy('start', 'asc'),
-                        limit(1)
-                    );
-                    const bookingSnap = await getDocs(qNext);
-                    if (!bookingSnap.empty) {
-                        const bData = bookingSnap.docs[0].data();
-                        setNextBooking({
-                            id: bookingSnap.docs[0].id,
-                            ...bData,
-                            start: bData.start.toDate(),
-                            end: bData.end.toDate(),
-                            created_at: bData.created_at?.toDate() || new Date()
-                        } as Booking);
-                    }
-                } catch (e) {
-                    console.error("Error fetching next booking:", e);
-                }
-
-                // 2. Check Occupancy
-                try {
-                    const bookingsRef = collection(db, 'bookings');
-                    const qActive = query(
-                        bookingsRef,
-                        where('house_id', '==', currentHouse.id),
-                        where('end', '>=', Timestamp.fromDate(now)),
-                        orderBy('end', 'asc')
-                    );
-                    const activeSnap = await getDocs(qActive);
-                    const active = activeSnap.docs.find(doc => {
-                        const data = doc.data();
-                        return data.start.toDate() <= now && data.end.toDate() >= now;
-                    });
+                    // Check Occupancy
+                    const active = bookingsData.find(b => b.start <= new Date() && b.end >= new Date());
                     setIsOccupied(!!active);
-                } catch (e) {
-                    console.error("Error checking occupancy:", e);
-                }
+                }, (error) => console.error("Bookings listener error:", error)));
 
-                // 3. Fetch Top 3 Tasks (Pending/In Progress)
-                try {
-                    const tasksRef = collection(db, 'tasks');
-                    const qTasks = query(
-                        tasksRef,
-                        where('house_id', '==', currentHouse.id),
-                        where('status', 'in', ['pending', 'in_progress']),
-                        orderBy('created_at', 'desc'),
-                        limit(3)
-                    );
-                    const tasksSnap = await getDocs(qTasks);
-                    const tasksData = tasksSnap.docs.map(doc => {
+                // 2. Tasks (Subcollection)
+                const qTasks = query(
+                    collection(db, 'houses', currentHouse.id, 'tasks'),
+                    where('status', 'in', ['pending', 'in_progress']),
+                    orderBy('created_at', 'desc'),
+                    limit(5)
+                );
+                unsubscribes.push(onSnapshot(qTasks, (snapshot) => {
+                    const tasksData = snapshot.docs.map(doc => {
                         const d = doc.data();
                         return {
                             id: doc.id,
                             ...d,
-                            created_at: d.created_at?.toDate()
+                            created_at: d.created_at?.toDate(),
+                            due_date: d.due_date?.toDate()
                         } as Task;
                     });
                     setTasks(tasksData);
-                } catch (e) {
-                    console.error("Error fetching tasks:", e);
-                }
+                }, (error) => console.error("Tasks listener error:", error)));
 
-                // 4. Fetch Shopping List Items
-                try {
-                    const shoppingRef = collection(db, 'shopping_list');
-                    const qShopping = query(
-                        shoppingRef,
-                        where('house_id', '==', currentHouse.id),
-                        orderBy('checked', 'asc'),
-                        orderBy('created_at', 'desc')
-                    );
-                    const shoppingSnap = await getDocs(qShopping);
-                    const shoppingData = shoppingSnap.docs.map(doc => ({
+                // 3. Shopping List (Subcollection)
+                const qShopping = query(
+                    collection(db, 'houses', currentHouse.id, 'shopping_list'),
+                    where('checked', '==', false),
+                    orderBy('created_at', 'desc'),
+                    limit(5)
+                );
+                unsubscribes.push(onSnapshot(qShopping, (snapshot) => {
+                    const items = snapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data(),
                         created_at: doc.data().created_at?.toDate() || new Date(),
                         checked_at: doc.data().checked_at?.toDate()
                     })) as ShoppingItem[];
-                    setShoppingItems(shoppingData);
-                } catch (e) {
-                    console.error("Error fetching shopping items:", e);
-                }
+                    setShoppingItems(items);
+                }, (error) => console.error("Shopping listener error:", error)));
 
-                // 5. Fetch Recent Internal Logs
-                try {
-                    const logsRef = collection(db, 'internal_logs');
-                    const qLogs = query(
-                        logsRef,
-                        where('house_id', '==', currentHouse.id),
-                        orderBy('created_at', 'desc'),
-                        limit(10)
-                    );
-                    const logsSnap = await getDocs(qLogs);
-                    const logsData = logsSnap.docs.map(doc => ({
+                // 4. Internal Logs (Subcollection - for Check-in status)
+                const qLogs = query(
+                    collection(db, 'houses', currentHouse.id, 'internal_logs'),
+                    orderBy('created_at', 'desc'),
+                    limit(5)
+                );
+                unsubscribes.push(onSnapshot(qLogs, (snapshot) => {
+                    const logsData = snapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data(),
-                        created_at: doc.data().created_at?.toDate() || new Date()
+                        created_at: doc.data().created_at?.toDate()
                     })) as InternalLog[];
-                    // setLogs(logsData); // Removed state
 
-                    // Check if user is checked in
+                    // Check check-in status
                     if (currentUser?.uid) {
                         const userLogs = logsData.filter(log => log.user_id === currentUser.uid);
                         if (userLogs.length > 0) {
-                            const lastLog = userLogs[0];
-                            if (lastLog.text.includes('skráði komu')) {
-                                setIsCheckedIn(true);
-                            } else if (lastLog.text.includes('skráði brottför')) {
-                                setIsCheckedIn(false);
-                            }
+                            const last = userLogs[0];
+                            if (last.text.includes('skráði komu')) setIsCheckedIn(true);
+                            else if (last.text.includes('skráði brottför')) setIsCheckedIn(false);
                         }
                     }
-                } catch (e) {
-                    console.error("Error fetching logs:", e);
-                }
+                }, (error) => console.error("Logs listener error:", error)));
 
-                // 6. Fetch Weather
-                try {
-                    if (currentHouse.location?.lat && currentHouse.location?.lng) {
-                        const wData = await fetchWeather(currentHouse.location.lat, currentHouse.location.lng);
-                        if (wData) {
-                            setWeather({
-                                temp: wData.temp,
-                                wind: wData.windSpeed,
-                                condition: wData.condition
-                            });
-                        }
-                    } else {
-                        setWeather({ temp: "?", wind: 0, condition: "Vantar staðsetningu" });
-                    }
-                } catch (e) {
-                    console.error("Error fetching weather:", e);
-                }
+                // 5. Finances (Subcollection)
+                const qFinance = query(
+                    collection(db, 'houses', currentHouse.id, 'finance_entries')
+                );
+                unsubscribes.push(onSnapshot(qFinance, (snapshot) => {
+                    const entries = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        date: doc.data().date?.toDate(),
+                        created_at: doc.data().created_at?.toDate()
+                    })) as LedgerEntry[];
 
-                // 7. Fetch Finance Data (Hússjóður)
-                try {
-                    const financeRef = collection(db, 'finance_entries');
-                    const qFinance = query(
-                        financeRef,
-                        where('house_id', '==', currentHouse.id)
-                    );
-                    const financeSnap = await getDocs(qFinance);
-                    const financeEntries = financeSnap.docs.map(doc => {
-                        const data = doc.data();
-                        return {
-                            id: doc.id,
-                            ...data,
-                            date: data.date?.toDate() || new Date(),
-                            created_at: data.created_at?.toDate() || new Date()
-                        } as LedgerEntry;
-                    });
+                    const income = entries.filter(e => e.type !== 'expense').reduce((s, e) => s + e.amount, 0);
+                    const expense = entries.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
+                    const bal = income - expense;
 
-                    const totalIncome = financeEntries
-                        .filter(e => e.type !== 'expense')
-                        .reduce((sum, e) => sum + e.amount, 0);
-                    const totalExpense = financeEntries
-                        .filter(e => e.type === 'expense')
-                        .reduce((sum, e) => sum + e.amount, 0);
-                    const balance = totalIncome - totalExpense;
-
-                    let lastAction = "Ekkert að frétta";
-                    if (financeEntries.length > 0) {
-                        financeEntries.sort((a, b) => b.date.getTime() - a.date.getTime());
-                        const latest = financeEntries[0];
-                        const amountStr = latest.amount.toLocaleString('is-IS');
-                        const action = latest.type === 'expense' ? 'Greiddi' : 'Lagði inn';
-                        const who = latest.paid_by_name ? latest.paid_by_name.split(' ')[0] : 'Sjóðurinn';
-                        lastAction = `${who} ${action.toLowerCase()} ${amountStr} kr.`;
+                    let action = "Ekkert að frétta";
+                    if (entries.length > 0) {
+                        entries.sort((a, b) => b.date.getTime() - a.date.getTime());
+                        const last = entries[0];
+                        const who = last.paid_by_name?.split(' ')[0] || 'Sjóðurinn';
+                        const verb = last.type === 'expense' ? 'greiddi' : 'lagði inn';
+                        action = `${who} ${verb} ${last.amount.toLocaleString('is-IS')} kr.`;
                     }
 
-                    setFinances({ balance, lastAction });
-                } catch (e) {
-                    console.error("Error fetching finance data:", e);
+                    setFinances({ balance: bal, lastAction: action });
+                }, (error) => console.error("Finance listener error:", error)));
+
+                // 6. Weather (Async - One time)
+                if (currentHouse.location?.lat && currentHouse.location?.lng) {
+                    fetchWeather(currentHouse.location.lat, currentHouse.location.lng)
+                        .then(wData => {
+                            if (wData) setWeather({ temp: wData.temp, wind: wData.windSpeed, condition: wData.condition });
+                        })
+                        .catch(e => console.error("Weather fetch error:", e));
+                } else {
+                    setWeather({ temp: "?", wind: 0, condition: "Vantar staðsetningu" });
                 }
 
-            } catch (error) {
-                console.error("Major dashboard data fetch error:", error);
-            } finally {
+                setLoading(false);
+
+            } catch (err) {
+                console.error("Setup listeners error:", err);
                 setLoading(false);
             }
         };
 
-        fetchData();
+        setupListeners();
+
+        return () => {
+            unsubscribes.forEach(u => u());
+        };
     }, [currentHouse, currentUser, navigate]);
 
     if (!currentHouse || loading) {

@@ -147,8 +147,7 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
         if (!houseId) return;
 
         const q = query(
-            collection(db, 'budget_plans'),
-            where('house_id', '==', houseId),
+            collection(db, 'houses', houseId, 'budget_plans'),
             where('year', '==', currentYear)
         );
 
@@ -170,8 +169,7 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
         if (!houseId) return;
 
         const q = query(
-            collection(db, 'finance_entries'),
-            where('house_id', '==', houseId)
+            collection(db, 'houses', houseId, 'finance_entries')
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -227,12 +225,12 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
 
             try {
                 if (plan) {
-                    await updateDoc(doc(db, 'budget_plans', plan.id), {
+                    await updateDoc(doc(db, 'houses', houseId, 'budget_plans', plan.id), {
                         items: arrayUnion(newItem),
                         updated_at: serverTimestamp()
                     });
                 } else {
-                    await addDoc(collection(db, 'budget_plans'), {
+                    await addDoc(collection(db, 'houses', houseId, 'budget_plans'), {
                         house_id: houseId,
                         year: currentYear,
                         items: [newItem],
@@ -254,12 +252,12 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
 
         try {
             if (plan) {
-                await updateDoc(doc(db, 'budget_plans', plan.id), {
+                await updateDoc(doc(db, 'houses', houseId, 'budget_plans', plan.id), {
                     items: arrayUnion(item),
                     updated_at: serverTimestamp()
                 });
             } else {
-                await addDoc(collection(db, 'budget_plans'), {
+                await addDoc(collection(db, 'houses', houseId, 'budget_plans'), {
                     house_id: houseId,
                     year: currentYear,
                     items: [item],
@@ -275,9 +273,9 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
     };
 
     const handleDeleteItem = async (item: BudgetItem) => {
-        if (!plan) return;
+        if (!plan || !houseId) return;
         try {
-            await updateDoc(doc(db, 'budget_plans', plan.id), {
+            await updateDoc(doc(db, 'houses', houseId, 'budget_plans', plan.id), {
                 items: arrayRemove(item)
             });
         } catch (error) {
@@ -469,8 +467,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
     useEffect(() => {
         if (!houseId) return;
         const q = query(
-            collection(db, 'budget_plans'),
-            where('house_id', '==', houseId),
+            collection(db, 'houses', houseId, 'budget_plans'),
             where('year', '==', currentYear)
         );
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -490,8 +487,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
         if (!houseId) return;
 
         const q = query(
-            collection(db, 'finance_entries'),
-            where('house_id', '==', houseId)
+            collection(db, 'houses', houseId, 'finance_entries')
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -566,10 +562,10 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
             if (entryData.id) {
                 // Update existing
                 const { id, ...data } = dataToSave;
-                await updateDoc(doc(db, 'finance_entries', id!), data);
+                await updateDoc(doc(db, 'houses', houseId, 'finance_entries', id!), data);
             } else {
                 // Create new
-                await addDoc(collection(db, 'finance_entries'), dataToSave);
+                await addDoc(collection(db, 'houses', houseId, 'finance_entries'), dataToSave);
             }
             setShowForm(false);
             setEditingEntry(null);
@@ -579,9 +575,10 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
     };
 
     const handleDeleteEntry = async (entry: LedgerEntry) => {
+        if (!houseId) return;
         if (!confirm('Ertu viss um að þú viljir eyða þessari færslu?')) return;
         try {
-            await deleteDoc(doc(db, 'finance_entries', entry.id));
+            await deleteDoc(doc(db, 'houses', houseId, 'finance_entries', entry.id));
         } catch (error) {
             console.error('Error deleting entry:', error);
         }
