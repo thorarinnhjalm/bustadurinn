@@ -14,7 +14,7 @@ import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
-import { collection, query, where, orderBy, limit, getDocs, Timestamp, addDoc, updateDoc, doc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, addDoc, updateDoc, doc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, AppNotification } from '@/types/models';
 import { fetchWeather } from '@/utils/weather';
