@@ -133,10 +133,8 @@ const UserDashboard = () => {
 
                 // 2. Tasks (Subcollection)
                 const qTasks = query(
-                    collection(db, 'houses', currentHouse.id, 'tasks'),
-                    where('status', 'in', ['pending', 'in_progress']),
-                    orderBy('created_at', 'desc'),
-                    limit(5)
+                    collection(db, 'houses', currentHouse.id, 'tasks')
+                    // Removed 'where' and 'orderBy' to avoid index issues / strictly require client-side sorting
                 );
                 unsubscribes.push(onSnapshot(qTasks, (snapshot) => {
                     const tasksData = snapshot.docs.map(doc => {
@@ -148,15 +146,20 @@ const UserDashboard = () => {
                             due_date: d.due_date?.toDate()
                         } as Task;
                     });
-                    setTasks(tasksData);
+
+                    // Client-side Filter & Sort
+                    const activeTasks = tasksData
+                        .filter(t => ['pending', 'in_progress'].includes(t.status))
+                        .sort((a, b) => (b.created_at?.getTime() || 0) - (a.created_at?.getTime() || 0))
+                        .slice(0, 5);
+
+                    setTasks(activeTasks);
                 }, (error) => console.error("Tasks listener error:", error)));
 
                 // 3. Shopping List (Subcollection)
                 const qShopping = query(
-                    collection(db, 'houses', currentHouse.id, 'shopping_list'),
-                    where('checked', '==', false),
-                    orderBy('created_at', 'desc'),
-                    limit(5)
+                    collection(db, 'houses', currentHouse.id, 'shopping_list')
+                    // Removed 'where' and 'orderBy' to avoid index issues
                 );
                 unsubscribes.push(onSnapshot(qShopping, (snapshot) => {
                     const items = snapshot.docs.map(doc => ({
@@ -165,7 +168,14 @@ const UserDashboard = () => {
                         created_at: doc.data().created_at?.toDate() || new Date(),
                         checked_at: doc.data().checked_at?.toDate()
                     })) as ShoppingItem[];
-                    setShoppingItems(items);
+
+                    // Client-side Filter & Sort
+                    const unchecked = items
+                        .filter(i => !i.checked)
+                        .sort((a, b) => (b.created_at?.getTime() || 0) - (a.created_at?.getTime() || 0))
+                        .slice(0, 5);
+
+                    setShoppingItems(unchecked);
                 }, (error) => console.error("Shopping listener error:", error)));
 
                 // 4. Internal Logs (Subcollection - for Check-in status)
