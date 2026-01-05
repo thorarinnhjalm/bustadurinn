@@ -27,6 +27,7 @@ import FAQPage from '@/pages/FAQPage';
 import AboutPage from '@/pages/AboutPage';
 import ContactPage from '@/pages/ContactPage';
 import SandboxPage from '@/pages/SandboxPage';
+import MigrationPage from '@/pages/MigrationPage';
 
 
 // Admin emails whitelist
@@ -175,6 +176,14 @@ function App() {
               element={
                 <AdminRoute>
                   <SuperAdminPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/migrate"
+              element={
+                <AdminRoute>
+                  <MigrationPage />
                 </AdminRoute>
               }
             />
