@@ -33,6 +33,7 @@ import MigrationPage from '@/pages/MigrationPage';
 // Admin emails whitelist
 const ADMIN_EMAILS = [
   'thorarinnhjalmarsson@gmail.com',
+  'thorarinnhjalm@gmail.com',
   // Add more admin emails here
 ];
 
