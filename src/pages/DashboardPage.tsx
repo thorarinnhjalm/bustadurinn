@@ -756,10 +756,10 @@ const UserDashboard = () => {
                                                         </div>
                                                         <div>
                                                             <p className="font-bold text-sm text-amber-900">
-                                                                {shoppingItems.filter(item => !item.checked).length} {shoppingItems.filter(item => !item.checked).length === 1 ? 'hlutur' : 'hlutir'} á innkaupalista
+                                                                {shoppingItems.filter(item => !item.checked).length} {shoppingItems.filter(item => !item.checked).length === 1 ? 'hlutur' : 'hlutir'} á innkaupalistanum
                                                             </p>
                                                             <p className="text-xs text-amber-700">
-                                                                Til að búa til fyrir komuna þína
+                                                                Vantar að kaupa fyrir komuna
                                                             </p>
                                                         </div>
                                                     </div>
