@@ -808,12 +808,20 @@ const UserDashboard = () => {
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-8 text-stone-400 relative z-10">
-                                    <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center mb-4">
-                                        <Calendar size={28} className="opacity-40" />
+                                <div className="flex flex-col items-center justify-center py-10 text-stone-500 relative z-10 text-center">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-amber/20 to-orange-100 rounded-full flex items-center justify-center mb-4 shadow-sm animate-pulse-slow">
+                                        <Calendar size={28} className="text-amber-600" />
                                     </div>
-                                    <p className="text-base font-medium text-stone-500">Húsið er laust næstu daga</p>
-                                    <button className="mt-4 text-sm font-bold text-amber hover:underline">Bóka núna</button>
+                                    <h4 className="text-lg font-serif font-bold text-charcoal mb-1">Ekkert framundan?</h4>
+                                    <p className="text-sm text-stone-400 mb-5 max-w-[200px] mx-auto leading-relaxed">
+                                        Húsið er laust næstu daga. Tilvalið tækifæri til að skella sér!
+                                    </p>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); navigate('/calendar'); }}
+                                        className="px-6 py-2 bg-[#1a1a1a] text-white rounded-full text-xs font-bold uppercase tracking-wider hover:bg-stone-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                                    >
+                                        Bóka núna
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -827,12 +835,21 @@ const UserDashboard = () => {
                         </div>
                         <div className="bg-white rounded-2xl border border-stone-100 shadow-xl shadow-stone-200/50 divide-y divide-stone-100 overflow-hidden">
                             {tasks.length === 0 ? (
-                                <div className="p-10 text-center text-stone-400 flex flex-col items-center justify-center">
-                                    <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center mb-3">
-                                        <CheckSquare size={20} className="opacity-50" />
+                                <div className="p-10 text-center flex flex-col items-center justify-center bg-stone-50/30">
+                                    <div className="w-14 h-14 bg-white border border-stone-100 rounded-2xl flex items-center justify-center mb-4 rotate-3 shadow-sm group-hover:rotate-6 transition-transform duration-300">
+                                        <CheckSquare size={24} className="text-stone-300" />
                                     </div>
-                                    <p className="font-medium">Öllum verkefnum lokið!</p>
-                                    <button onClick={() => navigate('/tasks')} className="mt-2 text-sm font-bold text-amber hover:underline">Bæta við nýju</button>
+                                    <h4 className="font-bold text-stone-600 mb-1">Engin verkefni</h4>
+                                    <p className="text-xs text-stone-400 mb-4 max-w-[250px]">
+                                        Haltu utan um viðhald og verkefni með því að skrá þau hér.
+                                    </p>
+                                    <button
+                                        onClick={() => navigate('/tasks')}
+                                        className="text-amber hover:text-amber-600 font-bold text-sm flex items-center gap-1 group/btn px-4 py-2 hover:bg-amber/5 rounded-full transition-colors"
+                                    >
+                                        <Plus size={16} className="group-hover/btn:rotate-90 transition-transform" />
+                                        Bæta við verkefni
+                                    </button>
                                 </div>
                             ) : tasks.map(task => (
                                 <div
