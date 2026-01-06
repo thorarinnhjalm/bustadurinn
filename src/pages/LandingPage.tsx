@@ -67,13 +67,13 @@ export default function LandingPage() {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <img
-                        src="https://images.unsplash.com/photo-1542718610-a1d656d1884c?w=1920&q=80&fit=crop"
+                        src="https://images.unsplash.com/photo-1487335416617-3bf5a053753f?w=1920&q=80&fit=crop"
                         alt="Beautiful Icelandic summer house"
                         className="w-full h-full object-cover"
                     />
                     {/* Gradient Overlays */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-charcoal via-charcoal/90 to-transparent"></div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#111111] via-[#111111]/90 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/90 via-transparent to-transparent"></div>
                 </div>
 
                 {/* Content */}

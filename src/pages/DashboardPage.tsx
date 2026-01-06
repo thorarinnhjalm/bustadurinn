@@ -35,6 +35,8 @@ const CabinLogo = ({ size = 24, className = "" }: { size?: number, className?: s
     </svg>
 );
 
+import Walkthrough from '@/components/Walkthrough';
+
 const UserDashboard = () => {
     const navigate = useNavigate();
     const currentHouse = useAppStore((state) => state.currentHouse);
@@ -44,6 +46,17 @@ const UserDashboard = () => {
 
     // UI state
     const [showHouseSwitcher, setShowHouseSwitcher] = useState(false);
+    const [showWalkthrough, setShowWalkthrough] = useState(false);
+
+    // Check for first-time walkthrough
+    useEffect(() => {
+        const hasSeen = localStorage.getItem('has_seen_walkthrough');
+        if (!hasSeen && currentUser && currentHouse) {
+            // Small delay to allow fade-in
+            const timer = setTimeout(() => setShowWalkthrough(true), 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [currentUser, currentHouse]);
 
     // Real Data State
     const [loading, setLoading] = useState(true);
@@ -496,7 +509,7 @@ const UserDashboard = () => {
             <div className="pt-16 max-w-5xl mx-auto">
                 <div className="relative h-64 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50">
                     <img
-                        src={currentHouse?.image_url || "https://images.unsplash.com/photo-1542718610-a1d656d1884c?q=80&w=2670&auto=format&fit=crop"}
+                        src={currentHouse?.image_url || "https://images.unsplash.com/photo-1487335416617-3bf5a053753f?q=80&w=2670&auto=format&fit=crop"}
                         alt={currentHouse?.name || "Cabin"}
                         className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
                     />
@@ -1069,6 +1082,8 @@ const UserDashboard = () => {
                 </div>
             )}
 
+            {/* Walkthrough */}
+            {showWalkthrough && <Walkthrough onClose={() => setShowWalkthrough(false)} />}
         </div>
     );
 };
