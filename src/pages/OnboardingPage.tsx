@@ -265,19 +265,24 @@ export default function OnboardingPage() {
         setError('');
 
         try {
-            // 0. Check for duplicate address
-            const q = query(collection(db, 'houses'), where('address', '==', houseData.address), limit(1));
-            const querySnapshot = await getDocs(q);
+            // 0. Check for duplicate address (Best effort - strict rules may block this)
+            try {
+                const q = query(collection(db, 'houses'), where('address', '==', houseData.address), limit(1));
+                const querySnapshot = await getDocs(q);
 
-            if (!querySnapshot.empty) {
-                const existingHouse = querySnapshot.docs[0].data();
-                setDuplicateHouse({
-                    id: querySnapshot.docs[0].id,
-                    name: existingHouse.name,
-                    manager_id: existingHouse.manager_id
-                });
-                setLoading(false);
-                return;
+                if (!querySnapshot.empty) {
+                    const existingHouse = querySnapshot.docs[0].data();
+                    setDuplicateHouse({
+                        id: querySnapshot.docs[0].id,
+                        name: existingHouse.name,
+                        manager_id: existingHouse.manager_id
+                    });
+                    setLoading(false);
+                    return;
+                }
+            } catch (dupErr) {
+                // If permission denied (users can't search all houses), we skip the check
+                console.warn("Skipping duplicate check due to permissions:", dupErr);
             }
 
             // 1. Create House
