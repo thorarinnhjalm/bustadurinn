@@ -24,6 +24,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    // 🔒 SECURITY: Verify admin authentication
+    try {
+        const { requireAdmin, getAuthErrorResponse } = await import('./utils/apiAuth');
+        await requireAdmin(req);
+    } catch (authError: any) {
+        const { getAuthErrorResponse } = await import('./utils/apiAuth');
+        const errorResponse = getAuthErrorResponse(authError);
+        return res.status(errorResponse.status).json(errorResponse.body);
+    }
+
     const clientId = process.env.VITE_PAYDAY_CLIENT_ID;
     const clientSecret = process.env.PAYDAY_SECRET_KEY;
     const tokenUrl = process.env.PAYDAY_TOKEN_URL || 'https://api.payday.is/auth/token';
@@ -175,6 +185,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } catch (error: any) {
         console.error('Payday invoice creation error:', error);
-        return res.status(500).json({ error: error.message, stack: error.stack });
+
+        // Don't expose stack traces in production
+        const errorResponse = process.env.NODE_ENV === 'production'
+            ? { error: 'Internal server error' }
+            : { error: error.message, stack: error.stack };
+
+        return res.status(500).json(errorResponse);
     }
 }

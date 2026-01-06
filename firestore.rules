@@ -3,13 +3,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // NUCLEAR ADMISSION - Open everything for these two methods while we debug
-    match /newsletter_subscribers/{id=**} {
-      allow read, write: if true;
+    // 🔒 SECURITY FIX: Newsletter subscribers - only admins can read/update/delete
+    match /newsletter_subscribers/{id} {
+      allow create: if true; // Anyone can subscribe
+      allow read, update, delete: if isSuperAdmin(); // Only admin can manage
     }
     
-    match /contact_submissions/{id=**} {
-      allow read, write: if true;
+    // 🔒 SECURITY FIX: Contact submissions - only admins can read
+    match /contact_submissions/{id} {
+      allow create: if true; // Anyone can submit contact form
+      allow read, update, delete: if isSuperAdmin(); // Only admin can view/manage
     }
 
     // THE MASTER KEY (UID + Email)
@@ -47,8 +50,11 @@ service cloud.firestore {
 
     match /houses/{houseId} {
       allow get: if true;
-      // Split rules for better security and to fix creation bug
-      allow create: if request.auth != null;
+      
+      // 🔒 SECURITY FIX: Ensure user can only create houses they own
+      allow create: if request.auth != null &&
+                       request.resource.data.manager_id == request.auth.uid &&
+                       request.resource.data.owner_ids.hasAny([request.auth.uid]);
       
       allow update, delete: if request.auth != null && (
         resource.data.owner_ids.hasAny([request.auth.uid]) ||

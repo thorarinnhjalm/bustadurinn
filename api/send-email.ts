@@ -79,6 +79,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         initServices();
 
+        // 🔒 SECURITY: Require authentication to send emails
+        try {
+            const { requireAuth, getAuthErrorResponse } = await import('./utils/apiAuth');
+            await requireAuth(req);
+        } catch (authError: any) {
+            const { getAuthErrorResponse } = await import('./utils/apiAuth');
+            const errorResponse = getAuthErrorResponse(authError);
+            return res.status(errorResponse.status).json(errorResponse.body);
+        }
+
         if (!db || !resend) {
             throw new Error('Internal services failed to initialize');
         }
@@ -156,9 +166,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ success: true, data: response.data });
     } catch (error: any) {
         console.error('❌ Server Error sending email:', error);
-        return res.status(500).json({
-            error: error.message,
-            code: error.code || 'internal_server_error'
-        });
+
+        // Don't expose stack traces in production
+        const errorResponse = process.env.NODE_ENV === 'production'
+            ? { error: 'Internal server error' }
+            : { error: error.message, code: error.code || 'internal_server_error' };
+
+        return res.status(500).json(errorResponse);
     }
 }

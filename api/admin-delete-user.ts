@@ -36,13 +36,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Basic API Key protection (optional, but good practice given potential danger)
-    // We can assume the frontend is protected by SuperAdmin checks, but adding a check here is safer.
-    // For now, relies on the requester's responsibility or an auth header if we were fully rigorous. 
-    // Given the task constraints, we'll proceed with standard execution but check for UID.
-
     try {
         initServices();
+
+        // 🔒 SECURITY: Verify admin authentication
+        const { requireAdmin, getAuthErrorResponse } = await import('./utils/apiAuth');
+        try {
+            await requireAdmin(req);
+        } catch (authError: any) {
+            const errorResponse = getAuthErrorResponse(authError);
+            return res.status(errorResponse.status).json(errorResponse.body);
+        }
 
         if (!db || !auth) {
             throw new Error('Internal services failed to initialize');
@@ -90,9 +94,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } catch (error: any) {
         console.error('❌ Server Error deleting user:', error);
-        return res.status(500).json({
-            error: error.message,
-            code: error.code || 'internal_server_error'
-        });
+
+        // Don't expose stack traces in production
+        const errorResponse = process.env.NODE_ENV === 'production'
+            ? { error: 'Internal server error' }
+            : { error: error.message, code: error.code || 'internal_server_error' };
+
+        return res.status(500).json(errorResponse);
     }
 }

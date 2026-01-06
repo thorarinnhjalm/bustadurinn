@@ -51,6 +51,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         initServices();
 
+        // 🔒 SECURITY: Require authentication
+        let authenticatedUser;
+        try {
+            const { requireAuth, getAuthErrorResponse } = await import('./utils/apiAuth');
+            authenticatedUser = await requireAuth(req);
+        } catch (authError: any) {
+            const { getAuthErrorResponse } = await import('./utils/apiAuth');
+            const errorResponse = getAuthErrorResponse(authError);
+            return res.status(errorResponse.status).json(errorResponse.body);
+        }
+
         if (!db || !resend) {
             throw new Error('Internal services failed to initialize');
         }
@@ -59,6 +70,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (!email || !houseId || !senderUid) {
             return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        // 🔒 SECURITY: Verify the authenticated user is the one sending the invite
+        if (authenticatedUser.uid !== senderUid) {
+            return res.status(403).json({ error: 'Forbidden: Cannot send invites on behalf of another user' });
+        }
+
+        // 🔒 SECURITY: Verify user has permission to invite to this house
+        const houseDoc = await db.collection('houses').doc(houseId).get();
+        if (!houseDoc.exists) {
+            return res.status(404).json({ error: 'House not found' });
+        }
+
+        const houseData = houseDoc.data();
+        const isOwner = houseData?.owner_ids?.includes(senderUid);
+        const isManager = houseData?.manager_id === senderUid;
+
+        if (!isOwner && !isManager) {
+            return res.status(403).json({ error: 'Forbidden: Only house owners/managers can invite members' });
         }
 
         const targetEmail = email.trim().toLowerCase();
@@ -186,9 +216,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } catch (error: any) {
         console.error('❌ Error inviting member:', error);
-        return res.status(500).json({
-            error: error.message,
-            code: error.code || 'internal_server_error'
-        });
+
+        // Don't expose stack traces in production
+        const errorResponse = process.env.NODE_ENV === 'production'
+            ? { error: 'Internal server error' }
+            : { error: error.message, code: error.code || 'internal_server_error' };
+
+        return res.status(500).json(errorResponse);
     }
 }
