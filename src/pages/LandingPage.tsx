@@ -1,6 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Calendar, TrendingUp, CheckCircle, ArrowRight, Users } from 'lucide-react';
+import {
+    Calendar, TrendingUp, CheckCircle, ArrowRight, Users,
+    CheckSquare, Home, Plus, Settings
+} from 'lucide-react';
 import MarketingLayout from '@/components/MarketingLayout';
 import { useAppStore } from '@/store/appStore';
 import NewsletterSignup from '@/components/NewsletterSignup';
@@ -190,13 +193,77 @@ export default function LandingPage() {
                                 {/* Speaker/Sensors */}
                                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-charcoal rounded-b-2xl z-20"></div>
 
-                                {/* Inner Screen */}
-                                <div className="w-full h-full bg-bone rounded-[2.5rem] overflow-hidden relative shadow-inner">
-                                    <img
-                                        src="/mobile-app-screenshot.jpg"
-                                        alt="Bústaðurinn App Screenshot"
-                                        className="w-full h-full object-cover"
-                                    />
+                                <div className="w-full h-full bg-[#FDFCF8] rounded-[2.5rem] overflow-hidden relative shadow-inner flex flex-col">
+                                    {/* Mockup Header */}
+                                    <div className="bg-[#1a1a1a]/5 p-6 pb-4 pt-10">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-white text-xs font-bold">ME</div>
+                                            <div className="flex gap-2">
+                                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-stone-400"><Users size={14} /></div>
+                                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-stone-400"><Calendar size={14} /></div>
+                                            </div>
+                                        </div>
+                                        <div className="text-amber text-xs font-bold uppercase tracking-widest mb-1">Góðan daginn</div>
+                                        <div className="text-2xl font-serif font-bold text-[#1a1a1a]">Fjölskyldan</div>
+                                        <div className="flex gap-2 mt-2 text-xs font-medium text-stone-500">
+                                            <span className="flex items-center gap-1"><Calendar size={12} className="text-amber" /> 12°C</span>
+                                            <span>•</span>
+                                            <span>Heiðskírt</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Mockup Body */}
+                                    <div className="flex-1 p-4 space-y-4 overflow-hidden relative">
+                                        {/* Next Booking Card (Mock) */}
+                                        <div className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-amber"></div>
+                                            <div className="flex justify-between items-start mb-3">
+                                                <span className="bg-stone-100 text-stone-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Eftir 3 daga</span>
+                                            </div>
+                                            <h4 className="font-serif font-bold text-[#1a1a1a] text-lg mb-1">Jón & Sigga</h4>
+                                            <p className="text-xs text-stone-500 mb-3">15. - 17. júlí • Helgarferð</p>
+                                            <div className="flex -space-x-2">
+                                                <div className="w-6 h-6 rounded-full bg-stone-200 border-2 border-white"></div>
+                                                <div className="w-6 h-6 rounded-full bg-stone-300 border-2 border-white"></div>
+                                            </div>
+                                        </div>
+
+                                        {/* Tasks Preview */}
+                                        <div>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h5 className="font-serif font-bold text-[#1a1a1a]">Verkefni</h5>
+                                                <span className="text-[10px] text-amber font-bold">Sjá öll</span>
+                                            </div>
+                                            <div className="bg-white rounded-xl border border-stone-100 p-1 divide-y divide-stone-50">
+                                                <div className="flex items-center gap-3 p-3">
+                                                    <div className="w-4 h-4 rounded border-2 border-[#e8b058] flex items-center justify-center"></div>
+                                                    <div className="flex-1">
+                                                        <p className="text-xs font-bold text-[#1a1a1a]">Klippa grasið</p>
+                                                        <p className="text-[10px] text-stone-400">Jón Jónsson</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3 p-3">
+                                                    <div className="w-4 h-4 rounded border-2 border-stone-200 flex items-center justify-center">
+                                                        <CheckSquare size={10} className="text-stone-300" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-xs font-bold text-stone-400 line-through">Mála pallinn</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Mockup Nav */}
+                                    <div className="bg-white border-t border-stone-100 p-3 px-6 flex justify-between items-center">
+                                        <Home size={20} className="text-[#1a1a1a]" />
+                                        <Calendar size={20} className="text-stone-300" />
+                                        <div className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center -mt-8 border-4 border-[#FDFCF8]">
+                                            <Plus size={16} className="text-white" />
+                                        </div>
+                                        <CheckSquare size={20} className="text-stone-300" />
+                                        <Settings size={20} className="text-stone-300" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
