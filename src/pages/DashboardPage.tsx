@@ -6,7 +6,7 @@ import {
     Plus, Users, Wallet, Bell,
     ChevronRight, Loader2, Shield,
     ChevronDown, Home, LogOut,
-    X, Image as ImageIcon, ShoppingBag, Check
+    X, Image as ImageIcon, ShoppingBag, Check, MapPin
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import { useNavigate } from 'react-router-dom';
@@ -613,6 +613,30 @@ const UserDashboard = () => {
                         <span>{isCheckedIn ? 'Skrá brottför' : 'Skrá komu'}</span>
                     </button>
                 </div>
+
+                {/* Missing Address Warning */}
+                {(!currentHouse.address || currentHouse.address.trim() === '') && currentUser?.uid && (currentUser.uid === currentHouse.manager_id || currentHouse.owner_ids?.includes(currentUser.uid)) && (
+                    <div className="bg-amber/10 border border-amber/20 rounded-2xl p-6 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-amber/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-4">
+                            <div className="w-10 h-10 bg-amber rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber/20">
+                                <MapPin size={24} className="text-[#1a1a1a]" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-[#1a1a1a] text-lg mb-1">Vantar heimilisfang!</h3>
+                                <p className="text-stone-600 text-sm leading-relaxed max-w-2xl">
+                                    Til þess að fá <strong>veðurspá</strong>, nákvæma <strong>staðsetningu á korti</strong> og leiðbeiningar fyrir gesti þarf að skrá heimilisfang hússins.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => navigate('/settings?tab=house')}
+                                className="bg-[#1a1a1a] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-stone-800 transition-all whitespace-nowrap shadow-lg"
+                            >
+                                Skrá heimilisfang
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
 

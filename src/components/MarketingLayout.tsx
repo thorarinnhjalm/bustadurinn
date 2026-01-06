@@ -2,6 +2,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import Logo from '@/components/Logo';
 import SEO from '@/components/SEO';
 import NewsletterSignup from '@/components/NewsletterSignup';
+import NewsletterPopup from '@/components/NewsletterPopup';
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 
@@ -58,6 +59,7 @@ export default function MarketingLayout({
                 structuredData={structuredData}
                 canonical={canonical}
             />
+            <NewsletterPopup />
 
             <nav className="fixed top-0 left-0 right-0 bg-bone/95 backdrop-blur-md z-[100] border-b border-grey-warm h-20 flex items-center">
                 <div className="container mx-auto px-6 flex justify-between items-center relative">

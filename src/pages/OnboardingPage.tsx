@@ -1,8 +1,8 @@
 
 // Declare Google Maps types
-declare var google: any;
+declare const google: any;
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, MapPin, Users, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, setDoc, doc, arrayUnion, query, where, getDocs, limit, getDoc } from 'firebase/firestore';
@@ -50,19 +50,7 @@ export default function OnboardingPage() {
 
     const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
-    useEffect(() => {
-        // Only auto-redirect if they have a house AND are on the very first step
-        // This allows them to stay in the flow after house creation (Step 2 -> 3)
-        if (currentUser && currentUser.house_ids && currentUser.house_ids.length > 0 && currentStep === 'welcome') {
-            navigate('/dashboard');
-        } else if (currentStep === 'welcome') {
-            // Track visit to onboarding
-            analytics.onboardingStep('welcome');
-            logFunnelEvent('onboarding_started');
-        }
-    }, [currentUser, navigate, currentStep]);
-
-    const logFunnelEvent = async (eventName: string) => {
+    const logFunnelEvent = useCallback(async (eventName: string) => {
         if (!currentUser) return;
         try {
             await addDoc(collection(db, 'funnel_events'), {
@@ -74,7 +62,19 @@ export default function OnboardingPage() {
         } catch (e) {
             console.error('Funnel log error:', e);
         }
-    };
+    }, [currentUser, houseData.id]);
+
+    useEffect(() => {
+        // Only auto-redirect if they have a house AND are on the very first step
+        // This allows them to stay in the flow after house creation (Step 2 -> 3)
+        if (currentUser && currentUser.house_ids && currentUser.house_ids.length > 0 && currentStep === 'welcome') {
+            navigate('/dashboard');
+        } else if (currentStep === 'welcome') {
+            // Track visit to onboarding
+            analytics.onboardingStep('welcome');
+            logFunnelEvent('onboarding_started');
+        }
+    }, [currentUser, navigate, currentStep, logFunnelEvent]);
 
     // Initialize Google Maps API Script
     useEffect(() => {
@@ -251,8 +251,9 @@ export default function OnboardingPage() {
     };
 
     const handleCreateHouse = async () => {
-        if (!houseData.name || !houseData.address) {
-            setError('Vinsamlegast fylltu út öll nauðsynleg svæði');
+        // Only name is strictly required now
+        if (!houseData.name) {
+            setError('Vinsamlegast settu inn nafn á húsið');
             return;
         }
 
@@ -265,32 +266,34 @@ export default function OnboardingPage() {
         setError('');
 
         try {
-            // 0. Check for duplicate address (Best effort - strict rules may block this)
-            try {
-                const q = query(collection(db, 'houses'), where('address', '==', houseData.address), limit(1));
-                const querySnapshot = await getDocs(q);
+            // 0. Check for duplicate address (If address provided)
+            if (houseData.address) {
+                try {
+                    const q = query(collection(db, 'houses'), where('address', '==', houseData.address), limit(1));
+                    const querySnapshot = await getDocs(q);
 
-                if (!querySnapshot.empty) {
-                    const existingHouse = querySnapshot.docs[0].data();
-                    setDuplicateHouse({
-                        id: querySnapshot.docs[0].id,
-                        name: existingHouse.name,
-                        manager_id: existingHouse.manager_id
-                    });
-                    setLoading(false);
-                    return;
+                    if (!querySnapshot.empty) {
+                        const existingHouse = querySnapshot.docs[0].data();
+                        setDuplicateHouse({
+                            id: querySnapshot.docs[0].id,
+                            name: existingHouse.name,
+                            manager_id: existingHouse.manager_id
+                        });
+                        setLoading(false);
+                        return;
+                    }
+                } catch (dupErr) {
+                    // If permission denied (users can't search all houses), we skip the check
+                    console.warn("Skipping duplicate check due to permissions:", dupErr);
                 }
-            } catch (dupErr) {
-                // If permission denied (users can't search all houses), we skip the check
-                console.warn("Skipping duplicate check due to permissions:", dupErr);
             }
 
             // 1. Create House
             const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             const houseRef = await addDoc(collection(db, 'houses'), {
                 name: houseData.name,
-                address: houseData.address,
-                location: houseData.location,
+                address: houseData.address || '',
+                location: houseData.location || { lat: 0, lng: 0 },
                 manager_id: currentUser.uid,
                 owner_ids: [currentUser.uid],
                 invite_code: inviteCode,
@@ -305,8 +308,8 @@ export default function OnboardingPage() {
             const newHouse = {
                 id: houseRef.id,
                 name: houseData.name,
-                address: houseData.address,
-                location: houseData.location,
+                address: houseData.address || '',
+                location: houseData.location || { lat: 0, lng: 0 },
                 manager_id: currentUser.uid,
                 owner_ids: [currentUser.uid],
                 invite_code: inviteCode,
@@ -362,7 +365,7 @@ export default function OnboardingPage() {
                 house_ids: [...(currentUser.house_ids || []), houseRef.id]
             });
 
-            // 4. Send Welcome Email (Non-blocking with dynamic template)
+            // 4. Send Welcome Email
             (async () => {
                 try {
                     const userName = currentUser.name || currentUser.email?.split('@')[0];
@@ -380,22 +383,14 @@ export default function OnboardingPage() {
                     if (res.ok) {
                         console.log('✅ Welcome email sent');
                     } else {
-                        const text = await res.text();
-                        let errorMsg = res.statusText;
-                        try {
-                            const errorData = JSON.parse(text);
-                            errorMsg = errorData.error || errorMsg;
-                        } catch (e) {
-                            // Not JSON
-                        }
-                        console.error('❌ Failed to send welcome email:', errorMsg);
+                        console.error('❌ Failed to send welcome email');
                     }
                 } catch (e) {
                     console.error("Failed to send welcome email:", e);
                 }
             })();
 
-            // 5. Send Onboarding Completion Email with Getting Started Guide
+            // 5. Send Onboarding Completion Email
             (async () => {
                 try {
                     const userName = currentUser.name || currentUser.email?.split('@')[0];
@@ -600,14 +595,13 @@ export default function OnboardingPage() {
                                 </div>
 
                                 <div className="relative">
-                                    <label className="label">Heimilisfang *</label>
+                                    <label className="label">Heimilisfang <span className="font-normal text-gray-500">(má fylla út síðar)</span></label>
                                     <input
                                         type="text"
                                         className="input"
                                         value={houseData.address}
                                         onChange={(e) => handleAddressChange(e.target.value)}
                                         placeholder="t.d. Sumarhúsabyggð 12, 800 Selfoss"
-                                        required
                                         autoComplete="off"
                                     />
                                     {suggestions.length > 0 && (
@@ -640,7 +634,7 @@ export default function OnboardingPage() {
                                         </ul>
                                     )}
                                     <p className="text-sm text-grey-mid mt-2">
-                                        Finnst bústaðurinn ekki? Skrifaðu nafnið eða heimilisfangið hér. Þú getur svo fínstillt staðsetninguna á kortinu í Stillingum.
+                                        Þú getur bætt við heimilisfangi síðar til að fá veðurspá og nákvæma staðsetningu.
                                     </p>
                                 </div>
 

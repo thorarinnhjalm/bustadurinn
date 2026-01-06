@@ -4,6 +4,7 @@ import { Calendar, TrendingUp, CheckCircle, ArrowRight, Users } from 'lucide-rea
 import MarketingLayout from '@/components/MarketingLayout';
 import { useAppStore } from '@/store/appStore';
 import NewsletterSignup from '@/components/NewsletterSignup';
+// NewsletterPopup moved to MarketingLayout
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -34,30 +35,30 @@ export default function LandingPage() {
     const features = [
         {
             icon: Calendar,
-            title: "Sanngjörn Bókun",
-            description: "Innbyggð sanngirnisregla tryggir jafna skiptingu á vinsælum helgum. Friður í fjölskyldunni."
+            title: "Sanngjörn skipting",
+            description: "Innbyggð sanngirnisregla tryggir að allir fái sinn tíma og að enginn sitji einn að vinsælustu helgunum. Kerfið sér um að deila gæðunum."
         },
         {
             icon: TrendingUp,
-            title: "Gagnsær Hússjóður",
-            description: "Haldið utan um kostnað og greiðslur. Sjáið svart á hvítu hvort hússjóðurinn standi undir rekstrinum."
+            title: "Hver borgaði rafmagnið?",
+            description: "Sjáið svart á hvítu hver hefur lagt hvað út. Haldið utan um kostnað og greiðslur svo hússjóðurinn standi alltaf undir rekstrinum."
         },
         {
             icon: Users,
-            title: "Gestaaðgangur",
-            description: "Sendu sjálfvirka \"Töfrahlekki\" á gesti sem opna upplýsingar um bústaðinn, veður og reglur. Virkar eins og stafræn gestabók og leiðarvísir í einu."
+            title: "Gestir og leigjendur",
+            description: "Sendu 'Töfrahlekk' á gesti með leiðbeiningum, pottastillingum og WiFi lykilorði. Engin öpp, engin skráning, bara virkar í vafranum."
         },
         {
-            icon: TrendingUp, // Replacing with a more appropriate icon if needed, but keeping for now
-            title: "Öryggi í forgangi",
-            description: "Rauntíma vöktun á veðri og færð á vegum beint að þínu sumarhúsi. Við látum þig vita ef það stefnir í ófærð eða vonskuveður."
+            icon: CheckCircle,
+            title: "Öryggi og eftirlit",
+            description: "Rauntíma tenging við Veðurstofuna og Vegagerðina. Við látum þig vita ef það stefnir í ófærð eða vonskuveður á svæðinu."
         }
     ];
 
     return (
         <MarketingLayout
-            title="Betra skipulag fyrir sumarhúsið"
-            description="Við færum utanumhald sameignarinnar úr flóknum Excel skjölum og Facebook hópum yfir í fágað viðmót sem hæfir nútíma sumarhúsum."
+            title="Friður í sumarhúsinu - Bókunarkerfi fyrir fjölskyldur"
+            description="Einföld lausn sem tryggir sanngjarna skiptingu, gagnsæ fjármál og frið í fjölskyldunni. Prófaðu frítt í 30 daga."
             structuredData={softwareAppSchema}
         >
 
@@ -86,13 +87,13 @@ export default function LandingPage() {
 
                         {/* Headline */}
                         <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-6 text-bone animate-fade-in">
-                            Betra skipulag fyrir{' '}
-                            <span className="text-amber">sumarhúsið</span>
+                            Hættu að rífast um{' '}
+                            <span className="text-amber">helgarnar</span>
                         </h1>
 
                         {/* Tagline */}
                         <p className="text-xl md:text-2xl mb-8 text-bone/90 leading-relaxed font-light">
-                            Við færum utanumhald sumarhússins úr Excel skjölum og Facebook spjalli yfir í fágað viðmót sem hæfir nútíma sumarhúsum.
+                            Einföld lausn sem tryggir sanngjarna skiptingu, gagnsæ fjármál og frið í fjölskyldunni. Sumarhúsið á að vera griðastaður, ekki uppspretta ágreinings.
                         </p>
 
                         {/* CTAs */}
@@ -145,9 +146,9 @@ export default function LandingPage() {
             <section className="py-24 bg-bone">
                 <div className="container max-w-6xl mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-serif mb-4">Allt sem þú þarft</h2>
+                        <h2 className="text-4xl md:text-5xl font-serif mb-4">Allt sem þarf fyrir friðsamleg samskipti</h2>
                         <p className="text-xl text-grey-dark max-w-2xl mx-auto">
-                            Eitt kerfi fyrir bókanir, fjármál og samskipti
+                            Eitt kerfi sem tekur á öllum helstu ágreiningsefnum í sameign
                         </p>
                     </div>
 

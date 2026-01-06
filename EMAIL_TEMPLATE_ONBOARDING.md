@@ -116,30 +116,30 @@ Velkomin í Bústaðurinn.is! 🏡 - Komdu í gang
         <div class="content">
             <p class="greeting">Hæ {name}! 👋</p>
             
-            <p>Til hamingju með að setja upp <strong>{house_name}</strong> í kerfinu okkar! Þú ert núna tilbúin/n að byrja að skipuleggja dvalir, halda utan um fjármál og verkefni.</p>
+            <p>Til hamingju með að skrá <strong>{house_name}</strong> í kerfið hjá okkur! Nú getur þú hafist handa við að skipuleggja dvalir, halda utan um fjármál og verkefni.</p>
             
             <div class="divider"></div>
             
-            <h2 style="color: #1a1a1a; margin-bottom: 20px;">Komdu í gang með þessum eiginleikum:</h2>
+            <h2 style="color: #1a1a1a; margin-bottom: 20px;">Hér er það helsta sem þú getur gert:</h2>
             
             <div class="feature-box">
                 <h3>📅 Bókunardagatal</h3>
-                <p>Skipuleggðu dvalir fyrir fjölskylduna. Kerfið passar upp á að engir rekist á og að allir fái sanngjarna deild á helgum.</p>
+                <p>Skipuleggðu dvalir fyrir fjölskylduna. Kerfið sér til þess að engar tvíbókanir verði og að helgum sé skipt á sanngjarnan hátt.</p>
             </div>
             
             <div class="feature-box">
                 <h3>💰 Fjármál</h3>
-                <p>Haltu utan um útgjöld, búðu til áætlun og sjáðu hvernig hússjóðurinn stendur. Allir meðeigendur geta skráð útgjöld.</p>
+                <p>Haltu utan um útgjöld, gerðu rekstraráætlun og fylgstu með stöðu hússjóðsins. Allir meðeigendur geta skráð útgjöld.</p>
             </div>
             
             <div class="feature-box">
                 <h3>✅ Verkefni</h3>
-                <p>Búðu til lista yfir viðhaldsverkefni. Úthlutaðu verkum til meðeigenda og fylgstu með framvindu.</p>
+                <p>Haltu utan um viðhaldsverkefni. Deildu verkefnum með meðeigendum og fylgstu með framvindunni.</p>
             </div>
 
             <div class="feature-box">
                 <h3>👥 Gestir</h3>
-                <p>Búðu til gesta-hlekk með WiFi kóðum og upplýsingum. Enginn þarf að hringja og spyrja!</p>
+                <p>Búðu til gestahlekk með WiFi kóða og helstu upplýsingum. Svo enginn þurfi að hringja og spyrja!</p>
             </div>
             
             <div style="text-align: center; margin: 40px 0;">
@@ -152,10 +152,10 @@ Velkomin í Bústaðurinn.is! 🏡 - Komdu í gang
             
             <h3 style="color: #1a1a1a;">💡 Ábendingar:</h3>
             <ul style="color: #666; line-height: 1.8;">
-                <li><strong>Bjó við meðeigendum:</strong> Í stillingum geturðu búið til boðshlekk til að senda öðrum</li>
-                <li><strong>Bóka fyrstu dvölina:</strong> Farðu á dagatalið og smelltu á dagatali til að búa til bókun</li>
-                <li><strong>Setja upp fjárhagsáætlun:</strong> Útbúðu rekstraráætlun svo allir sjái hversu miklu þarf að safna</li>
-                <li><strong>Á símanum?</strong> Bættu bústaðurinn við heimaskjáinn fyrir skjótari aðgang</li>
+                <li><strong>Bjóddu meðeigendum:</strong> Í stillingum geturðu búið til boðshlekk og sent öðrum.</li>
+                <li><strong>Bókaðu fyrstu dvölina:</strong> Farðu í dagatalið og smelltu á dagsetningu til að bóka.</li>
+                <li><strong>Gerðu rekstraráætlun:</strong> Útbúðu áætlun svo allir sjái hvað þarf að greiða í hússjóð.</li>
+                <li><strong>Í símanum?</strong> Bættu Bústaðnum við á heimaskjáinn fyrir skjótari aðgang.</li>
             </ul>
             
             <div class="divider"></div>
