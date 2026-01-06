@@ -63,6 +63,23 @@ export default function AboutPage() {
                             <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber/5 rounded-full -ml-24 -mb-24 blur-[80px]"></div>
                         </div>
 
+                        <div className="mb-20">
+                            <h3 className="text-3xl font-serif text-charcoal mb-8">Um Stofnandann</h3>
+                            <div className="bg-stone-50 rounded-2xl p-8 md:p-10 border border-stone-100 flex flex-col md:flex-row gap-8 items-start">
+                                <div className="flex-1 space-y-4">
+                                    <h4 className="text-xl font-bold text-charcoal">Þórarinn Hjálmarsson</h4>
+                                    <p className="text-grey-dark leading-relaxed">
+                                        Þórarinn á og rekur Bústaðinn.is en hann hefur starfað við vefþróun og markaðsmál frá árinu 2007.
+                                        Hugmyndin að kerfinu kviknaði út frá hans eigin þörf fyrir betra skipulag í kringum fjölskyldubústaðinn.
+                                    </p>
+                                    <p className="text-grey-dark leading-relaxed">
+                                        Hann er einnig stofnandi fræðsluvefsins <a href="https://www.markadssetning.is" target="_blank" rel="noopener" className="text-amber hover:text-amber-600 font-medium">Markaðssetning.is</a> og hefur komið að þróun fjölda annarra vefja eins og Nágrannar.is og Vaktaplan.is.
+                                        Til dagsins starfar Þórarinn sem forstöðumaður stjórnenda- og tæknináms hjá Akademias.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         <h3 className="text-2xl font-serif text-charcoal mt-12 mb-6 text-center">Hafið samband</h3>
                         <p className="mb-8 text-center">
                             Við elskum að heyra í notendum okkar. Ef þú hefur ábendingar, spurningar eða vilt einfaldlega segja hæ, sendu okkur línu.
