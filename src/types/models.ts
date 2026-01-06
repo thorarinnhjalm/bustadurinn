@@ -238,3 +238,22 @@ export interface AppNotification {
     };
     created_at: Date;
 }
+
+export interface ContactReply {
+    id?: string;
+    body: string;
+    from_email: string;
+    created_at: Date;
+    admin_id?: string;
+    is_admin_reply: boolean;
+}
+
+export interface ContactSubmission {
+    id: string;
+    name: string;
+    email: string;
+    message: string;
+    created_at: Date;
+    status: 'new' | 'read' | 'replied';
+    replies?: ContactReply[];
+}

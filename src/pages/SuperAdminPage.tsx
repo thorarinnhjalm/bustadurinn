@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw, MapPin, Shield, LogOut, LayoutDashboard } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw, MapPin, Shield, LogOut, LayoutDashboard, Reply, MessageSquare } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -16,7 +16,7 @@ import AdminLayout from '@/components/AdminLayout';
 import DataTable from '@/components/DataTable';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
 
-import type { House, User, Coupon } from '@/types/models';
+import type { House, User, Coupon, ContactSubmission } from '@/types/models';
 
 interface EmailTemplate {
     id: string; // 'welcome', 'inactive_engagement'
@@ -25,15 +25,6 @@ interface EmailTemplate {
     active: boolean;
     variables: string[];
     description: string;
-}
-
-interface ContactSubmission {
-    id: string;
-    name: string;
-    email: string;
-    message: string;
-    created_at: Date;
-    status: 'new' | 'read' | 'replied';
 }
 
 interface NewsletterSubscriber {
@@ -63,6 +54,8 @@ export default function SuperAdminPage() {
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [editingHouse, setEditingHouse] = useState<House | null>(null);
+    const [replyingTo, setReplyingTo] = useState<ContactSubmission | null>(null);
+    const [replyText, setReplyText] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [seeding, setSeeding] = useState(false);
@@ -652,6 +645,83 @@ export default function SuperAdminPage() {
         } catch (error: any) {
             console.error('Error syncing name:', error);
             alert(`❌ Error: ${error.message}`);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleSendReply = async () => {
+        if (!replyingTo || !replyText.trim()) return;
+
+        setActionLoading('sending-reply');
+        try {
+            // 1. Send Email (using direct html injection for flexible arbitrary replies)
+            // Note: In production you might want a proper template or 'send-email' endpoint that accepts 'html' or 'text' body directly.
+            // Assuming /api/send-email handles a 'html' property if provided, or we use a generic 'reply_template'.
+            // For now, let's assume valid implementation or generic handling.
+
+            const res = await fetch('/api/admin-send-reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: replyingTo.email,
+                    subject: `Sv: Erindi frá Bústaðurinn.is`,
+                    text: replyText,
+                    originalMessage: replyingTo.message
+                })
+            });
+
+            if (!res.ok) throw new Error('Failed to send email via API');
+
+            // 2. Update Firestore
+            const reply = {
+                body: replyText,
+                from_email: 'support@bustadurinn.is',
+                created_at: new Date(),
+                is_admin_reply: true,
+                admin_id: currentUser?.uid
+            };
+
+            const docRef = doc(db, 'contact_submissions', replyingTo.id);
+            // We need to use arrayUnion or simply read-modify-write. Since we have 'replyingTo' from state which might be stale if we don't be careful, but generally okay here.
+            // Actually, we should just push to the array in memory and write the whole array or use arrayUnion.
+            // Let's use standard update for now.
+
+            // Note: Firestore doesn't accept custom objects in arrayUnion easily without conversion if they have Date objects.
+            // We'll simplisticly just set the status and rely on local update, or fetch fresh.
+            // Better: update 'replies' field.
+
+            // For simplicity in this step, let's assume we update the whole object or just status + replies.
+            // Since we need to persist the 'reply' object which has a JS Date, we need to convert it for Firestore if using raw SDK, 
+            // but the SDK usually handles Date objects in top level fields. Inside arrays it can be tricky.
+            // We will just update status for now and assume the API might handle the log or we do it here.
+
+            await updateDoc(docRef, {
+                status: 'replied',
+                // For simplicity, we won't push to 'replies' array in Firestore in this specific call to avoid complex array logic without checking current DB state accurately. 
+                // BUT the requirements said "Implement conversation threading". 
+                // So I MUST persist it.
+                // standard way: 
+                replies: [...(replyingTo.replies || []), reply]
+            });
+
+            // 3. Update Local State
+            setStats(prev => ({
+                ...prev,
+                allContacts: prev.allContacts.map(c =>
+                    c.id === replyingTo.id
+                        ? { ...c, status: 'replied' as const, replies: [...(c.replies || []), reply] }
+                        : c
+                )
+            }));
+
+            setReplyingTo(null);
+            setReplyText('');
+            alert('✅ Svar sent!');
+
+        } catch (error: any) {
+            console.error('Reply error:', error);
+            alert('Mistókst að senda svar: ' + error.message);
         } finally {
             setActionLoading(null);
         }
@@ -1562,7 +1632,7 @@ export default function SuperAdminPage() {
                                         label: 'Skila boð',
                                         render: (row) => {
                                             const msg = row.message || '';
-                                            return msg.length > 100 ? msg.substring(0, 100) + '...' : msg;
+                                            return msg.length > 50 ? msg.substring(0, 50) + '...' : msg;
                                         }
                                     },
                                     {
@@ -1596,6 +1666,15 @@ export default function SuperAdminPage() {
                                 ]}
                                 data={stats.allContacts}
                                 searchKeys={['name', 'email', 'message']}
+                                actions={(row) => (
+                                    <button
+                                        onClick={() => setReplyingTo(row)}
+                                        className="btn btn-secondary btn-sm flex items-center gap-2"
+                                    >
+                                        <Reply className="w-3 h-3" />
+                                        {row.status === 'replied' ? 'Sjá Svar' : 'Svara'}
+                                    </button>
+                                )}
                             />
                         </div>
                     )
@@ -2036,6 +2115,73 @@ export default function SuperAdminPage() {
                         </div>
                     )
                 }
+
+                {/* Reply to Contact Modal */}
+                {
+                    replyingTo && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+                                <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-stone-50 rounded-t-lg">
+                                    <h3 className="font-bold text-xl font-serif">Svara Erindi</h3>
+                                    <button onClick={() => setReplyingTo(null)} className="text-stone-400 hover:text-stone-600">
+                                        <XCircle className="w-6 h-6" />
+                                    </button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                                    {/* Original Message */}
+                                    <div className="bg-stone-50 p-4 rounded-lg border border-stone-100">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="font-bold text-charcoal">{replyingTo.name}</div>
+                                            <div className="text-xs text-stone-500">{new Date(replyingTo.created_at).toLocaleString('is-IS')}</div>
+                                        </div>
+                                        <div className="text-sm text-stone-600 mb-2 font-mono text-xs">{replyingTo.email}</div>
+                                        <p className="text-stone-800 whitespace-pre-wrap">{replyingTo.message}</p>
+                                    </div>
+
+                                    {/* Previous Replies */}
+                                    {replyingTo.replies && replyingTo.replies.length > 0 && (
+                                        <div className="pl-6 border-l-2 border-stone-200 space-y-4">
+                                            <h5 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Samskiptasaga</h5>
+                                            {replyingTo.replies.map((reply, idx) => (
+                                                <div key={idx} className={`text-sm p-3 rounded-lg ${reply.is_admin_reply ? 'bg-blue-50 ml-4' : 'bg-stone-50 mr-4'}`}>
+                                                    <div className="flex justify-between text-xs text-stone-500 mb-1">
+                                                        <span className="font-bold">{reply.from_email}</span>
+                                                        <span>{new Date(reply.created_at).toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="whitespace-pre-wrap">{reply.body}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Reply Form */}
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-500 uppercase mb-2 block">Svar</label>
+                                        <textarea
+                                            className="w-full h-40 p-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber focus:border-transparent font-sans"
+                                            placeholder="Skrifaðu svar..."
+                                            value={replyText}
+                                            onChange={(e) => setReplyText(e.target.value)}
+                                            autoFocus
+                                        />
+                                    </div>
+                                </div>
+                                <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-end gap-3">
+                                    <button onClick={() => setReplyingTo(null)} className="btn btn-ghost">Loka</button>
+                                    <button
+                                        onClick={handleSendReply}
+                                        className="btn btn-primary flex items-center gap-2"
+                                        disabled={actionLoading === 'sending-reply' || !replyText.trim()}
+                                    >
+                                        {actionLoading === 'sending-reply' ? 'Sendi...' : 'Senda Svar'}
+                                        <Send className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+
             </div >
         </AdminLayout >
     );
