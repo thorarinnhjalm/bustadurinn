@@ -214,9 +214,18 @@ export default function SettingsPage() {
         setInviteLoading(true);
         setError('');
         try {
+            // Get Firebase auth token for API authentication
+            const token = await auth.currentUser?.getIdToken();
+            if (!token) {
+                throw new Error('Not authenticated');
+            }
+
             const resp = await fetch('/api/invite-member', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`  // 🔒 Auth token required
+                },
                 body: JSON.stringify({
                     email: inviteEmail.trim(),
                     houseId: house.id,

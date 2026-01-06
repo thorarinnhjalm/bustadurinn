@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw, MapPin, Shield, LogOut, LayoutDashboard, Reply } from 'lucide-react';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
@@ -609,9 +609,18 @@ export default function SuperAdminPage() {
 
         setActionLoading(`delete-user-${user.uid}`);
         try {
+            // Get Firebase auth token for API authentication
+            const token = await auth.currentUser?.getIdToken();
+            if (!token) {
+                throw new Error('Not authenticated');
+            }
+
             const res = await fetch('/api/admin-delete-user', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`  // 🔒 Auth token required
+                },
                 body: JSON.stringify({ uid: user.uid })
             });
 
