@@ -259,14 +259,48 @@ export default function LandingPage() {
                     <h2 className="text-center text-4xl font-serif mb-4">Einföld verðskrá</h2>
                     <p className="text-center text-grey-mid mb-16">Engin falin gjöld. Greitt fyrir hvert hús, óháð fjölda eigenda.</p>
 
-                    <div className="max-w-md mx-auto">
-                        {/* Annual Plan - Recommended */}
-                        <div className="card relative ring-4 ring-amber transform hover:-translate-y-1 transition-transform">
+                    <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                        {/* Free Trial Card */}
+                        <div className="card relative transition-transform hover:-translate-y-1 border-2 border-transparent hover:border-amber/20">
+                            <div className="text-center mb-8 pt-4">
+                                <h3 className="text-2xl font-serif mb-2 text-stone-600">Prufuáskrift</h3>
+                                <div className="text-4xl font-bold font-serif mb-2">0 kr <span className="text-base font-normal text-grey-mid">/ 30 daga</span></div>
+                                <p className="text-sm text-green-600 font-medium bg-green-50 inline-block px-3 py-1 rounded-full">
+                                    Engin kortaupplýsingar
+                                </p>
+                            </div>
+
+                            <ul className="space-y-4 mb-8">
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                    <span>30 dagar frítt</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                    <span>Allir eiginleikar innifaldir</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                    <span>Engin skuldbinding</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                    <span>Skoðaðu í rólegheitum</span>
+                                </li>
+                            </ul>
+
+                            <button onClick={() => navigate('/signup')} className="btn btn-secondary w-full py-4 text-lg border-stone-200">
+                                Prófa frítt
+                            </button>
+                        </div>
+
+                        {/* Annual Plan Card */}
+                        <div className="card relative ring-4 ring-amber transform hover:-translate-y-1 transition-transform bg-white">
                             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                                <span className="bg-amber text-charcoal px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Mælt með</span>
+                                <span className="bg-amber text-charcoal px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">Mælt með</span>
                             </div>
                             <div className="text-center mb-8 pt-4">
-                                <h3 className="text-2xl font-serif mb-2">Árlega</h3>
+                                <h3 className="text-2xl font-serif mb-2">Ársáskrift</h3>
                                 <div className="text-4xl font-bold font-serif mb-2">4.990 kr <span className="text-base font-normal text-grey-mid">/ ári</span></div>
                                 <p className="text-sm text-charcoal/80 bg-amber/10 inline-block px-3 py-1 rounded">
                                     Aðeins 416 kr á mánuði
@@ -284,7 +318,7 @@ export default function LandingPage() {
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                    <span>30 daga frí prufa</span>
+                                    <span>Greitt eftir prufutíma</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
@@ -292,7 +326,7 @@ export default function LandingPage() {
                                 </li>
                             </ul>
 
-                            <button onClick={() => navigate('/signup')} className="btn btn-primary bg-amber w-full py-4 text-lg">
+                            <button onClick={() => navigate('/signup')} className="btn btn-primary bg-amber w-full py-4 text-lg shadow-lg shadow-amber/20">
                                 Velja Ársáskrift
                             </button>
                         </div>
