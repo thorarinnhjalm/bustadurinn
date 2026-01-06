@@ -376,7 +376,7 @@ export default function SuperAdminPage() {
                 return;
             }
 
-            const productId = import.meta.env.VITE_PAYDAY_PRODUCT_MONTHLY || '004';
+            const productId = import.meta.env.VITE_PAYDAY_PRODUCT_ANNUAL || '005';
 
             // Create invoice via API
             const res = await fetch('/api/payday-create-invoice', {
@@ -387,7 +387,7 @@ export default function SuperAdminPage() {
                     customerEmail: manager.email,
                     lineItems: [{
                         productCode: productId,
-                        description: `Bústaðurinn.is - Mánaðarleg áskrift fyrir ${house.name}`,
+                        description: `Bústaðurinn.is - Ársáskrift fyrir ${house.name}`,
                         quantity: 1,
                         unitPrice: 4990
                     }],
