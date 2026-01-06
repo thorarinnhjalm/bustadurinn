@@ -358,6 +358,8 @@ Statistics (as of 2026-01-01):
 - ✅ **UI**: Replaced static screenshots with live CSS mockups
 - ✅ **Design**: Warmer imagery and neutral gradients (removed blue tint)
 - ✅ **Dashboard**: Improved 'Empty States' for bookings and tasks
+- ✅ **Admin**: Support ticket reply system (email + database)
+- ✅ **Content**: Added Founder Bio to About page
 
 ### v1.2.2 (2026-01-06)
 - ✅ **Onboarding**: Address field now optional to reduce friction
