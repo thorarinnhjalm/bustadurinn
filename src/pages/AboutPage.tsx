@@ -73,7 +73,7 @@ export default function AboutPage() {
                                         Hugmyndin að kerfinu kviknaði út frá hans eigin þörf fyrir betra skipulag í kringum fjölskyldubústaðinn.
                                     </p>
                                     <p className="text-grey-dark leading-relaxed">
-                                        Hann er einnig stofnandi fræðsluvefsins <a href="https://www.markadssetning.is" target="_blank" rel="noopener" className="text-amber hover:text-amber-600 font-medium">Markaðssetning.is</a> og hefur komið að þróun fjölda annarra vefja eins og Nágrannar.is og Vaktaplan.is.
+                                        Hann er einnig stofnandi fræðsluvefsins <a href="https://www.markadssetning.is" target="_blank" rel="noopener" className="text-amber hover:text-amber-600 font-medium">Markaðssetning.is</a> og hefur komið að þróun fjölda annarra vefja eins og <a href="https://nagrannar.is" target="_blank" rel="noopener" className="text-amber hover:text-amber-600 font-medium">Nágrannar.is</a> og <a href="https://vaktaplan.is" target="_blank" rel="noopener" className="text-amber hover:text-amber-600 font-medium">Vaktaplan.is</a>.
                                         Til dagsins starfar Þórarinn sem forstöðumaður stjórnenda- og tæknináms hjá Akademias.
                                     </p>
                                 </div>
