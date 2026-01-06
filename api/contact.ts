@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import DOMPurify from 'isomorphic-dompurify';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -38,6 +39,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
+        // 🔒 RATE LIMITING: Prevent spam/abuse (5 requests per hour)
+        const { checkRateLimit, getContactRateLimit, getIdentifier } = await import('./utils/ratelimit');
+        const identifier = getIdentifier(req);
+        const rateLimitResult = await checkRateLimit(getContactRateLimit(), identifier);
+
+        if (!rateLimitResult.allowed) {
+            return res.status(rateLimitResult.error.status).json(rateLimitResult.error.body);
+        }
+
         const { name, email, message } = req.body;
 
         // Validation
@@ -48,17 +58,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Save to Firestore (don't block on this)
         saveToFirestore({ name, email, message }).catch(console.error);
 
+        // 🔒 SECURITY: Sanitize message to prevent XSS in admin emails
+        const sanitizedName = DOMPurify.sanitize(name);
+        const sanitizedMessage = DOMPurify.sanitize(message);
+
         // Send email via Resend
         const data = await resend.emails.send({
             from: 'Bústaðurinn <no-reply@bustadurinn.is>',
             to: ['thorarinnhjalmarsson@gmail.com'], // Your email
-            subject: `Ný skilaboð frá ${name}`,
+            subject: `Ný skilaboð frá ${sanitizedName}`,
             html: `
                 <h2>Ný skilaboð frá bústaðurinn.is</h2>
-                <p><strong>Nafn:</strong> ${name}</p>
+                <p><strong>Nafn:</strong> ${sanitizedName}</p>
                 <p><strong>Netfang:</strong> ${email}</p>
                 <p><strong>Skilaboð:</strong></p>
-                <p>${message.replace(/\n/g, '<br>')}</p>
+                <p>${sanitizedMessage.replace(/\n/g, '<br>')}</p>
             `,
         });
 

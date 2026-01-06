@@ -6,6 +6,7 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import admin from 'firebase-admin';
+import DOMPurify from 'isomorphic-dompurify';
 
 // Lazy init variables
 let db: admin.firestore.Firestore | null = null;
@@ -62,8 +63,13 @@ interface EmailTemplate {
 function replaceVariables(content: string, variables: Record<string, string>): string {
     let result = content;
     for (const [key, value] of Object.entries(variables)) {
+        // 🔒 SECURITY: Sanitize HTML to prevent XSS injection
+        const sanitized = DOMPurify.sanitize(value, {
+            ALLOWED_TAGS: [],  // Strip all HTML tags
+            ALLOWED_ATTR: []   // Strip all attributes
+        });
         const regex = new RegExp(`{${key}}`, 'g');
-        result = result.replace(regex, value);
+        result = result.replace(regex, sanitized);
     }
     return result;
 }
