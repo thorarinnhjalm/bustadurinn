@@ -342,6 +342,9 @@ Statistics (as of 2026-01-01):
 **Email**: thorarinnhjalmarsson@gmail.com  
 **Company**: Neðri Hóll Hugmyndahús ehf  
 
+**Last Updated**: 2026-01-06 19:30 UTC  
+**Version**: 1.2.3  
+
 **Production Issues**: Contact via email  
 **Feature Requests**: GitHub issues (if access granted)  
 **Security**: Direct email only
@@ -349,6 +352,12 @@ Statistics (as of 2026-01-01):
 ---
 
 ## 📈 Version History
+
+### v1.2.3 (2026-01-06)
+- ✅ **Onboarding**: Added 'Walkthrough' tour for new users
+- ✅ **UI**: Replaced static screenshots with live CSS mockups
+- ✅ **Design**: Warmer imagery and neutral gradients (removed blue tint)
+- ✅ **Dashboard**: Improved 'Empty States' for bookings and tasks
 
 ### v1.2.2 (2026-01-06)
 - ✅ **Onboarding**: Address field now optional to reduce friction
