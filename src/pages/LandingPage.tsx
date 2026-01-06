@@ -25,7 +25,7 @@ export default function LandingPage() {
         "operatingSystem": "Web",
         "offers": {
             "@type": "Offer",
-            "price": "9900",
+            "price": "4990",
             "priceCurrency": "ISK"
         },
         "description": "Bókunarkerfi og app fyrir sameiginleg sumarhús."
@@ -127,7 +127,7 @@ export default function LandingPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <CheckCircle className="w-5 h-5 text-green-400" />
-                                <span>1.990 kr/mánuði</span>
+                                <span>4.990 kr/ári</span>
                             </div>
                         </div>
                     </div>
@@ -259,7 +259,7 @@ export default function LandingPage() {
                     <h2 className="text-center text-4xl font-serif mb-4">Einföld verðskrá</h2>
                     <p className="text-center text-grey-mid mb-16">Engin falin gjöld. Greitt fyrir hvert hús, óháð fjölda eigenda.</p>
 
-                    <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <div className="max-w-md mx-auto">
                         {/* Annual Plan - Recommended */}
                         <div className="card relative ring-4 ring-amber transform hover:-translate-y-1 transition-transform">
                             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -267,11 +267,10 @@ export default function LandingPage() {
                             </div>
                             <div className="text-center mb-8 pt-4">
                                 <h3 className="text-2xl font-serif mb-2">Árlega</h3>
-                                <div className="text-4xl font-bold font-serif mb-2">9.900 kr <span className="text-base font-normal text-grey-mid">/ ári</span></div>
+                                <div className="text-4xl font-bold font-serif mb-2">4.990 kr <span className="text-base font-normal text-grey-mid">/ ári</span></div>
                                 <p className="text-sm text-charcoal/80 bg-amber/10 inline-block px-3 py-1 rounded">
-                                    Sparar 58% (13.980 kr)
+                                    Aðeins 416 kr á mánuði
                                 </p>
-                                <p className="text-xs text-grey-mid mt-2">Jafngildir 825 kr/mán</p>
                             </div>
 
                             <ul className="space-y-4 mb-8">
@@ -295,34 +294,6 @@ export default function LandingPage() {
 
                             <button onClick={() => navigate('/signup')} className="btn btn-primary bg-amber w-full py-4 text-lg">
                                 Velja Ársáskrift
-                            </button>
-                        </div>
-
-                        {/* Monthly Plan */}
-                        <div className="card relative hover:-translate-y-1 transition-transform">
-                            <div className="text-center mb-8 pt-4">
-                                <h3 className="text-2xl font-serif mb-2">Mánaðarlega</h3>
-                                <div className="text-4xl font-bold font-serif mb-2">1.990 kr <span className="text-base font-normal text-grey-mid">/ mánuði</span></div>
-                                <p className="text-sm text-grey-mid mt-2">Uppsögn hvenær sem er</p>
-                            </div>
-
-                            <ul className="space-y-4 mb-8">
-                                <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-grey-mid flex-shrink-0" />
-                                    <span className="text-grey-dark">Allir eiginleikar innifaldir</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-grey-mid flex-shrink-0" />
-                                    <span className="text-grey-dark">Ótakmarkaður fjöldi notenda</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-grey-mid flex-shrink-0" />
-                                    <span className="text-grey-dark">30 daga frí prufa</span>
-                                </li>
-                            </ul>
-
-                            <button onClick={() => navigate('/signup')} className="btn btn-secondary w-full py-4 text-lg">
-                                Velja Mánaðaráskrift
                             </button>
                         </div>
                     </div>

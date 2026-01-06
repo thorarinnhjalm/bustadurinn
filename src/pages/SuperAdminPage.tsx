@@ -389,7 +389,7 @@ export default function SuperAdminPage() {
                         productCode: productId,
                         description: `Bústaðurinn.is - Mánaðarleg áskrift fyrir ${house.name}`,
                         quantity: 1,
-                        unitPrice: 1990
+                        unitPrice: 4990
                     }],
                     notes: `Test invoice for ${house.name} (${house.address || 'Enging staðsetning'})`
                 })
