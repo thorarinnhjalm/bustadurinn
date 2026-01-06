@@ -1,6 +1,6 @@
 # Bústaðurinn.is - Current Project Status
-**Last Updated**: 2026-01-05 18:48 UTC  
-**Version**: 1.2.0  
+**Last Updated**: 2026-01-06 19:00 UTC  
+**Version**: 1.2.2  
 **Environment**: Production
 
 ---
@@ -349,6 +349,12 @@ Statistics (as of 2026-01-01):
 ---
 
 ## 📈 Version History
+
+### v1.2.2 (2026-01-06)
+- ✅ **Onboarding**: Address field now optional to reduce friction
+- ✅ **Dashboard**: Added warning card for missing address
+- ✅ **Marketing**: Added Newsletter Signup Popup and lead capture
+- ✅ **Admin**: Cleaned up dashboard tabs
 
 ### v1.2.1 (2026-01-05)
 - ✅ SEO & Canonical URL fixes
