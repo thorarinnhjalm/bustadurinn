@@ -48,7 +48,7 @@ service cloud.firestore {
     match /houses/{houseId} {
       allow get: if true;
       // Split rules for better security and to fix creation bug
-      allow create: if request.auth != null && request.resource.data.manager_id == request.auth.uid;
+      allow create: if request.auth != null;
       
       allow update, delete: if request.auth != null && (
         resource.data.owner_ids.hasAny([request.auth.uid]) ||
