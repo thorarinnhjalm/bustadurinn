@@ -2,6 +2,8 @@ import MarketingLayout from '@/components/MarketingLayout';
 import { Calendar, User, Wallet, Wifi, Bell, Shield, CheckCircle2, ArrowRight, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { CalendarMockup, FairnessMockup, FinanceMockup, RolesMockup, GuestLinkMockup, NotificationsMockup, MultiHouseMockup } from '@/components/FeatureMockups';
+
 export default function FeaturesPage() {
     const features = [
         {
@@ -20,7 +22,8 @@ export default function FeaturesPage() {
                 "Forðastu árekstra við bókanir annarra",
                 "Sjáðu nýtingarhlutfall hússins yfir árið"
             ],
-            imageUrl: "/screenshots/calendar.png"
+            imageUrl: "/screenshots/calendar.png",
+            MockupComponent: CalendarMockup
         },
         {
             icon: Shield,
@@ -38,7 +41,8 @@ export default function FeaturesPage() {
                 "Tryggja sanngjarna skiptingu yfir árið",
                 "Sýna fram á gagnsæi í meðeigendahópi"
             ],
-            imageUrl: "/screenshots/calendar.png"
+            imageUrl: "/screenshots/calendar.png",
+            MockupComponent: FairnessMockup
         },
         {
             icon: Wallet,
@@ -56,7 +60,8 @@ export default function FeaturesPage() {
                 "Skipuleggja stórar framkvæmdir (t.d. málun, þakviðgerð)",
                 "Deila kostnaði sanngjarnt á alla meðeigendur"
             ],
-            imageUrl: "/screenshots/finance.png"
+            imageUrl: "/screenshots/finance.png",
+            MockupComponent: FinanceMockup
         },
         {
             icon: User,
@@ -74,7 +79,8 @@ export default function FeaturesPage() {
                 "Meðeigendur bóka og deila upplýsingum",
                 "Bættu við nýjum meðeiganda þegar eignarhlutur skiptist"
             ],
-            imageUrl: "/screenshots/tasks.png"
+            imageUrl: "/screenshots/tasks.png",
+            MockupComponent: RolesMockup
         },
         {
             icon: Wifi,
@@ -92,7 +98,8 @@ export default function FeaturesPage() {
                 "Láttu gesti sjá pin-númer og WiFi lykilorð",
                 "Stafræn gestabók og veðurupplýsingar á staðnum"
             ],
-            imageUrl: "/screenshots/guest-settings.png"
+            imageUrl: "/screenshots/guest-settings.png",
+            MockupComponent: GuestLinkMockup
         },
         {
             icon: Bell,
@@ -110,7 +117,8 @@ export default function FeaturesPage() {
                 "Vertu upplýstur um nýjar bókanir annarra",
                 "Fáðu áminningu þegar gjalddagi nálgast"
             ],
-            imageUrl: "/screenshots/dashboard.png"
+            imageUrl: "/screenshots/dashboard.png",
+            MockupComponent: NotificationsMockup
         },
         {
             icon: Home,
@@ -128,7 +136,8 @@ export default function FeaturesPage() {
                 "Halda utan um mörg hús í útleigu",
                 "Sjáðu stöðu margra félagshúsa á einum stað"
             ],
-            imageUrl: "/screenshots/dashboard.png"
+            imageUrl: "/screenshots/dashboard.png",
+            MockupComponent: MultiHouseMockup
         }
     ];
 
@@ -264,13 +273,16 @@ export default function FeaturesPage() {
                                         </div>
                                     </div>
                                     <div className="flex-1">
-                                        <div className="bg-white rounded-2xl overflow-hidden shadow-2xl border border-stone-100 aspect-video relative group">
-                                            <img
-                                                src={feature.imageUrl}
-                                                alt={feature.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                            />
-                                            <div className="absolute inset-0 bg-charcoal/5 group-hover:bg-transparent transition-colors"></div>
+                                        <div className="bg-white rounded-2xl overflow-hidden shadow-2xl border border-stone-100 aspect-video relative group transform hover:scale-[1.02] transition-transform duration-500">
+                                            {feature.MockupComponent ? (
+                                                <feature.MockupComponent />
+                                            ) : (
+                                                <img
+                                                    src={feature.imageUrl}
+                                                    alt={feature.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 </div>
