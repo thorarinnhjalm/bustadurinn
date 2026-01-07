@@ -218,7 +218,13 @@ export default function SignupPage() {
                             Ertu nú þegar með aðgang?{' '}
                             <button
                                 type="button"
-                                onClick={() => navigate('/login')}
+                                onClick={() => {
+                                    if (returnUrl) {
+                                        navigate(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+                                    } else {
+                                        navigate('/login');
+                                    }
+                                }}
                                 className="text-charcoal font-medium hover:text-amber"
                             >
                                 Skrá inn

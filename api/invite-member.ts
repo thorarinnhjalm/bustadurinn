@@ -44,6 +44,11 @@ function initServices() {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    // Handle Preflight (CORS)
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -74,6 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // 🔒 SECURITY: Verify the authenticated user is the one sending the invite
         if (authenticatedUser.uid !== senderUid) {
+            console.warn(`Forbidden: Token UID ${authenticatedUser.uid} !== Sender UID ${senderUid}`);
             return res.status(403).json({ error: 'Forbidden: Cannot send invites on behalf of another user' });
         }
 
@@ -84,10 +90,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const houseData = houseDoc.data();
-        const isOwner = houseData?.owner_ids?.includes(senderUid);
+        const owners = houseData?.owner_ids || [];
+        const isOwner = owners.includes(senderUid);
         const isManager = houseData?.manager_id === senderUid;
 
         if (!isOwner && !isManager) {
+            console.warn(`Forbidden: User ${senderUid} is not owner/manager of ${houseId}. Owners: ${JSON.stringify(owners)}, Manager: ${houseData?.manager_id}`);
             return res.status(403).json({ error: 'Forbidden: Only house owners/managers can invite members' });
         }
 

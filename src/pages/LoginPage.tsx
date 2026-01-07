@@ -164,7 +164,13 @@ export default function LoginPage() {
                             Ekki með aðgang?{' '}
                             <button
                                 type="button"
-                                onClick={() => navigate('/signup')}
+                                onClick={() => {
+                                    if (returnUrl) {
+                                        navigate(`/signup?returnUrl=${encodeURIComponent(returnUrl)}`);
+                                    } else {
+                                        navigate('/signup');
+                                    }
+                                }}
                                 className="text-charcoal font-medium hover:text-amber"
                             >
                                 Skrá sig
