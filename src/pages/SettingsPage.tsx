@@ -45,7 +45,8 @@ import {
     orderBy,
     getDocs,
     addDoc,
-    onSnapshot
+    onSnapshot,
+    arrayRemove
 } from 'firebase/firestore';
 import MagicLinkGenerator from '@/components/guest/MagicLinkGenerator';
 import { useAppStore } from '@/store/appStore';
@@ -606,11 +607,11 @@ export default function SettingsPage() {
 
         setLoading(true);
         try {
-            // 1. Remove house from all owners' house_ids
+            // 1. Remove house from all owners' house_ids using atomic arrayRemove
             const owners = house.owner_ids || [];
             await Promise.all(owners.map(uid =>
                 updateDoc(doc(db, 'users', uid), {
-                    house_ids: (members.find(m => m.uid === uid)?.house_ids || []).filter(h => h !== house.id)
+                    house_ids: arrayRemove(house.id)
                 }).catch(e => console.warn(`Failed to remove house from user ${uid}`, e))
             ));
 
@@ -620,7 +621,7 @@ export default function SettingsPage() {
             await deleteDoc(doc(db, 'houses', house.id));
 
             // 3. Update local state
-            const currentHouseIds = currentUser.house_ids.filter(id => id !== house.id);
+            const currentHouseIds = (currentUser.house_ids || []).filter(id => id !== house.id);
             setCurrentUser({
                 ...currentUser,
                 house_ids: currentHouseIds
