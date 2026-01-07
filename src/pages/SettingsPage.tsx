@@ -599,6 +599,59 @@ export default function SettingsPage() {
     // Allow any owner to edit house settings, not just the designated manager
     const isManager = house && currentUser && house.owner_ids?.includes(currentUser.uid);
 
+    const handleDeleteHouse = async () => {
+        if (!house || !currentUser) return;
+        if (!confirm('Ertu viss um að þú viljir eyða þessu húsi? Þessu er ekki hægt að afturkalla.')) return;
+        if (!confirm('ALLAR UPPLÝSINGAR MUNU EYÐAST: Bókanir, fjármál, verkefni o.s.frv. Ertu alveg viss?')) return;
+
+        setLoading(true);
+        try {
+            // 1. Remove house from all owners' house_ids
+            const owners = house.owner_ids || [];
+            await Promise.all(owners.map(uid =>
+                updateDoc(doc(db, 'users', uid), {
+                    house_ids: (members.find(m => m.uid === uid)?.house_ids || []).filter(h => h !== house.id)
+                }).catch(e => console.warn(`Failed to remove house from user ${uid}`, e))
+            ));
+
+            // 2. Delete the house document
+            // Note: Subcollections (bookings, tasks etc) are NOT automatically deleted by Firestore
+            // but they become inaccessible. A Cloud Function is usually best for recursive delete.
+            await deleteDoc(doc(db, 'houses', house.id));
+
+            // 3. Update local state
+            const currentHouseIds = currentUser.house_ids.filter(id => id !== house.id);
+            setCurrentUser({
+                ...currentUser,
+                house_ids: currentHouseIds
+            });
+
+            // 4. Navigate
+            if (currentHouseIds.length > 0) {
+                // Switch to another house
+                const nextHouseSnap = await getDoc(doc(db, 'houses', currentHouseIds[0]));
+                if (nextHouseSnap.exists()) {
+                    const nextHouse = { id: nextHouseSnap.id, ...nextHouseSnap.data() } as House;
+                    setCurrentHouse(nextHouse);
+                    localStorage.setItem('last_house_id', nextHouse.id);
+                    navigate('/dashboard');
+                } else {
+                    setCurrentHouse(null);
+                    navigate('/onboarding');
+                }
+            } else {
+                setCurrentHouse(null);
+                navigate('/onboarding');
+            }
+
+        } catch (error) {
+            console.error('Error deleting house:', error);
+            setError('Gat ekki eytt húsi. Vinsamlegast reyndu aftur.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Fetch Members
     useEffect(() => {
         if (activeTab === 'members' && house?.owner_ids?.length) {
@@ -1316,8 +1369,12 @@ export default function SettingsPage() {
                                         <p className="text-sm text-red-600 mb-4">
                                             Ef þú eyðir húsinu þá tapast allar upplýsingar, bókanir og fjárhagsfærslur. Þessari aðgerð er ekki hægt að afturkalla.
                                         </p>
-                                        <button className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded hover:bg-red-50 text-sm font-medium">
-                                            Eyða sumarhúsi
+                                        <button
+                                            onClick={handleDeleteHouse}
+                                            disabled={loading}
+                                            className="px-4 py-2 bg-white border border-red-300 text-red-600 rounded hover:bg-red-50 text-sm font-medium disabled:opacity-50"
+                                        >
+                                            {loading ? 'Eyði...' : 'Eyða sumarhúsi'}
                                         </button>
                                     </div>
                                 )}
