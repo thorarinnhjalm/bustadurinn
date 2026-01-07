@@ -1,6 +1,6 @@
 # Bústaðurinn.is - Current Project Status
-**Last Updated**: 2026-01-06 19:00 UTC  
-**Version**: 1.2.2  
+**Last Updated**: 2026-01-07 11:00 UTC  
+**Version**: 1.2.4  
 **Environment**: Production
 
 ---
@@ -352,6 +352,12 @@ Statistics (as of 2026-01-01):
 ---
 
 ## 📈 Version History
+
+### v1.2.4 (2026-01-07)
+- ✅ **Invites**: Fixed permission issue preventing non-manager owners from inviting
+- ✅ **Invites**: Fixed redirect loop where accepting an invite prompted signup/house creation
+- ✅ **Settings**: Added ability for owners to delete their houses
+- ✅ **API**: Fixed CORS handling for invite endpoint
 
 ### v1.2.3 (2026-01-06)
 - ✅ **Onboarding**: Added 'Walkthrough' tour for new users
