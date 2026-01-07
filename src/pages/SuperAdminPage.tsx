@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw, MapPin, Shield, LogOut, LayoutDashboard, Reply } from 'lucide-react';
+import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw, MapPin, Shield, LogOut, LayoutDashboard, Reply, AlertTriangle } from 'lucide-react';
 import { db, auth } from '@/lib/firebase';
 import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -210,10 +210,41 @@ export default function SuperAdminPage() {
         }
     };
 
-    // Extend trial for a house
-    const handleExtendTrial = async (houseId: string) => {
-        if (!confirm('Extend trial by 14 days?')) return;
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        type: 'danger' | 'info' | 'success';
+        onConfirm: () => void;
+    } | null>(null);
 
+    const initiateExtendTrial = (house: House) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Lengja prufu?',
+            message: `Ertu viss um að þú viljir lengja prufutíma fyrir "${house.name}" um 14 daga?`,
+            type: 'info',
+            onConfirm: () => executeExtendTrial(house.id)
+        });
+    };
+
+    const initiateToggleFree = (house: House) => {
+        const isFree = house.subscription_status === 'free';
+        setConfirmModal({
+            isOpen: true,
+            title: isFree ? 'Afturkalla frítt aðgengi?' : 'Veita FRÍTT aðgengi?',
+            message: isFree
+                ? `Ertu viss um að þú viljir breyta aðgangi fyrir "${house.name}" yfir í hefðbundið prufutímabil?`
+                : `Þetta veitir "${house.name}" ókeypis aðgang að eilífu (Lifetime Free). Ertu viss?`,
+            type: isFree ? 'danger' : 'success',
+            onConfirm: () => executeToggleFree(house.id)
+        });
+    };
+
+    // Execute functions
+    const executeExtendTrial = async (houseId: string | undefined) => {
+        if (!houseId) return;
+        setConfirmModal(null); // Close modal
         setActionLoading(houseId);
         try {
             const house = stats.allHouses.find(h => h.id === houseId);
@@ -250,13 +281,13 @@ export default function SuperAdminPage() {
         }
     };
 
-    const handleToggleFree = async (houseId: string) => {
+    const executeToggleFree = async (houseId: string | undefined) => {
+        if (!houseId) return;
+        setConfirmModal(null); // Close modal
         const house = stats.allHouses.find(h => h.id === houseId);
         if (!house) return;
 
         const isFree = house.subscription_status === 'free';
-        if (!confirm(isFree ? 'Revoke free access?' : 'Grant FREE lifetime access?')) return;
-
         setActionLoading(houseId);
         try {
             const newStatus = isFree ? 'trial' : 'free';
@@ -1250,7 +1281,7 @@ export default function SuperAdminPage() {
                                     actions={(row) => (
                                         <div className="flex gap-2">
                                             <button
-                                                onClick={() => handleExtendTrial(row.id!)}
+                                                onClick={() => initiateExtendTrial(row)}
                                                 disabled={actionLoading === row.id}
                                                 className="px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors disabled:opacity-50"
                                                 title="Lengja prufu"
@@ -1258,7 +1289,7 @@ export default function SuperAdminPage() {
                                                 {actionLoading === row.id ? 'Lengja...' : 'Lengja prufu'}
                                             </button>
                                             <button
-                                                onClick={() => handleToggleFree(row.id!)}
+                                                onClick={() => initiateToggleFree(row)}
                                                 disabled={actionLoading === row.id}
                                                 className={`px-3 py-1.5 text-xs font-bold border rounded transition-colors disabled:opacity-50 ${row.subscription_status === 'free'
                                                     ? 'border-red-200 text-red-600 hover:bg-red-50'
@@ -1344,7 +1375,7 @@ export default function SuperAdminPage() {
 
                                             <div className="flex flex-wrap gap-2 pt-3 border-t border-stone-100">
                                                 <button
-                                                    onClick={() => handleExtendTrial(house.id!)}
+                                                    onClick={() => initiateExtendTrial(house)}
                                                     disabled={actionLoading === house.id}
                                                     className="flex-1 px-3 py-2 text-xs font-semibold bg-amber/10 text-amber border border-amber/20 rounded-lg hover:bg-amber hover:text-charcoal transition-colors"
                                                 >
@@ -2184,6 +2215,40 @@ export default function SuperAdminPage() {
                                     >
                                         {actionLoading === 'sending-reply' ? 'Sendi...' : 'Senda Svar'}
                                         <Send className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+
+                {/* Custom Confirmation Modal */}
+                {
+                    confirmModal && confirmModal.isOpen && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+                            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100">
+                                <div className={`p-6 flex flex-col items-center text-center ${confirmModal.type === 'danger' ? 'bg-red-50' : confirmModal.type === 'success' ? 'bg-green-50' : 'bg-stone-50'
+                                    }`}>
+                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-sm ${confirmModal.type === 'danger' ? 'bg-white text-red-500' : confirmModal.type === 'success' ? 'bg-white text-green-600' : 'bg-white text-amber'
+                                        }`}>
+                                        {confirmModal.type === 'success' ? <CheckCircle className="w-8 h-8" /> : <AlertTriangle className="w-8 h-8" />}
+                                    </div>
+                                    <h3 className="text-xl font-serif font-bold text-charcoal mb-2">{confirmModal.title}</h3>
+                                    <p className="text-sm text-stone-600 leading-relaxed">{confirmModal.message}</p>
+                                </div>
+                                <div className="p-4 bg-white border-t border-stone-100 flex gap-3">
+                                    <button
+                                        onClick={() => setConfirmModal(null)}
+                                        className="flex-1 py-3 px-4 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-lg transition-colors"
+                                    >
+                                        Hætta við
+                                    </button>
+                                    <button
+                                        onClick={confirmModal.onConfirm}
+                                        className={`flex-1 py-3 px-4 font-bold rounded-lg text-white shadow-md transition-transform active:scale-95 ${confirmModal.type === 'danger' ? 'bg-red-500 hover:bg-red-600' : confirmModal.type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-amber hover:bg-amber-600'
+                                            }`}
+                                    >
+                                        Staðfesta
                                     </button>
                                 </div>
                             </div>
