@@ -6,7 +6,7 @@ import {
     Plus, Users, Wallet, Bell,
     ChevronRight, Loader2, Shield,
     ChevronDown, Home, LogOut,
-    X, Image as ImageIcon, ShoppingBag, Check, MapPin
+    X, Image as ImageIcon, ShoppingBag, Check, MapPin, Camera
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import { useNavigate } from 'react-router-dom';
@@ -509,22 +509,36 @@ const UserDashboard = () => {
             <div className="pt-16 max-w-5xl mx-auto">
                 <div className="relative h-64 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50">
                     <img
-                        src={currentHouse?.image_url || "https://images.unsplash.com/photo-1487335416617-3bf5a053753f?q=80&w=2670&auto=format&fit=crop"}
+                        src={currentHouse?.image_url || "/hero_summer_house.webp"}
                         alt={currentHouse?.name || "Cabin"}
                         className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/20 to-transparent opacity-90"></div>
 
+
+
                     {/* Gallery Preview Button */}
-                    {currentHouse?.gallery_urls && currentHouse.gallery_urls.length > 0 && (
-                        <button
-                            onClick={() => setSelectedGalleryImage(currentHouse.image_url || currentHouse.gallery_urls![0])}
-                            className="absolute top-6 right-6 bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/20 transition-all flex items-center gap-2"
-                        >
-                            <ImageIcon size={14} />
-                            Skoða myndasafn ({currentHouse.gallery_urls.length + (currentHouse.image_url ? 1 : 0)})
-                        </button>
-                    )}
+                    <div className="absolute top-6 right-6 flex flex-col gap-2 items-end">
+                        {currentUser && (currentUser.uid === currentHouse?.manager_id || currentHouse?.owner_ids?.includes(currentUser.uid)) && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); navigate('/settings?tab=house'); }}
+                                className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/20 transition-all flex items-center gap-2"
+                            >
+                                <Camera size={14} />
+                                <span className="hidden sm:inline">Breyta mynd</span>
+                            </button>
+                        )}
+
+                        {currentHouse?.gallery_urls && currentHouse.gallery_urls.length > 0 && (
+                            <button
+                                onClick={() => setSelectedGalleryImage(currentHouse.image_url || currentHouse.gallery_urls![0])}
+                                className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/20 transition-all flex items-center gap-2"
+                            >
+                                <ImageIcon size={14} />
+                                Skoða myndasafn ({currentHouse.gallery_urls.length + (currentHouse.image_url ? 1 : 0)})
+                            </button>
+                        )}
+                    </div>
 
                     {/* Greeting & Weather */}
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white flex flex-col md:flex-row md:items-end justify-between gap-6">
