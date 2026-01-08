@@ -12,6 +12,7 @@ import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
 import { updateUserNameInAllCollections } from '@/services/userService';
+import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import AdminLayout from '@/components/AdminLayout';
 import DataTable from '@/components/DataTable';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
@@ -81,6 +82,8 @@ export default function SuperAdminPage() {
     const [paydayStatus, setPaydayStatus] = useState<{ success: boolean; message: string } | null>(null);
     const [invoiceTestResult, setInvoiceTestResult] = useState<{ success: boolean; message: string; invoice?: any } | null>(null);
     const [selectedHouseForInvoice, setSelectedHouseForInvoice] = useState<string>('');
+    const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+    const [addressSearchTimer, setAddressSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
 
     const [stats, setStats] = useState<Stats>({
@@ -448,6 +451,7 @@ export default function SuperAdminPage() {
             await updateDoc(doc(db, 'houses', houseData.id), {
                 name: houseData.name,
                 address: houseData.address,
+                location: houseData.location || { lat: 0, lng: 0 },
                 manager_id: houseData.manager_id,
                 subscription_status: houseData.subscription_status
             });
@@ -463,6 +467,42 @@ export default function SuperAdminPage() {
         } finally {
             setActionLoading(null);
         }
+    };
+
+    const handleAddressChange = (val: string) => {
+        if (!editingHouse) return;
+        setEditingHouse({ ...editingHouse, address: val });
+
+        if (addressSearchTimer) clearTimeout(addressSearchTimer);
+
+        if (val.length < 2) {
+            setAddressSuggestions([]);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                const results = await searchHMSAddresses(val);
+                setAddressSuggestions(results);
+            } catch (e) {
+                console.error(e);
+            }
+        }, 300);
+        setAddressSearchTimer(timer);
+    };
+
+    const selectCMSAddress = (hmsItem: any) => {
+        if (!editingHouse) return;
+        const fullAddr = formatHMSAddress(hmsItem);
+        setEditingHouse({
+            ...editingHouse,
+            address: fullAddr,
+            location: {
+                lat: hmsItem.lat,
+                lng: hmsItem.lng
+            }
+        });
+        setAddressSuggestions([]);
     };
 
     const handleSeedTemplates = async () => {
@@ -2109,14 +2149,35 @@ export default function SuperAdminPage() {
                                             onChange={e => setEditingHouse({ ...editingHouse, name: e.target.value })}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="text-xs font-bold text-stone-500 uppercase">Heimilisfang</label>
+                                    <div className="relative">
+                                        <label className="text-xs font-bold text-stone-500 uppercase">Heimilisfang (HMS Leit)</label>
                                         <input
                                             type="text"
                                             className="input mt-1"
                                             value={editingHouse.address || ''}
-                                            onChange={e => setEditingHouse({ ...editingHouse, address: e.target.value })}
+                                            onChange={e => handleAddressChange(e.target.value)}
+                                            placeholder="Byrjaðu að skrifa heimilisfang..."
+                                            autoComplete="off"
                                         />
+                                        {/* Suggestions dropdown */}
+                                        {addressSuggestions.length > 0 && (
+                                            <div className="absolute z-50 w-full bg-white border border-stone-200 mt-1 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                                {addressSuggestions.map((item, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        className="w-full text-left px-4 py-2 hover:bg-amber/10 text-sm border-b border-stone-50 last:border-0 transition-colors flex items-center justify-between group"
+                                                        onClick={() => selectCMSAddress(item)}
+                                                    >
+                                                        <span className="font-medium text-stone-700 group-hover:text-charcoal">{formatHMSAddress(item)}</span>
+                                                        <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded border border-green-200 font-bold uppercase">HMS</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {/* Lat/Lng Indicator */}
+                                        <div className="absolute right-2 top-0 text-[10px] font-mono text-stone-400 mt-1">
+                                            {editingHouse.location?.lat ? '📍 GPS Found' : '❌ No GPS'}
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="text-xs font-bold text-stone-500 uppercase">Stjórnandi (UID)</label>
