@@ -12,7 +12,7 @@ interface MapHouse {
         lat: number;
         lng: number;
     };
-    address?: string; // Optional for privacy? keeping it in for internal map marketing
+    address?: string;
 }
 
 export default function MarketingMapPage() {
@@ -20,6 +20,19 @@ export default function MarketingMapPage() {
     const [houses, setHouses] = useState<MapHouse[]>([]);
     const mapRef = useRef<HTMLDivElement>(null);
     const [scriptLoaded, setScriptLoaded] = useState(false);
+
+    // Privacy: Fuzz coordinates to prevent exact location identification
+    const fuzzCoordinate = (lat: number, lng: number): { lat: number; lng: number } => {
+        // Add random offset of 500m to 2000m in random direction
+        // At Iceland's latitude (~64°), 1° lat ≈ 111km, 1° lng ≈ 50km
+        const latOffset = (Math.random() - 0.5) * 0.027; // ±0.0135° ≈ ±1500m
+        const lngOffset = (Math.random() - 0.5) * 0.06;  // ±0.03° ≈ ±1500m
+
+        return {
+            lat: lat + latOffset,
+            lng: lng + lngOffset
+        };
+    };
 
     useEffect(() => {
         const fetchHouses = async () => {
@@ -32,13 +45,14 @@ export default function MarketingMapPage() {
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     if (data.location && data.location.lat && data.location.lng) {
-                        // Filter out obviously invalid coordinates (e.g. 0,0) if desired, 
-                        // though 0,0 is technically valid (off Africa), unlikely for Iceland.
+                        // Filter out obviously invalid coordinates (e.g. 0,0)
                         if (data.location.lat !== 0 || data.location.lng !== 0) {
+                            // Apply coordinate fuzzing for privacy
+                            const fuzzed = fuzzCoordinate(data.location.lat, data.location.lng);
                             validHouses.push({
                                 id: doc.id,
-                                location: data.location,
-                                address: data.address
+                                location: fuzzed,
+                                address: undefined // Don't include address for privacy
                             });
                         }
                     }
@@ -84,12 +98,18 @@ export default function MarketingMapPage() {
 
         // Default to Iceland center
         const icelandCenter = { lat: 64.9631, lng: -19.0208 };
-        // Create map
+        // Create map with privacy-focused restrictions
         const map = new google.maps.Map(mapRef.current, {
             center: icelandCenter,
-            zoom: 6,
-            mapId: '4504f8b37365c3d0', // Use a Map ID if you have one, or remove this line for default style
+            zoom: 7,
+            minZoom: 6,  // Prevent zooming out too far
+            maxZoom: 11, // Prevent zooming in to street level (privacy protection)
+            mapId: '4504f8b37365c3d0',
             disableDefaultUI: false,
+            streetViewControl: false, // Disable street view for privacy
+            mapTypeControl: false,    // Disable switching to satellite view
+            fullscreenControl: true,
+            zoomControl: true,
             styles: [
                 {
                     "featureType": "poi",
@@ -150,12 +170,16 @@ export default function MarketingMapPage() {
                         Sjáðu hvar sumarhúsin í kerfinu eru staðsett. Við erum að stækka hratt um allt land!
                     </p>
 
-                    <div className="flex items-center gap-4 text-sm font-medium text-charcoal bg-stone-50 rounded-lg p-3 border border-stone-100">
+                    <div className="flex items-center gap-4 text-sm font-medium text-charcoal bg-stone-50 rounded-lg p-3 border border-stone-100 mb-3">
                         <div className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-amber animate-pulse"></span>
                             <span>{houses.length} hús skráð</span>
                         </div>
                     </div>
+
+                    <p className="text-xs text-stone-500 italic">
+                        🔒 Nákvæmar staðsetningar eru faldar til að vernda öryggi eigenda
+                    </p>
                 </div>
             </div>
         </div>
