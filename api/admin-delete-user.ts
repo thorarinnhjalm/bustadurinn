@@ -68,7 +68,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await db.collection('users').doc(uid).delete();
         console.log(`✅ Firestore user profile ${uid} deleted`);
 
-        // 3. Optional: Cleanup memberships? 
+        // 3. Delete user_roles document (RBAC cleanup)
+        try {
+            await db.collection('user_roles').doc(uid).delete();
+            console.log(`✅ User roles ${uid} deleted`);
+        } catch (roleError) {
+            // Non-critical if role document doesn't exist
+            console.log(`ℹ️ No user_roles document for ${uid}`);
+        }
+
+        // 4. Optional: Cleanup memberships
         // For now, we leave house memberships as 'ghost' strings in arrays or rely on client-side filtering.
         // A robust solution would remove the UID from 'owner_ids' in all houses.
         // Let's attempt a best-effort cleanup of houses where they are an owner.
