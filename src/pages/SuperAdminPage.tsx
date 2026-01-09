@@ -16,6 +16,7 @@ import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import AdminLayout from '@/components/AdminLayout';
 import DataTable from '@/components/DataTable';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
+import { logger } from '@/utils/logger';
 
 import type { House, User, Coupon, ContactSubmission } from '@/types/models';
 
@@ -187,7 +188,7 @@ export default function SuperAdminPage() {
             }
         };
 
-        console.log('📊 SuperAdmin Version: 1.2.0 - Email Service Active');
+        logger.info('SuperAdmin Version: 1.2.0 - Email Service Active');
         fetchStats();
     }, []);
 
@@ -634,7 +635,7 @@ export default function SuperAdminPage() {
 
                     if (houseSnap.exists()) {
                         userHouse = { id: houseSnap.id, ...houseSnap.data() } as House;
-                        console.log('🏠 Loaded user house:', userHouse.name);
+                        logger.debug('Loaded user house:', userHouse.name);
                     } else {
                         console.warn('House not found:', firstHouseId);
                     }
@@ -646,18 +647,18 @@ export default function SuperAdminPage() {
 
             // Set impersonation context FIRST
             startImpersonation(user);
-            console.log('🎭 Impersonation context set for:', user.name);
+            logger.info('Impersonation context set for:', user.name);
 
             // Then update store with their house
             if (userHouse) {
                 useAppStore.getState().setCurrentHouse(userHouse);
                 useAppStore.getState().setUserHouses([userHouse]);
-                console.log('✅ Store updated with user house');
+                logger.debug('Store updated with user house');
             } else {
                 // Clear house if they don't have one
                 useAppStore.getState().setCurrentHouse(null);
                 useAppStore.getState().setUserHouses([]);
-                console.log('ℹ️ User has no house - cleared store');
+                logger.debug('User has no house - cleared store');
             }
 
             // Save return URL
@@ -666,7 +667,7 @@ export default function SuperAdminPage() {
             // Small delay to ensure store updates are processed
             await new Promise(resolve => setTimeout(resolve, 200));
 
-            console.log('🚀 Navigating to dashboard as', user.name);
+            logger.info('Navigating to dashboard as', user.name);
 
             // Navigate to their dashboard
             navigate('/dashboard');

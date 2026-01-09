@@ -59,7 +59,8 @@ import GuestbookViewer from '@/components/GuestbookViewer';
 import ShoppingList from '@/components/ShoppingList';
 import InternalLogbook from '@/components/InternalLogbook';
 import { updateUserNameInAllCollections } from '@/services/userService';
-import { ShoppingBag, ClipboardList } from 'lucide-react'; // Ensure imports
+import { ShoppingBag, ClipboardList } from 'lucide-react';
+import { logger } from '@/utils/logger'; // Ensure imports
 
 type Tab = 'house' | 'members' | 'profile' | 'guests' | 'guestbook' | 'shopping' | 'logs';
 
@@ -495,7 +496,7 @@ export default function SettingsPage() {
             return;
         }
         try {
-            console.log("Saving cropped image for house:", house.id, "cropMode:", cropMode);
+            logger.debug("Saving cropped image for house:", house.id, "cropMode:", cropMode);
             setUploadingImage(true);
             setUploadProgress(0);
             const fileName = cropMode === 'main' ? 'image.jpg' : `gallery_${Date.now()}.jpg`;
@@ -550,7 +551,7 @@ export default function SettingsPage() {
 
             let updatedHouse: House;
             if (cropMode === 'main') {
-                console.log("Updating main image_url to:", downloadURL);
+                logger.debug("Updating main image_url to:", downloadURL);
                 await updateDoc(doc(db, 'houses', house.id), {
                     image_url: downloadURL,
                     updated_at: serverTimestamp()
@@ -559,7 +560,7 @@ export default function SettingsPage() {
             } else {
                 const currentGallery = house.gallery_urls || [];
                 const newGallery = [...currentGallery, downloadURL];
-                console.log("Updating gallery_urls, new count:", newGallery.length);
+                logger.debug("Updating gallery_urls, new count:", newGallery.length);
                 await updateDoc(doc(db, 'houses', house.id), {
                     gallery_urls: newGallery,
                     updated_at: serverTimestamp()
@@ -578,7 +579,7 @@ export default function SettingsPage() {
 
             // Sync with Guest View if token exists (Use setDoc merge for robustness)
             if (updatedHouse.guest_token) {
-                console.log("Syncing image with guest view:", updatedHouse.guest_token);
+                logger.debug("Syncing image with guest view:", updatedHouse.guest_token);
                 try {
                     await setDoc(doc(db, 'guest_views', updatedHouse.guest_token), {
                         image_url: updatedHouse.image_url || '',
@@ -670,14 +671,14 @@ export default function SettingsPage() {
 
                     // Auto-generate invite code if missing (for legacy houses)
                     if (!houseData.invite_code && houseData.manager_id === currentUser.uid) {
-                        console.log('Auto-generating invite code for house:', houseId);
+                        logger.info('Auto-generating invite code for house:', houseId);
                         const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
                         try {
                             await updateDoc(doc(db, 'houses', houseId), {
                                 invite_code: newCode
                             });
                             houseData.invite_code = newCode;
-                            console.log('Invite code generated:', newCode);
+                            logger.info('Invite code generated:', newCode);
                         } catch (err) {
                             console.error('Failed to generate invite code:', err);
                         }

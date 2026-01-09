@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { logger } from './utils/logger';
 import './index.css'
 import App from './App.tsx'
 
@@ -8,8 +9,8 @@ import App from './App.tsx'
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/firebase-messaging-sw.js')
-      .then(reg => console.log('SW registered:', reg))
-      .catch(err => console.log('SW registration failed:', err));
+      .then(reg => logger.debug('SW registered:', reg))
+      .catch(err => logger.warn('SW registration failed:', err));
   });
 }
 

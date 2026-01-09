@@ -1,4 +1,5 @@
-import { getToken, onMessage } from "firebase/messaging";
+import { getToken, onMessage } from 'firebase/messaging';
+import { logger } from './logger';
 import { messaging, db } from "@/lib/firebase";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { type User } from "@/types/models";
@@ -19,7 +20,7 @@ export const requestPushPermission = async (currentUser: User) => {
             });
 
             if (token) {
-                console.log("FCM Token generated:", token);
+                logger.info("FCM Token generated:", token);
 
                 // Save token to user profile if not already there
                 if (!currentUser.fcm_tokens?.includes(token)) {
@@ -40,7 +41,7 @@ export const onForegroundMessage = () => {
     if (!messaging) return;
 
     onMessage(messaging, (payload) => {
-        console.log("Foreground message received:", payload);
+        logger.debug("Foreground message received:", payload);
         // You could show a custom toast here if you want
     });
 };

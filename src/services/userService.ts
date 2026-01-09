@@ -1,12 +1,6 @@
-
 import { db } from '@/lib/firebase';
-import {
-    collection,
-    query,
-    where,
-    getDocs,
-    writeBatch
-} from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { logger } from '@/utils/logger';
 import type { BudgetPlan } from '@/types/models';
 
 /**
@@ -14,7 +8,7 @@ import type { BudgetPlan } from '@/types/models';
  * This ensures data consistency when a user changes their name.
  */
 export const updateUserNameInAllCollections = async (userId: string, newName: string, houseIds: string[]) => {
-    console.log(`Starting global name update for user ${userId} to "${newName}"...`);
+    logger.info(`Starting global name update for user ${userId} to "${newName}"...`);
 
     // We will use batches to perform updates. specific limit is 500 ops per batch.
     // simpler approach: create a new batch for each collection or group of updates to avoid complexity of tracking size.
@@ -76,7 +70,7 @@ export const updateUserNameInAllCollections = async (userId: string, newName: st
         }
 
         await Promise.all(promises);
-        console.log('Global name update complete.');
+        logger.info('Global name update complete.');
         return true;
     } catch (error) {
         console.error('Error updating user name globally:', error);
@@ -103,7 +97,7 @@ const updateCollection = async (collectionName: string, whereField: string, user
         });
 
         await batch.commit();
-        console.log(`Updated ${count} documents in ${collectionName} where ${whereField} matched.`);
+        logger.debug(`Updated ${count} documents in ${collectionName} where ${whereField} matched.`);
     } catch (error) {
         console.error(`Error updating collection ${collectionName}:`, error);
         // We don't throw here to ensure other collections proceed, but might want to rethink for strict consistency
@@ -156,7 +150,7 @@ const updateBudgetPlans = async (houseIds: string[], userId: string, newName: st
 
             if (updatesCount > 0) {
                 await batch.commit();
-                console.log(`Updated ${updatesCount} budget plans.`);
+                logger.debug(`Updated ${updatesCount} budget plans.`);
             }
         }
     } catch (error) {

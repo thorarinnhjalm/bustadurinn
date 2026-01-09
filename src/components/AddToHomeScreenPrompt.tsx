@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Home, X, Share, Download, Bell } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface AddToHomeScreenPromptProps {
     houseName: string;
@@ -26,7 +27,7 @@ export default function AddToHomeScreenPrompt({ houseName, onDismiss }: AddToHom
         if ('Notification' in window && Notification.permission === 'default') {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                console.log('Notifications enabled!');
+                logger.info('Notifications enabled!');
                 setShowNotificationPrompt(false);
                 // Here you would integrate with FCM for push notifications
             }

@@ -109,6 +109,20 @@
                     "order": "DESCENDING"
                 }
             ]
+        },
+        {
+            "collectionGroup": "finance_entries",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "house_id",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
         }
     ],
     "fieldOverrides": []

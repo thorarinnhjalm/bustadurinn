@@ -5,6 +5,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { auth } from '@/lib/firebase';
+import { logger } from '@/utils/logger';
 import type { User } from '@/types/models';
 
 interface ImpersonationContextType {
@@ -38,7 +39,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
         const unsubscribe = auth.onAuthStateChanged((user) => {
             // If user logs out (user is null) and we are impersonating, stop it
             if (!user && impersonatedUser) {
-                console.log('🔒 User logged out - clearing impersonation');
+                logger.debug('User logged out - clearing impersonation');
                 stopImpersonation();
             }
         });
@@ -48,11 +49,11 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
     const startImpersonation = (user: User) => {
         setImpersonatedUser(user);
         localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(user));
-        console.log('🎭 Started impersonating:', user.name, user.email);
+        logger.info('Started impersonating:', user.name, user.email);
     };
 
     const stopImpersonation = () => {
-        console.log('🎭 Stopped impersonation');
+        logger.info('Stopped impersonation');
         setImpersonatedUser(null);
         localStorage.removeItem(IMPERSONATION_KEY);
         localStorage.removeItem('admin_original_house');

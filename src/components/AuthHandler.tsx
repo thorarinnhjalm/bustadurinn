@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, DocumentSnapshot } from 'firebase/firestore';
+import { doc, getDoc, type DocumentSnapshot } from 'firebase/firestore';
 import { useAppStore } from '@/store/appStore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { logger } from '@/utils/logger';
 import type { House, User } from '@/types/models';
 
 export default function AuthHandler() {
@@ -74,7 +75,7 @@ export default function AuthHandler() {
             // If impersonating, use that. Otherwise use realUser.
             const effectiveUser = isImpersonating && impersonatedUser ? impersonatedUser : realUser;
 
-            console.log(`📡 AuthHandler: Loading data for ${isImpersonating ? 'IMPERSONATED' : 'REAL'} user:`, effectiveUser.email);
+            logger.debug(`AuthHandler: Loading data for ${isImpersonating ? 'IMPERSONATED' : 'REAL'} user:`, effectiveUser.email);
 
             // Update Store with EFFECTIVE user
             setCurrentUser(effectiveUser);

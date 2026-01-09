@@ -5,6 +5,7 @@ import { db, auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { Home, Loader2, CheckCircle, AlertTriangle, X, Calendar, DollarSign, ListTodo, ArrowRight, ExternalLink } from 'lucide-react';
 import type { House, User } from '@/types/models';
+import { logger } from '@/utils/logger';
 
 export default function JoinPage() {
     const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function JoinPage() {
             // Case 1: Handle Token (from email)
             if (tokenParam) {
                 try {
-                    console.log("Checking token:", tokenParam);
+                    logger.debug("Checking token:", tokenParam);
                     const q = query(collection(db, 'invitations'), where('token', '==', tokenParam), limit(1));
                     const snap = await getDocs(q);
 

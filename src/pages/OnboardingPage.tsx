@@ -1,4 +1,3 @@
-
 // Declare Google Maps types
 declare const google: any;
 
@@ -10,6 +9,7 @@ import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { analytics } from '@/utils/analytics';
+import { logger } from '@/utils/logger';
 import AddToHomeScreenPrompt from '@/components/AddToHomeScreenPrompt';
 
 type OnboardingStep = 'welcome' | 'house' | 'invite' | 'finish';
@@ -435,7 +435,7 @@ export default function OnboardingPage() {
                     });
 
                     if (res.ok) {
-                        console.log('✅ Welcome email sent');
+                        logger.info('Welcome email sent');
                     } else {
                         console.error('❌ Failed to send welcome email');
                     }
@@ -463,7 +463,7 @@ export default function OnboardingPage() {
                     });
 
                     if (res.ok) {
-                        console.log('✅ Onboarding completion email sent');
+                        logger.info('Onboarding completion email sent');
                     } else {
                         console.error('❌ Failed to send onboarding email');
                     }

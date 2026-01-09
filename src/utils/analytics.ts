@@ -3,6 +3,8 @@
  * Track custom events in GA4
  */
 
+import { logger } from './logger';
+
 // Declare gtag function for TypeScript
 declare global {
     interface Window {
@@ -14,7 +16,7 @@ declare global {
 export const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
     if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', eventName, eventParams);
-        console.log('📊 GA Event:', eventName, eventParams);
+        logger.debug('GA Event:', eventName, eventParams);
     }
 };
 

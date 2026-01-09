@@ -8,6 +8,7 @@ import { useAppStore } from '@/store/appStore';
 import { ImpersonationProvider } from '@/contexts/ImpersonationContext';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
 import AuthHandler from '@/components/AuthHandler';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Pages
 import LandingPage from '@/pages/LandingPage';
@@ -105,98 +106,100 @@ function App() {
   // Auth logic moved to AuthHandler
 
   return (
-    <ImpersonationProvider>
-      <AuthHandler />
-      <HelmetProvider>
-        <Router>
-          <ImpersonationBanner />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/join" element={<JoinPage />} />
-            <Route path="/join/:houseId/:code" element={<JoinPage />} />
-            <Route path="/guest/:token" element={<GuestPage />} />
-            <Route path="/eiginleikar" element={<FeaturesPage />} />
-            <Route path="/spurt-og-svarad" element={<FAQPage />} />
-            <Route path="/um-okkur" element={<AboutPage />} />
-            <Route path="/hafa-samband" element={<ContactPage />} />
-            <Route path="/prufa" element={<SandboxPage />} />
-            <Route path="/marketing-map" element={<MarketingMapPage />} />
+    <ErrorBoundary>
+      <ImpersonationProvider>
+        <AuthHandler />
+        <HelmetProvider>
+          <Router>
+            <ImpersonationBanner />
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/join" element={<JoinPage />} />
+              <Route path="/join/:houseId/:code" element={<JoinPage />} />
+              <Route path="/guest/:token" element={<GuestPage />} />
+              <Route path="/eiginleikar" element={<FeaturesPage />} />
+              <Route path="/spurt-og-svarad" element={<FAQPage />} />
+              <Route path="/um-okkur" element={<AboutPage />} />
+              <Route path="/hafa-samband" element={<ContactPage />} />
+              <Route path="/prufa" element={<SandboxPage />} />
+              <Route path="/marketing-map" element={<MarketingMapPage />} />
 
-            {/* Protected Routes */}
-            <Route
-              path="/onboarding"
-              element={
-                <ProtectedRoute>
-                  <OnboardingPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <SettingsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/finance"
-              element={
-                <ProtectedRoute>
-                  <FinancePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/tasks"
-              element={
-                <ProtectedRoute>
-                  <TasksPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/calendar"
-              element={
-                <ProtectedRoute>
-                  <CalendarPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/super-admin"
-              element={
-                <AdminRoute>
-                  <SuperAdminPage />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/migrate"
-              element={
-                <AdminRoute>
-                  <MigrationPage />
-                </AdminRoute>
-              }
-            />
+              {/* Protected Routes */}
+              <Route
+                path="/onboarding"
+                element={
+                  <ProtectedRoute>
+                    <OnboardingPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/finance"
+                element={
+                  <ProtectedRoute>
+                    <FinancePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tasks"
+                element={
+                  <ProtectedRoute>
+                    <TasksPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/calendar"
+                element={
+                  <ProtectedRoute>
+                    <CalendarPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/super-admin"
+                element={
+                  <AdminRoute>
+                    <SuperAdminPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/migrate"
+                element={
+                  <AdminRoute>
+                    <MigrationPage />
+                  </AdminRoute>
+                }
+              />
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-      </HelmetProvider>
-    </ImpersonationProvider>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Router>
+        </HelmetProvider>
+      </ImpersonationProvider>
+    </ErrorBoundary>
   );
 }
 
