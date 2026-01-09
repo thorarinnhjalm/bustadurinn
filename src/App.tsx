@@ -31,13 +31,9 @@ import SandboxPage from '@/pages/SandboxPage';
 import MigrationPage from '@/pages/MigrationPage';
 import MarketingMapPage from '@/pages/MarketingMapPage';
 
-
-// Admin emails whitelist
-const ADMIN_EMAILS = [
-  'thorarinnhjalmarsson@gmail.com',
-  'thorarinnhjalm@gmail.com',
-  // Add more admin emails here
-];
+// RBAC imports
+import { useUserRole } from '@/hooks/useUserRole';
+import { isSuperAdmin } from '@/utils/rbac';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -58,13 +54,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-// Admin Route Component
+// Admin Route Component (RBAC-protected)
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const currentUser = useAppStore((state) => state.currentUser);
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   const isLoading = useAppStore((state) => state.isLoading);
+  const { systemRole, loading: roleLoading } = useUserRole(currentUser?.uid);
 
-  if (isLoading) {
+  if (isLoading || roleLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -79,7 +76,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
 
-  const isAdmin = currentUser?.email && ADMIN_EMAILS.includes(currentUser.email);
+  // Check RBAC permission instead of email
+  const isAdmin = isSuperAdmin(systemRole);
 
   if (!isAdmin) {
     return (
