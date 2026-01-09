@@ -14,27 +14,21 @@ export function checkSystemPermission(role: SystemRole, permission: string): boo
 
     if (!rolePermissions) return false;
 
-    // Convert readonly array to mutable for type checking
-    const permissions = Array.from(rolePermissions);
-
     // Super admin has all permissions
-    if (permissions.includes('all')) return true;
+    if ((rolePermissions as readonly string[]).includes('all')) return true;
 
-    return permissions.includes(permission);
+    return (rolePermissions as readonly string[]).includes(permission);
 }
 
 /**
- * Check if a house role has a specific permission
+ *Check if a house role has a specific permission
  */
 export function checkHousePermission(role: HouseRole, permission: string): boolean {
     const rolePermissions = HOUSE_PERMISSIONS[role];
 
     if (!rolePermissions) return false;
 
-    // Convert readonly array to mutable for type checking
-    const permissions = Array.from(rolePermissions);
-
-    return permissions.includes(permission);
+    return (rolePermissions as readonly string[]).includes(permission);
 }
 
 /**
