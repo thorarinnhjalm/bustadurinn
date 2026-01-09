@@ -10,25 +10,31 @@ import type { SystemRole, HouseRole } from '@/types/rbac';
  * Check if a system role has a specific permission
  */
 export function checkSystemPermission(role: SystemRole, permission: string): boolean {
-    const permissions = SYSTEM_PERMISSIONS[role];
+    const rolePermissions = SYSTEM_PERMISSIONS[role];
 
-    if (!permissions) return false;
+    if (!rolePermissions) return false;
+
+    // Convert readonly array to mutable for type checking
+    const permissions = Array.from(rolePermissions);
 
     // Super admin has all permissions
     if (permissions.includes('all')) return true;
 
-    return permissions.includes(permission as any);
+    return permissions.includes(permission);
 }
 
 /**
  * Check if a house role has a specific permission
  */
 export function checkHousePermission(role: HouseRole, permission: string): boolean {
-    const permissions = HOUSE_PERMISSIONS[role];
+    const rolePermissions = HOUSE_PERMISSIONS[role];
 
-    if (!permissions) return false;
+    if (!rolePermissions) return false;
 
-    return permissions.includes(permission as any);
+    // Convert readonly array to mutable for type checking
+    const permissions = Array.from(rolePermissions);
+
+    return permissions.includes(permission);
 }
 
 /**

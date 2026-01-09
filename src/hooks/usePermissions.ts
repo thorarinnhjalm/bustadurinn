@@ -13,7 +13,7 @@ export function usePermissions(
     houseId?: string,
     hideFinances?: boolean
 ): Permissions {
-    const { systemRole, houseRoles, loading } = useUserRole(userId);
+    const { systemRole, houseRoles } = useUserRole(userId);
 
     return useMemo(() => {
         const houseRole = houseId ? houseRoles[houseId] : undefined;
