@@ -841,7 +841,7 @@ export default function SettingsPage() {
                 directions_en: houseForm.directions_en,
                 access_instructions: houseForm.access_instructions,
                 access_instructions_en: houseForm.access_instructions_en,
-                access_instructions_en: houseForm.access_instructions_en,
+
                 emergency_contact: houseForm.emergency_contact,
                 privacy_hide_finances: houseForm.privacy_hide_finances,
                 updated_at: new Date()
