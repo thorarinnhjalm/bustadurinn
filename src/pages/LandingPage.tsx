@@ -89,7 +89,7 @@ export default function LandingPage() {
                                 Fyrstu 50 húsin fá 1 ár frítt!
                             </div>
                             <div className="inline-flex items-center gap-2 bg-amber/20 text-amber border border-amber/30 px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm">
-                                Engin kreditkort • 30 daga prufa
+                                Engin skuldbinding • 30 daga prufa
                             </div>
                         </div>
 
@@ -339,7 +339,7 @@ export default function LandingPage() {
                                 <h3 className="text-2xl font-serif mb-2 text-stone-600">Prufuáskrift</h3>
                                 <div className="text-4xl font-bold font-serif mb-2">0 kr <span className="text-base font-normal text-grey-mid">/ 30 daga</span></div>
                                 <p className="text-sm text-green-600 font-medium bg-green-50 inline-block px-3 py-1 rounded-full">
-                                    Engin kortaupplýsingar
+                                    Engin skuldbinding
                                 </p>
                             </div>
 
@@ -477,7 +477,7 @@ export default function LandingPage() {
                 <div className="container mx-auto px-6">
                     <h2 className="text-3xl md:text-4xl font-serif mb-6">Tilbúinn að prófa?</h2>
                     <p className="text-xl text-grey-warm mb-8 max-w-2xl mx-auto">
-                        Engin greiðslukortaupplýsingar nauðsynlegar. Prófaðu í heilan mánuð án skuldbindinga.
+                        Engin skuldbinding. Prófaðu í heilan mánuð án kostnaðar.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button
