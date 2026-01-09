@@ -668,58 +668,67 @@ const UserDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
 
                     {/* FINANCE SNAPSHOT - MOVED TO FIRST POSITION FOR VISIBILITY */}
-                    <section onClick={() => navigate('/finance')} className="group cursor-pointer">
-                        <div className="flex justify-between items-center mb-4 px-1">
-                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Hússjóður</h3>
-                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-[#1a1a1a] group-hover:text-white transition-colors">
-                                <ChevronRight size={18} />
-                            </div>
-                        </div>
-                        <div className="bg-[#1a1a1a] p-6 rounded-2xl text-white shadow-xl shadow-stone-200 relative overflow-hidden group hover:shadow-2xl hover:scale-[1.01] transition-all duration-300">
-                            {/* Decorative Gradients */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-amber/20 to-transparent opacity-50 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
-
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="p-1.5 bg-white/10 rounded-md">
-                                        <Wallet size={16} className="text-amber" />
-                                    </div>
-                                    <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Staða sjóðs</p>
+                    {(!currentHouse?.privacy_hide_finances || currentHouse?.manager_id === currentUser?.uid) && (
+                        <section onClick={() => navigate('/finance')} className="group cursor-pointer">
+                            <div className="flex justify-between items-center mb-4 px-1">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Hússjóður</h3>
+                                    {currentHouse?.privacy_hide_finances && (
+                                        <div title="Aðeins sýnilegt stjórnendum">
+                                            <Shield size={16} className="text-amber" />
+                                        </div>
+                                    )}
                                 </div>
+                                <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-[#1a1a1a] group-hover:text-white transition-colors">
+                                    <ChevronRight size={18} />
+                                </div>
+                            </div>
+                            <div className="bg-[#1a1a1a] p-6 rounded-2xl text-white shadow-xl shadow-stone-200 relative overflow-hidden group hover:shadow-2xl hover:scale-[1.01] transition-all duration-300">
+                                {/* Decorative Gradients */}
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-amber/20 to-transparent opacity-50 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
 
-                                <h4 className="text-4xl font-serif text-white mb-6 tracking-tight">
-                                    {finances.balance.toLocaleString('is-IS')} <span className="text-xl text-stone-500 font-sans font-normal">kr.</span>
-                                </h4>
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="p-1.5 bg-white/10 rounded-md">
+                                            <Wallet size={16} className="text-amber" />
+                                        </div>
+                                        <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Staða sjóðs</p>
+                                    </div>
 
-                                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
-                                    <div className="flex items-center gap-3 text-sm">
-                                        <div className={`w-2 h-2 rounded-full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-stone-300 text-xs uppercase tracking-wide font-bold mb-0.5">Síðasta færsla</p>
-                                            <p className="text-white font-medium truncate">{finances.lastAction}</p>
+                                    <h4 className="text-4xl font-serif text-white mb-6 tracking-tight">
+                                        {finances.balance.toLocaleString('is-IS')} <span className="text-xl text-stone-500 font-sans font-normal">kr.</span>
+                                    </h4>
+
+                                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <div className={`w-2 h-2 rounded-full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-stone-300 text-xs uppercase tracking-wide font-bold mb-0.5">Síðasta færsla</p>
+                                                <p className="text-white font-medium truncate">{finances.lastAction}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Empty State Overlay */}
-                            {finances.balance === 0 && finances.lastAction === "Ekkert að frétta" && (
-                                <div className="absolute inset-0 bg-charcoal/95 backdrop-blur-sm flex items-center justify-center z-20 rounded-2xl">
-                                    <div className="text-center p-6">
-                                        <Wallet size={32} className="mx-auto mb-3 text-amber" />
-                                        <p className="text-white font-bold mb-2">Sjóðurinn er tómur</p>
-                                        <p className="text-stone-400 text-sm mb-4">Byrjaðu með að bæta við fyrstu færslunni</p>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); navigate('/finance'); }}
-                                            className="px-4 py-2 bg-amber text-charcoal rounded-lg font-bold text-sm hover:bg-amber/90 transition-colors"
-                                        >
-                                            Opna Hússjóð
-                                        </button>
+                                {/* Empty State Overlay */}
+                                {finances.balance === 0 && finances.lastAction === "Ekkert að frétta" && (
+                                    <div className="absolute inset-0 bg-charcoal/95 backdrop-blur-sm flex items-center justify-center z-20 rounded-2xl">
+                                        <div className="text-center p-6">
+                                            <Wallet size={32} className="mx-auto mb-3 text-amber" />
+                                            <p className="text-white font-bold mb-2">Sjóðurinn er tómur</p>
+                                            <p className="text-stone-400 text-sm mb-4">Byrjaðu með að bæta við fyrstu færslunni</p>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); navigate('/finance'); }}
+                                                className="px-4 py-2 bg-amber text-charcoal rounded-lg font-bold text-sm hover:bg-amber/90 transition-colors"
+                                            >
+                                                Opna Hússjóð
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    </section>
+                                )}
+                            </div>
+                        </section>
+                    )}
 
                     {/* NEXT BOOKING CARD */}
                     <section

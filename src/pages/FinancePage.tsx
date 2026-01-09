@@ -12,7 +12,9 @@ import {
     Trash2,
     Calculator,
     ArrowLeft,
-    Wallet
+    Wallet,
+    Shield,
+    Eye
 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { db } from '@/lib/firebase';
@@ -60,6 +62,17 @@ export default function FinancePage() {
 
     const isManager = house?.manager_id === currentUser?.uid;
 
+    if (house?.privacy_hide_finances && !isManager) {
+        return (
+            <div className="min-h-screen bg-bone p-6 flex flex-col items-center justify-center text-center">
+                <Shield className="w-16 h-16 text-stone-300 mb-4" />
+                <h2 className="text-xl font-serif font-bold text-charcoal mb-2">Enginn aðgangur</h2>
+                <p className="text-stone-500 mb-6 max-w-sm">Hússtjórn hefur lokað fyrir aðgang að fjármálaupplýsingum fyrir almenna meðeigendur.</p>
+                <button onClick={() => navigate('/dashboard')} className="btn btn-primary">Til baka á stjórnborð</button>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-bone p-6 pb-24">
             {/* Header */}
@@ -77,56 +90,78 @@ export default function FinancePage() {
                         <h1 className="text-3xl font-serif text-charcoal mb-2">Hússjóður</h1>
                         <p className="text-grey-mid">Umsjón með rekstri og bókhaldi</p>
                     </div>
+                    {isManager && (
+                        <button
+                            onClick={() => navigate('/settings?tab=house')}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${house?.privacy_hide_finances
+                                ? 'bg-amber/10 text-amber-700 border-amber/20 hover:bg-amber/20'
+                                : 'bg-stone-100 text-stone-500 border-stone-200 hover:bg-stone-200'
+                                }`}
+                        >
+                            {house?.privacy_hide_finances ? (
+                                <>
+                                    <Shield size={14} />
+                                    <span>Aðeins stjórnendur</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Eye size={14} />
+                                    <span>Sýnilegt öllum</span>
+                                </>
+                            )}
+                        </button>
+                    )}
                 </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="max-w-5xl mx-auto mb-8 border-b border-grey-warm">
-                <div className="flex gap-8">
-                    <button
-                        onClick={() => setActiveTab('budget')}
-                        className={`pb-4 px-2 font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'budget'
-                            ? 'text-charcoal'
-                            : 'text-grey-mid hover:text-charcoal'
-                            }`}
-                    >
-                        <Calculator className="w-5 h-5" />
-                        Rekstraráætlun
-                        {activeTab === 'budget' && (
-                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber" />
-                        )}
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('ledger')}
-                        className={`pb-4 px-2 font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'ledger'
-                            ? 'text-charcoal'
-                            : 'text-grey-mid hover:text-charcoal'
-                            }`}
-                    >
-                        <Receipt className="w-5 h-5" />
-                        Bókhald
-                        {activeTab === 'ledger' && (
-                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber" />
-                        )}
-                    </button>
-                </div>
-            </div>
-
-            {/* Content Area */}
-            <div className="max-w-5xl mx-auto">
-                {activeTab === 'budget' ? (
-                    <BudgetView houseId={house?.id} currentUserId={currentUser?.uid} house={house} />
-                ) : (
-                    <LedgerView
-                        houseId={house?.id}
-                        currentUserId={currentUser?.uid}
-                        isManager={isManager}
-                        currentUserName={currentUser?.name}
-                    />
-                )}
             </div>
         </div>
+
+            {/* Tabs */ }
+    <div className="max-w-5xl mx-auto mb-8 border-b border-grey-warm">
+        <div className="flex gap-8">
+            <button
+                onClick={() => setActiveTab('budget')}
+                className={`pb-4 px-2 font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'budget'
+                    ? 'text-charcoal'
+                    : 'text-grey-mid hover:text-charcoal'
+                    }`}
+            >
+                <Calculator className="w-5 h-5" />
+                Rekstraráætlun
+                {activeTab === 'budget' && (
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber" />
+                )}
+            </button>
+
+            <button
+                onClick={() => setActiveTab('ledger')}
+                className={`pb-4 px-2 font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'ledger'
+                    ? 'text-charcoal'
+                    : 'text-grey-mid hover:text-charcoal'
+                    }`}
+            >
+                <Receipt className="w-5 h-5" />
+                Bókhald
+                {activeTab === 'ledger' && (
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber" />
+                )}
+            </button>
+        </div>
+    </div>
+
+    {/* Content Area */ }
+    <div className="max-w-5xl mx-auto">
+        {activeTab === 'budget' ? (
+            <BudgetView houseId={house?.id} currentUserId={currentUser?.uid} house={house} />
+        ) : (
+            <LedgerView
+                houseId={house?.id}
+                currentUserId={currentUser?.uid}
+                isManager={isManager}
+                currentUserName={currentUser?.name}
+            />
+        )}
+    </div>
+        </div >
     );
 }
 

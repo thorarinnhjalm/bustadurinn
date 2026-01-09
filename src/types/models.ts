@@ -40,6 +40,9 @@ export interface House {
     invite_code?: string;
     guest_token?: string;
 
+    // Privacy
+    privacy_hide_finances?: boolean;
+
     // Subscription
     subscription_status?: 'trial' | 'active' | 'free' | 'expired';
     plan_id?: 'monthly' | 'annual';

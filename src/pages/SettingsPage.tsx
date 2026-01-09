@@ -101,7 +101,8 @@ export default function SettingsPage() {
         directions_en: '',
         access_instructions: '',
         access_instructions_en: '',
-        emergency_contact: ''
+        emergency_contact: '',
+        privacy_hide_finances: false
     });
 
     // Language Toggle for dual-input fields
@@ -706,7 +707,8 @@ export default function SettingsPage() {
                         directions_en: houseData.directions_en || '',
                         access_instructions: houseData.access_instructions || '',
                         access_instructions_en: houseData.access_instructions_en || '',
-                        emergency_contact: houseData.emergency_contact || ''
+                        emergency_contact: houseData.emergency_contact || '',
+                        privacy_hide_finances: houseData.privacy_hide_finances || false
                     });
                 }
             } catch (err) {
@@ -839,7 +841,9 @@ export default function SettingsPage() {
                 directions_en: houseForm.directions_en,
                 access_instructions: houseForm.access_instructions,
                 access_instructions_en: houseForm.access_instructions_en,
+                access_instructions_en: houseForm.access_instructions_en,
                 emergency_contact: houseForm.emergency_contact,
+                privacy_hide_finances: houseForm.privacy_hide_finances,
                 updated_at: new Date()
             };
 
@@ -1390,6 +1394,20 @@ export default function SettingsPage() {
                                                     />
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        <div className="border-t border-grey-warm pt-4 mt-6">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <Shield className="w-5 h-5 text-amber" />
+                                                <h3 className="font-serif text-lg">Aðgangsstýring</h3>
+                                            </div>
+                                            <Toggle
+                                                label="Fela fjármál fyrir öðrum"
+                                                description="Ef kveikt er á þessu sjá einungis stjórnendur (þú) fjármálayfirlitið. Aðrir meðeigendur sjá hvorki stöðu né færslur."
+                                                checked={houseForm.privacy_hide_finances}
+                                                onChange={(val) => setHouseForm({ ...houseForm, privacy_hide_finances: val })}
+                                                disabled={!isManager}
+                                            />
                                         </div>
 
                                         {isManager && (
