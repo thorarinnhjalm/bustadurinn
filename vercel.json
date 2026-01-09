@@ -35,7 +35,7 @@
                 },
                 {
                     "key": "Content-Security-Policy",
-                    "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://maps.googleapis.com https://vercel.live https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.googleapis.com https://*.google-analytics.com https://*.firebaseio.com https://*.cloudfunctions.net https://bustadurinn-599f2.firebaseapp.com wss://*.firebaseio.com https://api.open-meteo.com https://apis.is https://xmlweather.vedur.is https://vercel.live; frame-src 'self' https://maps.google.com https://vercel.live; object-src 'none'; base-uri 'self'; form-action 'self';"
+                    "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://maps.googleapis.com https://vercel.live https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.googleapis.com https://*.google-analytics.com https://*.firebaseio.com https://*.cloudfunctions.net https://bustadurinn-599f2.firebaseapp.com wss://*.firebaseio.com https://api.open-meteo.com https://apis.is https://xmlweather.vedur.is https://vercel.live; frame-src 'self' https://maps.google.com https://vercel.live https://bustadurinn-599f2.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self';"
                 }
             ]
         },
