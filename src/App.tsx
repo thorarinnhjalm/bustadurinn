@@ -28,6 +28,7 @@ import AboutPage from '@/pages/AboutPage';
 import ContactPage from '@/pages/ContactPage';
 import SandboxPage from '@/pages/SandboxPage';
 import MigrationPage from '@/pages/MigrationPage';
+import MarketingMapPage from '@/pages/MarketingMapPage';
 
 
 // Admin emails whitelist
@@ -122,6 +123,7 @@ function App() {
             <Route path="/um-okkur" element={<AboutPage />} />
             <Route path="/hafa-samband" element={<ContactPage />} />
             <Route path="/prufa" element={<SandboxPage />} />
+            <Route path="/marketing-map" element={<MarketingMapPage />} />
 
             {/* Protected Routes */}
             <Route

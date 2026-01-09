@@ -47,6 +47,7 @@ interface Stats {
     allContacts: ContactSubmission[];
     allCoupons: Coupon[];
     allSubscribers: NewsletterSubscriber[];
+    launchOfferCount: number;
 }
 
 export default function SuperAdminPage() {
@@ -96,7 +97,8 @@ export default function SuperAdminPage() {
         allUsers: [],
         allContacts: [],
         allCoupons: [],
-        allSubscribers: []
+        allSubscribers: [],
+        launchOfferCount: 0
     });
 
     // Email Templates Logic - Define BEFORE useEffect
@@ -126,14 +128,15 @@ export default function SuperAdminPage() {
                     }
                 };
 
-                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap] = await Promise.all([
+                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, promoSnapResult] = await Promise.all([
                     safeFetch('houses'),
                     safeFetch('users'),
                     safeFetch('bookings'),
                     safeFetch('tasks'),
                     safeFetch('contact_submissions'),
                     safeFetch('coupons'),
-                    safeFetch('newsletter_subscribers')
+                    safeFetch('newsletter_subscribers'),
+                    getDoc(doc(db, 'system', 'promotions'))
                 ]);
 
                 const houses = housesSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as House)) || [];
@@ -169,7 +172,8 @@ export default function SuperAdminPage() {
                     allUsers: users,
                     allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
                     allCoupons: coupons,
-                    allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
+                    allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
+                    launchOfferCount: promoSnapResult && promoSnapResult.exists() ? promoSnapResult.data().launch_offer_count || 0 : 0
                 });
 
                 if (!housesSnap && !usersSnap) {
@@ -1190,6 +1194,35 @@ export default function SuperAdminPage() {
                                     <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalSubscribers}</p>
                                     <p className="text-[10px] md:text-xs text-stone-400">
                                         Væntanlegir viðskiptavinir
+                                    </p>
+                                </div>
+
+                                {/* Launch Offer Stats */}
+                                <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-2 opacity-10">
+                                        <Tag className="w-16 h-16 transform rotate-12" />
+                                    </div>
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center">
+                                            <Tag className="w-4 h-4 text-purple-600" />
+                                        </div>
+                                        <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Starttilboð</p>
+                                    </div>
+                                    <div className="flex items-baseline gap-1">
+                                        <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.launchOfferCount}</p>
+                                        <span className="text-sm text-stone-400 font-medium">/ 50</span>
+                                    </div>
+
+                                    {/* Progress Bar */}
+                                    <div className="w-full bg-stone-100 rounded-full h-1.5 mt-2 mb-1">
+                                        <div
+                                            className="bg-purple-500 h-1.5 rounded-full transition-all duration-1000"
+                                            style={{ width: `${(stats.launchOfferCount / 50) * 100}%` }}
+                                        ></div>
+                                    </div>
+
+                                    <p className="text-[10px] md:text-xs text-stone-400">
+                                        {50 - stats.launchOfferCount} pláss eftir
                                     </p>
                                 </div>
                             </div>

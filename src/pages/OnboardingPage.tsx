@@ -5,7 +5,7 @@ declare const google: any;
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, MapPin, Users, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, setDoc, doc, arrayUnion, query, where, getDocs, limit, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, setDoc, doc, arrayUnion, query, where, getDocs, limit, getDoc, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
@@ -37,9 +37,25 @@ export default function OnboardingPage() {
     const [debounceTimer, setDebounceTimer] = useState<any>(null); // Store timer
     const [showPwaPrompt, setShowPwaPrompt] = useState(false);
 
-    // Duplicate detection state
     const [duplicateHouse, setDuplicateHouse] = useState<{ id: string; name: string; manager_id: string } | null>(null);
     const [joinRequestSent, setJoinRequestSent] = useState(false);
+    const [launchOfferCount, setLaunchOfferCount] = useState<number | null>(null);
+
+    // Fetch launch offer status
+    useEffect(() => {
+        const fetchOfferStatus = async () => {
+            try {
+                const docRef = doc(db, 'system', 'promotions');
+                const snap = await getDoc(docRef);
+                if (snap.exists()) {
+                    setLaunchOfferCount(snap.data().launch_offer_count || 0);
+                }
+            } catch (e) {
+                console.error("Error fetching offer status", e);
+            }
+        };
+        fetchOfferStatus();
+    }, []);
 
     const steps = [
         { id: 'welcome', label: 'Velkomin' },
@@ -288,52 +304,91 @@ export default function OnboardingPage() {
                 }
             }
 
-            // 1. Create House
-            const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const houseRef = await addDoc(collection(db, 'houses'), {
-                name: houseData.name,
-                address: houseData.address || '',
-                location: houseData.location || { lat: 0, lng: 0 },
-                manager_id: currentUser.uid,
-                owner_ids: [currentUser.uid],
-                invite_code: inviteCode,
-                holiday_mode: 'fairness' as const,
-                seo_slug: houseData.name.toLowerCase().replace(/\s+/g, '-'),
-                subscription_status: 'trial',
-                subscription_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                created_at: serverTimestamp(),
-                updated_at: serverTimestamp()
+            // 1. Create House with Transaction (Atomic Check for "First 50 Free")
+            let houseId: string;
+            let inviteCode: string;
+            let isFree = false;
+
+            await runTransaction(db, async (transaction) => {
+                // Check promotion status
+                const promoRef = doc(db, 'system', 'promotions');
+                const promoDoc = await transaction.get(promoRef);
+
+                let currentCount = 0;
+                if (promoDoc.exists()) {
+                    currentCount = promoDoc.data().launch_offer_count || 0;
+                }
+
+                // Determine status
+                isFree = currentCount < 50;
+
+                // Prepare House Data
+                inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                const houseRef = doc(collection(db, 'houses')); // Generate ID first
+                houseId = houseRef.id;
+
+                const startDate = new Date();
+                const endDate = new Date(startDate);
+                if (isFree) {
+                    endDate.setFullYear(endDate.getFullYear() + 1); // 1 Year Free
+                    // Increment counter
+                    transaction.set(promoRef, { launch_offer_count: currentCount + 1 }, { merge: true });
+                } else {
+                    endDate.setDate(endDate.getDate() + 30); // 30 Day Trial
+                }
+
+                const newHouseData = {
+                    name: houseData.name,
+                    address: houseData.address || '',
+                    location: houseData.location || { lat: 0, lng: 0 },
+                    manager_id: currentUser.uid,
+                    owner_ids: [currentUser.uid],
+                    invite_code: inviteCode,
+                    holiday_mode: 'fairness',
+                    seo_slug: houseData.name.toLowerCase().replace(/\s+/g, '-'),
+                    subscription_status: isFree ? 'active' : 'trial', // Active if free
+                    subscription_end: endDate,
+                    created_at: serverTimestamp(),
+                    updated_at: serverTimestamp()
+                };
+
+                // Commit House
+                transaction.set(houseRef, newHouseData);
             });
 
-            const newHouse = {
-                id: houseRef.id,
+            // We need to reconstruct the objects for local state since 'serverTimestamp' is not a date yet
+            // and we need strict types.
+            const createdHouseLocalState = {
+                id: houseId!,
                 name: houseData.name,
                 address: houseData.address || '',
                 location: houseData.location || { lat: 0, lng: 0 },
                 manager_id: currentUser.uid,
                 owner_ids: [currentUser.uid],
-                invite_code: inviteCode,
-                subscription_status: 'trial' as const,
-                subscription_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                invite_code: inviteCode!,
+                subscription_status: isFree ? 'active' : 'trial',
+                subscription_end: isFree
+                    ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+                    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
             };
 
-            // Initialize Subcollections with Defaults
+            // Initialize Subcollections (Post-Transaction, non-critical)
             try {
                 // 1. Sample Task
-                await addDoc(collection(db, 'houses', houseRef.id, 'tasks'), {
+                await addDoc(collection(db, 'houses', houseId!, 'tasks'), {
                     title: 'Kl klára uppsetningu',
                     description: 'Farðu í stillingar og fylltu út húsreglur, WiFi og aðrar upplýsingar.',
                     status: 'pending',
-                    house_id: houseRef.id,
+                    house_id: houseId!,
                     created_by: currentUser.uid,
                     created_at: serverTimestamp(),
                     priority: 'high'
                 });
 
                 // 2. Initial Log Entry
-                await addDoc(collection(db, 'houses', houseRef.id, 'internal_logs'), {
-                    text: 'Hús stofnað.',
-                    house_id: houseRef.id,
+                await addDoc(collection(db, 'houses', houseId!, 'internal_logs'), {
+                    text: isFree ? 'Hús stofnað (Fékk 1 ár frítt!).' : 'Hús stofnað.',
+                    house_id: houseId!,
                     user_id: currentUser.uid,
                     user_name: currentUser.name || currentUser.email,
                     created_at: serverTimestamp()
@@ -346,23 +401,22 @@ export default function OnboardingPage() {
             // Update local state with created house metadata
             setHouseData(prev => ({
                 ...prev,
-                id: houseRef.id,
-                invite_code: inviteCode
+                id: houseId!,
+                invite_code: inviteCode!
             }));
 
             // 2. Link to User (CRITICAL for Dashboard)
-            // Use setDoc with merge: true to CREATE user profile if it doesn't exist
             await setDoc(doc(db, 'users', currentUser.uid), {
                 email: currentUser.email,
                 name: currentUser.name || currentUser.email?.split('@')[0],
-                house_ids: arrayUnion(houseRef.id)
+                house_ids: arrayUnion(houseId!)
             }, { merge: true });
 
             // 3. Update Local State (Immediate Reflection)
-            setCurrentHouse(newHouse as any);
+            setCurrentHouse(createdHouseLocalState as any);
             setCurrentUser({
                 ...currentUser,
-                house_ids: [...(currentUser.house_ids || []), houseRef.id]
+                house_ids: [...(currentUser.house_ids || []), houseId!]
             });
 
             // 4. Send Welcome Email
@@ -561,15 +615,34 @@ export default function OnboardingPage() {
                     )}
 
                     {currentStep === 'welcome' && (
-                        <div className="text-center py-8 animate-fade-in">
+                        <div className="text-center py-8 animate-fade-in relative">
+                            {/* Urgency Badge */}
+                            {launchOfferCount !== null && launchOfferCount < 50 && (
+                                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg animate-pulse whitespace-nowrap z-10">
+                                    🔥 Aðeins {50 - launchOfferCount} pláss eftir í frítt ár!
+                                </div>
+                            )}
+
                             <Home className="w-16 h-16 mx-auto mb-6 text-amber" />
                             <h2 className="mb-4">Velkomin í Bústaðurinn.is</h2>
-                            <p className="text-xl text-grey-dark mb-8 max-w-md mx-auto">
+                            <p className="text-xl text-grey-dark mb-4 max-w-md mx-auto">
                                 Við skulum setja upp sumarhúsið ykkar í kerfinu.
                                 Þetta tekur bara nokkrar mínútur.
                             </p>
-                            <button onClick={nextStep} className="btn btn-primary">
-                                Byrja uppsetningu
+
+                            {/* Offer Info */}
+                            {launchOfferCount !== null && launchOfferCount < 50 && (
+                                <div className="bg-amber/10 border border-amber/30 rounded-lg p-4 mb-8 max-w-md mx-auto">
+                                    <p className="text-amber-800 font-medium text-sm">
+                                        <strong>Starttilboð í gangi:</strong> Fyrstu 50 húsin fá kerfið frítt í heilt ár.
+                                        Kláraðu skráningu núna til að tryggja þér pláss!
+                                    </p>
+                                </div>
+                            )}
+
+                            <button onClick={nextStep} className="btn btn-primary w-full md:w-auto px-8 relative overflow-hidden group">
+                                <span className="relative z-10">Byrja uppsetningu</span>
+                                <div className="absolute inset-0 bg-white/20 transform -skew-x-12 translate-x-full group-hover:translate-x-[-150%] transition-transform duration-700 ease-in-out"></div>
                             </button>
                         </div>
                     )}
