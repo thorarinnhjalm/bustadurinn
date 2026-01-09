@@ -110,13 +110,14 @@ export default function MarketingLayout({
                 </div>
 
                 {/* Mobile Menu Overlay */}
-                <div className={`fixed inset-0 bg-bone z-[105] transition-transform duration-300 md:hidden flex flex-col ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                <div className={`fixed inset-0 bg-white z-[105] transition-transform duration-300 md:hidden flex flex-col ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                     <div className="flex flex-col items-center justify-center flex-1 gap-8 px-6 text-center">
                         {navLinks.map((link, idx) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
-                                className={`text-2xl font-serif font-bold transition-all duration-300 transform ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                                onClick={() => setIsMenuOpen(false)}
+                                className={`text-lg font-serif font-bold text-charcoal transition-all duration-300 transform ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
                                 style={{ transitionDelay: `${idx * 50}ms` }}
                             >
                                 {link.name}
@@ -124,8 +125,8 @@ export default function MarketingLayout({
                         ))}
                         <div className={`w-12 h-0.5 bg-amber/20 transition-all duration-500 ${isMenuOpen ? 'w-24' : 'w-0'}`}></div>
                         <button
-                            onClick={() => navigate('/login')}
-                            className={`text-xl font-semibold text-charcoal hover:text-amber transition-all duration-300 transform ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                            onClick={() => { setIsMenuOpen(false); navigate('/login'); }}
+                            className={`text-lg font-semibold text-charcoal hover:text-amber transition-all duration-300 transform ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
                             style={{ transitionDelay: `${navLinks.length * 50}ms` }}
                         >
                             Innskrá
