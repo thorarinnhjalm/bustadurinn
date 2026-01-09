@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Trash2 } from 'lucide-react';
 import type { InternalLog } from '@/types/models';
 import { formatDistanceToNow } from 'date-fns';
 import { is } from 'date-fns/locale';
@@ -7,10 +7,20 @@ import { is } from 'date-fns/locale';
 interface InternalLogbookProps {
     logs: InternalLog[];
     currentUserName: string;
+    currentUserUid?: string;
+    isManager?: boolean;
     onAddLog: (text: string) => void;
+    onDeleteLog?: (log: InternalLog) => void;
 }
 
-export default function InternalLogbook({ logs, currentUserName, onAddLog }: InternalLogbookProps) {
+export default function InternalLogbook({
+    logs,
+    currentUserName,
+    currentUserUid,
+    isManager,
+    onAddLog,
+    onDeleteLog
+}: InternalLogbookProps) {
     const [newLog, setNewLog] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -59,20 +69,35 @@ export default function InternalLogbook({ logs, currentUserName, onAddLog }: Int
             {/* Timeline */}
             {logs.length > 0 ? (
                 <div className="relative pl-4 border-l-2 border-stone-100 space-y-6">
-                    {logs.map((log) => (
-                        <div key={log.id} className="relative">
-                            <div className="absolute -left-[21px] top-0 w-3 h-3 bg-stone-200 rounded-full border-2 border-white"></div>
-                            <div className="flex justify-between items-start mb-1">
-                                <p className="text-xs font-bold text-[#1a1a1a]">{log.user_name}</p>
-                                <span className="text-[10px] text-stone-400 flex items-center gap-1">
-                                    <Clock size={10} /> {getTimeAgo(log.created_at)}
-                                </span>
+                    {logs.map((log) => {
+                        const canDelete = onDeleteLog && (isManager || (currentUserUid && log.user_id === currentUserUid));
+
+                        return (
+                            <div key={log.id} className="relative group">
+                                <div className="absolute -left-[21px] top-0 w-3 h-3 bg-stone-200 rounded-full border-2 border-white"></div>
+                                <div className="flex justify-between items-start mb-1">
+                                    <p className="text-xs font-bold text-[#1a1a1a]">{log.user_name}</p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-stone-400 flex items-center gap-1">
+                                            <Clock size={10} /> {getTimeAgo(log.created_at)}
+                                        </span>
+                                        {canDelete && (
+                                            <button
+                                                onClick={() => onDeleteLog(log)}
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity text-stone-400 hover:text-red-500 p-1"
+                                                title="Eyða færslu"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="bg-stone-50 p-3 rounded-lg rounded-tl-none text-sm text-stone-600 border border-stone-100/50">
+                                    {log.text}
+                                </div>
                             </div>
-                            <div className="bg-stone-50 p-3 rounded-lg rounded-tl-none text-sm text-stone-600 border border-stone-100/50">
-                                {log.text}
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="text-center py-8 text-stone-400 text-sm">

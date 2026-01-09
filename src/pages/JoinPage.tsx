@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
-import { doc, getDoc, updateDoc, arrayUnion, collection, query, where, limit, getDocs, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { doc, getDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { Home, Loader2, CheckCircle, AlertTriangle, X, Calendar, DollarSign, ListTodo, ArrowRight, ExternalLink } from 'lucide-react';
 import type { House, User } from '@/types/models';
@@ -125,17 +125,28 @@ export default function JoinPage() {
 
         setStatus('joining');
         try {
-            // 1. Add user to house owner_ids
-            await updateDoc(doc(db, 'houses', house.id), {
-                owner_ids: arrayUnion(currentUser.uid)
+            // Get ID token for auth
+            const idToken = await auth.currentUser?.getIdToken();
+
+            const response = await fetch('/api/join-house', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({
+                    houseId: house.id,
+                    inviteCode: codeParam,
+                    token: tokenParam
+                })
             });
 
-            // 2. Add house to user house_ids
-            await updateDoc(doc(db, 'users', currentUser.uid), {
-                house_ids: arrayUnion(house.id)
-            });
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to join');
+            }
 
-            // 3. Update Local Store immediately (otherwise Dashboard redirects to onboarding)
+            // Update Local Store immediately (otherwise Dashboard redirects to onboarding)
             useAppStore.getState().setCurrentUser({
                 ...currentUser,
                 house_ids: [...(currentUser.house_ids || []), house.id]
@@ -143,25 +154,10 @@ export default function JoinPage() {
             useAppStore.getState().setCurrentHouse(house);
 
             setStatus('joined');
-
-            // 4. Cleanup invitation if using token
-            if (tokenParam) {
-                try {
-                    const q = query(collection(db, 'invitations'), where('token', '==', tokenParam));
-                    const snap = await getDocs(q);
-                    if (!snap.empty) {
-                        await deleteDoc(doc(db, 'invitations', snap.docs[0].id));
-                    }
-                } catch (cleanupErr) {
-                    console.error("Failed to cleanup invitation:", cleanupErr);
-                }
-            }
-
-            // Show welcome modal instead of immediately redirecting
             setShowWelcomeModal(true);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError('Villa við að ganga í hús. Mögulega vantar réttindi.');
+            setError(err.message || 'Villa við að ganga í hús.');
             setStatus('idle');
         }
     };

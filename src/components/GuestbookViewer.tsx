@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { BookOpen, Heart, Loader2 } from 'lucide-react';
+import { BookOpen, Heart, Loader2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
 import type { GuestbookEntry } from '@/types/models';
 
 interface GuestbookViewerProps {
     houseId: string;
+    isManager?: boolean;
+    onDeleteEntry?: (entry: GuestbookEntry) => void;
 }
 
-export default function GuestbookViewer({ houseId }: GuestbookViewerProps) {
+export default function GuestbookViewer({ houseId, isManager, onDeleteEntry }: GuestbookViewerProps) {
     const [entries, setEntries] = useState<GuestbookEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -60,12 +62,23 @@ export default function GuestbookViewer({ houseId }: GuestbookViewerProps) {
     return (
         <div className="space-y-4">
             {entries.map((entry) => (
-                <div key={entry.id} className="bg-white p-6 rounded-lg shadow-sm border border-stone-100">
+                <div key={entry.id} className="bg-white p-6 rounded-lg shadow-sm border border-stone-100 group relative">
+                    {/* Delete Button (Manager Only) */}
+                    {isManager && onDeleteEntry && (
+                        <button
+                            onClick={() => onDeleteEntry(entry)}
+                            className="absolute top-4 right-4 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2"
+                            title="Eyða færslu"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    )}
+
                     <div className="flex items-start gap-4">
                         <div className="w-10 h-10 bg-amber/10 rounded-full flex items-center justify-center flex-shrink-0">
                             <Heart className="w-5 h-5 text-amber" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 pr-8">
                             <div className="flex items-baseline justify-between mb-2">
                                 <h4 className="font-semibold text-charcoal">{entry.author}</h4>
                                 <time className="text-xs text-grey-mid">

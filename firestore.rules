@@ -56,8 +56,12 @@ service cloud.firestore {
                        request.resource.data.manager_id == request.auth.uid &&
                        request.resource.data.owner_ids.hasAny([request.auth.uid]);
       
-      allow update, delete: if request.auth != null && (
-        resource.data.owner_ids.hasAny([request.auth.uid]) ||
+      allow update: if request.auth != null && (
+        resource.data.manager_id == request.auth.uid ||
+        isSuperAdmin()
+      );
+      
+      allow delete: if request.auth != null && (
         resource.data.manager_id == request.auth.uid ||
         isSuperAdmin()
       );

@@ -114,11 +114,15 @@ export default function SettingsPage() {
     const [loadingMembers, setLoadingMembers] = useState(false);
     const [membersError, setMembersError] = useState('');
     const [isEditingLocation, setIsEditingLocation] = useState(false);
+
+    // Ownership Transfer State
+    const [memberToTransfer, setMemberToTransfer] = useState<User | null>(null);
+    const [transferConfirmation, setTransferConfirmation] = useState('');
     const [imageFile, setImageFile] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [cropMode, setCropMode] = useState<'main' | 'gallery'>('main');
+    const [cropMode, setCropMode] = useState<'main' | 'gallery' | 'avatar'>('main');
 
     // Shopping & Logs State
     const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
@@ -191,6 +195,46 @@ export default function SettingsPage() {
         };
         const docRef = await addDoc(collection(db, 'houses', house.id, 'internal_logs'), newLog);
         setLogs(prev => [{ id: docRef.id, ...newLog } as InternalLog, ...prev]);
+    };
+
+    const handleDeleteLog = async (log: InternalLog) => {
+        if (!house || !currentUser) return;
+        if (!confirm('Ertu viss um að þú viljir eyða þessari færslu?')) return;
+
+        try {
+            await deleteDoc(doc(db, 'houses', house.id, 'internal_logs', log.id));
+            setLogs(prev => prev.filter(l => l.id !== log.id));
+            setSuccess('Færslu eytt');
+            setTimeout(() => setSuccess(''), 2000);
+        } catch (e) {
+            console.error('Error deleting log:', e);
+            setError('Gat ekki eytt færslu');
+        }
+    };
+
+    const handleDeleteGuestbookEntry = async (entry: any) => {
+        if (!confirm('Ertu viss um að þú viljir eyða þessari færslu úr gestabókinni?')) return;
+        try {
+            await deleteDoc(doc(db, 'guestbook', entry.id));
+            // Force refresh of guestbook viewer? 
+            // Since GuestbookViewer fetches its own data on mount/update, we might need a way to trigger refresh.
+            // For now, simple approach: The component manages its own state? No, it fetches on mount.
+            // We can pass a key to force re-render or let it handle its own update if we passed the list.
+            // Actually, GuestbookViewer manages its own state. 
+            // We should probably move the state up OR make GuestbookViewer listen to changes.
+            // OR simpler: Just reload the page or show success and let user refresh.
+            // BETTER: Pass a "refreshTrigger" prop to GuestbookViewer?
+            setSuccess('Færslu eytt');
+            setTimeout(() => setSuccess(''), 2000);
+
+            // To make the UI update immediately without refresh, we would need to lift state up.
+            // Given the complexity constraints, I'll trigger a re-mount by changing key or similar.
+            // But let's look at how GuestbookViewer is implemented. 
+            // It fetches data in useEffect.
+        } catch (e) {
+            console.error('Error deleting guestbook entry:', e);
+            setError('Gat ekki eytt færslu');
+        }
     };
 
     // Invite State
@@ -327,6 +371,26 @@ export default function SettingsPage() {
         }
     };
 
+    const handleUpdateLanguage = async (code: 'is' | 'en' | 'de' | 'fr' | 'es') => {
+        if (!currentUser) return;
+        try {
+            await updateDoc(doc(db, 'users', currentUser.uid), {
+                language: code
+            });
+            const updatedUser = { ...currentUser, language: code };
+            if (isImpersonating) {
+                startImpersonation(updatedUser);
+            } else {
+                setCurrentUser(updatedUser);
+            }
+            setSuccess('Tungumál uppfært');
+            setTimeout(() => setSuccess(''), 2000);
+        } catch (e) {
+            console.error('Error updating language', e);
+            setError('Gat ekki uppfært tungumál');
+        }
+    };
+
     const handleUpdateNotificationSettings = async (
         category: 'emails' | 'in_app',
         setting: string,
@@ -387,6 +451,7 @@ export default function SettingsPage() {
                 <span
                     className={`
                         pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 
+                        pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0
                         transition duration-200 ease-in-out
                         ${checked ? 'translate-x-5' : 'translate-x-0'}
                     `}
@@ -398,13 +463,27 @@ export default function SettingsPage() {
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setCropMode('main'); // Default to house
             const reader = new FileReader();
             reader.onload = () => {
                 setImageFile(reader.result as string);
                 setShowCropper(true);
             };
             reader.readAsDataURL(file);
-            // Reset input so the same file can be selected again
+            e.target.value = '';
+        }
+    };
+
+    const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setCropMode('avatar');
+            const reader = new FileReader();
+            reader.onload = () => {
+                setImageFile(reader.result as string);
+                setShowCropper(true);
+            };
+            reader.readAsDataURL(file);
             e.target.value = '';
         }
     };
@@ -442,6 +521,31 @@ export default function SettingsPage() {
             // Wait for upload to complete
             await uploadTask;
             const downloadURL = await getDownloadURL(storageRef);
+
+            if (cropMode === 'avatar') {
+                if (!currentUser) return;
+                await updateDoc(doc(db, 'users', currentUser.uid), {
+                    avatar: downloadURL
+                });
+
+                // Update globally
+                const updatedUser = { ...currentUser, avatar: downloadURL };
+                if (isImpersonating) {
+                    startImpersonation(updatedUser);
+                } else {
+                    setCurrentUser(updatedUser);
+                }
+
+                // Also update in current house's owner list if needed? 
+                // No, member lists usually just store UID and name, Avatar is fetched or stored in users collection.
+                // However, some local cached lists might need it. 
+
+                setShowCropper(false);
+                setImageFile(null);
+                setSuccess('Prófílmynd uppfærð!');
+                setTimeout(() => setSuccess(''), 3000);
+                return;
+            }
 
             let updatedHouse: House;
             if (cropMode === 'main') {
@@ -526,6 +630,25 @@ export default function SettingsPage() {
             setError('Gat ekki eytt mynd.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleTransferOwnership = async () => {
+        if (!house || !currentUser || !memberToTransfer) return;
+
+        try {
+            await updateDoc(doc(db, 'houses', house.id), {
+                manager_id: memberToTransfer.uid,
+                updated_at: serverTimestamp()
+            });
+
+            setHouse({ ...house, manager_id: memberToTransfer.uid });
+            setSuccess(`Eignarhaldi flutt yfir á ${memberToTransfer.name || memberToTransfer.email}`);
+            setMemberToTransfer(null);
+            setTransferConfirmation('');
+        } catch (e) {
+            console.error('Error transferring ownership:', e);
+            setError('Villa kom upp við að færa eignarhald.');
         }
     };
 
@@ -881,23 +1004,7 @@ export default function SettingsPage() {
         }
     };
 
-    const handleUpdateLanguage = async (lang: 'is' | 'en' | 'de' | 'fr' | 'es') => {
-        if (!currentUser) return;
 
-        try {
-            await updateDoc(doc(db, 'users', currentUser.uid), {
-                language: lang
-            });
-
-            // Update local state
-            setCurrentUser({
-                ...currentUser,
-                language: lang
-            });
-        } catch (err) {
-            console.error('Error updating language:', err);
-        }
-    };
 
     if (loading && !house) {
         return <div className="p-8 text-center text-grey-mid">Hleð...</div>;
@@ -1049,7 +1156,10 @@ export default function SettingsPage() {
                                 <InternalLogbook
                                     logs={logs}
                                     currentUserName={currentUser?.name || ''}
+                                    currentUserUid={currentUser?.uid}
+                                    isManager={house?.manager_id === currentUser?.uid}
                                     onAddLog={handleAddLog}
+                                    onDeleteLog={handleDeleteLog}
                                 />
                             </div>
                         )}
@@ -1433,13 +1543,7 @@ export default function SettingsPage() {
                                                 <div>
                                                     {isManager && house.manager_id !== member.uid && (
                                                         <button
-                                                            onClick={async () => {
-                                                                if (!confirm(`Ertu viss um að þú viljir gera ${member.name || member.email} að Bústaðastjóra? Þú missir stjórnenda-réttindi.`)) return;
-                                                                try {
-                                                                    await updateDoc(doc(db, 'houses', house.id), { manager_id: member.uid });
-                                                                    setHouse({ ...house, manager_id: member.uid });
-                                                                } catch (e) { console.error(e); }
-                                                            }}
+                                                            onClick={() => setMemberToTransfer(member)}
                                                             className="text-xs text-amber hover:text-amber-dark font-medium"
                                                         >
                                                             Gera að stjórnanda
@@ -1851,7 +1955,13 @@ export default function SettingsPage() {
                                         Hér geta gestir og fjölskyldumeðlimir skrifað minningar og upplifanir af dvöl sinni í húsinu.
                                         Fagurt skjalasafn til að líta til baka.
                                     </p>
-                                    <GuestbookViewer houseId={house.id} />
+                                    <GuestbookViewer
+                                        houseId={house.id}
+                                        // Force re-render on delete/success? Simple key change
+                                        key={success}
+                                        isManager={house.manager_id === currentUser?.uid}
+                                        onDeleteEntry={handleDeleteGuestbookEntry}
+                                    />
                                 </div>
                             </div>
                         )}
@@ -1865,6 +1975,37 @@ export default function SettingsPage() {
                                 </div>
 
                                 <div className="space-y-6">
+                                    {/* Avatar Section */}
+                                    <div className="flex flex-col items-center pb-6 border-b border-stone-200">
+                                        <div className="relative group cursor-pointer mb-4">
+                                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-stone-100">
+                                                {currentUser?.avatar ? (
+                                                    <img src={currentUser.avatar} alt="Profile" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-stone-400">
+                                                        <UserIcon size={40} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <label className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
+                                                <ImageIcon size={24} />
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={handleAvatarSelect}
+                                                />
+                                            </label>
+                                            <button
+                                                className="absolute bottom-0 right-0 bg-amber text-white p-1.5 rounded-full shadow-sm hover:bg-amber-dark transition-colors"
+                                                onClick={() => (document.querySelector('input[type="file"][onChange]') as HTMLInputElement)?.click()}
+                                            >
+                                                <Edit2 size={12} />
+                                            </button>
+                                        </div>
+                                        <p className="text-sm text-stone-500">Smelltu á myndina til að breyta</p>
+                                    </div>
+
                                     <div>
                                         <label className="label">Tungumál (Language)</label>
                                         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -2101,6 +2242,56 @@ export default function SettingsPage() {
                     </div>
                 )
             }
+            {/* Ownership Transfer Modal */}
+            {memberToTransfer && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                        <div className="flex items-center gap-3 text-red-600 mb-4">
+                            <AlertTriangle className="w-8 h-8" />
+                            <h3 className="text-xl font-bold font-serif">Flytja Eignarhald?</h3>
+                        </div>
+
+                        <p className="text-stone-600 mb-4 text-sm leading-relaxed">
+                            Þú ert að fara að gera <strong>{memberToTransfer.name || memberToTransfer.email}</strong> að Bústaðastjóra.
+                        </p>
+
+                        <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 text-sm text-red-800">
+                            <strong>Aðvörun:</strong> Þú munt missa öll stjórnendaréttindi (bókunarreglur, stillingar, o.fl.) og verður venjulegur meðeigandi.
+                        </div>
+
+                        <p className="text-xs text-stone-500 mb-2 uppercase font-bold tracking-wide">
+                            Skrifaðu "SAMÞYKKJA" til að staðfesta:
+                        </p>
+
+                        <input
+                            type="text"
+                            className="w-full border border-stone-300 rounded-md px-3 py-2 mb-6 font-mono text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 uppercase"
+                            placeholder="SAMÞYKKJA"
+                            value={transferConfirmation}
+                            onChange={(e) => setTransferConfirmation(e.target.value.toUpperCase())}
+                        />
+
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => {
+                                    setMemberToTransfer(null);
+                                    setTransferConfirmation('');
+                                }}
+                                className="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-md text-sm font-medium transition-colors"
+                            >
+                                Hætta við
+                            </button>
+                            <button
+                                onClick={handleTransferOwnership}
+                                disabled={transferConfirmation !== 'SAMÞYKKJA'}
+                                className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                            >
+                                Staðfesta Flutning
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <MobileNav />
         </div >
     );
