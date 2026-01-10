@@ -90,9 +90,10 @@ export default function SetupProgress({ house, onShowWalkthrough }: SetupProgres
         return (
             <button
                 onClick={handleUndismiss}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-4 text-xs text-stone-500 hover:text-amber bg-stone-100 hover:bg-amber/10 rounded-full transition-colors"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] text-stone-400 hover:text-amber bg-stone-50 hover:bg-amber/10 border border-stone-100 rounded-full transition-colors"
+                title="Smelltu til að opna uppsetningarhjálp"
             >
-                <Circle size={8} className="text-amber" />
+                <Circle size={6} className="text-amber" />
                 {percentage}% uppsett
             </button>
         );
