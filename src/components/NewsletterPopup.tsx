@@ -15,8 +15,8 @@ export default function NewsletterPopup() {
             const date = new Date(parseInt(dismissedAt));
             const now = new Date();
             const daysDiff = (now.getTime() - date.getTime()) / (1000 * 3600 * 24);
-            if (daysDiff < 7) {
-                return; // Don't show if dismissed within 7 days
+            if (daysDiff < 30) {
+                return; // Don't show if dismissed within 30 days
             }
         }
 
@@ -30,7 +30,7 @@ export default function NewsletterPopup() {
         // Trigger on timer (mobile/desktop fallback)
         const timer = setTimeout(() => {
             setIsOpen(true);
-        }, 15000); // 15 seconds
+        }, 45000); // 45 seconds
 
         document.addEventListener('mouseleave', onMouseLeave);
 

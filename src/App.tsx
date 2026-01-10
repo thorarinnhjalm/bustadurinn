@@ -30,6 +30,8 @@ import ContactPage from '@/pages/ContactPage';
 import SandboxPage from '@/pages/SandboxPage';
 import MigrationPage from '@/pages/MigrationPage';
 import MarketingMapPage from '@/pages/MarketingMapPage';
+import PrivacyPage from '@/pages/PrivacyPage';
+import TermsPage from '@/pages/TermsPage';
 
 // RBAC imports
 import { useUserRole } from '@/hooks/useUserRole';
@@ -124,6 +126,8 @@ function App() {
               <Route path="/hafa-samband" element={<ContactPage />} />
               <Route path="/prufa" element={<SandboxPage />} />
               <Route path="/marketing-map" element={<MarketingMapPage />} />
+              <Route path="/personuvernd" element={<PrivacyPage />} />
+              <Route path="/skilmalar" element={<TermsPage />} />
 
               {/* Protected Routes */}
               <Route
