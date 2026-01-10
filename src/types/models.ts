@@ -19,6 +19,7 @@ export interface House {
     rules?: string;
     wifi_ssid?: string;
     wifi_password?: string;
+    no_wifi?: boolean; // True if house has no WiFi available
     seo_slug?: string;
 
     // Guest Information

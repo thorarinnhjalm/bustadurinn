@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Circle, ChevronRight } from 'lucide-react';
+import { CheckCircle, Circle, ChevronRight, X } from 'lucide-react';
 import type { House } from '@/types/models';
 
 interface SetupProgressProps {
@@ -35,7 +36,8 @@ const SETUP_ITEMS: SetupItem[] = [
     {
         id: 'wifi',
         label: 'WiFi upplýsingar',
-        isComplete: (h) => !!h.wifi_ssid || !!h.wifi_password,
+        // Complete if has wifi info OR marked as no wifi available
+        isComplete: (h) => !!h.wifi_ssid || !!h.wifi_password || h.no_wifi === true,
         link: '/settings'
     },
     {
@@ -43,17 +45,36 @@ const SETUP_ITEMS: SetupItem[] = [
         label: 'Húsreglur',
         isComplete: (h) => !!h.house_rules && h.house_rules.length > 10,
         link: '/settings'
-    },
-    {
-        id: 'guest',
-        label: 'Gestahlekkur',
-        isComplete: (h) => !!h.guest_token,
-        link: '/settings?tab=guests'
     }
 ];
 
 export default function SetupProgress({ house, onShowWalkthrough }: SetupProgressProps) {
     const navigate = useNavigate();
+    const [isDismissed, setIsDismissed] = useState(false);
+
+    // Check localStorage for dismissed state
+    useEffect(() => {
+        if (house) {
+            const dismissed = localStorage.getItem(`setup_dismissed_${house.id}`);
+            if (dismissed === 'true') {
+                setIsDismissed(true);
+            }
+        }
+    }, [house]);
+
+    const handleDismiss = () => {
+        if (house) {
+            localStorage.setItem(`setup_dismissed_${house.id}`, 'true');
+        }
+        setIsDismissed(true);
+    };
+
+    const handleUndismiss = () => {
+        if (house) {
+            localStorage.removeItem(`setup_dismissed_${house.id}`);
+        }
+        setIsDismissed(false);
+    };
 
     if (!house) return null;
 
@@ -64,9 +85,31 @@ export default function SetupProgress({ house, onShowWalkthrough }: SetupProgres
     // Don't show if fully complete
     if (percentage === 100) return null;
 
+    // Show mini reminder when dismissed
+    if (isDismissed) {
+        return (
+            <button
+                onClick={handleUndismiss}
+                className="w-full bg-amber/10 border border-amber/20 rounded-xl p-3 mb-4 flex items-center justify-center gap-2 text-amber-800 text-sm font-medium hover:bg-amber/15 transition-colors"
+            >
+                <Circle size={14} className="text-amber" />
+                Uppsetning ólokið ({percentage}%) — smelltu til að sjá
+            </button>
+        );
+    }
+
     return (
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 mb-6">
-            <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 mb-6 relative">
+            {/* Dismiss button */}
+            <button
+                onClick={handleDismiss}
+                className="absolute top-3 right-3 text-stone-300 hover:text-stone-500 transition-colors p-1"
+                title="Fela"
+            >
+                <X size={18} />
+            </button>
+
+            <div className="flex items-center justify-between mb-4 pr-6">
                 <div>
                     <h3 className="font-serif font-bold text-lg text-charcoal">
                         Uppsetning húss

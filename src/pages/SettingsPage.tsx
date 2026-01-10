@@ -95,6 +95,7 @@ export default function SettingsPage() {
         invite_code: '',
         wifi_ssid: '',
         wifi_password: '',
+        no_wifi: false,
         holiday_mode: 'first_come' as 'fairness' | 'first_come',
         house_rules: '',
         house_rules_en: '',
@@ -702,6 +703,7 @@ export default function SettingsPage() {
                         invite_code: houseData.invite_code || '',
                         wifi_ssid: houseData.wifi_ssid || '',
                         wifi_password: houseData.wifi_password || '',
+                        no_wifi: houseData.no_wifi || false,
                         holiday_mode: houseData.holiday_mode || 'first_come',
                         house_rules: houseData.house_rules || '',
                         house_rules_en: houseData.house_rules_en || '',
@@ -837,6 +839,7 @@ export default function SettingsPage() {
                 },
                 wifi_ssid: houseForm.wifi_ssid,
                 wifi_password: houseForm.wifi_password,
+                no_wifi: houseForm.no_wifi,
                 holiday_mode: houseForm.holiday_mode as any,
                 house_rules: houseForm.house_rules,
                 house_rules_en: houseForm.house_rules_en,
@@ -863,6 +866,7 @@ export default function SettingsPage() {
                     address: houseForm.address,
                     wifi_ssid: houseForm.wifi_ssid,
                     wifi_password: houseForm.wifi_password,
+                    no_wifi: houseForm.no_wifi,
                     house_rules: houseForm.house_rules,
                     house_rules_en: houseForm.house_rules_en,
                     check_in_time: houseForm.check_in_time,
@@ -986,6 +990,7 @@ export default function SettingsPage() {
                 address: houseForm.address,
                 wifi_ssid: houseForm.wifi_ssid,
                 wifi_password: houseForm.wifi_password,
+                no_wifi: houseForm.no_wifi,
                 house_rules: houseForm.house_rules,
                 house_rules_en: houseForm.house_rules_en,
                 check_in_time: houseForm.check_in_time,
@@ -1399,6 +1404,16 @@ export default function SettingsPage() {
                                                         placeholder="••••••••"
                                                     />
                                                 </div>
+                                                <label className="flex items-center gap-3 mt-4 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={houseForm.no_wifi}
+                                                        onChange={(e) => setHouseForm({ ...houseForm, no_wifi: e.target.checked })}
+                                                        disabled={!isManager}
+                                                        className="w-5 h-5 rounded border-stone-300 text-amber focus:ring-amber"
+                                                    />
+                                                    <span className="text-sm text-stone-600">Ekkert WiFi í boði</span>
+                                                </label>
                                             </div>
                                         </div>
 
