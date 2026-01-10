@@ -18,9 +18,9 @@ export default defineConfig({
       },
     },
   },
-  // esbuild: {
-  //   drop: ['console', 'debugger'],  // Remove console.* and debugger in production
-  // },
+  esbuild: {
+    drop: ['console', 'debugger'],  // Remove console.* and debugger in production
+  },
   server: {
     proxy: {
       '/api': {
