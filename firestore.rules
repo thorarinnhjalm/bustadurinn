@@ -37,6 +37,12 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
     }
+
+    // RBAC ROLES - Allow users to read their own role
+    match /user_roles/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
+      allow write: if isSuperAdmin();
+    }
     
     // House Member Check Helper
     function isHouseMember(houseId) {
