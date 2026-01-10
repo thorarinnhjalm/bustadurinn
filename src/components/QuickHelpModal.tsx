@@ -8,7 +8,7 @@ interface QuickHelpModalProps {
 
 const FAQ_ITEMS = [
     {
-        q: "Hvernig bý ég til gestahlekkja?",
+        q: "Hvernig bý ég til gestahlekk?",
         a: "Farðu í Stillingar → Gestir flipann. Þar getur þú búið til tímabundna hlekki fyrir hverja bókun eða fastan hlekk fyrir fjölskyldu."
     },
     {

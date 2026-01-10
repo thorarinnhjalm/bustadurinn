@@ -57,7 +57,7 @@ export default function WhatsNext({ house, currentUser, bookingsCount, membersCo
         nudges.push({
             id: 'guest',
             icon: Link2,
-            title: 'Búðu til gestahlekkja',
+            title: 'Búðu til gestahlekk',
             description: 'Deildu upplýsingum með gestum á einfaldan hátt.',
             link: '/settings?tab=guests',
             color: 'bg-emerald-50 text-emerald-600'
