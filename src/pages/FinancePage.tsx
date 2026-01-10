@@ -61,8 +61,9 @@ export default function FinancePage() {
     }, [currentUser]);
 
     const isManager = house?.manager_id === currentUser?.uid;
+    const canViewFinances = isManager || (house?.finance_viewer_ids?.includes(currentUser?.uid || '') || false);
 
-    if (house?.privacy_hide_finances && !isManager) {
+    if (house?.privacy_hide_finances && !canViewFinances) {
         return (
             <div className="min-h-screen bg-bone p-6 flex flex-col items-center justify-center text-center">
                 <Shield className="w-16 h-16 text-stone-300 mb-4" />

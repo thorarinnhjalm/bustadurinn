@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- A-frame cabin outline -->
+  <path d="M50 8L8 92H92L50 8Z" stroke="#D97706" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Door/vertical line -->
+  <path d="M50 60V92" stroke="#D97706" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

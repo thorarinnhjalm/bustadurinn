@@ -45,25 +45,6 @@ export default function FeaturesPage() {
             MockupComponent: FairnessMockup
         },
         {
-            icon: Wallet,
-            title: "Fjárhagsyfirlit",
-            shortDesc: "Halddu utan um hússjóðinn og sjáðu strax stöðuna.",
-            description: "Fjárhagskerfið gerir þér kleift að halda fullkomnu bókhaldi yfir allt sem varðar sumarhúsið. Skráðu innborganir, útgjöld, viðhaldsvinnu og leigu. Kerfið flokkkar sjálfkrafa eftir tegund (rafmagn, viðhald, tryggingar, o.fl.) og sýnir þér strax hvort hússjóðurinn sé í plús eða mínus. Þú getur líka úthlutað kostnaði á mismunandi meðeigendur ef þörf krefur. Öll gögn eru auðlæsileg og tilbúin til að deila með bókhaldara eða endurskoðanda.",
-            benefits: [
-                "Sjáðu stöðu hússjóðs í rauntíma",
-                "Flokka útgjöld eftir tegund",
-                "Úthlutaðu kostnaði á einstaka eigendur",
-                "Útflutningur í Excel fyrir bókhald"
-            ],
-            useCases: [
-                "Halda utan um rafmagnsreikninga og fasteignagjöld",
-                "Skipuleggja stórar framkvæmdir (t.d. málun, þakviðgerð)",
-                "Deila kostnaði sanngjarnt á alla meðeigendur"
-            ],
-            imageUrl: "/screenshots/finance.png",
-            MockupComponent: FinanceMockup
-        },
-        {
             icon: User,
             title: "Hlutverkastýring",
             shortDesc: "Skilgreindu bústaðastjóra og almenna meðeigendur.",
@@ -81,6 +62,25 @@ export default function FeaturesPage() {
             ],
             imageUrl: "/screenshots/tasks.png",
             MockupComponent: RolesMockup
+        },
+        {
+            icon: Wallet,
+            title: "Fjárhagsyfirlit",
+            shortDesc: "Halddu utan um hússjóðinn og sjáðu strax stöðuna.",
+            description: "Fjárhagskerfið gerir þér kleift að halda fullkomnu bókhaldi yfir allt sem varðar sumarhúsið. Skráðu innborganir, útgjöld, viðhaldsvinnu og leigu. Kerfið flokkkar sjálfkrafa eftir tegund og sýnir stöðu hússjóðsins. Þú hefur fulla stjórn á hverjir sjá hvað – felaðu fjármálin fyrir öðrum eða gefðu aðgang bara til maka.",
+            benefits: [
+                "Sjáðu stöðu hússjóðs í rauntíma",
+                "Stjórnaðu hverjir sjá fjármálin",
+                "Flokka útgjöld eftir tegund",
+                "Útflutningur í Excel fyrir bókhald"
+            ],
+            useCases: [
+                "Halda utan um rafmagnsreikninga og fasteignagjöld",
+                "Skipuleggja stórar framkvæmdir (t.d. málun, þakviðgerð)",
+                "Deila kostnaði sanngjarnt á alla meðeigendur"
+            ],
+            imageUrl: "/screenshots/finance.png",
+            MockupComponent: FinanceMockup
         },
         {
             icon: Wifi,
@@ -175,8 +175,8 @@ export default function FeaturesPage() {
     return (
         <>
             <MarketingLayout
-                title="Eiginleikar - Bústaðurinn.is | Bókunarkerfi, Fjármál og Verkefni fyrir Sumarhús"
-                description="Yfirlit yfir alla eiginleika Bústaðurinn.is: Bókunardagatal með sanngirnisreglu, fjárhagsyfirlit, hlutverkastýring, gestaaðgangur, tilkynningar og fleira. Hannað fyrir íslensk sumarhús í sameign."
+                title="Eiginleikar - Bústaðurinn.is | Bókunarkerfi, Sanngirnisregla og Verkefni"
+                description="Yfirlit yfir alla eiginleika Bústaðurinn.is: Bókunardagatal með sanngirnisreglu, verkefnastjórnun, hlutverkastýring og sjálfvirkur hússjóður. Hannað fyrir íslensk sumarhús í sameign."
                 keywords="sumarhús eiginleikar, bókunarkerfi, fjárhagskerfi, verkefnastjórnun, gestaaðgangur, sanngirnisregla, íslensk sumarhús"
                 canonical="https://bustadurinn.is/eiginleikar"
                 structuredData={{

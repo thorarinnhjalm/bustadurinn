@@ -103,7 +103,8 @@ export default function SettingsPage() {
         access_instructions: '',
         access_instructions_en: '',
         emergency_contact: '',
-        privacy_hide_finances: false
+        privacy_hide_finances: false,
+        finance_viewer_ids: [] as string[]
     });
 
     // Language Toggle for dual-input fields
@@ -709,7 +710,8 @@ export default function SettingsPage() {
                         access_instructions: houseData.access_instructions || '',
                         access_instructions_en: houseData.access_instructions_en || '',
                         emergency_contact: houseData.emergency_contact || '',
-                        privacy_hide_finances: houseData.privacy_hide_finances || false
+                        privacy_hide_finances: houseData.privacy_hide_finances || false,
+                        finance_viewer_ids: houseData.finance_viewer_ids || []
                     });
                 }
             } catch (err) {
@@ -845,6 +847,7 @@ export default function SettingsPage() {
 
                 emergency_contact: houseForm.emergency_contact,
                 privacy_hide_finances: houseForm.privacy_hide_finances,
+                finance_viewer_ids: houseForm.finance_viewer_ids || [],
                 updated_at: new Date()
             };
 
@@ -1402,13 +1405,84 @@ export default function SettingsPage() {
                                                 <Shield className="w-5 h-5 text-amber" />
                                                 <h3 className="font-serif text-lg">Aðgangsstýring</h3>
                                             </div>
-                                            <Toggle
-                                                label="Fela fjármál fyrir öðrum"
-                                                description="Ef kveikt er á þessu sjá einungis stjórnendur (þú) fjármálayfirlitið. Aðrir meðeigendur sjá hvorki stöðu né færslur."
-                                                checked={houseForm.privacy_hide_finances}
-                                                onChange={(val) => setHouseForm({ ...houseForm, privacy_hide_finances: val })}
-                                                disabled={!isManager}
-                                            />
+
+                                            <div className="space-y-4">
+                                                <Toggle
+                                                    label="Fela fjármál (Hússjóður)"
+                                                    description="Ef kveikt er á þessu sjá einungis stjórnendur (þú) fjármálayfirlitið sjálfkrafa. Aðrir sjá það ekki nema þeim sé sérstaklega veittur aðgangur hér að neðan."
+                                                    checked={houseForm.privacy_hide_finances}
+                                                    onChange={(val) => setHouseForm({ ...houseForm, privacy_hide_finances: val })}
+                                                    disabled={!isManager}
+                                                />
+
+                                                {/* Viewer Selection (Only visible if finances are hidden) */}
+                                                {houseForm.privacy_hide_finances && isManager && (
+                                                    <div className="bg-stone-50 rounded-xl p-4 border border-stone-200 animate-in fade-in slide-in-from-top-2">
+                                                        <h5 className="text-sm font-bold text-charcoal mb-3 flex items-center gap-2">
+                                                            <Users size={14} className="text-amber" />
+                                                            Hverjir mega sjá?
+                                                        </h5>
+
+                                                        {loadingMembers ? (
+                                                            <div className="text-sm text-stone-400">Hleð notendum...</div>
+                                                        ) : (
+                                                            <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                                                {members
+                                                                    .filter(m => m.uid !== house?.manager_id) // Exclude manager as they always see it
+                                                                    .map(member => {
+                                                                        const canView = houseForm.finance_viewer_ids?.includes(member.uid) || false;
+                                                                        return (
+                                                                            <div
+                                                                                key={member.uid}
+                                                                                className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer transition-all ${canView
+                                                                                    ? 'bg-white border-green-500 shadow-sm'
+                                                                                    : 'bg-transparent border-transparent hover:bg-stone-100 hover:border-stone-200'
+                                                                                    }`}
+                                                                                onClick={() => {
+                                                                                    const currentViewers = houseForm.finance_viewer_ids || [];
+                                                                                    let newViewers;
+
+                                                                                    if (canView) {
+                                                                                        newViewers = currentViewers.filter(id => id !== member.uid);
+                                                                                    } else {
+                                                                                        newViewers = [...currentViewers, member.uid];
+                                                                                    }
+                                                                                    setHouseForm({ ...houseForm, finance_viewer_ids: newViewers });
+                                                                                }}
+                                                                            >
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-stone-600 text-xs font-bold overflow-hidden border border-stone-100">
+                                                                                        {member.avatar ? (
+                                                                                            <img src={member.avatar} alt="" className="w-full h-full object-cover" />
+                                                                                        ) : (
+                                                                                            (member.name || member.email || '?').substring(0, 2).toUpperCase()
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <span className={`text-sm ${canView ? 'font-bold text-charcoal' : 'text-stone-600'}`}>
+                                                                                        {member.name || member.email}
+                                                                                    </span>
+                                                                                </div>
+
+                                                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${canView
+                                                                                    ? 'bg-green-500 border-green-500 text-white scale-110'
+                                                                                    : 'border-stone-300 bg-white'
+                                                                                    }`}>
+                                                                                    {canView && <Check size={12} strokeWidth={3} />}
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+
+                                                                {members.filter(m => m.uid !== house?.manager_id).length === 0 && (
+                                                                    <p className="text-xs text-stone-400 italic py-2 text-center">
+                                                                        Engir aðrir meðeigendur fundust.
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {isManager && (

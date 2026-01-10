@@ -2,8 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import {
     Calendar, TrendingUp, CheckCircle, ArrowRight, Users,
-    CheckSquare, Home, Plus, Settings
+    CheckSquare, Home, Plus, Settings, Shield, Bell
 } from 'lucide-react';
+import { CalendarMockup } from '@/components/FeatureMockups';
 import MarketingLayout from '@/components/MarketingLayout';
 import { useAppStore } from '@/store/appStore';
 import NewsletterSignup from '@/components/NewsletterSignup';
@@ -38,23 +39,23 @@ export default function LandingPage() {
     const features = [
         {
             icon: Calendar,
+            title: "Bókunardagatal",
+            description: "Sjáðu strax hver er búinn að panta helgar. Einfalt og skýrt dagatal sem kemur í veg fyrir tvíbókanir og árekstra."
+        },
+        {
+            icon: Shield,
             title: "Sanngjörn skipting",
             description: "Innbyggð sanngirnisregla tryggir að allir fái sinn tíma og að enginn sitji einn að vinsælustu helgunum. Kerfið sér um að deila gæðunum."
         },
         {
+            icon: Bell,
+            title: "Tilkynningar",
+            description: "Fáðu boð í tölvupósti þegar ný bókun dettur inn. Allir vita alltaf hvað er í gangi, án þess að þurfa að hringjast á."
+        },
+        {
             icon: TrendingUp,
-            title: "Hver borgaði rafmagnið?",
-            description: "Sjáið svart á hvítu hver hefur lagt hvað út. Haldið utan um kostnað og greiðslur svo hússjóðurinn standi alltaf undir rekstrinum."
-        },
-        {
-            icon: Users,
-            title: "Gestir og leigjendur",
-            description: "Sendu 'Töfrahlekk' á gesti með leiðbeiningum, pottastillingum og WiFi lykilorði. Engin öpp, engin skráning, bara virkar í vafranum."
-        },
-        {
-            icon: CheckCircle,
-            title: "Öryggi og eftirlit",
-            description: "Rauntíma tenging við Veðurstofuna og Vegagerðina. Við látum þig vita ef það stefnir í ófærð eða vonskuveður á svæðinu."
+            title: "Hússjóður (Valfrjálst)",
+            description: "Ef þið viljið, þá heldur kerfið utan um hússjóðinn og hver á að borga rafmagnið. Algjörlega sjálfvirkt og gagnsætt."
         }
     ];
 
@@ -66,86 +67,96 @@ export default function LandingPage() {
         >
 
             {/* Hero Section */}
-            <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-                {/* Background Image */}
-                <div className="absolute inset-0 z-0">
-                    <img
-                        src="/hero_summer_house.webp"
-                        alt="Beautiful Icelandic summer house"
-                        className="w-full h-full object-cover"
-                    />
-                    {/* Gradient Overlays */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#111111] via-[#111111]/90 to-transparent"></div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/90 via-transparent to-transparent"></div>
-                </div>
+            <section className="relative min-h-[90vh] flex items-center bg-bone overflow-hidden pt-20">
+                {/* Background Decor */}
+                <div className="absolute top-0 right-0 w-2/3 h-full bg-stone-100 rounded-l-[5rem] hidden lg:block"></div>
 
-                {/* Content */}
-                <div className="container mx-auto px-6 py-20 md:py-32 relative z-10">
-                    <div className="max-w-3xl">
-                        {/* Badge */}
-                        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-8">
-                            <div className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-[0_0_20px_rgba(220,38,38,0.4)] animate-pulse">
-                                <span className="w-2 h-2 bg-white rounded-full"></span>
-                                Fyrstu 50 húsin fá 1 ár frítt!
+                <div className="container mx-auto px-6 relative z-10">
+                    <div className="flex flex-col lg:flex-row items-center gap-16">
+                        {/* Text Content */}
+                        <div className="w-full lg:w-1/2">
+                            {/* Badge */}
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-8">
+                                <div className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-[0_0_20px_rgba(220,38,38,0.4)] animate-pulse">
+                                    <span className="w-2 h-2 bg-white rounded-full"></span>
+                                    Fyrstu 50 húsin fá 1 ár frítt!
+                                </div>
+                                <div className="inline-flex items-center gap-2 bg-amber/20 text-charcoal border border-amber/30 px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm">
+                                    Engin skuldbinding • 30 daga prufa
+                                </div>
                             </div>
-                            <div className="inline-flex items-center gap-2 bg-amber/20 text-amber border border-amber/30 px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm">
-                                Engin skuldbinding • 30 daga prufa
+
+                            <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-8 text-charcoal">
+                                Hættu að rífast um{' '}
+                                <span className="text-amber inline-block transform -rotate-2">helgarnar</span>
+                            </h1>
+
+                            <p className="text-xl md:text-2xl mb-10 text-grey-dark leading-relaxed font-light">
+                                Hver fær páskana? Hver átti helgina? Bústaðurinn.is tryggir að það sé <strong>aldrei vesen</strong>. Einfalt bókunarkerfi sem heldur friðinn í fjölskyldunni.
+                            </p>
+
+                            <div className="flex flex-col sm:flex-row gap-4 mb-12">
+                                <button
+                                    onClick={() => navigate('/prufa')}
+                                    className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-10 py-5 shadow-[0_0_30px_rgba(251,191,36,0.2)] hover:shadow-[0_0_40px_rgba(251,191,36,0.3)] transform hover:scale-105 transition-all flex items-center justify-center gap-2 group rounded-xl"
+                                >
+                                    <Calendar className="w-5 h-5" />
+                                    Prófaðu Bókunarkerfið
+                                </button>
+                                <button
+                                    onClick={() => navigate('/signup')}
+                                    className="btn btn-secondary border-2 border-stone-200 text-charcoal hover:border-charcoal hover:bg-stone-50 text-lg px-10 py-5 transition-all rounded-xl"
+                                >
+                                    Stofna Aðgang
+                                </button>
                             </div>
-                        </div>
 
-                        {/* Headline */}
-                        <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-6 text-bone animate-fade-in">
-                            Hættu að rífast um{' '}
-                            <span className="text-amber">helgarnar</span>
-                        </h1>
-
-                        {/* Tagline */}
-                        <p className="text-xl md:text-2xl mb-8 text-bone/90 leading-relaxed font-light">
-                            Einföld lausn sem tryggir sanngjarna skiptingu, gagnsæ fjármál og frið í fjölskyldunni. Sumarhúsið á að vera griðastaður, ekki uppspretta ágreinings.
-                        </p>
-
-                        {/* CTAs */}
-                        <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                            <button
-                                onClick={() => navigate('/prufa')}
-                                className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-10 py-4 shadow-[0_0_30px_rgba(251,191,36,0.3)] hover:shadow-[0_0_40px_rgba(251,191,36,0.4)] transform hover:scale-105 transition-all flex items-center justify-center gap-2 group"
-                            >
-                                <span className="relative flex h-3 w-3 mr-1">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-charcoal opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-charcoal"></span>
-                                </span>
-                                Prófaðu Sumarbústaðinn
-                            </button>
-                            <button
-                                onClick={() => navigate('/signup')}
-                                className="btn btn-secondary border-2 border-white/20 text-white hover:bg-white/10 backdrop-blur-sm text-lg px-10 py-4 hover:border-white/40 transition-all"
-                            >
-                                Stofna Aðgang
-                            </button>
-                        </div>
-
-                        {/* Social Proof */}
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 text-sm text-stone-400">
-                            <div className="flex items-center gap-2">
-                                <CheckCircle className="w-5 h-5 text-green-400" />
-                                <span>30 daga prufa</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <CheckCircle className="w-5 h-5 text-green-400" />
-                                <span>Engin bindandi samningar</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <CheckCircle className="w-5 h-5 text-green-400" />
-                                <span>4.990 kr/ári</span>
+                            <div className="flex items-center gap-8 text-sm text-grey-mid font-medium">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                    <span>Virkar í síma & tölvu</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                    <span>Engin öpp að sækja</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* Scroll Indicator */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-bounce">
-                    <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-                        <div className="w-1 h-3 bg-white/50 rounded-full mt-2"></div>
+                        {/* Hero Visual - Calendar Mockup */}
+                        <div className="w-full lg:w-1/2 relative perspective-1000">
+                            {/* Blobs */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-amber/10 rounded-full blur-3xl -z-10 animate-pulse-slow"></div>
+
+                            <div className="relative transform rotate-y-[-5deg] rotate-x-[5deg] hover:rotate-0 transition-all duration-700 ease-out shadow-2xl rounded-2xl overflow-hidden border border-stone-100 bg-white min-h-[500px]">
+                                <CalendarMockup />
+
+                                {/* Floating Badges */}
+                                <div className="absolute -right-4 top-12 bg-white p-4 rounded-xl shadow-xl border border-stone-100 animate-float">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                                            <CheckCircle className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-stone-900">Bókun staðfest</p>
+                                            <p className="text-[10px] text-stone-500">Jón var að bóka helgina</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="absolute -left-4 bottom-24 bg-white p-4 rounded-xl shadow-xl border border-stone-100 animate-float-delayed">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-amber/10 text-amber flex items-center justify-center">
+                                            <Shield className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-stone-900">Sanngirnisregla</p>
+                                            <p className="text-[10px] text-stone-500">Allir fá jafnan aðgang</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

@@ -42,6 +42,7 @@ export interface House {
 
     // Privacy
     privacy_hide_finances?: boolean;
+    finance_viewer_ids?: string[]; // Specific members allowed to view finances even if hidden
 
     // Subscription
     subscription_status?: 'trial' | 'active' | 'free' | 'expired';
