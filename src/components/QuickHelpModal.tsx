@@ -21,7 +21,7 @@ const FAQ_ITEMS = [
     },
     {
         q: "Get ég séð hverjir bókuðu hvað?",
-        a: "Já, allar bókanir sjást í dagatali. Bústaðastjórinn getur smellt á bókunarspjöld til að sjá nánari upplýsingar. Aðrir meðeigendur sjá bókanir sínar."
+        a: "Já, allar bókanir sjást í dagatali. Bústaðastjórinn getur smellt á bókunarspjöld til að sjá nánari upplýsingar. Meðeigendur sjá bókanir en ekki nánar (t.d. veðurspá eða innkaupalista)."
     },
     {
         q: "Hvernig býð ég öðrum í húsið?",
