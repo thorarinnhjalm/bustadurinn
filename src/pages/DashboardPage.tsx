@@ -37,6 +37,8 @@ const CabinLogo = ({ size = 24, className = "" }: { size?: number, className?: s
 
 import Walkthrough from '@/components/Walkthrough';
 import SetupProgress from '@/components/SetupProgress';
+import WhatsNext from '@/components/WhatsNext';
+import QuickHelpModal from '@/components/QuickHelpModal';
 
 const UserDashboard = () => {
     const navigate = useNavigate();
@@ -48,6 +50,7 @@ const UserDashboard = () => {
     // UI state
     const [showHouseSwitcher, setShowHouseSwitcher] = useState(false);
     const [showWalkthrough, setShowWalkthrough] = useState(false);
+    const [showQuickHelp, setShowQuickHelp] = useState(false);
 
     // Check for first-time walkthrough
     useEffect(() => {
@@ -422,9 +425,9 @@ const UserDashboard = () => {
                         </button>
                     )}
                     <button
-                        onClick={() => setShowWalkthrough(true)}
+                        onClick={() => setShowQuickHelp(true)}
                         className="text-stone-400 hover:text-amber transition-colors"
-                        title="Hjálp / Leiðbeiningar"
+                        title="Hjálp"
                     >
                         <HelpCircle size={20} />
                     </button>
@@ -603,6 +606,14 @@ const UserDashboard = () => {
                 <SetupProgress
                     house={currentHouse}
                     onShowWalkthrough={() => setShowWalkthrough(true)}
+                />
+
+                {/* What's Next nudges (shows when setup complete but actions pending) */}
+                <WhatsNext
+                    house={currentHouse}
+                    currentUser={currentUser}
+                    bookingsCount={nextBooking ? 1 : 0}
+                    membersCount={1} // TODO: get actual member count
                 />
 
                 {/* Quick Actions Bar */}
@@ -1123,6 +1134,9 @@ const UserDashboard = () => {
 
             {/* Walkthrough */}
             {showWalkthrough && <Walkthrough onClose={() => setShowWalkthrough(false)} />}
+
+            {/* Quick Help Modal */}
+            <QuickHelpModal isOpen={showQuickHelp} onClose={() => setShowQuickHelp(false)} />
         </div>
     );
 };
