@@ -6,7 +6,7 @@ import {
     Plus, Users, Wallet, Bell,
     ChevronRight, Loader2, Shield,
     ChevronDown, Home, LogOut,
-    X, Image as ImageIcon, ShoppingBag, Check, MapPin, Camera
+    X, Image as ImageIcon, ShoppingBag, Check, MapPin, Camera, HelpCircle
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import { useNavigate } from 'react-router-dom';
@@ -36,6 +36,7 @@ const CabinLogo = ({ size = 24, className = "" }: { size?: number, className?: s
 );
 
 import Walkthrough from '@/components/Walkthrough';
+import SetupProgress from '@/components/SetupProgress';
 
 const UserDashboard = () => {
     const navigate = useNavigate();
@@ -421,6 +422,13 @@ const UserDashboard = () => {
                         </button>
                     )}
                     <button
+                        onClick={() => setShowWalkthrough(true)}
+                        className="text-stone-400 hover:text-amber transition-colors"
+                        title="Hjálp / Leiðbeiningar"
+                    >
+                        <HelpCircle size={20} />
+                    </button>
+                    <button
                         onClick={() => setShowNotifications(!showNotifications)}
                         className="relative text-stone-400 hover:text-[#1a1a1a] transition-colors"
                     >
@@ -590,6 +598,12 @@ const UserDashboard = () => {
 
             {/* --- MAIN CONTENT --- */}
             <main className="max-w-5xl mx-auto px-4 -mt-8 relative z-10 space-y-8">
+
+                {/* Setup Progress (shows if incomplete) */}
+                <SetupProgress
+                    house={currentHouse}
+                    onShowWalkthrough={() => setShowWalkthrough(true)}
+                />
 
                 {/* Quick Actions Bar */}
                 <div className="bg-white p-2 rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-100 flex p-1.5 gap-2">
