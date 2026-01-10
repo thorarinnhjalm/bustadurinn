@@ -24,7 +24,7 @@ const FAQ_ITEMS = [
         a: "Já, í dagatali sérðu allar bókanir. Stillingar → Húsreglur flipanum getur þú stjórnað hvort bókanir séu sýnilegar öllum eða aðeins eigendanum."
     },
     {
-        q: "Hvernig bjó ég öðrum í húsið?",
+        q: "Hvernig bý ég öðrum í húsið?",
         a: "Stillingar → Meðlimir flipinn. Smelltu á 'Bjóða meðlimi' og sendu boðshlekk í tölvupósti eða skeyti."
     },
     {
