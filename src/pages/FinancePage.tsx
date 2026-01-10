@@ -16,6 +16,7 @@ import {
     Shield,
     Eye
 } from 'lucide-react';
+import EmptyState from '@/components/EmptyState';
 import { useAppStore } from '@/store/appStore';
 import { db } from '@/lib/firebase';
 import {
@@ -397,10 +398,13 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
 
                 {!plan || !plan.items || plan.items.length === 0 ? (
                     !showForm && (
-                        <div className="text-center py-12 text-grey-mid">
-                            <Calculator className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                            <p>Engir liðir skráðir. Bættu við kostnaði til að byrja.</p>
-                        </div>
+                        <EmptyState
+                            icon={Calculator}
+                            title="Hússjóðurinn er tómur"
+                            description="Skráðu sameiginlegan kostnað hér: rafmagn, tryggingar, viðhald og fleira. Svo vitið þið alltaf hver á inni."
+                            actionLabel="Bæta við lið"
+                            onAction={() => setShowForm(true)}
+                        />
                     )
                 ) : (
                     <div className="space-y-3 sm:space-y-4">

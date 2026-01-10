@@ -19,6 +19,7 @@ import { dateLocales, calendarMessages, bookingTypeLabels, type SupportedLanguag
 import { getIcelandicHolidays, isHoliday, includesMajorHoliday } from '@/utils/icelandicHolidays';
 import { analytics } from '@/utils/analytics';
 import MobileNav from '@/components/MobileNav';
+import EmptyState from '@/components/EmptyState';
 import confetti from 'canvas-confetti';
 
 // View type derived from string as generic View type import is tricky
@@ -180,11 +181,11 @@ const BookingsListView = ({
 
     if (bookings.length === 0) {
         return (
-            <div className="text-center py-12">
-                <CalendarIcon className="w-12 h-12 text-stone-300 mx-auto mb-4" />
-                <p className="text-stone-500 text-lg">Engar bókanir ennþá</p>
-                <p className="text-stone-400 text-sm">Smelltu á "Ný bókun" til að bóka dvöl</p>
-            </div>
+            <EmptyState
+                icon={CalendarIcon}
+                title="Engar bókanir ennþá"
+                description="Dagatalið bíður þín! Bókaðu fyrstu dvölina og haltu utan um hverjir nýta húsið."
+            />
         );
     }
 
