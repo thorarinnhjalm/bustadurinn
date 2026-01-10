@@ -613,7 +613,7 @@ const UserDashboard = () => {
                     house={currentHouse}
                     currentUser={currentUser}
                     bookingsCount={nextBooking ? 1 : 0}
-                    membersCount={1} // TODO: get actual member count
+                    membersCount={currentHouse?.owner_ids?.length || 1}
                 />
 
                 {/* Quick Actions Bar */}
