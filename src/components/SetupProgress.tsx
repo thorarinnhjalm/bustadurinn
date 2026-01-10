@@ -85,15 +85,15 @@ export default function SetupProgress({ house, onShowWalkthrough }: SetupProgres
     // Don't show if fully complete
     if (percentage === 100) return null;
 
-    // Show mini reminder when dismissed
+    // Show subtle indicator when dismissed
     if (isDismissed) {
         return (
             <button
                 onClick={handleUndismiss}
-                className="w-full bg-amber/10 border border-amber/20 rounded-xl p-3 mb-4 flex items-center justify-center gap-2 text-amber-800 text-sm font-medium hover:bg-amber/15 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-4 text-xs text-stone-500 hover:text-amber bg-stone-100 hover:bg-amber/10 rounded-full transition-colors"
             >
-                <Circle size={14} className="text-amber" />
-                Uppsetning ólokið ({percentage}%) — smelltu til að sjá
+                <Circle size={8} className="text-amber" />
+                {percentage}% uppsett
             </button>
         );
     }
