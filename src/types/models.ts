@@ -25,6 +25,9 @@ export interface House {
     // Guest Information
     house_rules?: string;
     house_rules_en?: string;
+    guest_instructions?: string; // General instructions for guests
+    guest_instructions_en?: string;
+    amenities?: string[]; // Array of amenity IDs: 'hot_tub', 'tv', 'grill', etc.
     check_in_time?: string;
     check_out_time?: string;
     directions?: string;

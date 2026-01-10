@@ -89,11 +89,31 @@ export default function GuestPage() {
         }
     };
 
+    // Build amenities list from data
+    const amenityConfig: { [key: string]: { label: string; icon: React.ReactNode } } = {
+        hot_tub: { label: 'Heitur pottur', icon: <Droplets size={20} /> },
+        grill: { label: 'Grill', icon: <Flame size={20} /> },
+        tv: { label: 'Sjónvarp / Apple TV', icon: <Tv size={20} /> },
+        sauna: { label: 'Sauna / Gufa', icon: <Droplets size={20} /> },
+        washer: { label: 'Þvottavél', icon: <Droplets size={20} /> },
+        dishwasher: { label: 'Uppþvottavél', icon: <Droplets size={20} /> },
+        fireplace: { label: 'Arinn', icon: <Flame size={20} /> },
+        outdoor_furniture: { label: 'Verönd / Garðhúsgögn', icon: <BookOpen size={20} /> },
+        kayak: { label: 'Kajak / Bátur', icon: <Droplets size={20} /> },
+        bikes: { label: 'Reiðhjól', icon: <BookOpen size={20} /> },
+        games: { label: 'Leikir / Spil', icon: <BookOpen size={20} /> },
+        coffee_machine: { label: 'Kaffivél', icon: <BookOpen size={20} /> }
+    };
+
     const guides = [
-        { id: 1, title: 'Heitur potturinn', icon: <Droplets size={20} /> },
-        { id: 2, title: 'Sjónvarp / Apple TV', icon: <Tv size={20} /> },
-        { id: 3, title: 'Grillið', icon: <Flame size={20} /> },
-        { id: 4, title: 'Húsreglur', icon: <BookOpen size={20} /> },
+        // Add house rules if present
+        ...(data?.house_rules ? [{ id: 'rules', title: 'Húsreglur', icon: <BookOpen size={20} /> }] : []),
+        // Add amenities from data
+        ...(data?.amenities || []).map((amenityId: string) => ({
+            id: amenityId,
+            title: amenityConfig[amenityId]?.label || amenityId,
+            icon: amenityConfig[amenityId]?.icon || <BookOpen size={20} />
+        }))
     ];
 
     if (loading) {

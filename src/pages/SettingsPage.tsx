@@ -106,6 +106,9 @@ export default function SettingsPage() {
         access_instructions: '',
         access_instructions_en: '',
         emergency_contact: '',
+        guest_instructions: '',
+        guest_instructions_en: '',
+        amenities: [] as string[],
         privacy_hide_finances: false,
         finance_viewer_ids: [] as string[]
     });
@@ -714,6 +717,9 @@ export default function SettingsPage() {
                         access_instructions: houseData.access_instructions || '',
                         access_instructions_en: houseData.access_instructions_en || '',
                         emergency_contact: houseData.emergency_contact || '',
+                        guest_instructions: houseData.guest_instructions || '',
+                        guest_instructions_en: houseData.guest_instructions_en || '',
+                        amenities: houseData.amenities || [],
                         privacy_hide_finances: houseData.privacy_hide_finances || false,
                         finance_viewer_ids: houseData.finance_viewer_ids || []
                     });
@@ -851,6 +857,9 @@ export default function SettingsPage() {
                 access_instructions_en: houseForm.access_instructions_en,
 
                 emergency_contact: houseForm.emergency_contact,
+                guest_instructions: houseForm.guest_instructions,
+                guest_instructions_en: houseForm.guest_instructions_en,
+                amenities: houseForm.amenities || [],
                 privacy_hide_finances: houseForm.privacy_hide_finances,
                 finance_viewer_ids: houseForm.finance_viewer_ids || [],
                 updated_at: new Date()
@@ -876,6 +885,9 @@ export default function SettingsPage() {
                     access_instructions: houseForm.access_instructions,
                     access_instructions_en: houseForm.access_instructions_en,
                     emergency_contact: houseForm.emergency_contact,
+                    guest_instructions: houseForm.guest_instructions,
+                    guest_instructions_en: houseForm.guest_instructions_en,
+                    amenities: houseForm.amenities || [],
                     location: {
                         lat: houseForm.lat,
                         lng: houseForm.lng
@@ -1000,6 +1012,9 @@ export default function SettingsPage() {
                 access_instructions: houseForm.access_instructions,
                 access_instructions_en: houseForm.access_instructions_en,
                 emergency_contact: houseForm.emergency_contact,
+                guest_instructions: houseForm.guest_instructions,
+                guest_instructions_en: houseForm.guest_instructions_en,
+                amenities: houseForm.amenities || [],
                 location: {
                     lat: houseForm.lat,
                     lng: houseForm.lng
@@ -1917,6 +1932,75 @@ export default function SettingsPage() {
                                                 </button>
                                             </div>
                                         )}
+                                    </div>
+                                </section>
+
+                                <hr className="border-stone-200" />
+
+                                {/* Amenities Section */}
+                                <section>
+                                    <div className="mb-6">
+                                        <h2 className="text-2xl font-serif font-bold text-charcoal mb-2">Þægindi</h2>
+                                        <p className="text-grey-mid">Merktu við það sem er í boði í húsinu. Þetta birtist á gestasíðunni.</p>
+                                    </div>
+
+                                    <div className="card p-6 border-2 border-stone-100">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                            {[
+                                                { id: 'hot_tub', label: 'Heitur pottur' },
+                                                { id: 'grill', label: 'Grill' },
+                                                { id: 'tv', label: 'Sjónvarp / Apple TV' },
+                                                { id: 'sauna', label: 'Sauna / Gufa' },
+                                                { id: 'washer', label: 'Þvottavél' },
+                                                { id: 'dishwasher', label: 'Uppþvottavél' },
+                                                { id: 'fireplace', label: 'Arinn' },
+                                                { id: 'outdoor_furniture', label: 'Verönd / Garðhúsgögn' },
+                                                { id: 'kayak', label: 'Kajak / Bátur' },
+                                                { id: 'bikes', label: 'Reiðhjól' },
+                                                { id: 'games', label: 'Leikir / Spil' },
+                                                { id: 'coffee_machine', label: 'Kaffivél' }
+                                            ].map(amenity => (
+                                                <label key={amenity.id} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-stone-50 transition-colors">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={houseForm.amenities.includes(amenity.id)}
+                                                        onChange={(e) => {
+                                                            const newAmenities = e.target.checked
+                                                                ? [...houseForm.amenities, amenity.id]
+                                                                : houseForm.amenities.filter(a => a !== amenity.id);
+                                                            setHouseForm({ ...houseForm, amenities: newAmenities });
+                                                        }}
+                                                        className="w-5 h-5 rounded border-stone-300 text-amber focus:ring-amber"
+                                                    />
+                                                    <span className="text-sm text-charcoal">{amenity.label}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <hr className="border-stone-200" />
+
+                                {/* Guest Instructions */}
+                                <section>
+                                    <div className="mb-6">
+                                        <h2 className="text-2xl font-serif font-bold text-charcoal mb-2">Almennar leiðbeiningar</h2>
+                                        <p className="text-grey-mid">Frjálst svæði fyrir ráðleggingar og upplýsingar sem gestir ættu að vita.</p>
+                                    </div>
+
+                                    <div className="card p-6 border-2 border-stone-100">
+                                        <textarea
+                                            className="input min-h-[120px]"
+                                            value={editLang === 'is' ? houseForm.guest_instructions : houseForm.guest_instructions_en}
+                                            onChange={(e) => setHouseForm({
+                                                ...houseForm,
+                                                [editLang === 'is' ? 'guest_instructions' : 'guest_instructions_en']: e.target.value
+                                            })}
+                                            placeholder="t.d. Gott að vita: Heitt vatn tekur 10 mín að hitna. Nálægustu matvöruverslanir eru í Selfossi..."
+                                        />
+                                        <p className="text-xs text-stone-400 mt-2">
+                                            Skiptið á milli íslensku/ensku með tungumálarofanum hér fyrir neðan.
+                                        </p>
                                     </div>
                                 </section>
 
