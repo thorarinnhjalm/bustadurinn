@@ -58,8 +58,9 @@ import MobileNav from '@/components/MobileNav';
 import GuestbookViewer from '@/components/GuestbookViewer';
 import ShoppingList from '@/components/ShoppingList';
 import InternalLogbook from '@/components/InternalLogbook';
+import GuestPreviewModal from '@/components/GuestPreviewModal';
 import { updateUserNameInAllCollections } from '@/services/userService';
-import { ShoppingBag, ClipboardList } from 'lucide-react';
+import { ShoppingBag, ClipboardList, Eye } from 'lucide-react';
 import { logger } from '@/utils/logger'; // Ensure imports
 
 type Tab = 'house' | 'members' | 'profile' | 'guests' | 'guestbook' | 'shopping' | 'logs';
@@ -82,6 +83,7 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
+    const [showGuestPreview, setShowGuestPreview] = useState(false);
 
     // House State
     const [house, setHouse] = useState<House | null>(null);
@@ -1816,6 +1818,13 @@ export default function SettingsPage() {
                                                         </button>
                                                     </div>
                                                     <div className="flex justify-center gap-3">
+                                                        <button
+                                                            onClick={() => setShowGuestPreview(true)}
+                                                            className="btn bg-amber-500 text-white hover:bg-amber-600 border-none text-sm px-4"
+                                                        >
+                                                            <Eye size={16} className="mr-2" />
+                                                            Forskoða
+                                                        </button>
                                                         <a
                                                             href={`/guest/${house.guest_token}`}
                                                             target="_blank"
@@ -2033,6 +2042,13 @@ export default function SettingsPage() {
                                         </form>
                                     </div>
                                 </section>
+
+                                {/* Guest Preview Modal */}
+                                <GuestPreviewModal
+                                    house={house}
+                                    isOpen={showGuestPreview}
+                                    onClose={() => setShowGuestPreview(false)}
+                                />
                             </div>
                         )}
 
