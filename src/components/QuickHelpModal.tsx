@@ -21,7 +21,7 @@ const FAQ_ITEMS = [
     },
     {
         q: "Get ég séð hverjir bókuðu hvað?",
-        a: "Já, í dagatali sérðu allar bókanir. Stillingar → Húsreglur flipanum getur þú stjórnað hvort bókanir séu sýnilegar öllum eða aðeins eigendanum."
+        a: "Já, í dagatali sérðu allar bókanir og hverjir bókuðu hvaða daga. Allar bókanir eru sýnilegar öllum meðeigendum."
     },
     {
         q: "Hvernig býð ég öðrum í húsið?",
