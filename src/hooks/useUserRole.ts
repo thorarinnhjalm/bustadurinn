@@ -29,30 +29,15 @@ export function useUserRole(userId: string | undefined): UseUserRoleReturn {
             return;
         }
 
-        // 🚨 EMERGENCY BYPASS: Force Super Admin for specific UID
-        if (userId === 'sxcToczAAwT3Fmh8FPXa1P6hMHB3') {
-            console.log('🔓 EMERGENCY BYPASS: Granting Super Admin to:', userId);
-            setSystemRole('super_admin');
-            setHouseRoles({});
-            setLoading(false);
-            return;
-        }
-
         const fetchUserRole = async () => {
             setLoading(true);
             setError(null);
-            console.log('🔍 Fetching role for user:', userId);
 
             try {
-                const docRef = doc(db, 'user_roles', userId);
-                console.log('📄 Document Path:', docRef.path);
-
-                const roleDoc = await getDoc(docRef);
-                console.log('exists?', roleDoc.exists());
+                const roleDoc = await getDoc(doc(db, 'user_roles', userId));
 
                 if (roleDoc.exists()) {
                     const data = roleDoc.data() as UserRoles;
-                    console.log('✅ User Role Data:', data);
                     setSystemRole(data.system_role || 'regular_user');
 
                     // Convert house_roles to simple map
@@ -62,13 +47,11 @@ export function useUserRole(userId: string | undefined): UseUserRoleReturn {
                     });
                     setHouseRoles(roles);
                 } else {
-                    console.log('❌ No role document found for this UID');
                     // No role document - regular user with no house access
                     setSystemRole('regular_user');
                     setHouseRoles({});
                 }
             } catch (err) {
-                console.error('🔥 Error fetching user role:', err);
                 logger.error('Error fetching user role:', err);
                 setError('Failed to load user permissions');
                 // Default to regular user on error
