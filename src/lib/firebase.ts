@@ -20,6 +20,7 @@ export const auth = getAuth(app);
 // experimentalForceLongPolling helps resolve Safari CORS/ITP issues
 export const db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
+    ignoreUndefinedProperties: true,
 });
 
 export const functions = getFunctions(app);

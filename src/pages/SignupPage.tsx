@@ -68,7 +68,7 @@ export default function SignupPage() {
                 email: user.email,
                 name: formData.name || '',
                 house_ids: [],
-                utm_params: utmParams || undefined,
+                utm_params: utmParams || null,
                 created_at: serverTimestamp(),
                 last_login: serverTimestamp()
             });
@@ -110,7 +110,7 @@ export default function SignupPage() {
                     name: user.displayName || '',
                     avatar: user.photoURL || '',
                     house_ids: [],
-                    utm_params: utmParams || undefined,
+                    utm_params: utmParams || null,
                     created_at: serverTimestamp(),
                     last_login: serverTimestamp()
                 });
