@@ -701,8 +701,17 @@ export default function SuperAdminPage() {
             });
 
             if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || 'Failed to delete user');
+                const text = await res.text();
+                let errorMessage = 'Failed to delete user';
+                try {
+                    const data = JSON.parse(text);
+                    errorMessage = data.error || data.message || errorMessage;
+                    if (data.details) errorMessage += `\n\nDetails: ${data.details}`;
+                } catch (e) {
+                    // Not JSON, use raw text (might be Vercel crash page)
+                    errorMessage = `Server Error (${res.status}): ${text.slice(0, 200)}`;
+                }
+                throw new Error(errorMessage);
             }
 
             setStats(prev => ({
