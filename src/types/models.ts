@@ -3,6 +3,17 @@
  * Based on Firestore Schema with Manager/Member Role Logic
  */
 
+// UTM Tracking
+export interface UTMParams {
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+    utm_term?: string;
+    utm_content?: string;
+    captured_at: string;
+    landing_page?: string;
+}
+
 // Role Types
 export type UserRole = 'manager' | 'member' | 'guest';
 
@@ -83,6 +94,7 @@ export interface User {
     language?: 'is' | 'en' | 'de' | 'fr' | 'es'; // Preferred language
     notification_settings?: NotificationSettings;
     fcm_tokens?: string[];
+    utm_params?: UTMParams; // Marketing attribution data
     created_at: Date;
     last_login?: Date;
 }

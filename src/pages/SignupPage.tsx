@@ -10,6 +10,7 @@ import { UserPlus } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { analytics } from '@/utils/analytics';
 import { useEffect } from 'react';
+import { getStoredUTMParams } from '@/utils/utm';
 import SEO from '@/components/SEO';
 
 import { useSearchParams } from 'react-router-dom';
@@ -61,11 +62,13 @@ export default function SignupPage() {
 
             // Create user doc if it doesn't exist (it won't for email signup)
             const user = userCredential.user;
+            const utmParams = getStoredUTMParams();
             await setDoc(doc(db, 'users', user.uid), {
                 uid: user.uid,
                 email: user.email,
                 name: formData.name || '',
                 house_ids: [],
+                utm_params: utmParams || undefined,
                 created_at: serverTimestamp(),
                 last_login: serverTimestamp()
             });
@@ -100,12 +103,14 @@ export default function SignupPage() {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
 
             if (!userDoc.exists()) {
+                const utmParams = getStoredUTMParams();
                 await setDoc(doc(db, 'users', user.uid), {
                     uid: user.uid,
                     email: user.email,
                     name: user.displayName || '',
                     avatar: user.photoURL || '',
                     house_ids: [],
+                    utm_params: utmParams || undefined,
                     created_at: serverTimestamp(),
                     last_login: serverTimestamp()
                 });

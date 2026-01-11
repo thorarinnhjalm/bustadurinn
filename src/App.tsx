@@ -3,12 +3,14 @@
  */
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { useAppStore } from '@/store/appStore';
 import { ImpersonationProvider } from '@/contexts/ImpersonationContext';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
 import AuthHandler from '@/components/AuthHandler';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { captureUTMParams, sendUTMToSentry } from '@/utils/utm';
 
 // Pages
 import LandingPage from '@/pages/LandingPage';
@@ -32,6 +34,7 @@ import MigrationPage from '@/pages/MigrationPage';
 import MarketingMapPage from '@/pages/MarketingMapPage';
 import PrivacyPage from '@/pages/PrivacyPage';
 import TermsPage from '@/pages/TermsPage';
+import SentryTestPage from '@/pages/SentryTestPage';
 
 // RBAC imports
 import { useUserRole } from '@/hooks/useUserRole';
@@ -105,6 +108,12 @@ function App() {
 
   // Auth logic moved to AuthHandler
 
+  // Capture UTM parameters on app load
+  useEffect(() => {
+    captureUTMParams();
+    sendUTMToSentry();
+  }, []);
+
   return (
     <ErrorBoundary>
       <ImpersonationProvider>
@@ -128,6 +137,7 @@ function App() {
               <Route path="/marketing-map" element={<MarketingMapPage />} />
               <Route path="/personuvernd" element={<PrivacyPage />} />
               <Route path="/skilmalar" element={<TermsPage />} />
+              <Route path="/sentry-example-page" element={<SentryTestPage />} />
 
               {/* Protected Routes */}
               <Route
