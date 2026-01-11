@@ -84,7 +84,7 @@ export default function SignupPage() {
             if (err.code === 'auth/email-already-in-use') {
                 setError('Þetta netfang er þegar í notkun');
             } else {
-                setError('Villa kom upp við skráningu');
+                setError(`Villa kom upp við skráningu: ${err.message} (${err.code || 'unknown'})`);
             }
             console.error('Signup error:', err);
         } finally {
