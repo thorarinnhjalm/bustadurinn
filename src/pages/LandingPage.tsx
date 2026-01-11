@@ -87,12 +87,12 @@ export default function LandingPage() {
                             </div>
 
                             <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-8 text-charcoal">
-                                Hættu að rífast um{' '}
+                                Betra skipulag fyrir{' '}
                                 <span className="text-amber inline-block transform -rotate-2">helgarnar</span>
                             </h1>
 
                             <p className="text-xl md:text-2xl mb-10 text-grey-dark leading-relaxed font-light">
-                                Hver fær páskana? Hver átti helgina? Bústaðurinn.is tryggir að það sé <strong>aldrei vesen</strong>. Einfalt bókunarkerfi sem heldur friðinn í fjölskyldunni.
+                                Hver fær páskana? Hver átti helgina? Bústaðurinn.is <strong>einfaldar skipulagið</strong>. Nútímalegt bókunarkerfi sem heldur utan um allt fyrir fjölskylduna.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 mb-12">
