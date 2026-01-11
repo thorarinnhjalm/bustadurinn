@@ -88,7 +88,7 @@ export default function LandingPage() {
 
                             <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-8 text-charcoal">
                                 Betra skipulag fyrir{' '}
-                                <span className="text-amber inline-block transform -rotate-2">helgarnar</span>
+                                <span className="text-amber inline-block transform -rotate-2">sumarbústaðinn</span>
                             </h1>
 
                             <p className="text-xl md:text-2xl mb-10 text-grey-dark leading-relaxed font-light">
