@@ -105,9 +105,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('❌ Server Error deleting user:', error);
 
         // Don't expose stack traces in production
-        const errorResponse = process.env.NODE_ENV === 'production'
-            ? { error: 'Internal server error' }
-            : { error: error.message, code: error.code || 'internal_server_error' };
+        // Expose error details for Super Admins to debug
+        const errorResponse = {
+            error: error.message,
+            code: error.code || 'internal_server_error',
+            details: error.stack
+        };
 
         return res.status(500).json(errorResponse);
     }
