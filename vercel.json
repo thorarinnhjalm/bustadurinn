@@ -1,17 +1,4 @@
 {
-    "redirects": [
-        {
-            "source": "/:path*",
-            "has": [
-                {
-                    "type": "host",
-                    "value": "www.bustadurinn.is"
-                }
-            ],
-            "destination": "https://bustadurinn.is/:path*",
-            "permanent": true
-        }
-    ],
     "rewrites": [
         {
             "source": "/api/(.*)",

@@ -146,7 +146,6 @@ export default function SignupPage() {
                 title="Búa til aðgang - Bústaðurinn.is"
                 description="Búðu til aðgang að Bústaðurinn.is og byrjaðu að skipuleggja sumarhúsið betur. Frítt í 30 daga."
                 canonical="https://bustadurinn.is/signup"
-                noIndex={true}
             />
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
