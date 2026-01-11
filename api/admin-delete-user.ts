@@ -7,25 +7,40 @@ let db: admin.firestore.Firestore | null = null;
 let auth: admin.auth.Auth | null = null;
 
 function initServices() {
-    if (!admin.apps.length) {
-        try {
-            if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    console.log('Testing InitServices...');
+    if (admin.apps.length > 0) {
+        console.log('Firebase Admin already initialized');
+        db = admin.firestore();
+        auth = admin.auth();
+        return;
+    }
+
+    try {
+        console.log('Initializing Firebase Admin...');
+        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            console.log('Found FIREBASE_SERVICE_ACCOUNT env var');
+            try {
                 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
                 admin.initializeApp({
                     credential: admin.credential.cert(serviceAccount),
                     projectId: serviceAccount.project_id
                 });
-            } else {
-                // Fallback for local or managed environment
-                admin.initializeApp({
-                    credential: admin.credential.applicationDefault(),
-                    projectId: 'bustadurinn-is'
-                });
+                console.log('Initialized with Service Account');
+            } catch (jsonError: any) {
+                console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT:', jsonError.message);
+                throw new Error(`Service Account JSON Parse Error: ${jsonError.message}`);
             }
-        } catch (error) {
-            console.error('❌ Firebase Admin initialization error:', error);
-            throw new Error(`Firebase Init Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } else {
+            console.log('No FIREBASE_SERVICE_ACCOUNT, trying applicationDefault');
+            // Fallback for local or managed environment
+            admin.initializeApp({
+                credential: admin.credential.applicationDefault(),
+                projectId: 'bustadurinn-is'
+            });
         }
+    } catch (error: any) {
+        console.error('❌ Firebase Admin initialization error:', error);
+        throw new Error(`Firebase Init Failed: ${error.message}`);
     }
 
     if (!db) db = admin.firestore();
