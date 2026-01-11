@@ -2,6 +2,60 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import admin from 'firebase-admin';
 
 
+// Helper functions inlined to prevent module resolution issues in Vercel
+async function requireAdmin(req: VercelRequest): Promise<admin.auth.DecodedIdToken> {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new Error('UNAUTHORIZED: Missing or invalid authorization header');
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+
+        // Super Admin email whitelist matching apiAuth.ts
+        const ADMIN_EMAILS = [
+            'thorarinnhjalmarsson@gmail.com',
+            'thorarinnhjalm@gmail.com',
+        ];
+
+        if (!decodedToken.email || !ADMIN_EMAILS.includes(decodedToken.email)) {
+            throw new Error('FORBIDDEN: Admin access required');
+        }
+
+        return decodedToken;
+    } catch (error: any) {
+        if (error.message?.startsWith('FORBIDDEN')) {
+            throw error;
+        }
+        throw new Error('UNAUTHORIZED: Invalid or expired token');
+    }
+}
+
+function getAuthErrorResponse(error: Error): { status: number; body: any } {
+    if (error.message.startsWith('UNAUTHORIZED')) {
+        return {
+            status: 401,
+            body: { error: 'Unauthorized', message: 'Authentication required' }
+        };
+    }
+
+    if (error.message.startsWith('FORBIDDEN')) {
+        return {
+            status: 403,
+            body: { error: 'Forbidden', message: 'Insufficient permissions' }
+        };
+    }
+
+    console.error('Auth error:', error);
+    return {
+        status: 500,
+        body: { error: 'Internal server error' }
+    };
+}
+
 // Lazy init
 let db: admin.firestore.Firestore | null = null;
 let auth: admin.auth.Auth | null = null;
