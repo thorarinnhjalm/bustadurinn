@@ -2,10 +2,10 @@
 declare const google: any;
 
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Home, MapPin, Users, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, setDoc, doc, arrayUnion, query, where, getDocs, limit, getDoc, runTransaction } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { analytics } from '@/utils/analytics';
@@ -16,10 +16,14 @@ type OnboardingStep = 'welcome' | 'house' | 'invite' | 'finish';
 
 export default function OnboardingPage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const currentUser = useAppStore((state) => state.currentUser);
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
     const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
-    const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
+
+    // Determine initial step - if creating new house (param 'new'), skip welcome
+    const initialStep: OnboardingStep = searchParams.get('new') ? 'house' : 'welcome';
+    const [currentStep, setCurrentStep] = useState<OnboardingStep>(initialStep);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -82,8 +86,10 @@ export default function OnboardingPage() {
 
     useEffect(() => {
         // Only auto-redirect if they have a house AND are on the very first step
-        // This allows them to stay in the flow after house creation (Step 2 -> 3)
-        if (currentUser && currentUser.house_ids && currentUser.house_ids.length > 0 && currentStep === 'welcome') {
+        // AND they are not explicitly trying to create a new house
+        const isCreatingNew = searchParams.get('new') === 'true';
+
+        if (currentUser && currentUser.house_ids && currentUser.house_ids.length > 0 && currentStep === 'welcome' && !isCreatingNew) {
             navigate('/dashboard');
         } else if (currentStep === 'welcome') {
             // Track visit to onboarding
@@ -228,9 +234,13 @@ export default function OnboardingPage() {
             const managerEmail = managerData.email;
 
             // 2. Send email via API
+            const token = await auth.currentUser?.getIdToken();
             await fetch('/api/send-email', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     templateId: 'general_notification', // Using generic template for now
                     to: managerEmail,
@@ -423,10 +433,14 @@ export default function OnboardingPage() {
             (async () => {
                 try {
                     const userName = currentUser.name || currentUser.email?.split('@')[0];
+                    const token = await auth.currentUser?.getIdToken();
 
                     const res = await fetch('/api/send-email', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
                         body: JSON.stringify({
                             templateId: 'welcome',
                             to: currentUser.email,
@@ -448,10 +462,14 @@ export default function OnboardingPage() {
             (async () => {
                 try {
                     const userName = currentUser.name || currentUser.email?.split('@')[0];
+                    const token = await auth.currentUser?.getIdToken();
 
                     const res = await fetch('/api/send-email', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
                         body: JSON.stringify({
                             templateId: 'onboarding_complete',
                             to: currentUser.email,
@@ -493,9 +511,13 @@ export default function OnboardingPage() {
         setError('');
 
         try {
+            const token = await auth.currentUser?.getIdToken();
             const res = await fetch('/api/send-invite', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     emails: inviteEmails,
                     houseName: houseData.name,

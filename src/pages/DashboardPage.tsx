@@ -403,7 +403,7 @@ const UserDashboard = () => {
                             </div>
                             <div className="mt-2 pt-2 border-t border-stone-100">
                                 <button
-                                    onClick={() => navigate('/onboarding')}
+                                    onClick={() => navigate('/onboarding?new=true')}
                                     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-amber hover:bg-stone-50 transition-colors"
                                 >
                                     <Plus size={14} />
