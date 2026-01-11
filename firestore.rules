@@ -29,6 +29,12 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin();
     }
 
+    // SYSTEM DOCUMENTS - Allow authenticated users to read promotions for launch offer validation
+    match /system/promotions {
+      allow read: if request.auth != null; // Users need to read this during house creation
+      allow write: if isSuperAdmin(); // Only admin can update counters
+    }
+
     // PUBLIC ACCESS
     match /guest_views/{id} { allow read: if true; }
     match /guestbook/{id} { allow read, create: if true; }
