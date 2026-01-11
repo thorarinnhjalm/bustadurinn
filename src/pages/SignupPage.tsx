@@ -216,7 +216,7 @@ export default function SignupPage() {
                             disabled={isLoading}
                         >
                             <UserPlus className="w-5 h-5" />
-                            {isLoading ? 'Býr til aðgang...' : 'Búa til aðgang'}
+                            {isLoading ? 'Býr til aðgang...' : 'Búa til aðgang (v2)'}
                         </button>
 
                         <div className="text-center text-sm text-grey-mid">
