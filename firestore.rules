@@ -31,8 +31,18 @@ service cloud.firestore {
 
     // SYSTEM DOCUMENTS - Allow authenticated users to read promotions for launch offer validation
     match /system/promotions {
-      allow read: if request.auth != null; // Users need to read this during house creation
-      allow write: if isSuperAdmin(); // Only admin can update counters
+      allow read: if request.auth != null; 
+      
+      // Allow atomic increment for launch offer tracking by authenticated users
+      allow create: if request.auth != null &&
+                    request.resource.data.keys().hasOnly(['launch_offer_count']) &&
+                    request.resource.data.launch_offer_count == 1;
+                    
+      allow update: if request.auth != null && 
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['launch_offer_count']) &&
+                    request.resource.data.launch_offer_count == resource.data.get('launch_offer_count', 0) + 1;
+                    
+      allow delete: if isSuperAdmin();
     }
 
     // PUBLIC ACCESS
