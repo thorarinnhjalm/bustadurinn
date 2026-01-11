@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import admin from 'firebase-admin';
+import { requireAdmin, getAuthErrorResponse } from './utils/apiAuth';
 
 // Lazy init
 let db: admin.firestore.Firestore | null = null;
@@ -40,7 +41,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         initServices();
 
         // 🔒 SECURITY: Verify admin authentication
-        const { requireAdmin, getAuthErrorResponse } = await import('./utils/apiAuth');
         try {
             await requireAdmin(req);
         } catch (authError: any) {
