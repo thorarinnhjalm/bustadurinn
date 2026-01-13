@@ -1269,7 +1269,6 @@ export default function SuperAdminPage() {
 
                     // MRR Calculation (excludes demo houses AND houses within their 1-year free period)
                     const demoHouseNames = ['Sumarbústaður við Þingvallavatn', 'Demo House'];
-                    const now = new Date();
                     const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
 
                     const paidHouses = stats.allHouses.filter(h => {
