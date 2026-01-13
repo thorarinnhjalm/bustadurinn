@@ -1267,13 +1267,25 @@ export default function SuperAdminPage() {
                         return endDate <= threeDaysFromNow && endDate >= now;
                     });
 
-                    // MRR Calculation (excludes demo houses AND free houses)
+                    // MRR Calculation (excludes demo houses AND houses within their 1-year free period)
                     const demoHouseNames = ['Sumarbústaður við Þingvallavatn', 'Demo House'];
-                    const paidHouses = stats.allHouses.filter(h =>
-                        !demoHouseNames.includes(h.name || '') &&
-                        ((h as any).subscription_status === 'active' || (h as any).subscription_active) &&
-                        (h as any).subscription_status !== 'free'  // Exclude the 50 free houses
-                    );
+                    const now = new Date();
+                    const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+
+                    const paidHouses = stats.allHouses.filter(h => {
+                        // Exclude demo houses
+                        if (demoHouseNames.includes(h.name || '')) return false;
+
+                        // Exclude houses explicitly marked as free
+                        if ((h as any).subscription_status === 'free') return false;
+
+                        // Exclude houses within their 1-year launch offer period
+                        const createdAt = (h as any).created_at?.toDate?.() || new Date(0);
+                        if (createdAt > oneYearAgo) return false; // House is less than 12 months old
+
+                        // Include if subscription is active
+                        return (h as any).subscription_status === 'active' || (h as any).subscription_active;
+                    });
                     const estimatedMRR = paidHouses.length * 1990;
 
                     // Activity Calculation
