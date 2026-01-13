@@ -1014,8 +1014,8 @@ export default function CalendarPage() {
                             )}
                         </div>
 
-                        {/* Only allow deletion if user owns the booking */}
-                        {(currentUser?.uid === selectedBooking.user_id) && (
+                        {/* Allow deletion if user owns the booking OR is manager */}
+                        {(currentUser?.uid === selectedBooking.user_id || (houseSettings && houseSettings.manager_id === currentUser?.uid) || (currentHouse?.manager_id === currentUser?.uid)) && (
                             <div className="flex gap-3 pt-4 border-t border-stone-100">
                                 <button
                                     onClick={handleDeleteBooking}

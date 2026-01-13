@@ -40,6 +40,7 @@ const db = admin.firestore();
 const welcomeHtml = readFileSync(join(__dirname, 'email-templates/welcome.html'), 'utf8');
 const inviteHtml = readFileSync(join(__dirname, 'email-templates/invite.html'), 'utf8');
 const trialEndingHtml = readFileSync(join(__dirname, 'email-templates/trial_ending.html'), 'utf8');
+const onboardingCompleteHtml = readFileSync(join(__dirname, 'email-templates/onboarding_complete.html'), 'utf8');
 
 const templates = [
     {
