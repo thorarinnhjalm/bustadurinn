@@ -233,6 +233,7 @@ export default function CalendarPage() {
     const [events, setEvents] = useState<BookingEvent[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
@@ -635,10 +636,10 @@ export default function CalendarPage() {
 
     const handleDeleteBooking = async () => {
         if (!selectedBooking || !houseId) return;
-        if (!confirm('Ertu viss um að þú viljir eyða þessari bókun?')) return;
 
         setLoading(true);
         setError(''); // Clear any previous errors
+        setShowDeleteConfirm(false); // Hide confirmation buttons
 
         try {
             console.log('🗑️ Attempting to delete booking:', {
@@ -1052,19 +1053,47 @@ export default function CalendarPage() {
 
                         {/* Allow deletion if user owns the booking OR is house member (manager or co-owner) */}
                         {(currentUser?.uid === selectedBooking.user_id || currentHouse?.manager_id === currentUser?.uid || currentHouse?.owner_ids?.includes(currentUser?.uid || '')) && (
-                            <div className="flex gap-3 pt-4 border-t border-stone-100">
-                                <button
-                                    onClick={(e) => {
-                                        console.log('🔴 Delete button clicked!');
-                                        e.stopPropagation();
-                                        handleDeleteBooking();
-                                    }}
-                                    className="btn bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 flex-1 flex items-center justify-center gap-2"
-                                    disabled={loading}
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                    {loading ? 'Eyði...' : 'Eyða Bókun'}
-                                </button>
+                            <div className="pt-4 border-t border-stone-100">
+                                {!showDeleteConfirm ? (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowDeleteConfirm(true);
+                                        }}
+                                        className="btn bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 w-full flex items-center justify-center gap-2"
+                                        disabled={loading}
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Eyða Bókun
+                                    </button>
+                                ) : (
+                                    <div>
+                                        <p className="text-sm text-red-600 font-medium mb-3 text-center">Ertu viss um að þú viljir eyða þessari bókun?</p>
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowDeleteConfirm(false);
+                                                }}
+                                                className="btn btn-ghost flex-1"
+                                                disabled={loading}
+                                            >
+                                                Hætta við
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteBooking();
+                                                }}
+                                                className="btn bg-red-600 text-white hover:bg-red-700 flex-1 flex items-center justify-center gap-2"
+                                                disabled={loading}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                {loading ? 'Eyði...' : 'Já, eyða'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
