@@ -63,7 +63,8 @@ const UserDashboard = () => {
     }, [currentUser, currentHouse]);
 
     // Real Data State
-    const [loading, setLoading] = useState(true);
+    const appLoading = useAppStore((state) => state.isLoading);
+    const [dashboardLoading, setDashboardLoading] = useState(true);
     const [nextBooking, setNextBooking] = useState<Booking | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isOccupied, setIsOccupied] = useState(false);
@@ -95,7 +96,7 @@ const UserDashboard = () => {
             if (!currentHouse || !currentUser) return;
 
             try {
-                setLoading(true);
+                setDashboardLoading(true);
                 const now = new Date();
                 const todayStart = new Date(now.setHours(0, 0, 0, 0));
 
@@ -258,11 +259,11 @@ const UserDashboard = () => {
                     setWeather({ temp: "?", wind: 0, condition: "Vantar staðsetningu" });
                 }
 
-                setLoading(false);
+                setDashboardLoading(false);
 
             } catch (err) {
                 console.error("Setup listeners error:", err);
-                setLoading(false);
+                setDashboardLoading(false);
             }
         };
 
@@ -273,7 +274,42 @@ const UserDashboard = () => {
         };
     }, [currentHouse, currentUser, navigate]);
 
-    if (!currentHouse || loading) {
+    if (appLoading) {
+        return (
+            <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+            </div>
+        );
+    }
+
+    // Handle missing house (e.g., during impersonation or onboarding incomplete)
+    // MOVED UP: Check this BEFORE trying to render dashboard content
+    if (!currentHouse) {
+        return (
+            <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-6">
+                <div className="card max-w-md text-center">
+                    <h2 className="text-2xl font-serif mb-4">Engin hús fundust</h2>
+                    <p className="text-grey-dark mb-6">
+                        Þessi notandi hefur ekki lokið við að setja upp hús.
+                    </p>
+                    <button
+                        onClick={() => window.location.href = '/onboarding'}
+                        className="btn btn-primary"
+                    >
+                        Fara í uppsetningu
+                    </button>
+                    <button
+                        onClick={() => window.history.back()}
+                        className="btn btn-ghost mt-2"
+                    >
+                        Til baka
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (dashboardLoading) {
         return (
             <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
@@ -336,25 +372,7 @@ const UserDashboard = () => {
         }
     };
 
-    // Handle missing house (e.g., during impersonation or onboarding incomplete)
-    if (!currentHouse) {
-        return (
-            <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center p-6">
-                <div className="card max-w-md text-center">
-                    <h2 className="text-2xl font-serif mb-4">Engin hús fundust</h2>
-                    <p className="text-grey-dark mb-6">
-                        Þessi notandi hefur ekki lokið við að setja upp hús.
-                    </p>
-                    <button
-                        onClick={() => window.history.back()}
-                        className="btn btn-primary"
-                    >
-                        Til baka
-                    </button>
-                </div>
-            </div>
-        );
-    }
+
 
     // ... (rest of component)
 
