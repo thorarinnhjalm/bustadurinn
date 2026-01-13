@@ -106,7 +106,11 @@ service cloud.firestore {
       // Subcollections
       match /bookings/{bookingId} {
         allow read, create, update: if isHouseMember(houseId);
-        allow delete: if isHouseMember(houseId) || resource.data.user_id == request.auth.uid;
+        // Explicitly check for auth and strictly match user_id
+        allow delete: if request.auth != null && (
+          resource.data.user_id == request.auth.uid || 
+          isHouseMember(houseId)
+        );
       }
       match /tasks/{taskId} {
         allow read, write: if isHouseMember(houseId);

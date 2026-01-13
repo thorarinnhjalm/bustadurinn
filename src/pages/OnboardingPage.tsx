@@ -429,6 +429,8 @@ export default function OnboardingPage() {
                 house_ids: [...(currentUser.house_ids || []), houseId!]
             });
 
+            console.log("House transaction complete. ID:", houseId!);
+
             // 4. Send Welcome Email
             (async () => {
                 try {
@@ -490,8 +492,11 @@ export default function OnboardingPage() {
                 }
             })();
 
+            console.log("Tracking analytics...");
             analytics.onboardingStep('invite');
             logFunnelEvent('house_created');
+
+            console.log("Calling nextStep()...");
             nextStep();
         } catch (err: any) {
             console.error('Error creating house:', err);
