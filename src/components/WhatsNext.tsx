@@ -36,7 +36,7 @@ export default function WhatsNext({ house, currentUser, bookingsCount, membersCo
             id: 'booking',
             icon: Calendar,
             title: 'Bókaðu fyrstu helgina',
-            description: 'Dagatalið bíður þín — smelltu til að bóka dvöl.',
+            description: `${house.name} bíður þín — smelltu til að bóka dvöl.`,
             link: '/calendar',
             color: 'bg-blue-50 text-blue-600'
         });
