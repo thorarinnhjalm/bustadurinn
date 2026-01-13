@@ -1055,6 +1055,7 @@ export default function CalendarPage() {
                             <div className="flex gap-3 pt-4 border-t border-stone-100">
                                 <button
                                     onClick={(e) => {
+                                        console.log('🔴 Delete button clicked!');
                                         e.stopPropagation();
                                         handleDeleteBooking();
                                     }}
