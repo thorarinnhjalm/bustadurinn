@@ -64,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Send email via Resend
         const data = await resend.emails.send({
-            from: 'Bústaðurinn <no-reply@bustadurinn.is>',
+            from: 'Bústaðurinn <hallo@bustadurinn.is>',
             to: ['thorarinnhjalmarsson@gmail.com'], // Your email
             subject: `Ný skilaboð frá ${sanitizedName}`,
             html: `

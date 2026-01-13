@@ -149,7 +149,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             `;
 
             await resend.emails.send({
-                from: 'Bústaðurinn <no-reply@bustadurinn.is>',
+                from: 'Bústaðurinn <hallo@bustadurinn.is>',
                 to: targetEmail,
                 subject,
                 html,
@@ -213,7 +213,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             `;
 
             await resend.emails.send({
-                from: 'Bústaðurinn <no-reply@bustadurinn.is>',
+                from: 'Bústaðurinn <hallo@bustadurinn.is>',
                 to: targetEmail,
                 subject,
                 html,

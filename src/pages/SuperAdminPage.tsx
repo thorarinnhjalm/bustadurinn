@@ -1267,11 +1267,12 @@ export default function SuperAdminPage() {
                         return endDate <= threeDaysFromNow && endDate >= now;
                     });
 
-                    // MRR Calculation
+                    // MRR Calculation (excludes demo houses AND free houses)
                     const demoHouseNames = ['Sumarbústaður við Þingvallavatn', 'Demo House'];
                     const paidHouses = stats.allHouses.filter(h =>
                         !demoHouseNames.includes(h.name || '') &&
-                        ((h as any).subscription_status === 'active' || (h as any).subscription_active)
+                        ((h as any).subscription_status === 'active' || (h as any).subscription_active) &&
+                        (h as any).subscription_status !== 'free'  // Exclude the 50 free houses
                     );
                     const estimatedMRR = paidHouses.length * 1990;
 

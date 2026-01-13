@@ -163,13 +163,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             <div class="feature"><strong>📅 Bókaðu fyrstu dvölina</strong><br>Farðu í dagatalið og veldu dagsetningar fyrir næstu helgi.</div>
             <div class="feature"><strong>✅ Bættu við verkefnum</strong><br>Haltu utan um viðhald og verkefni á einfaldan hátt.</div>
             <div class="feature"><strong>💰 Skráðu útgjöld</strong><br>Haltu utan um kostnað og skiptu honum sanngjarnt á milli eigenda.</div>
-            <p style="margin-top: 30px;">Þú hefur <strong>30 daga ókeypis prufutíma</strong> til að prófa alla eiginleika kerfisins.</p>
+            <p style="margin-top: 30px;">Þú hefur <strong>1 ár ókeypis aðgang</strong> til að prófa alla eiginleika kerfisins sem hluti af opnunartilboðinu okkar! 🎉</p>
             <a href="https://bustadurinn.is/dashboard" class="button">Fara á stjórnborð</a>
             <p style="margin-top: 40px; font-size: 14px; color: #4a4642;">Ef þú hefur spurningar, ekki hika við að hafa samband við okkur á <a href="mailto:hjalp@bustadurinn.is" style="color: #e8b058;">hjalp@bustadurinn.is</a></p>
         </div>
         <div class="footer">
             <p>© 2025 Bústaðurinn.is - Neðri Hóll Hugmyndahús ehf.</p>
-            <p>Þetta tölvupóstfang er ekki vaktað - vinsamlegast svarið ekki þessum pósti.</p>
+            <p>Spurningar? Sendu okkur línu á <a href="mailto:hjalp@bustadurinn.is" style="color: #e8b058;">hjalp@bustadurinn.is</a></p>
         </div>
     </div>
 </body>
@@ -254,7 +254,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const response = await resend.emails.send({
-            from: 'Bústaðurinn <no-reply@bustadurinn.is>',
+            from: 'Bústaðurinn <hallo@bustadurinn.is>',
             to: Array.isArray(to) ? to : [to],
             subject,
             html,
