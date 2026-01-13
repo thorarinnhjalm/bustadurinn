@@ -1054,7 +1054,10 @@ export default function CalendarPage() {
                         {(currentUser?.uid === selectedBooking.user_id || currentHouse?.manager_id === currentUser?.uid || currentHouse?.owner_ids?.includes(currentUser?.uid || '')) && (
                             <div className="flex gap-3 pt-4 border-t border-stone-100">
                                 <button
-                                    onClick={handleDeleteBooking}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteBooking();
+                                    }}
                                     className="btn bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 flex-1 flex items-center justify-center gap-2"
                                     disabled={loading}
                                 >
