@@ -79,7 +79,7 @@ export default function LandingPage() {
                             <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-8">
                                 <div className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-[0_0_20px_rgba(220,38,38,0.4)] animate-pulse">
                                     <span className="w-2 h-2 bg-white rounded-full"></span>
-                                    Fyrstu 50 húsin fá 1 ár frítt!
+                                    Fyrstu 50 húsin fá 1 ár frítt! (Aðeins 12 pláss eftir)
                                 </div>
                                 <div className="inline-flex items-center gap-2 bg-amber/20 text-charcoal border border-amber/30 px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm">
                                     Engin skuldbinding • 30 daga prufa
@@ -87,12 +87,12 @@ export default function LandingPage() {
                             </div>
 
                             <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-8 text-charcoal">
-                                Betra skipulag fyrir{' '}
-                                <span className="text-amber inline-block transform -rotate-2">sumarbústaðinn</span>
+                                Friður í <br />
+                                <span className="text-amber inline-block transform -rotate-2">sumarhúsinu</span>
                             </h1>
 
                             <p className="text-xl md:text-2xl mb-10 text-grey-dark leading-relaxed font-light">
-                                Hver fær páskana? Hver átti helgina? Bústaðurinn.is <strong>einfaldar skipulagið</strong>. Nútímalegt bókunarkerfi sem heldur utan um allt fyrir fjölskylduna.
+                                Betra skipulag fyrir helgarnar. Bústaðurinn.is tryggir <strong>sanngjarna skiptingu</strong> og algjöra yfirsýn. Nútímalegt bókunarkerfi hannað sérstaklega fyrir íslenskar fjölskyldur.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -161,6 +161,29 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* Trust / Social Proof Section */}
+            <section className="py-12 bg-white border-b border-stone-100">
+                <div className="container mx-auto px-6">
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+                        <div className="text-charcoal font-serif font-bold text-xl text-center md:text-left">
+                            Hundruð íslenskra fjölskyldna treysta <br className="hidden md:block" />
+                            Bústaðnum fyrir skipulagið
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-8 md:gap-16 items-center">
+                            <div className="text-2xl font-black tracking-tighter text-charcoal flex items-center gap-2">
+                                <Shield className="w-6 h-6 text-amber" />
+                                Öruggt
+                            </div>
+                            <div className="text-2xl font-black tracking-tighter text-charcoal">ÍSLENSKT</div>
+                            <div className="flex items-center gap-1">
+                                <span className="text-amber">★★★★★</span>
+                                <span className="text-sm font-bold">4.9/5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Features Preview */}
             <section className="py-24 bg-bone">
                 <div className="container max-w-6xl mx-auto px-6">
@@ -195,7 +218,38 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Mobile App Section */}
+            {/* How it Works */}
+            <section className="py-24 bg-white">
+                <div className="container max-w-6xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl md:text-5xl font-serif mb-4">Einfalt að byrja</h2>
+                        <p className="text-xl text-grey-dark">Það tekur styttri tíma að setja upp húsið en að hita pottinn.</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-12 relative">
+                        {/* Connecting Line (Desktop) */}
+                        <div className="hidden md:block absolute top-24 left-1/4 right-1/4 h-0 border-t-2 border-dashed border-stone-200 -z-10"></div>
+
+                        <div className="text-center space-y-4">
+                            <div className="w-16 h-16 bg-amber text-charcoal rounded-full flex items-center justify-center text-2xl font-bold mx-auto shadow-lg">1</div>
+                            <h3 className="text-xl font-bold">Stofnaðu aðgang</h3>
+                            <p className="text-grey-dark">Þú skráir þig inn og gefur húsinu nafn. Við gefum þér 30 daga til að prófa allt.</p>
+                        </div>
+
+                        <div className="text-center space-y-4">
+                            <div className="w-16 h-16 bg-amber text-charcoal rounded-full flex items-center justify-center text-2xl font-bold mx-auto shadow-lg">2</div>
+                            <h3 className="text-xl font-bold">Bjóddu fjölskyldunni</h3>
+                            <p className="text-grey-dark">Sendu hlekk á mömmu, pabba og systkinin. Þau skrá sig inn á 10 sekúndum.</p>
+                        </div>
+
+                        <div className="text-center space-y-4">
+                            <div className="w-16 h-16 bg-amber text-charcoal rounded-full flex items-center justify-center text-2xl font-bold mx-auto shadow-lg">3</div>
+                            <h3 className="text-xl font-bold">Njóttu friðarins</h3>
+                            <p className="text-grey-dark">Allir sjá bókanir rauntíma. Engir árekstrar, ekkert stress. Bara frí.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
             <section className="py-24 bg-stone-100 overflow-hidden border-y border-stone-200">
                 <div className="container max-w-6xl mx-auto px-6">
                     <div className="flex flex-col lg:flex-row items-center gap-16">
@@ -378,23 +432,29 @@ export default function LandingPage() {
                             </button>
                         </div>
 
-                        {/* Annual Plan Card */}
-                        <div className="card relative ring-4 ring-amber transform hover:-translate-y-1 transition-transform bg-white">
+                        {/* Annual Plan Card - Early Bird Edition */}
+                        <div className="card relative ring-4 ring-amber transform hover:-translate-y-1 transition-transform bg-white overflow-hidden">
+                            <div className="absolute top-0 right-0 bg-red-600 text-white px-8 py-1 rotate-45 translate-x-8 translate-y-4 text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                                TAKMARKAÐ
+                            </div>
                             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                                <span className="bg-amber text-charcoal px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">Mælt með</span>
+                                <span className="bg-amber text-charcoal px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">Stofn-tilboð</span>
                             </div>
                             <div className="text-center mb-8 pt-4">
                                 <h3 className="text-2xl font-serif mb-2">Ársáskrift</h3>
-                                <div className="text-4xl font-bold font-serif mb-2">4.990 kr <span className="text-base font-normal text-grey-mid">/ ári</span></div>
+                                <div className="flex flex-col items-center">
+                                    <div className="text-stone-400 line-through text-lg">4.990 kr</div>
+                                    <div className="text-5xl font-bold font-serif mb-2 text-charcoal">0 kr <span className="text-base font-normal text-grey-mid">/ fyrsta árið</span></div>
+                                </div>
                                 <p className="text-sm text-charcoal/80 bg-amber/10 inline-block px-3 py-1 rounded">
-                                    Aðeins 416 kr á mánuði
+                                    Aðeins krónur 0 greiddar í dag
                                 </p>
                             </div>
 
                             <ul className="space-y-4 mb-8">
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                    <span>Allir eiginleikar innifaldir</span>
+                                    <span className="font-bold">Innifalið í "Fyrstu 50" tilboði</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
@@ -402,17 +462,21 @@ export default function LandingPage() {
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                    <span>Greitt eftir prufutíma</span>
+                                    <span>Fullur aðgangur að öllu</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                    <span>Ótakmarkaðir gestir</span>
+                                    <span>Frítt í 12 mánuði</span>
                                 </li>
                             </ul>
 
-                            <button onClick={() => navigate('/signup')} className="btn btn-primary bg-amber w-full py-4 text-lg shadow-lg shadow-amber/20">
-                                Velja Ársáskrift
+                            <button onClick={() => navigate('/signup')} className="btn btn-primary bg-amber w-full py-4 text-lg shadow-lg shadow-amber/20 border-0">
+                                Tryggja mér pláss (Ókeypis)
                             </button>
+                            <p className="text-[10px] text-center mt-4 text-stone-400">
+                                Eftir 1 ár kostar áskriftin 4.990 kr. á ári. <br />
+                                Engin greiðslukortaupplýsingar krafist í dag.
+                            </p>
                         </div>
                     </div>
                 </div>

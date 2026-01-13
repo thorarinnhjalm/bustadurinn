@@ -10,7 +10,7 @@ import { format, parse, startOfWeek, getDay, addDays } from 'date-fns';
 import { is } from 'date-fns/locale';
 import {
     Calendar, DollarSign, CheckSquare, Settings,
-    Bell, Menu, User as UserIcon
+    Bell, Menu, User as UserIcon, Plus, Shield, Users
 } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -261,12 +261,71 @@ const SandboxTasks = () => {
         </div>
     );
 };
+const SandboxUsers = () => {
+    const navigate = useNavigate();
+    return (
+        <div className="max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-serif font-bold text-charcoal">Fjölskyldan</h2>
+                <button
+                    onClick={() => navigate('/signup')}
+                    className="btn btn-secondary flex items-center gap-2 opacity-50 cursor-not-allowed"
+                >
+                    <Plus size={16} />
+                    Bjóða meðeiganda <Shield size={14} className="text-amber" />
+                </button>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden relative">
+                {/* Locked Overlay */}
+                <div className="absolute inset-0 bg-stone-50/40 backdrop-blur-[2px] z-10 flex items-center justify-center p-8 text-center">
+                    <div className="bg-white p-8 rounded-2xl shadow-xl border border-stone-100 max-w-sm">
+                        <Users className="w-12 h-12 text-amber mx-auto mb-4" />
+                        <h4 className="text-xl font-bold mb-2">Læstur eiginleiki</h4>
+                        <p className="text-stone-500 text-sm mb-6">
+                            Til að bjóða fjölskyldunni og stýra aðgangi þarftu að stofna alvöru aðgang.
+                        </p>
+                        <button
+                            onClick={() => navigate('/signup')}
+                            className="btn btn-primary w-full"
+                        >
+                            Stofna aðgang núna
+                        </button>
+                    </div>
+                </div>
+
+                <div className="p-6 space-y-6 opacity-30">
+                    <div className="flex items-center justify-between py-4 border-b border-stone-100">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-stone-200"></div>
+                            <div>
+                                <p className="font-bold text-charcoal">Jón Jónsson</p>
+                                <p className="text-xs text-stone-500">Eigandi</p>
+                            </div>
+                        </div>
+                        <span className="text-xs bg-stone-100 px-2 py-1 rounded">Stjórnandi</span>
+                    </div>
+                    <div className="flex items-center justify-between py-4">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-stone-200"></div>
+                            <div>
+                                <p className="font-bold text-charcoal">Guðrún Sigurðardóttir</p>
+                                <p className="text-xs text-stone-500">Meðeigandi</p>
+                            </div>
+                        </div>
+                        <span className="text-xs bg-stone-100 px-2 py-1 rounded">Notandi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // --- Main Page Component ---
 
 export default function SandboxPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'calendar' | 'finance' | 'tasks' | 'settings'>('calendar');
+    const [activeTab, setActiveTab] = useState<'calendar' | 'finance' | 'tasks' | 'users' | 'settings'>('calendar');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const MenuLink = ({ id, icon: Icon, label }: { id: typeof activeTab, icon: any, label: string }) => (
@@ -300,6 +359,7 @@ export default function SandboxPage() {
                     <MenuLink id="calendar" icon={Calendar} label="Dagatal" />
                     <MenuLink id="finance" icon={DollarSign} label="Fjármál" />
                     <MenuLink id="tasks" icon={CheckSquare} label="Verkefni" />
+                    <MenuLink id="users" icon={Users} label="Fjölskyldan" />
                     <MenuLink id="settings" icon={Settings} label="Stillingar" />
                 </nav>
 
@@ -362,10 +422,11 @@ export default function SandboxPage() {
                     </div>
 
                     {/* View Rendering */}
-                    <div className="max-w-7xl mx-auto h-full pb-20">
+                    <div className="max-w-7xl mx-auto h-full pb-32">
                         {activeTab === 'calendar' && <SandboxCalendar />}
                         {activeTab === 'finance' && <SandboxFinance />}
                         {activeTab === 'tasks' && <SandboxTasks />}
+                        {activeTab === 'users' && <SandboxUsers />}
                         {activeTab === 'settings' && (
                             <div className="text-center py-20">
                                 <Settings className="w-16 h-16 text-stone-300 mx-auto mb-4" />
@@ -378,6 +439,27 @@ export default function SandboxPage() {
                                 </button>
                             </div>
                         )}
+                    </div>
+
+                    {/* Conversion Footer Banner */}
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-auto md:min-w-[500px] z-50">
+                        <div className="bg-charcoal text-white p-4 md:p-6 rounded-2xl shadow-2xl border border-amber/30 flex flex-col md:flex-row items-center gap-4 md:gap-8 overflow-hidden relative">
+                            {/* Accent Glow */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber/10 blur-3xl -z-10"></div>
+
+                            <div className="flex-1">
+                                <p className="text-amber text-xs font-bold uppercase tracking-widest mb-1">Takmarkað stofn-tilboð</p>
+                                <h4 className="text-lg font-serif font-bold">Tryggðu þér sumarbústaðinn frítt í 1 ár</h4>
+                                <p className="text-stone-400 text-xs mt-1">Aðeins 12 pláss eftir fyrir fyrstu 50 húsin.</p>
+                            </div>
+
+                            <button
+                                onClick={() => navigate('/signup')}
+                                className="w-full md:w-auto btn bg-amber text-charcoal hover:bg-amber-dark font-bold px-8 py-3 rounded-xl shadow-[0_0_20px_rgba(232,176,88,0.3)] transition-all transform hover:scale-105"
+                            >
+                                Virkja mitt hús
+                            </button>
+                        </div>
                     </div>
                 </div>
 
