@@ -638,8 +638,22 @@ export default function CalendarPage() {
         if (!confirm('Ertu viss um að þú viljir eyða þessari bókun?')) return;
 
         setLoading(true);
+        setError(''); // Clear any previous errors
+
         try {
+            console.log('🗑️ Attempting to delete booking:', {
+                bookingId: selectedBooking.id,
+                bookingUserId: selectedBooking.user_id,
+                currentUserId: currentUser?.uid,
+                houseId: houseId,
+                isOwner: currentUser?.uid === selectedBooking.user_id,
+                currentHouseManagerId: currentHouse?.manager_id,
+                isManager: currentHouse?.manager_id === currentUser?.uid
+            });
+
             await deleteDoc(doc(db, 'houses', houseId, 'bookings', selectedBooking.id));
+
+            console.log('✅ Booking deleted successfully');
 
             // Reload bookings
             await loadBookings();
@@ -647,9 +661,24 @@ export default function CalendarPage() {
 
             // Track analytics
             // analytics.bookingDeleted(); 
-        } catch (err) {
-            console.error("Error deleting booking:", err);
-            setError("Gat ekki eytt bókun.");
+        } catch (err: any) {
+            console.error("❌ Error deleting booking:", err);
+            console.error("Error code:", err.code);
+            console.error("Error message:", err.message);
+
+            // Provide user-friendly error messages based on error code
+            let userMessage = "Gat ekki eytt bókun.";
+
+            if (err.code === 'permission-denied') {
+                userMessage = "Þú hefur ekki réttindi til að eyða þessari bókun. Aðeins sá sem bjó til bókun eða stjórnandi sumarhússins getur eytt henni.";
+                console.error("🔒 Permission denied. Current user:", currentUser?.uid, "Booking owner:", selectedBooking.user_id);
+            } else if (err.code === 'not-found') {
+                userMessage = "Bókun fannst ekki. Hún kann að hafa verið eytt nú þegar.";
+            } else if (err.code === 'unavailable') {
+                userMessage = "Ekki var hægt að ná sambandi við netþjón. Athugaðu nettenginguna þína.";
+            }
+
+            setError(userMessage);
         } finally {
             setLoading(false);
         }
@@ -970,6 +999,13 @@ export default function CalendarPage() {
                             </button>
                         </div>
 
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500 text-red-700 rounded p-4 mb-4 flex items-start gap-3">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                <span className="text-sm">{error}</span>
+                            </div>
+                        )}
+
                         <div className="space-y-4 mb-6">
                             <div>
                                 <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Bókað af</label>
@@ -1014,8 +1050,8 @@ export default function CalendarPage() {
                             )}
                         </div>
 
-                        {/* Allow deletion if user owns the booking OR is manager */}
-                        {(currentUser?.uid === selectedBooking.user_id || (houseSettings && houseSettings.manager_id === currentUser?.uid) || (currentHouse?.manager_id === currentUser?.uid)) && (
+                        {/* Allow deletion if user owns the booking OR is house member (manager or co-owner) */}
+                        {(currentUser?.uid === selectedBooking.user_id || currentHouse?.manager_id === currentUser?.uid || currentHouse?.owner_ids?.includes(currentUser?.uid || '')) && (
                             <div className="flex gap-3 pt-4 border-t border-stone-100">
                                 <button
                                     onClick={handleDeleteBooking}
