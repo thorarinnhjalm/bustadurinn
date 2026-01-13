@@ -61,8 +61,8 @@ export default function LandingPage() {
 
     return (
         <MarketingLayout
-            title="Friður í sumarhúsinu - Bókunarkerfi fyrir fjölskyldur"
-            description="Einföld lausn sem tryggir sanngjarna skiptingu, gagnsæ fjármál og frið í fjölskyldunni. Prófaðu frítt í 30 daga."
+            title="Sumarbústaðurinn í vasanum - Bústaðurinn.is"
+            description="Skipulagt sumarhús, ánægð fjölskylda. Bókanir, fjármál, verkefni og innkaupalisti aðgengilegt beint í símann. 30 daga ókeypis prufa."
             structuredData={softwareAppSchema}
         >
 
@@ -87,12 +87,12 @@ export default function LandingPage() {
                             </div>
 
                             <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-8 text-charcoal">
-                                Friður í <br />
-                                <span className="text-amber inline-block transform -rotate-2">sumarhúsinu</span>
+                                Sumarbústaðurinn <br />
+                                <span className="text-amber inline-block transform -rotate-2">í vasanum</span>
                             </h1>
 
                             <p className="text-xl md:text-2xl mb-10 text-grey-dark leading-relaxed font-light">
-                                Betra skipulag fyrir helgarnar. Bústaðurinn.is tryggir <strong>sanngjarna skiptingu</strong> og algjöra yfirsýn. Nútímalegt bókunarkerfi hannað sérstaklega fyrir íslenskar fjölskyldur.
+                                Bústaðurinn.is einfaldar yfirsýn yfir <strong>bókanir, fjármál, verkefni og innkaupalista</strong>...allt aðgengilegt beint í símann. Nútímalegt kerfi hannað fyrir íslenskar fjölskyldur.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 mb-12">
