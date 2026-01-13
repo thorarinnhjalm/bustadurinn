@@ -33,14 +33,14 @@ export default function LandingPage() {
             "price": "4990",
             "priceCurrency": "ISK"
         },
-        "description": "Bókunarkerfi og app fyrir sameiginleg sumarhús."
+        "description": "Sumarhúskerfi sem einfaldar skipulag og tryggir sanngjarna skiptingu fyrir íslenskar fjölskyldur."
     };
 
     const features = [
         {
             icon: Calendar,
             title: "Bókunardagatal",
-            description: "Sjáðu strax hver er búinn að panta helgar. Einfalt og skýrt dagatal sem kemur í veg fyrir tvíbókanir og árekstra."
+            description: "Sjáðu strax hver er búinn að panta helgar. Einfalt og skýrt dagatal þar sem allir sjá. Engin ruglingur, bara góð samvinna."
         },
         {
             icon: Shield,
@@ -55,7 +55,7 @@ export default function LandingPage() {
         {
             icon: TrendingUp,
             title: "Hússjóður (Valfrjálst)",
-            description: "Ef þið viljið, þá heldur kerfið utan um hússjóðinn og hver á að borga rafmagnið. Algjörlega sjálfvirkt og gagnsætt."
+            description: "Ef þið viljið - gagnsæ fjármál. Kerfið heldur sjálfkrafa utan um hússjóð og gerir allt skýrt og sanngjarnt."
         }
     ];
 
@@ -188,9 +188,9 @@ export default function LandingPage() {
             <section className="py-24 bg-bone">
                 <div className="container max-w-6xl mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-serif mb-4">Allt sem þarf fyrir friðsamleg samskipti</h2>
+                        <h2 className="text-4xl md:text-5xl font-serif mb-4">Allt sem þarf fyrir ánægjulega samveru</h2>
                         <p className="text-xl text-grey-dark max-w-2xl mx-auto">
-                            Eitt kerfi sem tekur á öllum helstu ágreiningsefnum í sameign
+                            Einfalt kerfi sem tryggir sanngjarna skiptingu og góða yfirsýn
                         </p>
                     </div>
 
@@ -244,8 +244,8 @@ export default function LandingPage() {
 
                         <div className="text-center space-y-4">
                             <div className="w-16 h-16 bg-amber text-charcoal rounded-full flex items-center justify-center text-2xl font-bold mx-auto shadow-lg">3</div>
-                            <h3 className="text-xl font-bold">Njóttu friðarins</h3>
-                            <p className="text-grey-dark">Allir sjá bókanir rauntíma. Engir árekstrar, ekkert stress. Bara frí.</p>
+                            <h3 className="text-xl font-bold">Njóttu samverustundarinnar</h3>
+                            <p className="text-grey-dark">Allir sjá bókanir strax. Allt skýrt, allt sanngjarnt. Meiri tími fyrir fjölskylduna.</p>
                         </div>
                     </div>
                 </div>
