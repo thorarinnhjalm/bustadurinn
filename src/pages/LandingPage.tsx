@@ -33,7 +33,7 @@ export default function LandingPage() {
             "price": "4990",
             "priceCurrency": "ISK"
         },
-        "description": "Sumarhúskerfi sem einfaldar skipulag og tryggir sanngjarna skiptingu fyrir íslenskar fjölskyldur."
+        "description": "Bókunarkerfi og bókunardagatal fyrir sameiginleg sumarhús. Einfaldar bókanir, sanngjarna skiptingu og gagnsæ fjármál fyrir íslenskar fjölskyldur."
     };
 
     const features = [
@@ -61,8 +61,8 @@ export default function LandingPage() {
 
     return (
         <MarketingLayout
-            title="Sumarbústaðurinn í vasanum - Bústaðurinn.is"
-            description="Skipulagt sumarhús, ánægð fjölskylda. Bókanir, fjármál, verkefni og innkaupalisti aðgengilegt beint í símann. 30 daga ókeypis prufa."
+            title="Bókunarkerfi fyrir sumarhús - Bústaðurinn.is"
+            description="Bókunarkerfi fyrir sumarhús. Einfaldar bókanir, sanngjarna skiptingu og fjármál. Nútímalegt bókunardagatal fyrir íslenskar fjölskyldur. Prófaðu frítt í 30 daga."
             structuredData={softwareAppSchema}
         >
 
