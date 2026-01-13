@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, type DocumentSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, type DocumentSnapshot } from 'firebase/firestore';
 import { useAppStore } from '@/store/appStore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { logger } from '@/utils/logger';
@@ -41,6 +41,23 @@ export default function AuthHandler() {
                     if (userSnap.exists()) {
                         const firestoreData = userSnap.data();
                         baseUser = { ...baseUser, ...firestoreData };
+                    } else {
+                        // SELF-REPAIR: Missing profile but authenticated
+                        console.warn("AuthHandler: Orphan user detected, triggering self-repair for:", firebaseUser.email);
+                        try {
+                            // We don't wait for this to finish to avoid blocking the main auth flow
+                            setDoc(userDocRef, {
+                                uid: baseUser.uid,
+                                email: baseUser.email,
+                                name: baseUser.name || baseUser.email.split('@')[0],
+                                house_ids: [],
+                                created_at: serverTimestamp(),
+                                last_login: serverTimestamp(),
+                                repaired_auto: true
+                            }, { merge: true });
+                        } catch (repairErr) {
+                            console.error("AuthHandler: Self-repair failed:", repairErr);
+                        }
                     }
                 } catch (err) {
                     console.error("Error fetching user profile:", err);

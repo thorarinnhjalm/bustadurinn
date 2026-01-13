@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import {
     Calendar, TrendingUp, CheckCircle, ArrowRight, Users,
-    CheckSquare, Home, Plus, Settings, Shield, Bell
+    CheckSquare, Home, Plus, Settings, Shield, Bell, UserPlus
 } from 'lucide-react';
 import { CalendarMockup } from '@/components/FeatureMockups';
 import MarketingLayout from '@/components/MarketingLayout';
@@ -97,17 +97,17 @@ export default function LandingPage() {
 
                             <div className="flex flex-col sm:flex-row gap-4 mb-12">
                                 <button
-                                    onClick={() => navigate('/prufa')}
+                                    onClick={() => navigate('/signup')}
                                     className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-10 py-5 shadow-[0_0_30px_rgba(251,191,36,0.2)] hover:shadow-[0_0_40px_rgba(251,191,36,0.3)] transform hover:scale-105 transition-all flex items-center justify-center gap-2 group rounded-xl"
                                 >
-                                    <Calendar className="w-5 h-5" />
-                                    Prófaðu Bókunarkerfið
+                                    <UserPlus className="w-5 h-5" />
+                                    Stofna Aðgang
                                 </button>
                                 <button
-                                    onClick={() => navigate('/signup')}
+                                    onClick={() => navigate('/prufa')}
                                     className="btn btn-secondary border-2 border-stone-200 text-charcoal hover:border-charcoal hover:bg-stone-50 text-lg px-10 py-5 transition-all rounded-xl"
                                 >
-                                    Stofna Aðgang
+                                    Skoða sýnishorn
                                 </button>
                             </div>
 
@@ -492,16 +492,16 @@ export default function LandingPage() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button
-                            onClick={() => navigate('/prufa')}
+                            onClick={() => navigate('/signup')}
                             className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-8 py-4 shadow-xl shadow-amber/20"
                         >
-                            Prófaðu Sumarbústaðinn
+                            Stofna aðgang núna
                         </button>
                         <button
-                            onClick={() => navigate('/signup')}
+                            onClick={() => navigate('/prufa')}
                             className="btn btn-ghost border-2 border-white/20 text-bone hover:bg-white/10 text-lg px-8 py-4"
                         >
-                            Stofna aðgang núna
+                            Skoða sýnishorn
                         </button>
                     </div>
                 </div>

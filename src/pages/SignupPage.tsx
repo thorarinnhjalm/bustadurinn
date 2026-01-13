@@ -28,6 +28,23 @@ export default function SignupPage() {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
+    const createProfileWithRetry = async (uid: string, data: any) => {
+        let retryCount = 0;
+        const maxRetries = 3;
+        while (retryCount < maxRetries) {
+            try {
+                await setDoc(doc(db, 'users', uid), data, { merge: true });
+                return true;
+            } catch (err) {
+                retryCount++;
+                console.error(`Firestore profile creation attempt ${retryCount} failed:`, err);
+                if (retryCount === maxRetries) throw err;
+                await new Promise(r => setTimeout(r, 1000 * retryCount));
+            }
+        }
+        return false;
+    };
+
     useEffect(() => {
         analytics.signupStarted();
     }, []);
@@ -60,10 +77,10 @@ export default function SignupPage() {
                 displayName: formData.name
             });
 
-            // Create user doc if it doesn't exist (it won't for email signup)
+            // Create user doc robustly
             const user = userCredential.user;
             const utmParams = getStoredUTMParams();
-            await setDoc(doc(db, 'users', user.uid), {
+            await createProfileWithRetry(user.uid, {
                 uid: user.uid,
                 email: user.email,
                 name: formData.name || '',
@@ -104,7 +121,7 @@ export default function SignupPage() {
 
             if (!userDoc.exists()) {
                 const utmParams = getStoredUTMParams();
-                await setDoc(doc(db, 'users', user.uid), {
+                await createProfileWithRetry(user.uid, {
                     uid: user.uid,
                     email: user.email,
                     name: user.displayName || '',
@@ -115,22 +132,15 @@ export default function SignupPage() {
                     last_login: serverTimestamp()
                 });
 
-                if (returnUrl) {
-                    navigate(returnUrl);
-                } else {
-                    navigate('/onboarding');
-                }
-            } else {
-                await setDoc(doc(db, 'users', user.uid), {
-                    last_login: serverTimestamp()
-                }, { merge: true });
-
                 analytics.signupCompleted('google');
-                if (returnUrl) {
-                    navigate(returnUrl);
-                } else {
-                    navigate('/dashboard');
-                }
+                navigate(returnUrl || '/onboarding');
+            } else {
+                await createProfileWithRetry(user.uid, {
+                    last_login: serverTimestamp()
+                });
+
+                analytics.signupCompleted('google-login');
+                navigate(returnUrl || '/dashboard');
             }
         } catch (err: any) {
             setError('Villa við skráningu með Google');

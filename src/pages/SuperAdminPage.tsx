@@ -53,7 +53,7 @@ interface Stats {
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'houses' | 'users' | 'contacts' | 'coupons' | 'integrations' | 'emails' | 'newsletter'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'houses' | 'users' | 'contacts' | 'coupons' | 'integrations' | 'emails' | 'newsletter' | 'audit'>('overview');
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [editingHouse, setEditingHouse] = useState<House | null>(null);
@@ -86,6 +86,10 @@ export default function SuperAdminPage() {
     const [selectedHouseForInvoice, setSelectedHouseForInvoice] = useState<string>('');
     const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
     const [addressSearchTimer, setAddressSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+    // Audit State
+    const [orphans, setOrphans] = useState<any[]>([]);
+    const [auditLoading, setAuditLoading] = useState(false);
 
 
     const [stats, setStats] = useState<Stats>({
@@ -820,6 +824,86 @@ export default function SuperAdminPage() {
             setActionLoading(null);
         }
     };
+
+    // Audit & Health Logic
+    const fetchOrphans = async () => {
+        setAuditLoading(true);
+        try {
+            const idToken = await auth.currentUser?.getIdToken();
+            const res = await fetch('/api/admin-audit-users', {
+                headers: { 'Authorization': `Bearer ${idToken}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setOrphans(data.orphans || []);
+            } else {
+                throw new Error(data.error || 'Failed to fetch orphans');
+            }
+        } catch (e: any) {
+            alert('Audit Error: ' + e.message);
+        } finally {
+            setAuditLoading(false);
+        }
+    };
+
+    const handleRepairOrphan = async (uid: string) => {
+        if (!confirm('Viltu búa til Firestore prófíl fyrir þennan notanda?')) return;
+
+        setActionLoading(`repair-${uid}`);
+        try {
+            const idToken = await auth.currentUser?.getIdToken();
+            const res = await fetch('/api/admin-repair-user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({ uid })
+            });
+
+            if (res.ok) {
+                alert('✅ Notandi lagfærður!');
+                setOrphans(prev => prev.filter(o => o.uid !== uid));
+            } else {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to repair');
+            }
+        } catch (e: any) {
+            alert('Repair Error: ' + e.message);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const exportOrphansCSV = () => {
+        if (orphans.length === 0) return;
+
+        const headers = ['Created', 'Email', 'Name', 'isTest', 'UID'];
+        const rows = orphans.map(o => [
+            new Date(o.createdAt).toISOString(),
+            o.email || '',
+            o.displayName || '',
+            o.isTest ? 'TRUE' : 'FALSE',
+            o.uid
+        ]);
+
+        const csvContent = [headers, ...rows].map(e => e.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `orphan_users_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    useEffect(() => {
+        if (activeTab === 'audit') {
+            fetchOrphans();
+        }
+    }, [activeTab]);
 
     const handleCreateCoupon = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -2433,6 +2517,105 @@ export default function SuperAdminPage() {
                         </div>
                     )
                 }
+
+                {activeTab === 'audit' && (
+                    <div className="space-y-8">
+                        <div className="flex justify-between items-center text-charcoal">
+                            <div>
+                                <h2 className="text-2xl font-serif font-bold">Audit & Health</h2>
+                                <p className="text-stone-500">Finna og laga notendur sem vantar Firestore prófíl (Orphans)</p>
+                            </div>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={exportOrphansCSV}
+                                    disabled={orphans.length === 0}
+                                    className="btn border-stone-200 bg-white text-charcoal hover:bg-stone-50 flex items-center gap-2"
+                                >
+                                    <Reply className="w-4 h-4 rotate-180" />
+                                    Flytja út CSV
+                                </button>
+                                <button
+                                    onClick={fetchOrphans}
+                                    disabled={auditLoading}
+                                    className="btn btn-primary flex items-center gap-2"
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${auditLoading ? 'animate-spin' : ''}`} />
+                                    Keyra úttekt
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                            <table className="w-full text-left">
+                                <thead className="bg-stone-50 border-b border-stone-200">
+                                    <tr>
+                                        <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Stofnað</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Netfang</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Nafn</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Tegund</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Aðgerðir</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-stone-100">
+                                    {auditLoading ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-12 text-center text-stone-400">
+                                                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+                                                Sæki gögn og athuga Firestore...
+                                            </td>
+                                        </tr>
+                                    ) : orphans.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-12 text-center text-green-600 font-medium">
+                                                ✅ Engir munaðarlausir notendur fundust! Allt í góðu.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        orphans.map((o) => (
+                                            <tr key={o.uid} className="hover:bg-stone-50">
+                                                <td className="px-6 py-4 text-sm text-stone-600">
+                                                    {new Date(o.createdAt).toLocaleString('is-IS')}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm font-medium text-charcoal">{o.email}</td>
+                                                <td className="px-6 py-4 text-sm text-stone-500">{o.displayName || '-'}</td>
+                                                <td className="px-6 py-4">
+                                                    {o.isTest ? (
+                                                        <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-500 text-[10px] uppercase font-bold tracking-wider">Test Account</span>
+                                                    ) : (
+                                                        <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] uppercase font-bold tracking-wider">Potential Real User</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <button
+                                                        onClick={() => handleRepairOrphan(o.uid)}
+                                                        disabled={actionLoading === `repair-${o.uid}`}
+                                                        className="px-3 py-1 text-xs bg-amber/10 text-amber-dark border border-amber/20 rounded hover:bg-amber/20 flex items-center gap-1"
+                                                    >
+                                                        {actionLoading === `repair-${o.uid}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                                                        Gera við
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {orphans.length > 0 && (
+                            <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex gap-3 text-blue-800">
+                                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                                <div className="text-sm">
+                                    <p className="font-bold">Hvað eru "Orphan Users"?</p>
+                                    <p className="mt-1 opacity-90">
+                                        Þetta eru notendur sem hafa tekist að stofna aðgang (Firebase Auth) en vegna villu tókst ekki að búa til prófíl í gagnagrunninum (Firestore).
+                                        Með því að smella á "Gera við" býrðu til lágmarks prófíl svo þeir geti skráð sig inn og haldið áfram.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
             </div >
         </AdminLayout >

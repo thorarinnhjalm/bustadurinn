@@ -45,7 +45,7 @@ async function auditSignups() {
 
             // Check House membership
             let houses = [];
-            if (hasFirestoreProfile && firestoreData.house_ids && firestoreData.house_ids.length > 0) {
+            if (hasFirestoreProfile && firestoreData?.house_ids && Array.isArray(firestoreData.house_ids) && firestoreData.house_ids.length > 0) {
                 // Check if they are actually in these houses
                 houses = firestoreData.house_ids;
             }
@@ -55,7 +55,7 @@ async function auditSignups() {
             console.log(`  Created: ${creationTimeStr}`);
             console.log(`  Firestore Profile: ${hasFirestoreProfile ? '✅ Yes' : '❌ MISSING'}`);
 
-            if (hasFirestoreProfile) {
+            if (hasFirestoreProfile && firestoreData) {
                 console.log(`  Houses: ${houses.length > 0 ? '✅ ' + houses.join(', ') : '⚠️ No houses'}`);
 
                 // Check if profile creation time matches auth creation effectively

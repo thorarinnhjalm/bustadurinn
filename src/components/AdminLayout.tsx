@@ -13,7 +13,8 @@ import {
     Menu,
     X,
     LogOut,
-    Send
+    Send,
+    Shield
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import type { House } from '@/types/models';
@@ -43,6 +44,7 @@ export default function AdminLayout({
         { name: 'Notendur', id: 'users', icon: Users },
         { name: 'Samskipti', id: 'contacts', icon: Mail },
         { name: 'Póstlisti', id: 'newsletter', icon: Send },
+        { name: 'Audit', id: 'audit', icon: Shield },
     ];
 
     const handleTabClick = (id: string) => {
