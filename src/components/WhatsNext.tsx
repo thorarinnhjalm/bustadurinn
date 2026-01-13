@@ -47,7 +47,7 @@ export default function WhatsNext({ house, currentUser, bookingsCount, membersCo
             id: 'members',
             icon: Users,
             title: 'Bjóddu fjölskyldunni',
-            description: 'Sendu boðshlekk til annarra eigenda húsins.',
+            description: `Sendu boðshlekk til annarra eigenda ${house.name}.`,
             link: '/settings?tab=members',
             color: 'bg-purple-50 text-purple-600'
         });
@@ -58,7 +58,7 @@ export default function WhatsNext({ house, currentUser, bookingsCount, membersCo
             id: 'guest',
             icon: Link2,
             title: 'Búðu til gestahlekk',
-            description: 'Deildu upplýsingum með gestum á einfaldan hátt.',
+            description: `Deildu upplýsingum um ${house.name} með gestum á einfaldan hátt.`,
             link: '/settings?tab=guests',
             color: 'bg-emerald-50 text-emerald-600'
         });
