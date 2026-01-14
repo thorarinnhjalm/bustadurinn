@@ -358,8 +358,8 @@ export default function OnboardingPage() {
                     seo_slug: houseData.name.toLowerCase().replace(/\s+/g, '-'),
                     subscription_status: isFree ? 'active' : 'trial', // Active if free
                     subscription_end: endDate,
-                    created_at: serverTimestamp(),
-                    updated_at: serverTimestamp()
+                    created_at: new Date(),
+                    updated_at: new Date()
                 };
 
                 // Commit House
@@ -736,6 +736,18 @@ export default function OnboardingPage() {
                                     <p className="text-sm text-grey-mid mt-2">
                                         Þú getur bætt við heimilisfangi síðar til að fá veðurspá og nákvæma staðsetningu.
                                     </p>
+
+                                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mt-3 flex gap-3 items-start">
+                                        <div className="bg-blue-100 p-1.5 rounded-full mt-0.5">
+                                            <MapPin className="w-4 h-4 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-blue-900 font-medium mb-0.5">Betri upplifun</p>
+                                            <p className="text-xs text-blue-800 leading-relaxed">
+                                                Með því að skrá heimilisfang færðu sjálfkrafa <strong>veðurspá</strong> og <strong>akstursleiðbeiningar</strong> fyrir bústaðinn.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-4 justify-end">
