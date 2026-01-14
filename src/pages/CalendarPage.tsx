@@ -166,18 +166,39 @@ const BookingsListView = ({
     onSelectBooking: (booking: Booking) => void;
     getTypeLabel: (type: BookingType) => string;
 }) => {
-    // Sort bookings by start date (upcoming first)
-    const sortedBookings = [...bookings].sort((a, b) => a.start.getTime() - b.start.getTime());
+    // State for toggling past bookings
+    const [showPast, setShowPast] = useState(false);
 
-    // Group by month
-    const groupedByMonth: { [key: string]: Booking[] } = {};
-    sortedBookings.forEach(booking => {
-        const monthKey = booking.start.toLocaleDateString('is-IS', { month: 'long', year: 'numeric' });
-        if (!groupedByMonth[monthKey]) {
-            groupedByMonth[monthKey] = [];
-        }
-        groupedByMonth[monthKey].push(booking);
-    });
+    // Sort bookings by start date
+    // Upcoming: Nearest first
+    // Past: Newest first (descending)
+    const now = new Date();
+    // Reset time to start of today so bookings ending today aren't "past" yet if we want them visible
+    // But usually "past" means end date < now. Let's use strict end time comparison.
+
+    const upcoming = bookings
+        .filter(b => b.end >= now)
+        .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+    const past = bookings
+        .filter(b => b.end < now)
+        .sort((a, b) => b.start.getTime() - a.start.getTime()); // Descending for history
+
+    // Group helper
+    const groupBookings = (list: Booking[]) => {
+        const grouped: { [key: string]: Booking[] } = {};
+        list.forEach(booking => {
+            const monthKey = booking.start.toLocaleDateString('is-IS', { month: 'long', year: 'numeric' });
+            if (!grouped[monthKey]) {
+                grouped[monthKey] = [];
+            }
+            grouped[monthKey].push(booking);
+        });
+        return grouped;
+    };
+
+    const upcomingGroups = groupBookings(upcoming);
+    const pastGroups = groupBookings(past);
 
     if (bookings.length === 0) {
         return (
@@ -190,24 +211,70 @@ const BookingsListView = ({
     }
 
     return (
-        <div className="space-y-6">
-            {Object.entries(groupedByMonth).map(([month, monthBookings]) => (
-                <div key={month}>
-                    <h3 className="text-lg font-serif font-bold text-charcoal mb-3 capitalize sticky top-0 bg-white py-2 z-10">
-                        {month}
-                    </h3>
-                    <div className="space-y-3">
-                        {monthBookings.map(booking => (
-                            <BookingCard
-                                key={booking.id}
-                                booking={booking}
-                                onClick={onSelectBooking}
-                                getTypeLabel={getTypeLabel}
-                            />
-                        ))}
-                    </div>
+        <div className="space-y-8">
+            {/* Upcoming Bookings */}
+            {upcoming.length > 0 ? (
+                <div className="space-y-6">
+                    {Object.entries(upcomingGroups).map(([month, monthBookings]) => (
+                        <div key={month}>
+                            <h3 className="text-lg font-serif font-bold text-charcoal mb-3 capitalize sticky top-0 bg-white py-2 z-10 border-b border-stone-100">
+                                {month}
+                            </h3>
+                            <div className="space-y-3">
+                                {monthBookings.map(booking => (
+                                    <BookingCard
+                                        key={booking.id}
+                                        booking={booking}
+                                        onClick={onSelectBooking}
+                                        getTypeLabel={getTypeLabel}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
                 </div>
-            ))}
+            ) : (
+                <div className="text-center py-8 bg-stone-50 rounded-lg border border-stone-200">
+                    <CalendarIcon className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+                    <p className="text-stone-500 font-medium">Engar framtíðarbókanir</p>
+                </div>
+            )}
+
+            {/* Past Bookings Section */}
+            {past.length > 0 && (
+                <div className="pt-4 border-t border-stone-200">
+                    <button
+                        onClick={() => setShowPast(!showPast)}
+                        className="flex items-center gap-2 text-stone-500 hover:text-charcoal font-medium transition-colors w-full py-2"
+                    >
+                        <Clock className="w-4 h-4" />
+                        <span>{showPast ? 'Fela eldri bókanir' : `Sjá eldri bókanir (${past.length})`}</span>
+                        <ChevronRight className={`w-4 h-4 ml-auto transition-transform ${showPast ? 'rotate-90' : ''}`} />
+                    </button>
+
+                    {showPast && (
+                        <div className="space-y-6 mt-4 animate-in slide-in-from-top-2 duration-200">
+                            {Object.entries(pastGroups).map(([month, monthBookings]) => (
+                                <div key={month} className="opacity-75">
+                                    <h3 className="text-sm font-bold text-stone-500 mb-2 capitalize px-1">
+                                        {month}
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {monthBookings.map(booking => (
+                                            <BookingCard
+                                                key={booking.id}
+                                                booking={booking}
+                                                onClick={onSelectBooking}
+                                                getTypeLabel={getTypeLabel}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
@@ -730,7 +797,7 @@ export default function CalendarPage() {
     return (
         <div className="min-h-screen bg-bone">
             {/* Header */}
-            <div className="bg-white border-b border-grey-warm sticky top-0 z-30 shadow-sm">
+            <div className="bg-white border-b border-grey-warm relative md:sticky md:top-0 z-30 shadow-sm">
                 <div className="container mx-auto px-6 py-6">
                     <div className="flex flex-wrap md:flex-nowrap justify-between items-center gap-4">
                         <div className="w-full md:w-auto">
