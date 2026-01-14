@@ -54,18 +54,5 @@
             "path": "/api/cron/trial-reminders",
             "schedule": "0 10 * * *"
         }
-    ],
-    "redirects": [
-        {
-            "source": "/:path*",
-            "has": [
-                {
-                    "type": "host",
-                    "value": "www.bustadurinn.is"
-                }
-            ],
-            "destination": "https://bustadurinn.is/:path*",
-            "permanent": true
-        }
     ]
 }
