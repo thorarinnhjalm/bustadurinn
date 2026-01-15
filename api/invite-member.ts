@@ -13,6 +13,7 @@ function initServices() {
     if (!resend) {
         if (!process.env.RESEND_API_KEY) {
             console.warn('⚠️ RESEND_API_KEY is not set');
+            throw new Error('Missing RESEND_API_KEY');
         }
         resend = new Resend(process.env.RESEND_API_KEY);
     }
@@ -62,6 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const { requireAuth, getAuthErrorResponse } = await import('./utils/apiAuth');
             authenticatedUser = await requireAuth(req);
         } catch (authError: any) {
+            console.error('Auth Error:', authError);
             const { getAuthErrorResponse } = await import('./utils/apiAuth');
             const errorResponse = getAuthErrorResponse(authError);
             return res.status(errorResponse.status).json(errorResponse.body);
@@ -95,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const isManager = houseData?.manager_id === senderUid;
 
         if (!isOwner && !isManager) {
-            console.warn(`Forbidden: User ${senderUid} is not owner/manager of ${houseId}. Owners: ${JSON.stringify(owners)}, Manager: ${houseData?.manager_id}`);
+            console.warn(`Forbidden: User ${senderUid} is not owner/manager of ${houseId}.`);
             return res.status(403).json({ error: 'Forbidden: Only house owners/managers can invite members' });
         }
 
@@ -106,17 +108,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const userExists = !userSnapshot.empty;
 
         if (userExists) {
-            // --- EXISTING USER FLOW ---
             const userDoc = userSnapshot.docs[0];
             const userId = userDoc.id;
             const userData = userDoc.data();
 
-            // Check if already in house
             if (userData.house_ids?.includes(houseId)) {
                 return res.status(400).json({ error: 'User is already a member of this house.' });
             }
 
-            // Transaction to update both House and User
             await db.runTransaction(async (t) => {
                 const houseRef = db!.collection('houses').doc(houseId);
                 const userRef = db!.collection('users').doc(userId);
@@ -131,17 +130,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             // Send "Added" Email
             const subject = `Þér hefur verið bætt við ${houseName || 'sumarbústað'}`;
+            // Use a simpler template for "Added" or the same one? Using simple for now to focus on Invite.
             const html = `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                     <h2 style="color: #333;">Hæ ${userData.name || 'vinur'}!</h2>
                     <p style="font-size: 16px; color: #555;">
                         <strong>${senderName || 'Eigandi'}</strong> hefur bætt þér við sem meðeiganda í <strong>${houseName}</strong> á Bústaðurinn.is.
                     </p>
-                    <p style="font-size: 16px; color: #555;">
-                        Þú getur nú skráð þig inn og séð húsið í yfirlitinu þínu.
-                    </p>
                     <div style="margin: 30px 0;">
-                        <a href="https://bustadurinn.is/dashboard" style="background-color: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                        <a href="https://bustadurinn.is/dashboard" style="background-color: #e8b058; color: #1a1a1a; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                             Fara í Bústaðurinn.is
                         </a>
                     </div>
@@ -186,30 +183,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 created_at: admin.firestore.FieldValue.serverTimestamp()
             });
 
-            // Send "Invite" Email
-            // We direct them to a signup/claim URL. 
-            // Assuming /join-house or just /login?invite_token=... logic exists or will be created.
-            const inviteUrl = `https://bustadurinn.is/join?token=${token}`; // Utilizing generic join page, might need to implement token logic there.
+            const inviteUrl = `https://bustadurinn.is/join?token=${token}`;
+            const subject = `Boð frá ${senderName}`;
 
-            const subject = `Boð í ${houseName || 'sumarbústað'}`;
+            // New HTML Template based on user request
             const html = `
-                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #333;">Hæ!</h2>
-                    <p style="font-size: 16px; color: #555;">
-                        <strong>${senderName}</strong> hefur boðið þér að gerast meðeigandi í <strong>${houseName}</strong> á Bústaðurinn.is.
-                    </p>
-                    <p style="font-size: 16px; color: #555;">
-                        Bústaðurinn.is er einfalt kerfi til að halda utan um sumarbústaðinn, bókanir, verkefni og fjármál.
-                    </p>
-                    <div style="margin: 30px 0;">
-                        <a href="${inviteUrl}" style="background-color: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                            Samþykkja boð & Stofna aðgang
-                        </a>
-                    </div>
-                    <p style="font-size: 12px; color: #999;">
-                        Ef þú átt nú þegar aðgang mun boðið bætast við prófílinn þinn við innskráningu.
-                    </p>
-                </div>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; color: #1a1a1a; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .header { background: #1a1a1a; color: #fdfcf8; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .header h1 { margin: 0; font-family: 'Fraunces', serif; font-size: 28px; }
+    .content { background: white; padding: 40px; border: 1px solid #e8e4df; border-top: none; border-radius: 0 0 8px 8px; }
+    .button { display: inline-block; background: #e8b058; color: #1a1a1a; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+    .footer { text-align: center; padding: 20px; color: #8a8580; font-size: 14px; }
+    .house-info { background: #fdfcf8; padding: 20px; border-radius: 6px; margin: 20px 0; border: 1px solid #e8e4df; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Boð frá ${senderName}</h1>
+    </div>
+    <div class="content">
+      <p>Hæ,</p>
+
+      <p><strong>${senderName}</strong> hefur boðið þér að gerast meðeigandi í sumarhúsinu.</p>
+
+      <div class="house-info">
+        <h2 style="margin-top: 0; font-family: 'Fraunces', serif; color: #1a1a1a;">${houseName}</h2>
+        <p style="margin: 0; color: #4a4642;">Smelltu á hlekkinn hér að neðan til að samþykkja boðið.</p>
+      </div>
+
+      <p><strong>Sem meðeigandi getur þú:</strong></p>
+      <ul>
+        <li>Bóka helgar og dvalir</li>
+        <li>Skrá útgjöld og sjá fjármál</li>
+        <li>Bæta við verkefnum og listum</li>
+        <li>Séð allar upplýsingar um húsið</li>
+      </ul>
+
+      <a href="${inviteUrl}" class="button">Samþykkja boð</a>
+
+      <p style="margin-top: 40px; font-size: 14px; color: #8a8580;">
+        Ef þú fékkst þennan tölvupóst fyrir mistök, getur þú hunsað hann.
+      </p>
+    </div>
+    <div class="footer">
+      <p>© ${new Date().getFullYear()} Bústaðurinn.is - Neðri Hóll Hugmyndahús ehf.</p>
+    </div>
+  </div>
+</body>
+</html>
             `;
 
             await resend.emails.send({
@@ -225,11 +253,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
         console.error('❌ Error inviting member:', error);
 
-        // Don't expose stack traces in production
-        const errorResponse = process.env.NODE_ENV === 'production'
-            ? { error: 'Internal server error' }
-            : { error: error.message, code: error.code || 'internal_server_error' };
-
-        return res.status(500).json(errorResponse);
+        // Return explicit error for clearer debugging on client (temporary, or secure enough?)
+        // Assuming user is an admin/manager, seeing the error is helpful.
+        return res.status(500).json({ error: error.message || 'Internal server error', code: error.code });
     }
 }
