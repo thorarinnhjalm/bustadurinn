@@ -104,6 +104,9 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Feedback
+import FeedbackWidget from '@/components/feedback/FeedbackWidget';
+
 function App() {
 
   // Auth logic moved to AuthHandler
@@ -208,6 +211,7 @@ function App() {
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            <FeedbackWidget />
           </Router>
         </HelmetProvider>
       </ImpersonationProvider>

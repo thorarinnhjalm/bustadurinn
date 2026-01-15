@@ -5,7 +5,12 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, BarChart2, TrendingUp, Activity, Database, UserCog, Edit, Send, Tag, Settings, CheckCircle, XCircle, Mail, Trash2, Loader2, RefreshCw, MapPin, Shield, LogOut, LayoutDashboard, Reply, AlertTriangle } from 'lucide-react';
+import {
+    LayoutDashboard, Home, Users, BarChart2, Mail, Tag, Settings, Send,
+    Database, LogOut, Search, Plus, Trash2, Edit2, CheckCircle, AlertTriangle,
+    XCircle, ChevronDown, ChevronUp, ChevronRight, Download, Filter, RefreshCw, Loader2, Shield, Activity, TrendingUp, Reply, ExternalLink, Star,
+    Edit, MapPin, UserCog
+} from 'lucide-react';
 import { db, auth } from '@/lib/firebase';
 import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -17,8 +22,9 @@ import AdminLayout from '@/components/AdminLayout';
 import DataTable from '@/components/DataTable';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
 import { logger } from '@/utils/logger';
+import { feedbackService } from '@/services/feedbackService';
 
-import type { House, User, Coupon, ContactSubmission } from '@/types/models';
+import type { House, User, Coupon, ContactSubmission, Feedback } from '@/types/models';
 
 interface EmailTemplate {
     id: string; // 'welcome', 'inactive_engagement'
@@ -48,12 +54,13 @@ interface Stats {
     allContacts: ContactSubmission[];
     allCoupons: Coupon[];
     allSubscribers: NewsletterSubscriber[];
+    allFeedback: Feedback[];
     launchOfferCount: number;
 }
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'houses' | 'users' | 'contacts' | 'coupons' | 'integrations' | 'emails' | 'newsletter' | 'audit'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'houses' | 'users' | 'contacts' | 'feedback' | 'coupons' | 'integrations' | 'emails' | 'newsletter' | 'audit'>('overview');
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [editingHouse, setEditingHouse] = useState<House | null>(null);
@@ -103,6 +110,7 @@ export default function SuperAdminPage() {
         allContacts: [],
         allCoupons: [],
         allSubscribers: [],
+        allFeedback: [],
         launchOfferCount: 0
     });
 
@@ -133,7 +141,7 @@ export default function SuperAdminPage() {
                     }
                 };
 
-                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, promoSnapResult] = await Promise.all([
+                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, promoSnapResult] = await Promise.all([
                     safeFetch('houses'),
                     safeFetch('users'),
                     safeFetch('bookings'),
@@ -141,6 +149,7 @@ export default function SuperAdminPage() {
                     safeFetch('contact_submissions'),
                     safeFetch('coupons'),
                     safeFetch('newsletter_subscribers'),
+                    safeFetch('feedback'),
                     getDoc(doc(db, 'system', 'promotions'))
                 ]);
 
@@ -167,6 +176,12 @@ export default function SuperAdminPage() {
                     created_at: (doc.data().created_at as any)?.toDate() || new Date()
                 } as NewsletterSubscriber)) || [];
 
+                const feedback = feedbackSnap?.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    createdAt: (doc.data().createdAt as any)?.toDate() || new Date()
+                } as Feedback)) || [];
+
                 setStats({
                     totalHouses: houses.length,
                     totalUsers: users.length,
@@ -178,6 +193,7 @@ export default function SuperAdminPage() {
                     allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
                     allCoupons: coupons,
                     allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
+                    allFeedback: feedback.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
                     launchOfferCount: promoSnapResult && promoSnapResult.exists() ? promoSnapResult.data().launch_offer_count || 0 : 0
                 });
 
@@ -825,6 +841,39 @@ export default function SuperAdminPage() {
         }
     };
 
+    const handleToggleFeatured = async (feedback: Feedback) => {
+        setActionLoading(`feature-${feedback.id}`);
+        try {
+            await feedbackService.toggleFeatured(feedback.id, !feedback.featured);
+            setStats(prev => ({
+                ...prev,
+                allFeedback: prev.allFeedback.map(f => f.id === feedback.id ? { ...f, featured: !f.featured } : f)
+            }));
+        } catch (error: any) {
+            console.error('Error toggling featured status:', error);
+            alert('Error: ' + error.message);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleDeleteFeedback = async (id: string) => {
+        if (!confirm('Ertu viss um að þú viljir eyða þessari umsögn?')) return;
+        setActionLoading(`delete-feedback-${id}`);
+        try {
+            await feedbackService.deleteFeedback(id);
+            setStats(prev => ({
+                ...prev,
+                allFeedback: prev.allFeedback.filter(f => f.id !== id)
+            }));
+        } catch (error: any) {
+            console.error('Error deleting feedback:', error);
+            alert('Error: ' + error.message);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     // Audit & Health Logic
     const fetchOrphans = async () => {
         setAuditLoading(true);
@@ -1447,6 +1496,65 @@ export default function SuperAdminPage() {
                 })()}
 
                 {/* Houses Tab Start */}
+
+                {/* Feedback Tab */}
+                {activeTab === 'feedback' && (
+                    <div className="bg-white border border-stone-200 rounded-lg p-6">
+                        <h2 className="text-lg font-serif font-semibold mb-6">Umsagnir</h2>
+                        <DataTable
+                            columns={[
+                                {
+                                    key: 'rating', label: 'Einkunn', sortable: true, render: (row) => (
+                                        <div className="flex text-amber">
+                                            {[...Array(5)].map((_, i) => (
+                                                <span key={i} className={i < row.rating ? 'fill-amber' : 'text-stone-300'}>★</span>
+                                            ))}
+                                        </div>
+                                    )
+                                },
+                                {
+                                    key: 'comment', label: 'Umsögn', render: (row) => (
+                                        <div className="max-w-md truncate" title={row.comment}>{row.comment || '-'}</div>
+                                    )
+                                },
+                                {
+                                    key: 'userName', label: 'Notandi', sortable: true, render: (row) => (
+                                        <div>
+                                            <div className="font-medium">{row.userName}</div>
+                                            <div className="text-xs text-stone-500">{row.userEmail}</div>
+                                        </div>
+                                    )
+                                },
+                                {
+                                    key: 'canContact', label: 'Leyfi', render: (row) => (
+                                        row.canContact ? <span className="text-green-600 bg-green-50 px-2 py-1 rounded text-xs">Má hafa samband</span> : <span className="text-stone-400 text-xs">Nei</span>
+                                    )
+                                },
+                                { key: 'createdAt', label: 'Dags', sortable: true, render: (row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString('is-IS') : '-' },
+                            ]}
+                            data={stats.allFeedback}
+                            searchKeys={['userName', 'userEmail', 'comment']}
+                            actions={(row) => (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleToggleFeatured(row)}
+                                        className={`p-2 rounded hover:bg-stone-50 transition-colors ${row.featured ? 'text-amber bg-amber/10' : 'text-stone-400'}`}
+                                        title={row.featured ? "Unfeature" : "Feature on Landing Page"}
+                                    >
+                                        <Star className={`w-4 h-4 ${row.featured ? 'fill-amber' : ''}`} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteFeedback(row.id)}
+                                        className="p-2 text-stone-400 hover:text-red-600 hover:bg-stone-50 rounded transition-colors"
+                                        title="Delete"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        />
+                    </div>
+                )}
 
                 {/* Houses Tab */}
                 {

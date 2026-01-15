@@ -67,6 +67,8 @@ type Tab = 'house' | 'members' | 'profile' | 'guests' | 'guestbook' | 'shopping'
 
 
 // ... other imports
+import { MessageSquarePlus } from 'lucide-react';
+import FeedbackModal from '@/components/feedback/FeedbackModal';
 
 export default function SettingsPage() {
     const navigate = useNavigate();
@@ -84,6 +86,7 @@ export default function SettingsPage() {
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
     const [showGuestPreview, setShowGuestPreview] = useState(false);
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
     // House State
     const [house, setHouse] = useState<House | null>(null);
@@ -2141,13 +2144,6 @@ export default function SettingsPage() {
                                         </form>
                                     </div>
                                 </section>
-
-                                {/* Guest Preview Modal */}
-                                <GuestPreviewModal
-                                    house={house}
-                                    isOpen={showGuestPreview}
-                                    onClose={() => setShowGuestPreview(false)}
-                                />
                             </div>
                         )}
 
@@ -2412,23 +2408,61 @@ export default function SettingsPage() {
                             </div>
                         )}
                     </div>
-                </div >
-            </div >
 
-            {/* Image Cropper Modal */}
-            {
-                showCropper && imageFile && (
-                    <ImageCropper
-                        image={imageFile}
-                        onCropComplete={handleCroppedImage}
-                        onCancel={() => {
-                            setShowCropper(false);
-                            setImageFile(null);
-                        }}
-                        aspectRatio={16 / 9}
-                    />
-                )
-            }
+                    {/* Feedback Button (Mobile Friendly way to get there) */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-100">
+                        <div className="flex items-center gap-2 mb-4">
+                            <MessageSquarePlus className="text-amber" size={24} />
+                            <h3 className="font-serif font-bold text-lg text-[#1a1a1a]">Gefa umsögn</h3>
+                        </div>
+                        <p className="text-stone-600 mb-4 text-sm">
+                            Hvað finnst þér um Bústaðinn.is? Við viljum endilega heyra frá þér til að gera kerfið enn betra.
+                        </p>
+                        <button
+                            onClick={() => setShowFeedbackModal(true)}
+                            className="btn btn-secondary w-full border-stone-200 hover:bg-stone-50"
+                        >
+                            Senda ábendingu
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Modals outside main content but valid in fragment or root div? 
+                Wait, the root div is closed at 2513. 
+                So these should be BEFORE the last closing div.
+                Line 2429 closes `div` which seems to be the main layout wrapper?
+                Let's check indentation. 
+                Line 2429 closes `div` at indentation level 12.
+                The root `div` is at indentation 4? No, return starts at 19?
+                
+                Let's just put them here.
+            */}
+
+            <FeedbackModal
+                isOpen={showFeedbackModal}
+                onClose={() => setShowFeedbackModal(false)}
+            />
+
+            {showGuestPreview && house && (
+                <GuestPreviewModal
+                    isOpen={showGuestPreview}
+                    onClose={() => setShowGuestPreview(false)}
+                    house={house}
+                />
+            )}
+
+            {showCropper && imageFile && (
+                <ImageCropper
+                    image={imageFile}
+                    onCropComplete={handleCroppedImage}
+                    onCancel={() => {
+                        setShowCropper(false);
+                        setImageFile(null);
+                    }}
+                    aspectRatio={1}
+                />
+            )}
 
             {/* Upload Progress Overlay */}
             {

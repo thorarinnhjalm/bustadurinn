@@ -277,3 +277,17 @@ export interface ContactSubmission {
     status: 'new' | 'read' | 'replied';
     replies?: ContactReply[];
 }
+
+export interface Feedback {
+    id: string;
+    userId: string;
+    userName: string;
+    userEmail?: string;
+    rating: number; // 1-5
+    comment: string;
+    canContact: boolean;
+    userAgent: string;
+    path: string;
+    createdAt: Date;
+    featured?: boolean; // Admin toggle for landing page
+}

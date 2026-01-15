@@ -10,6 +10,7 @@ import { CalendarMockup } from '@/components/FeatureMockups';
 import MarketingLayout from '@/components/MarketingLayout';
 import { useAppStore } from '@/store/appStore';
 import NewsletterSignup from '@/components/NewsletterSignup';
+import Testimonials from '@/components/landing/Testimonials';
 // NewsletterPopup moved to MarketingLayout
 
 export default function LandingPage() {
@@ -197,6 +198,9 @@ export default function LandingPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Testimonials Section (Dynamic) */}
+            <Testimonials />
 
             {/* Features Preview */}
             <section className="py-24 bg-bone">
