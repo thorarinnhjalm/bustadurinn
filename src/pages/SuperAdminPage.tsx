@@ -7,8 +7,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Home, Users, BarChart2, Mail, Tag, Settings, Send,
-    Database, LogOut, Search, Plus, Trash2, Edit2, CheckCircle, AlertTriangle,
-    XCircle, ChevronDown, ChevronUp, ChevronRight, Download, Filter, RefreshCw, Loader2, Shield, Activity, TrendingUp, Reply, ExternalLink, Star,
+    Database, LogOut, Trash2, CheckCircle, AlertTriangle,
+    XCircle, RefreshCw, Loader2, Shield, Activity, TrendingUp, Reply, Star,
     Edit, MapPin, UserCog
 } from 'lucide-react';
 import { db, auth } from '@/lib/firebase';
