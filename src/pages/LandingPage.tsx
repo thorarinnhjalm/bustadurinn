@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import {
     Calendar, TrendingUp, CheckCircle, ArrowRight, Users,
     CheckSquare, Home, Plus, Settings, Shield, Bell, UserPlus
@@ -12,6 +14,16 @@ import NewsletterSignup from '@/components/NewsletterSignup';
 
 export default function LandingPage() {
     const navigate = useNavigate();
+    const [remainingSlots, setRemainingSlots] = useState<number>(12); // Default to 12 as safe fallback
+
+    useEffect(() => {
+        getDoc(doc(db, 'system', 'promotions')).then(snap => {
+            if (snap.exists()) {
+                const count = snap.data().launch_offer_count || 0;
+                setRemainingSlots(Math.max(0, 50 - count));
+            }
+        }).catch(e => console.error("Failed to fetch promo count", e));
+    }, []);
 
     // Redirect if already logged in and has a house
     const { isAuthenticated, currentUser, isLoading } = useAppStore();
@@ -77,10 +89,12 @@ export default function LandingPage() {
                         <div className="w-full lg:w-1/2">
                             {/* Badge */}
                             <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-8">
-                                <div className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-[0_0_20px_rgba(220,38,38,0.4)] animate-pulse">
-                                    <span className="w-2 h-2 bg-white rounded-full"></span>
-                                    Fyrstu 50 húsin fá 1 ár frítt! (Aðeins 12 pláss eftir)
-                                </div>
+                                {(remainingSlots > 0) && (
+                                    <div className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-[0_0_20px_rgba(220,38,38,0.4)] animate-pulse">
+                                        <span className="w-2 h-2 bg-white rounded-full"></span>
+                                        Fyrstu 50 húsin fá 1 ár frítt! (Aðeins {remainingSlots} pláss eftir)
+                                    </div>
+                                )}
                                 <div className="inline-flex items-center gap-2 bg-amber/20 text-charcoal border border-amber/30 px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm">
                                     Engin skuldbinding • 30 daga prufa
                                 </div>
