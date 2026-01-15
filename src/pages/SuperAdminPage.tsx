@@ -617,7 +617,7 @@ export default function SuperAdminPage() {
             let parsedData: any = {};
             try {
                 parsedData = JSON.parse(data);
-            } catch (e) {
+            } catch (_e) {
                 // Not JSON
             }
 
@@ -727,7 +727,7 @@ export default function SuperAdminPage() {
                     const data = JSON.parse(text);
                     errorMessage = data.error || data.message || errorMessage;
                     if (data.details) errorMessage += `\n\nDetails: ${data.details}`;
-                } catch (e) {
+                } catch (_e) {
                     // Not JSON, use raw text (might be Vercel crash page)
                     errorMessage = `Server Error (${res.status}): ${text.slice(0, 200)}`;
                 }
@@ -1266,7 +1266,8 @@ export default function SuperAdminPage() {
                             { id: 'integrations', icon: Settings, label: 'Tengingar' },
                             { id: 'coupons', icon: Tag, label: 'Afslættir' },
                             { id: 'contacts', icon: Mail, label: 'Samskipti' },
-                            { id: 'newsletter', icon: Send, label: 'Póstlisti' }
+                            { id: 'newsletter', icon: Send, label: 'Póstlisti' },
+                            { id: 'feedback', icon: Star, label: 'Umsagnir' }
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -1504,7 +1505,7 @@ export default function SuperAdminPage() {
                         <DataTable
                             columns={[
                                 {
-                                    key: 'rating', label: 'Einkunn', sortable: true, render: (row) => (
+                                    key: 'rating', label: 'Hvað finnst þér?', sortable: true, render: (row) => (
                                         <div className="flex text-amber">
                                             {[...Array(5)].map((_, i) => (
                                                 <span key={i} className={i < row.rating ? 'fill-amber' : 'text-stone-300'}>★</span>
@@ -1513,7 +1514,7 @@ export default function SuperAdminPage() {
                                     )
                                 },
                                 {
-                                    key: 'comment', label: 'Umsögn', render: (row) => (
+                                    key: 'comment', label: 'Hvað má betur fara?', render: (row) => (
                                         <div className="max-w-md truncate" title={row.comment}>{row.comment || '-'}</div>
                                     )
                                 },
@@ -1526,8 +1527,8 @@ export default function SuperAdminPage() {
                                     )
                                 },
                                 {
-                                    key: 'canContact', label: 'Leyfi', render: (row) => (
-                                        row.canContact ? <span className="text-green-600 bg-green-50 px-2 py-1 rounded text-xs">Má hafa samband</span> : <span className="text-stone-400 text-xs">Nei</span>
+                                    key: 'canContact', label: 'Má hafa samband?', render: (row) => (
+                                        row.canContact ? <span className="text-green-600 bg-green-50 px-2 py-1 rounded text-xs">Já</span> : <span className="text-stone-400 text-xs">Nei</span>
                                     )
                                 },
                                 { key: 'createdAt', label: 'Dags', sortable: true, render: (row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString('is-IS') : '-' },

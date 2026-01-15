@@ -14,7 +14,8 @@ import {
     X,
     LogOut,
     Send,
-    Shield
+    Shield,
+    Star
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import type { House } from '@/types/models';
@@ -44,6 +45,7 @@ export default function AdminLayout({
         { name: 'Notendur', id: 'users', icon: Users },
         { name: 'Samskipti', id: 'contacts', icon: Mail },
         { name: 'Póstlisti', id: 'newsletter', icon: Send },
+        { name: 'Umsagnir', id: 'feedback', icon: Star },
         { name: 'Audit', id: 'audit', icon: Shield },
     ];
 
