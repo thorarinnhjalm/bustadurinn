@@ -4,7 +4,7 @@
  */
 
 import type { VercelRequest } from '@vercel/node';
-import admin from 'firebase-admin';
+import { admin } from './firebaseAdmin';
 
 // Super Admin email whitelist
 const ADMIN_EMAILS = [

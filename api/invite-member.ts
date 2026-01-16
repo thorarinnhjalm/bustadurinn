@@ -1,47 +1,20 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import admin from 'firebase-admin';
 import * as crypto from 'crypto';
 import { requireAuth, getAuthErrorResponse } from './utils/apiAuth';
+import { admin, db } from './utils/firebaseAdmin';
 
-// Lazy init variables
-let db: admin.firestore.Firestore | null = null;
+// Lazy init Resend
 let resend: Resend | null = null;
 
-function initServices() {
-    // Initialize Resend
+function initResend() {
     if (!resend) {
         if (!process.env.RESEND_API_KEY) {
-            console.warn('⚠️ RESEND_API_KEY is not set');
-            throw new Error('Missing RESEND_API_KEY');
+            throw new Error('Missing RESEND_API_KEY environment variable');
         }
         resend = new Resend(process.env.RESEND_API_KEY);
     }
-
-    // Initialize Firebase Admin
-    if (!admin.apps.length) {
-        try {
-            if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-                const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-                admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount),
-                    projectId: serviceAccount.project_id
-                });
-            } else {
-                admin.initializeApp({
-                    credential: admin.credential.applicationDefault(),
-                    projectId: 'bustadurinn-is'
-                });
-            }
-        } catch (error) {
-            console.error('❌ Firebase Admin initialization error:', error);
-            throw new Error(`Firebase Init Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-    }
-
-    if (!db) {
-        db = admin.firestore();
-    }
+    return resend;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -55,7 +28,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        initServices();
+        // Initialize Resend
+        const resendClient = initResend();
 
         // 🔒 SECURITY: Require authentication
         let authenticatedUser;
@@ -65,10 +39,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             console.error('Auth Error:', authError);
             const errorResponse = getAuthErrorResponse(authError);
             return res.status(errorResponse.status).json(errorResponse.body);
-        }
-
-        if (!db || !resend) {
-            throw new Error('Internal services failed to initialize');
         }
 
         const { email, houseId, houseName, senderName, senderUid } = req.body;
@@ -143,7 +113,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 </div>
             `;
 
-            await resend.emails.send({
+            await resendClient.emails.send({
                 from: 'Bústaðurinn <hallo@bustadurinn.is>',
                 to: targetEmail,
                 subject,
@@ -238,7 +208,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 </html>
             `;
 
-            await resend.emails.send({
+            await resendClient.emails.send({
                 from: 'Bústaðurinn <hallo@bustadurinn.is>',
                 to: targetEmail,
                 subject,
