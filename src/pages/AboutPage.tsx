@@ -99,6 +99,15 @@ export default function AboutPage() {
                                 Skoðaðu einnig <a href="https://vaktaplan.is" target="_blank" rel="noopener" className="text-charcoal font-semibold hover:text-amber transition-colors underline decoration-amber/30 underline-offset-4">Vaktaplan.is</a> fyrir snjallara vaktaskipulag og <a href="https://nagrannar.is" target="_blank" rel="noopener" className="text-charcoal font-semibold hover:text-amber transition-colors underline decoration-amber/30 underline-offset-4">Nágrannar.is</a> sem er sérsniðið utanumhald fyrir húsfélög í fjöleignarhúsum.
                             </p>
                         </div>
+
+                        <div className="mt-12 pt-10 border-t border-grey-warm/30">
+                            <h3 className="text-lg font-serif mb-4">Um fyrirtækið</h3>
+                            <div className="text-sm text-grey-mid leading-relaxed space-y-2">
+                                <p><strong>Neðri Hóll Hugmyndahús ehf.</strong></p>
+                                <p>Kennitala: 4701262480 • VSK númer: 159950</p>
+                                <p>Álfhólsvegi 97, 200 Kópavogur</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

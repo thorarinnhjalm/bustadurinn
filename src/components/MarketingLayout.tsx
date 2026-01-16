@@ -179,6 +179,10 @@ export default function MarketingLayout({
                                 <p className="text-[11px] text-stone-200 uppercase tracking-[0.2em] font-bold opacity-80">
                                     Útgefið af Neðri Hóll Hugmyndahús ehf.
                                 </p>
+                                <div className="text-[10px] text-stone-300/70 space-y-1 font-medium">
+                                    <p>Kennitala: 4701262480 • VSK númer: 159950</p>
+                                    <p>Álfhólsvegi 97, 200 Kópavogur</p>
+                                </div>
                             </div>
                         </div>
                     </div>
