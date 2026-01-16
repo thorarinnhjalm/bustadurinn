@@ -1,8 +1,8 @@
-
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import admin from 'firebase-admin';
 import * as crypto from 'crypto';
+import { requireAuth, getAuthErrorResponse } from './utils/apiAuth';
 
 // Lazy init variables
 let db: admin.firestore.Firestore | null = null;
@@ -60,11 +60,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 🔒 SECURITY: Require authentication
         let authenticatedUser;
         try {
-            const { requireAuth, getAuthErrorResponse } = await import('./utils/apiAuth');
             authenticatedUser = await requireAuth(req);
         } catch (authError: any) {
             console.error('Auth Error:', authError);
-            const { getAuthErrorResponse } = await import('./utils/apiAuth');
             const errorResponse = getAuthErrorResponse(authError);
             return res.status(errorResponse.status).json(errorResponse.body);
         }

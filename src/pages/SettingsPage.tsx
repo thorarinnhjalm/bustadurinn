@@ -2410,7 +2410,7 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Feedback Button (Mobile Friendly way to get there) */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-100">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-100 w-full md:w-80 flex-shrink-0">
                         <div className="flex items-center gap-2 mb-4">
                             <MessageSquarePlus className="text-amber" size={24} />
                             <h3 className="font-serif font-bold text-lg text-[#1a1a1a]">Gefa umsögn</h3>
