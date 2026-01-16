@@ -1886,9 +1886,12 @@ export default function SettingsPage() {
                                                     <p className="text-sm text-stone-500">
                                                         Viltu endurnýja hlekkinn? Gamli hlekkurinn hættir að virka.
                                                     </p>
-                                                    <div className="flex gap-2">
+                                                    <div className="mt-4 flex gap-2">
                                                         <button
-                                                            onClick={() => handleGenerateGuestToken(true)}
+                                                            onClick={() => {
+                                                                const input = document.querySelector('input[type="file"][data-upload-type="gallery"]') as HTMLInputElement;
+                                                                input?.click();
+                                                            }}
                                                             className="btn btn-ghost text-stone-500 hover:text-charcoal text-sm"
                                                         >
                                                             <RefreshCw size={14} className="mr-2" />
@@ -2194,6 +2197,7 @@ export default function SettingsPage() {
                                             <label className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
                                                 <ImageIcon size={24} />
                                                 <input
+                                                    id="avatar-upload"
                                                     type="file"
                                                     className="hidden"
                                                     accept="image/*"
@@ -2202,7 +2206,10 @@ export default function SettingsPage() {
                                             </label>
                                             <button
                                                 className="absolute bottom-0 right-0 bg-amber text-white p-1.5 rounded-full shadow-sm hover:bg-amber-dark transition-colors"
-                                                onClick={() => (document.querySelector('input[type="file"][onChange]') as HTMLInputElement)?.click()}
+                                                onClick={() => {
+                                                    const input = document.getElementById('avatar-upload') as HTMLInputElement;
+                                                    input?.click();
+                                                }}
                                             >
                                                 <Edit2 size={12} />
                                             </button>
