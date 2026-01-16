@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "process-hms": "node scripts/process-hms.cjs",
-    "seed-email-templates": "node scripts/seedEmailTemplatesAdmin.js"
+    "seed-email-templates": "node scripts/seedEmailTemplatesAdmin.js",
+    "test-payday": "node scripts/test-payday-integration.js"
   },
   "dependencies": {
     "@google-analytics/data": "^5.2.1",
