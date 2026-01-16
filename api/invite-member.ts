@@ -18,30 +18,37 @@ function initResend() {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // Handle Preflight (CORS)
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
     try {
+        console.log('🔍 invite-member - Start', { method: req.method, hasAuth: !!req.headers.authorization });
+
+        // Handle Preflight (CORS)
+        if (req.method === 'OPTIONS') {
+            return res.status(200).end();
+        }
+
+        if (req.method !== 'POST') {
+            return res.status(405).json({ error: 'Method not allowed' });
+        }
+
         // Initialize Resend
+        console.log('🔍 Initializing Resend...');
         const resendClient = initResend();
+        console.log('✅ Resend initialized');
 
         // 🔒 SECURITY: Require authentication
+        console.log('🔍 Authenticating request...');
         let authenticatedUser;
         try {
             authenticatedUser = await requireAuth(req);
+            console.log('✅ Auth success:', authenticatedUser.uid);
         } catch (authError: any) {
-            console.error('Auth Error:', authError);
+            console.error('❌ Auth Error:', authError);
             const errorResponse = getAuthErrorResponse(authError);
             return res.status(errorResponse.status).json(errorResponse.body);
         }
 
         const { email, houseId, houseName, senderName, senderUid } = req.body;
+        console.log('🔍 Request body:', { email, houseId, houseName, senderName, senderUid });
 
         if (!email || !houseId || !senderUid) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -219,10 +226,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
     } catch (error: any) {
-        console.error('❌ Error inviting member:', error);
+        console.error('❌ ERROR in invite-member:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+            code: error.code
+        });
 
-        // Return explicit error for clearer debugging on client (temporary, or secure enough?)
-        // Assuming user is an admin/manager, seeing the error is helpful.
-        return res.status(500).json({ error: error.message || 'Internal server error', code: error.code });
+        console.log('Environment check:', {
+            hasResendKey: !!process.env.RESEND_API_KEY,
+            hasFirebaseAccount: !!process.env.FIREBASE_SERVICE_ACCOUNT,
+            nodeEnv: process.env.NODE_ENV
+        });
+
+        return res.status(500).json({
+            error: error.message || 'Internal server error',
+            code: error.code,
+            type: error.name
+        });
     }
 }
+```
