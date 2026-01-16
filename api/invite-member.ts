@@ -67,7 +67,7 @@ function initResend() {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
-        console.log('🔍 invite-member - Start', { method: req.method, hasAuth: !!req.headers.authorization });
+        console.log('🔍 invite-member v2 - Start', { method: req.method, hasAuth: !!req.headers.authorization });
 
         // Handle Preflight (CORS)
         if (req.method === 'OPTIONS') {
