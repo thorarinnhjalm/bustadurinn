@@ -1,9 +1,32 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
-import { admin, db } from './utils/firebaseAdmin';
+import admin from 'firebase-admin';
 
-// Inline auth functions to avoid module resolution issues in Vercel
+// Initialize Firebase Admin (inline to avoid module resolution)
+if (!admin.apps.length) {
+    try {
+        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+                projectId: serviceAccount.project_id
+            });
+        } else {
+            admin.initializeApp({
+                credential: admin.credential.applicationDefault(),
+                projectId: 'bustadurinn-is'
+            });
+        }
+        console.log('✅ Firebase Admin initialized');
+    } catch (error) {
+        console.error('❌ Firebase Admin init error:', error);
+    }
+}
+
+const db = admin.firestore();
+
+// Inline auth functions to avoid module resolution issues
 async function requireAuth(req: VercelRequest) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -20,22 +43,13 @@ async function requireAuth(req: VercelRequest) {
 
 function getAuthErrorResponse(error: Error): { status: number; body: any } {
     if (error.message.startsWith('UNAUTHORIZED')) {
-        return {
-            status: 401,
-            body: { error: 'Unauthorized', message: 'Authentication required' }
-        };
+        return { status: 401, body: { error: 'Unauthorized', message: 'Authentication required' } };
     }
     if (error.message.startsWith('FORBIDDEN')) {
-        return {
-            status: 403,
-            body: { error: 'Forbidden', message: 'Insufficient permissions' }
-        };
+        return { status: 403, body: { error: 'Forbidden', message: 'Insufficient permissions' } };
     }
     console.error('Auth error:', error);
-    return {
-        status: 500,
-        body: { error: 'Internal server error' }
-    };
+    return { status: 500, body: { error: 'Internal server error' } };
 }
 
 // Lazy init Resend
