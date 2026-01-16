@@ -1,8 +1,42 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
-import { requireAuth, getAuthErrorResponse } from './utils/apiAuth';
 import { admin, db } from './utils/firebaseAdmin';
+
+// Inline auth functions to avoid module resolution issues in Vercel
+async function requireAuth(req: VercelRequest) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new Error('UNAUTHORIZED: Missing or invalid authorization header');
+    }
+    const token = authHeader.split('Bearer ')[1];
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        return decodedToken;
+    } catch (error) {
+        throw new Error('UNAUTHORIZED: Invalid or expired token');
+    }
+}
+
+function getAuthErrorResponse(error: Error): { status: number; body: any } {
+    if (error.message.startsWith('UNAUTHORIZED')) {
+        return {
+            status: 401,
+            body: { error: 'Unauthorized', message: 'Authentication required' }
+        };
+    }
+    if (error.message.startsWith('FORBIDDEN')) {
+        return {
+            status: 403,
+            body: { error: 'Forbidden', message: 'Insufficient permissions' }
+        };
+    }
+    console.error('Auth error:', error);
+    return {
+        status: 500,
+        body: { error: 'Internal server error' }
+    };
+}
 
 // Lazy init Resend
 let resend: Resend | null = null;
