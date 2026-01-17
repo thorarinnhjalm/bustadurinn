@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp, where, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Task, TaskStatus, TaskPriority, TaskCategory, House, User } from '@/types/models';
-import { Plus, Calendar, DollarSign, AlertCircle, Check, X, Edit2, Trash2, Paperclip } from 'lucide-react';
+import type { Task, TaskStatus, TaskPriority, TaskCategory, House, User } from '@/types/models';
+import { Plus, Calendar, DollarSign, Check, Trash2 } from 'lucide-react';
 
 interface TaskManagerProps {
     house: House;
@@ -14,7 +14,6 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
-    const [editingTask, setEditingTask] = useState<Task | null>(null);
 
     // Form state
     const [formData, setFormData] = useState({
