@@ -51,7 +51,7 @@ import {
 import MagicLinkGenerator from '@/components/guest/MagicLinkGenerator';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
-import type { House, User, NotificationSettings, ShoppingItem, InternalLog } from '@/types/models';
+import type { House, User, NotificationSettings, ShoppingItem } from '@/types/models';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { MapPin } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
@@ -155,21 +155,6 @@ export default function SettingsPage() {
         }
     }, [activeTab, house?.id]);
 
-    // Fetch Internal Logs
-    useEffect(() => {
-        if (activeTab === 'logs' && house?.id) {
-            const fetchLogs = async () => {
-                const q = query(
-                    collection(db, 'houses', house.id, 'internal_logs'),
-                    orderBy('created_at', 'desc')
-                );
-                const snapshot = await getDocs(q);
-                const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InternalLog));
-                setLogs(items);
-            };
-            fetchLogs();
-        }
-    }, [activeTab, house?.id]);
 
     // Shopping handlers
     const handleToggleShoppingItem = async (item: ShoppingItem) => {
