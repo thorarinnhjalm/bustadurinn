@@ -131,7 +131,7 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
         }
     };
 
-    const getCategoryIcon = (category: TaskCategory) => {
+    const getCategoryIcon = () => {
         // Simple placeholder - can be expanded later
         return '📋';
     };
@@ -269,7 +269,7 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-xl">{getCategoryIcon(task.category)}</span>
+                                        <span className="text-xl">{getCategoryIcon()}</span>
                                         <h4 className="font-bold text-charcoal">{task.title}</h4>
                                         <span className={`text-xs px-2 py-0.5 rounded-full border ${getPriorityColor(task.priority)}`}>
                                             {task.priority}

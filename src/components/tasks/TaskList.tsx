@@ -90,10 +90,10 @@ export default function TaskList({ tasks, onStatusChange, onDelete }: TaskListPr
                                     {format(new Date(task.due_date), 'd. MMM', { locale: is })}
                                 </div>
                             )}
-                            {task.assigned_to_name && (
+                            {task.assigned_to_names && task.assigned_to_names.length > 0 && (
                                 <div className="flex items-center gap-1">
                                     <UserIcon className="w-3 h-3" />
-                                    {task.assigned_to_name}
+                                    {task.assigned_to_names[0]}
                                 </div>
                             )}
                         </div>

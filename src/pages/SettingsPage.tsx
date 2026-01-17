@@ -57,7 +57,6 @@ import { MapPin } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import GuestbookViewer from '@/components/GuestbookViewer';
 import ShoppingList from '@/components/ShoppingList';
-import InternalLogbook from '@/components/InternalLogbook';
 import TaskManager from '@/components/TaskManager';
 import GuestPreviewModal from '@/components/GuestPreviewModal';
 import { updateUserNameInAllCollections } from '@/services/userService';
@@ -137,9 +136,8 @@ export default function SettingsPage() {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [cropMode, setCropMode] = useState<'main' | 'gallery' | 'avatar'>('main');
 
-    // Shopping & Logs State
+    // Shopping State
     const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
-    const [logs, setLogs] = useState<InternalLog[]>([]);
 
     // Fetch Shopping List
     useEffect(() => {
@@ -196,34 +194,7 @@ export default function SettingsPage() {
         });
     };
 
-    // Log handlers
-    const handleAddLog = async (text: string) => {
-        if (!house || !currentUser) return;
-        const newLog = {
-            house_id: house.id,
-            user_id: currentUser.uid,
-            user_name: currentUser.name || 'Óþekktur',
-            text: text,
-            created_at: new Date()
-        };
-        const docRef = await addDoc(collection(db, 'houses', house.id, 'internal_logs'), newLog);
-        setLogs(prev => [{ id: docRef.id, ...newLog } as InternalLog, ...prev]);
-    };
 
-    const handleDeleteLog = async (log: InternalLog) => {
-        if (!house || !currentUser) return;
-        if (!confirm('Ertu viss um að þú viljir eyða þessari færslu?')) return;
-
-        try {
-            await deleteDoc(doc(db, 'houses', house.id, 'internal_logs', log.id));
-            setLogs(prev => prev.filter(l => l.id !== log.id));
-            setSuccess('Færslu eytt');
-            setTimeout(() => setSuccess(''), 2000);
-        } catch (e) {
-            console.error('Error deleting log:', e);
-            setError('Gat ekki eytt færslu');
-        }
-    };
 
     const handleDeleteGuestbookEntry = async (entry: any) => {
         if (!confirm('Ertu viss um að þú viljir eyða þessari færslu úr gestabókinni?')) return;

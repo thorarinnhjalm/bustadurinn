@@ -97,9 +97,9 @@ export default function TaskBoard({ tasks, onStatusChange, onDelete }: TaskBoard
 
                                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-bone">
                                     <div className="flex items-center gap-2">
-                                        {task.assigned_to_name && (
-                                            <div className="w-6 h-6 rounded-full bg-charcoal text-white text-[10px] flex items-center justify-center" title={task.assigned_to_name}>
-                                                {task.assigned_to_name[0]}
+                                        {task.assigned_to_names && task.assigned_to_names.length > 0 && (
+                                            <div className="w-6 h-6 rounded-full bg-charcoal text-white text-[10px] flex items-center justify-center" title={task.assigned_to_names[0]}>
+                                                {task.assigned_to_names[0][0]}
                                             </div>
                                         )}
                                     </div>

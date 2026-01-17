@@ -1012,8 +1012,8 @@ const UserDashboard = () => {
                                     </div>
                                     <div className="flex-1">
                                         <p className={`text-base font-bold text-[#1a1a1a] ${task.status === 'completed' ? 'line-through text-stone-400' : ''} `}>{task.title}</p>
-                                        {task.assigned_to_name ? (
-                                            <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1"><Users size={12} /> {task.assigned_to_name}</p>
+                                        {task.assigned_to_names && task.assigned_to_names.length > 0 ? (
+                                            <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1"><Users size={12} /> {task.assigned_to_names[0]}</p>
                                         ) : (
                                             <p className="text-xs text-[#e8b058] mt-0.5 group-hover:underline font-bold">+ Taka að sér</p>
                                         )}

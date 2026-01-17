@@ -25,10 +25,13 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
             title,
             description,
             status,
-            assigned_to: assignedTo || undefined,
-            assigned_to_name: assignedMember?.name,
+            category: 'other',
+            priority: 'medium',
+            assigned_to: assignedTo ? [assignedTo] : undefined,
+            assigned_to_names: assignedMember ? [assignedMember.name] : undefined,
             due_date: dueDate ? new Date(dueDate) : undefined,
-            created_at: new Date()
+            created_at: new Date(),
+            updated_at: new Date()
         });
     };
 
