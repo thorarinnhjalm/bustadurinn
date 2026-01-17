@@ -113,20 +113,54 @@ export interface Booking {
     created_at: Date;
 }
 
-export type TaskStatus = 'pending' | 'in_progress' | 'completed';
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskCategory = 'maintenance' | 'repair' | 'improvement' | 'cleaning' | 'other';
+
+export interface TaskAttachment {
+    url: string;
+    name: string;
+    type: 'image' | 'document';
+    uploaded_at: Date;
+    uploaded_by: string;
+}
 
 export interface Task {
     id: string;
     house_id: string;
+
+    // Basic Info
     title: string;
     description?: string;
-    status: TaskStatus;
-    assigned_to?: string;
-    assigned_to_name?: string;
+    category: TaskCategory;
+
+    // Scheduling
     due_date?: Date;
-    created_by: string;
-    created_at: Date;
     completed_at?: Date;
+
+    // Cost Tracking
+    estimated_cost?: number;
+    actual_cost?: number;
+    add_to_finances?: boolean; // Manual option to add completed cost to finance ledger
+    finance_entry_id?: string; // Link to created finance entry if added
+
+    // Attachments
+    attachments?: TaskAttachment[];
+
+    // Status & Priority
+    status: TaskStatus;
+    priority: TaskPriority;
+
+    // Assignment
+    created_by: string;
+    created_by_name?: string;
+    assigned_to?: string[]; // UIDs of members
+    assigned_to_names?: string[]; // Names for display
+    notified_members?: string[]; // Track who has been notified
+
+    // Metadata
+    created_at: Date;
+    updated_at: Date;
 }
 
 // Budget Playground (Rekstrarhermir)
