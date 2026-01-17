@@ -1,6 +1,6 @@
 import MarketingLayout from '@/components/MarketingLayout';
 import ContactForm from '@/components/ContactForm';
-import { Heart, ShieldCheck, Users } from 'lucide-react';
+import { Heart, ShieldCheck, Users, Home } from 'lucide-react';
 
 export default function AboutPage() {
     return (
@@ -16,6 +16,25 @@ export default function AboutPage() {
                         Við teljum að bestu minningarnar verði til í sumarhúsinu.
                         Okkar markmið er að tryggja að skipulagið standi ekki í vegi fyrir þeim.
                     </p>
+                </div>
+            </div>
+
+            {/* Iceland Map Section */}
+            <div className="bg-bone py-16 border-b border-grey-warm/10">
+                <div className="container max-w-5xl mx-auto px-6">
+                    <div className="text-center mb-8">
+                        <h2 className="text-3xl font-serif text-charcoal mb-3">Útbreiðsla um allt land</h2>
+                        <p className="text-grey-dark max-w-2xl mx-auto mb-6">
+                            Sumarhús í Bústaðakerfinu eru víða um land allt. Kerfið nýtist jafnt vel á litlum sumarhúsum sem stórum.
+                        </p>
+                        <a
+                            href="/marketing-map"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-amber text-charcoal font-bold rounded-xl hover:bg-amber-600 transition-colors shadow-lg hover:shadow-xl"
+                        >
+                            <Home className="w-5 h-5" />
+                            Sjá kort af dreifingu
+                        </a>
+                    </div>
                 </div>
             </div>
 
