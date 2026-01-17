@@ -908,8 +908,77 @@ const UserDashboard = () => {
                         </div>
                     </section>
 
+                    {/* SHOPPING LIST CARD */}
+                    <section
+                        onClick={() => navigate('/settings', { state: { initialTab: 'shopping' } })}
+                        className="group cursor-pointer"
+                    >
+                        <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Innkaupalistinn</h3>
+                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-amber group-hover:text-white transition-colors">
+                                <ChevronRight size={18} />
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+                            <div className="absolute top-0 left-0 w-1.5 h-full bg-green-500"></div>
+
+                            {/* Background Pattern */}
+                            <div className="absolute right-0 top-0 opacity-[0.03] transform translate-x-1/3 -translate-y-1/3 pointer-events-none">
+                                <ShoppingBag size={200} />
+                            </div>
+
+                            {shoppingItems.length > 0 ? (
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <ShoppingBag size={20} className="text-green-600" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-2xl font-serif font-bold text-[#1a1a1a]">
+                                                {shoppingItems.length} {shoppingItems.length === 1 ? 'hlutur' : 'hlutir'}
+                                            </h4>
+                                            <p className="text-xs text-stone-500">Vantar að kaupa</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Preview of first 3 items */}
+                                    <div className="space-y-2 mb-3">
+                                        {shoppingItems.slice(0, 3).map(item => (
+                                            <div key={item.id} className="flex items-center gap-2 text-sm">
+                                                <div className="w-4 h-4 rounded border border-stone-300 bg-white flex-shrink-0"></div>
+                                                <span className="text-stone-700 truncate">{item.item}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {shoppingItems.length > 3 && (
+                                        <p className="text-xs text-stone-400 italic">
+                                            + {shoppingItems.length - 3} {shoppingItems.length - 3 === 1 ? 'hlutur' : 'hlutir'} í viðbót
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-8 text-stone-500 relative z-10 text-center">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-50 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                                        <Check size={28} className="text-green-600" />
+                                    </div>
+                                    <h4 className="text-lg font-serif font-bold text-charcoal mb-1">Allt til reiðu!</h4>
+                                    <p className="text-sm text-stone-400 mb-5 max-w-[200px] mx-auto leading-relaxed">
+                                        Innkaupalistinn er tómur
+                                    </p>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); navigate('/settings', { state: { initialTab: 'shopping' } }); }}
+                                        className="px-6 py-2 bg-[#1a1a1a] text-white rounded-full text-xs font-bold uppercase tracking-wider hover:bg-stone-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                                    >
+                                        Bæta við vörum
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
                     {/* TASKS */}
-                    <section className="md:col-span-2">
+                    <section>
                         <div className="flex justify-between items-center mb-4 px-1">
                             <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Verkefni</h3>
                             <button onClick={() => navigate('/tasks')} className="text-xs font-bold text-stone-400 hover:text-[#e8b058]">Sjá öll</button>
