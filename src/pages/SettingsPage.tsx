@@ -58,6 +58,7 @@ import MobileNav from '@/components/MobileNav';
 import GuestbookViewer from '@/components/GuestbookViewer';
 import ShoppingList from '@/components/ShoppingList';
 import InternalLogbook from '@/components/InternalLogbook';
+import TaskManager from '@/components/TaskManager';
 import GuestPreviewModal from '@/components/GuestPreviewModal';
 import { updateUserNameInAllCollections } from '@/services/userService';
 import { ShoppingBag, ClipboardList, Eye } from 'lucide-react';
@@ -1095,7 +1096,7 @@ export default function SettingsPage() {
                                     }`}
                             >
                                 <ClipboardList className="w-5 h-5" />
-                                <span>Rekstrarbók</span>
+                                <span>Verkefni & Viðhald</span>
                             </button>
 
                             <button
@@ -1184,16 +1185,15 @@ export default function SettingsPage() {
                         {/* TAB: LOGS */}
                         {activeTab === 'logs' && (
                             <div className="bg-white rounded-lg shadow-sm p-6">
-                                <h2 className="text-xl font-serif font-bold mb-4">Rekstrarbók</h2>
-                                <p className="text-stone-500 mb-6">Skráðu niður verkefni, viðhald eða ábendingar.</p>
-                                <InternalLogbook
-                                    logs={logs}
-                                    currentUserName={currentUser?.name || ''}
-                                    currentUserUid={currentUser?.uid}
-                                    isManager={house?.manager_id === currentUser?.uid}
-                                    onAddLog={handleAddLog}
-                                    onDeleteLog={handleDeleteLog}
-                                />
+                                <h2 className="text-xl font-serif font-bold mb-4">Verkefni & Viðhald</h2>
+                                <p className="text-stone-500 mb-6">Halda utan um verkefni, viðhald og umbætur á bústaðnum.</p>
+                                {house && currentUser && (
+                                    <TaskManager
+                                        house={house}
+                                        currentUser={currentUser}
+                                        members={members}
+                                    />
+                                )}
                             </div>
                         )}
 
