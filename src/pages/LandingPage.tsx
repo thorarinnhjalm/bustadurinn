@@ -4,7 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
     Calendar, TrendingUp, CheckCircle, ArrowRight, Users,
-    CheckSquare, Home, Plus, Settings, Shield, Bell, UserPlus
+    CheckSquare, Home, Plus, Settings, Shield, Bell, UserPlus, Sparkles
 } from 'lucide-react';
 import { CalendarMockup } from '@/components/FeatureMockups';
 import MarketingLayout from '@/components/MarketingLayout';
@@ -112,17 +112,19 @@ export default function LandingPage() {
 
                             <div className="flex flex-col sm:flex-row gap-4 mb-12">
                                 <button
-                                    onClick={() => navigate('/signup')}
-                                    className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-10 py-5 shadow-[0_0_30px_rgba(251,191,36,0.2)] hover:shadow-[0_0_40px_rgba(251,191,36,0.3)] transform hover:scale-105 transition-all flex items-center justify-center gap-2 group rounded-xl"
+                                    onClick={() => navigate('/prufa')}
+                                    className="btn btn-primary bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-lg px-10 py-5 shadow-[0_0_30px_rgba(37,99,235,0.2)] hover:shadow-[0_0_40px_rgba(37,99,235,0.3)] transform hover:scale-105 transition-all flex items-center justify-center gap-2 group rounded-xl"
                                 >
-                                    <UserPlus className="w-5 h-5" />
-                                    Stofna Aðgang
+                                    <Sparkles className="w-5 h-5" />
+                                    Prófa kerfið núna
+                                    <span className="ml-1 text-sm opacity-75">• Engin skráning</span>
                                 </button>
                                 <button
-                                    onClick={() => navigate('/prufa')}
-                                    className="btn btn-secondary border-2 border-stone-200 text-charcoal hover:border-charcoal hover:bg-stone-50 text-lg px-10 py-5 transition-all rounded-xl"
+                                    onClick={() => navigate('/signup')}
+                                    className="btn btn-secondary border-2 border-amber/50 text-charcoal hover:bg-amber/10 hover:border-amber text-lg px-10 py-5 transition-all rounded-xl flex items-center justify-center gap-2"
                                 >
-                                    Skoða sýnishorn
+                                    <UserPlus className="w-5 h-5" />
+                                    Eða stofna aðgang
                                 </button>
                             </div>
 
