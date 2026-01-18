@@ -17,7 +17,6 @@ import { driver } from 'driver.js';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'driver.js/dist/driver.css';
 import SEO from '@/components/SEO';
-import { analyticsService } from '@/services/analyticsService';
 
 // Utils and mock data
 import {
@@ -58,8 +57,6 @@ const SandboxDashboard = ({
     tasks: MockTask[],
     financeEntries: MockFinanceEntry[]
 }) => {
-    const navigate = useNavigate();
-
     // Calculate stats
     const upcomingBookings = bookings
         .filter(b => b.start > new Date())
