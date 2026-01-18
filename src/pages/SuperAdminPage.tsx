@@ -154,7 +154,6 @@ export default function SuperAdminPage() {
                     safeFetch('feedback'),
                     getDoc(doc(db, 'system', 'promotions')),
 
-                const houses = housesSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as House)) || [];
                 const users = usersSnap?.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User)) || [];
                 const activeTasks = tasksSnap?.docs.filter(doc => doc.data().status !== 'completed').length || 0;
 
