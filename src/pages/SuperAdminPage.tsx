@@ -153,7 +153,8 @@ export default function SuperAdminPage() {
                     safeFetch('newsletter_subscribers'),
                     safeFetch('feedback'),
                     getDoc(doc(db, 'system', 'promotions')),
-
+                    getDocs(query(collection(db, 'funnel_events'), where('event_name', '==', 'sandbox_visited')))
+                ]);
                 const users = usersSnap?.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User)) || [];
                 const activeTasks = tasksSnap?.docs.filter(doc => doc.data().status !== 'completed').length || 0;
 
