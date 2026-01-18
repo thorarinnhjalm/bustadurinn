@@ -178,28 +178,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Trust / Social Proof Section */}
-            <section className="py-12 bg-white border-b border-stone-100">
-                <div className="container mx-auto px-6">
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                        <div className="text-charcoal font-serif font-bold text-xl text-center md:text-left">
-                            Hundruð íslenskra fjölskyldna treysta <br className="hidden md:block" />
-                            Bústaðnum fyrir skipulagið
-                        </div>
-                        <div className="flex flex-wrap justify-center gap-8 md:gap-16 items-center">
-                            <div className="text-2xl font-black tracking-tighter text-charcoal flex items-center gap-2">
-                                <Shield className="w-6 h-6 text-amber" />
-                                Öruggt
-                            </div>
-                            <div className="text-2xl font-black tracking-tighter text-charcoal">ÍSLENSKT</div>
-                            <div className="flex items-center gap-1">
-                                <span className="text-amber">★★★★★</span>
-                                <span className="text-sm font-bold">4.9/5</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
 
             {/* Testimonials Section (Dynamic) */}
             <Testimonials />
