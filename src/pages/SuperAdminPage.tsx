@@ -1430,17 +1430,6 @@ export default function SuperAdminPage() {
                                     </p>
 
                                 {/* Sandbox Visits */}
-                                <div className="bg-white rounded-xl border border-stone-200 p-6 shadow-sm hover:shadow-md transition-all">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <Activity className="w-8 h-8 text-purple-600" />
-                                        <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded font-medium">Demo</span>
-                                    </div>
-                                    <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.sandboxVisits}</p>
-                                    <p className="text-xs text-grey-mid uppercase tracking-wider">Sandbox Heimsóknir</p>
-                                </div>
-                                </div>
-
-                                {/* Launch Offer Stats */}
                                 <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-2 opacity-10">
                                         <Tag className="w-16 h-16 transform rotate-12" />
