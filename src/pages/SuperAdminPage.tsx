@@ -1427,6 +1427,7 @@ export default function SuperAdminPage() {
                                     <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalSubscribers}</p>
                                     <p className="text-[10px] md:text-xs text-stone-400">
                                         Væntanlegir viðskiptavinir
+                                    </p>
                                 </div>
 
                                 {/* Sandbox Visits */}
