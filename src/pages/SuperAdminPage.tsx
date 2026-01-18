@@ -1427,6 +1427,7 @@ export default function SuperAdminPage() {
                                     <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalSubscribers}</p>
                                     <p className="text-[10px] md:text-xs text-stone-400">
                                         Væntanlegir viðskiptavinir
+                                </div>
 
                                 {/* Sandbox Visits */}
                                 <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden">
