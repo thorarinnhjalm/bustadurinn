@@ -17,6 +17,8 @@ import { driver } from 'driver.js';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'driver.js/dist/driver.css';
 import SEO from '@/components/SEO';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // Utils and mock data
 import {
@@ -532,17 +534,29 @@ export default function SandboxPage() {
         const tab = searchParams.get('tab');
         return (tab as any) || 'dashboard';
     });
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-
     // Track sandbox visit
     useEffect(() => {
-        // Log page view (this would be tracked by your analytics system)
-        console.log('[Analytics] Sandbox visited');
+        const trackVisit = async () => {
+            try {
+                await addDoc(collection(db, 'funnel_events'), {
+                    event_name: 'sandbox_visited',
+                    timestamp: serverTimestamp(),
+                    user_agent: navigator.userAgent,
+                    referrer: document.referrer || null
+                });
+                console.log('[Analytics] Sandbox visit logged');
+            } catch (error) {
+                console.error('Failed to log sandbox visit:', error);
+            }
+        };
+        trackVisit();
     }, []);
 
     // Track tab changes
     useEffect(() => {
-        console.log(`[Analytics] Sandbox tab changed: ${activeTab}`);
+        if (activeTab !== 'dashboard') {
+            console.log(`[Analytics] Tab: ${activeTab}`);
+        }
     }, [activeTab]);
 
     // State with localStorage persistence

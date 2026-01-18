@@ -56,6 +56,7 @@ interface Stats {
     allSubscribers: NewsletterSubscriber[];
     allFeedback: Feedback[];
     launchOfferCount: number;
+    sandboxVisits: number; // Track /prufa engagement
 }
 
 export default function SuperAdminPage() {
@@ -105,6 +106,7 @@ export default function SuperAdminPage() {
         totalBookings: 0,
         totalSubscribers: 0,
         activeTasks: 0,
+        sandboxVisits: 0,
         allHouses: [],
         allUsers: [],
         allContacts: [],
@@ -187,6 +189,7 @@ export default function SuperAdminPage() {
                     totalUsers: users.length,
                     totalBookings: bookingsSnap?.size || 0,
                     totalSubscribers: subSnap?.size || 0,
+                    sandboxVisits: sandboxVisitsSnap?.size || 0,
                     activeTasks,
                     allHouses: houses,
                     allUsers: users,
@@ -1425,6 +1428,16 @@ export default function SuperAdminPage() {
                                     <p className="text-[10px] md:text-xs text-stone-400">
                                         Væntanlegir viðskiptavinir
                                     </p>
+
+                                {/* Sandbox Visits */}
+                                <div className="bg-white rounded-xl border border-stone-200 p-6 shadow-sm hover:shadow-md transition-all">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <Activity className="w-8 h-8 text-purple-600" />
+                                        <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded font-medium">Demo</span>
+                                    </div>
+                                    <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.sandboxVisits}</p>
+                                    <p className="text-xs text-grey-mid uppercase tracking-wider">Sandbox Heimsóknir</p>
+                                </div>
                                 </div>
 
                                 {/* Launch Offer Stats */}
