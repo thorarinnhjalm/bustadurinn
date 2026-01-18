@@ -531,6 +531,7 @@ export default function SandboxPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState<'dashboard' | 'calendar' | 'finance' | 'tasks' | 'shopping' | 'users' | 'settings'>(() => {
+    const [sidebarOpen, setSidebarOpen] = useState(false);
         const tab = searchParams.get('tab');
         return (tab as any) || 'dashboard';
     });

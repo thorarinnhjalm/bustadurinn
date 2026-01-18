@@ -143,7 +143,7 @@ export default function SuperAdminPage() {
                     }
                 };
 
-                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, promoSnapResult] = await Promise.all([
+                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, promoSnapResult, sandboxVisitsSnap] = await Promise.all([
                     safeFetch('houses'),
                     safeFetch('users'),
                     safeFetch('bookings'),
@@ -153,7 +153,8 @@ export default function SuperAdminPage() {
                     safeFetch('newsletter_subscribers'),
                     safeFetch('feedback'),
                     getDoc(doc(db, 'system', 'promotions'))
-                ]);
+                ]),
+                    getDocs(query(collection(db, 'funnel_events'), where('event_name', '==', 'sandbox_visited')))
 
                 const houses = housesSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as House)) || [];
                 const users = usersSnap?.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User)) || [];
