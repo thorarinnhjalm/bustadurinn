@@ -5,7 +5,8 @@ import {
     Plus, Wallet,
     ChevronRight, Loader2, Shield,
     Home, LogOut,
-    Image as ImageIcon, MapPin, Camera
+    Image as ImageIcon, MapPin, Camera,
+    ShoppingCart, CheckSquare
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
@@ -46,9 +47,9 @@ const UserDashboard = () => {
     const appLoading = useAppStore((state) => state.isLoading);
     const [dashboardLoading, setDashboardLoading] = useState(true);
     const [nextBooking, setNextBooking] = useState<Booking | null>(null);
-    const [_tasks, setTasks] = useState<Task[]>([]); // Prefixed _ as unused/future
+    const [tasks, setTasks] = useState<Task[]>([]);
     const [isOccupied, setIsOccupied] = useState(false);
-    const [_shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]); // Prefixed _ as unused/future
+    const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
     const [weather, setWeather] = useState({ temp: "--" as string | number, wind: 0, condition: "—" });
     const [finances, setFinances] = useState({ balance: 0, lastAction: "—" });
 
@@ -626,6 +627,85 @@ const UserDashboard = () => {
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    </section>
+
+                    {/* SHOPPING LIST */}
+                    <section onClick={() => navigate('/settings?tab=shopping')} className="group cursor-pointer">
+                        <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Innkaupalistinn</h3>
+                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-amber group-hover:text-white transition-colors">
+                                <ChevronRight size={18} />
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300 min-h-[200px]">
+                            {shoppingItems.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-center py-6">
+                                    <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-3">
+                                        <ShoppingCart size={20} />
+                                    </div>
+                                    <p className="font-bold text-[#1a1a1a]">Allt til alls!</p>
+                                    <p className="text-xs text-stone-500">Enginn hefur skráð vantar efni.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {shoppingItems.map(item => (
+                                        <div key={item.id} className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 group/item hover:bg-amber/10 transition-colors">
+                                            <div className="mt-0.5 w-5 h-5 rounded-md border-2 border-stone-300 flex items-center justify-center group-hover/item:border-amber"></div>
+                                            <div>
+                                                <p className="font-bold text-[#1a1a1a] text-sm leading-tight">{item.item}</p>
+                                                <p className="text-[10px] text-stone-400 mt-0.5">Skráð af {item.added_by_name?.split(' ')[0]}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {shoppingItems.length >= 5 && (
+                                        <p className="text-xs text-center text-stone-400 pt-2">... og fleira</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* TASKS */}
+                    <section onClick={() => navigate('/tasks')} className="group cursor-pointer">
+                        <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Verkefni</h3>
+                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-amber group-hover:text-white transition-colors">
+                                <ChevronRight size={18} />
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300 min-h-[200px]">
+                            {tasks.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-center py-6">
+                                    <div className="w-12 h-12 bg-stone-100 text-stone-400 rounded-full flex items-center justify-center mb-3">
+                                        <CheckSquare size={20} />
+                                    </div>
+                                    <p className="font-bold text-[#1a1a1a]">Ekkert á listanum</p>
+                                    <p className="text-xs text-stone-500">Bústaðurinn er í toppstandi!</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {tasks.map(task => (
+                                        <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors">
+                                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${task.priority === 'high' || task.priority === 'urgent' ? 'bg-red-500' : 'bg-blue-500'
+                                                }`} />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-[#1a1a1a] text-sm truncate">{task.title}</p>
+                                                <p className="text-[10px] text-stone-500 truncate">
+                                                    {task.assigned_to_names && task.assigned_to_names.length > 0
+                                                        ? `Ábyrgð: ${task.assigned_to_names[0].split(' ')[0]}`
+                                                        : 'Óúthlutað'}
+                                                </p>
+                                            </div>
+                                            {task.due_date && (
+                                                <span className="text-[10px] bg-white px-2 py-1 rounded-md border border-stone-200 text-stone-500 whitespace-nowrap">
+                                                    {format(task.due_date, 'd. MMM', { locale: is })}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </section>
                 </div>
