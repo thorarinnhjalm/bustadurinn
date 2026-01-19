@@ -61,10 +61,10 @@ export default function ForProvidersPage() {
                             <Star className="w-4 h-4" />
                             <span>Fyrir verktaka og þjónustuaðila</span>
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">
+                        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight text-white">
                             Fáðu fleiri verkefni í sumarhúsum
                         </h1>
-                        <p className="text-lg text-stone-300 mb-8 leading-relaxed">
+                        <p className="text-lg text-stone-200 mb-8 leading-relaxed">
                             Torgið tengir þig beint við eigendur sumarhúsa á þínu þjónustosvæði.
                             Skráðu þig frítt og vertu sýnilegur þegar vantar snjómokstur, þrif, pípulagnir eða viðhald.
                         </p>
