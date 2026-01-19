@@ -1320,7 +1320,6 @@ export default function SuperAdminPage() {
                             { id: 'integrations', icon: Settings, label: 'Tengingar' },
                             { id: 'coupons', icon: Tag, label: 'Afslættir' },
                             { id: 'contacts', icon: Mail, label: 'Samskipti' },
-                            { id: 'contacts', icon: Mail, label: 'Samskipti' },
                             { id: 'newsletter', icon: Send, label: 'Póstlisti' },
                             { id: 'feedback', icon: Star, label: 'Umsagnir' },
                             { id: 'providers', icon: UserCog, label: 'Verktakar' }
