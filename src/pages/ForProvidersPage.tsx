@@ -102,7 +102,7 @@ export default function ForProvidersPage() {
                                     Við mælum með að þú farir og skoðir skráninguna þína.
                                 </p>
                                 <button
-                                    onClick={() => navigate('/thjonusta')}
+                                    onClick={() => navigate('/torgid')}
                                     className="btn btn-primary"
                                 >
                                     Fara á Torgið

@@ -251,7 +251,7 @@ export default function LandingPage() {
 
                             <div className="flex gap-4">
                                 <button
-                                    onClick={() => navigate('/thjonusta')}
+                                    onClick={() => navigate('/torgid')}
                                     className="btn btn-primary bg-amber text-charcoal hover:bg-white hover:text-charcoal px-8 py-4 text-lg"
                                 >
                                     Skoða Torgið

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import MarketingLayout from '@/components/MarketingLayout';
+import AppLayoutWrapper from '@/components/AppLayoutWrapper';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { ServiceProvider } from '@/types/models';
@@ -108,11 +109,8 @@ export default function MarketplacePage() {
         }))
     };
 
-    return (
-        <MarketingLayout
-            title="Torgið - Þjónusta fyrir sumarbústaði | Snjómokstur, Viðhald o.fl."
-            description="Finndu iðnaðarmenn, snjómokstur og þjónustuaðila fyrir sumarbústaðinn þinn. Tengjum saman eigendur og verktaka."
-        >
+    const content = (
+        <>
             <Helmet>
                 <script type="application/ld+json">
                     {JSON.stringify(jsonLd)}
@@ -270,6 +268,23 @@ export default function MarketplacePage() {
                     }}
                 />
             )}
+        </>
+    );
+
+    if (isAuthenticated) {
+        return (
+            <AppLayoutWrapper title="Torgið" showBackButton={true}>
+                {content}
+            </AppLayoutWrapper>
+        );
+    }
+
+    return (
+        <MarketingLayout
+            title="Torgið - Þjónusta fyrir sumarbústaði | Snjómokstur, Viðhald o.fl."
+            description="Finndu iðnaðarmenn, snjómokstur og þjónustuaðila fyrir sumarbústaðinn þinn. Tengjum saman eigendur og verktaka."
+        >
+            {content}
         </MarketingLayout>
     );
 }

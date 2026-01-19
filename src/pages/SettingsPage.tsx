@@ -1090,7 +1090,7 @@ export default function SettingsPage() {
                             </button>
 
                             <button
-                                onClick={() => navigate('/thjonusta')}
+                                onClick={() => navigate('/torgid')}
                                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-grey-dark hover:bg-bone transition-colors"
                             >
                                 <Hammer className="w-5 h-5" />

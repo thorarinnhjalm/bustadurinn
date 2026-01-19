@@ -144,7 +144,7 @@ function App() {
               <Route path="/skilmalar" element={<TermsPage />} />
               <Route path="/sentry-example-page" element={<SentryTestPage />} />
               <Route path="/verktakar" element={<ForProvidersPage />} />
-              <Route path="/thjonusta" element={<MarketplacePage />} />
+              <Route path="/torgid" element={<MarketplacePage />} />
 
               {/* Protected Routes */}
               <Route
