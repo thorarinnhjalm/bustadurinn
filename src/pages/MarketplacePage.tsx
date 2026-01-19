@@ -5,7 +5,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { ServiceProvider } from '@/types/models';
-import { Search, MapPin, Star, Hammer, Shovel, Droplets, Zap, Home } from 'lucide-react';
+import { Search, MapPin, Star, Hammer, Shovel, Droplets, Zap, Home, ArrowLeft } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import ReviewModal from '@/components/marketplace/ReviewModal';
 import { useAppStore } from '@/store/appStore';
@@ -120,6 +120,15 @@ export default function MarketplacePage() {
             {/* Header / Filter Section */}
             <div className="bg-charcoal text-white py-12 px-6">
                 <div className="max-w-6xl mx-auto">
+                    {isAuthenticated && (
+                        <button
+                            onClick={() => navigate('/')}
+                            className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors mb-6 text-sm font-bold"
+                        >
+                            <ArrowLeft size={16} />
+                            Til baka á yfirlit
+                        </button>
+                    )}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                         <h1 className="text-3xl md:text-4xl font-serif font-bold">Torgið – Þjónusta í nágrenninu</h1>
                         <Link

@@ -128,6 +128,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         </button>
                     )}
                     <button
+                        onClick={() => handleNavigate('/')}
+                        className="text-stone-400 hover:text-amber transition-colors"
+                        title="Heim"
+                    >
+                        <Home size={20} />
+                    </button>
+                    <button
                         onClick={() => setShowQuickHelp(true)}
                         className="text-stone-400 hover:text-amber transition-colors"
                         title="Hjálp"
