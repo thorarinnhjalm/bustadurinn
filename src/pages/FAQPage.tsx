@@ -9,6 +9,14 @@ export default function FAQPage() {
             a: "4.990 kr. á ári (ein greiðsla). Innifalið eru allir eiginleikar, ótakmarkaður fjöldi notenda og gesta. 30 daga prufutími er í boði án skuldbindinga."
         },
         {
+            q: "Hvað er Torgið?",
+            a: "Torgið er markaðstorg Bústaðurinn.is þar sem þú getur fundið iðnaðarmenn og þjónustuaðila fyrir sumarbústaðinn. Þú getur leitað eftir landshluta og flokkum, lesið umsagnir og haft samband beint."
+        },
+        {
+            q: "Hvernig skrái ég mig sem verktaka á Torgið?",
+            a: "Smelltu á 'Torgið' í valmyndinni og veldu 'Ertu verktaki?' hnappinn efst. Það er frítt að skrá sig og þjónustan er sýnileg öllum notendum kerfisins."
+        },
+        {
             q: "Get ég sagt upp áskriftinni?",
             a: "Já, hvenær sem er. Enginn binding."
         },
