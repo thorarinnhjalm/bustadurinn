@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import MarketingLayout from '@/components/MarketingLayout';
-import AppLayoutWrapper from '@/components/AppLayoutWrapper';
+import DashboardLayout from '@/components/DashboardLayout';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { ServiceProvider } from '@/types/models';
@@ -273,9 +273,9 @@ export default function MarketplacePage() {
 
     if (isAuthenticated) {
         return (
-            <AppLayoutWrapper title="Torgið" showBackButton={true}>
+            <DashboardLayout>
                 {content}
-            </AppLayoutWrapper>
+            </DashboardLayout>
         );
     }
 
