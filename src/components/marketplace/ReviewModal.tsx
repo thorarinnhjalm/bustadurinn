@@ -72,6 +72,23 @@ export default function ReviewModal({ provider, onClose, onReviewSubmitted }: Re
         } finally {
             setLoading(false);
         }
+
+        // Send notification email (fire and forget)
+        if (provider.contact_email) {
+            fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templateId: 'general_notification',
+                    to: provider.contact_email,
+                    variables: {
+                        title: 'Ný umsögn á Torginu! ⭐',
+                        message: `Þú hefur fengið nýja ${rating} stjörnu umsögn frá ${currentUser.name || 'notanda'}. Kíktu á Torgið til að sjá hvað viðskiptavinir eru að segja.`,
+                        actionUrl: 'https://bustadurinn.is/thjonusta'
+                    }
+                })
+            }).catch(console.error); // Log error but don't block UI
+        }
     };
 
     return (

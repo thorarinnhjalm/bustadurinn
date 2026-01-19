@@ -48,6 +48,7 @@ interface Stats {
     totalUsers: number;
     totalBookings: number;
     totalSubscribers: number;
+    totalProviders: number; // New
     activeTasks: number;
     allHouses: House[];
     allUsers: User[];
@@ -105,6 +106,7 @@ export default function SuperAdminPage() {
         totalUsers: 0,
         totalBookings: 0,
         totalSubscribers: 0,
+        totalProviders: 0,
         activeTasks: 0,
         sandboxVisits: 0,
         allHouses: [],
@@ -143,7 +145,7 @@ export default function SuperAdminPage() {
                     }
                 };
 
-                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, promoSnapResult, sandboxVisitsSnap] = await Promise.all([
+                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, providersSnap, promoSnapResult, sandboxVisitsSnap] = await Promise.all([
                     safeFetch('houses'),
                     safeFetch('users'),
                     safeFetch('bookings'),
@@ -152,6 +154,7 @@ export default function SuperAdminPage() {
                     safeFetch('coupons'),
                     safeFetch('newsletter_subscribers'),
                     safeFetch('feedback'),
+                    safeFetch('service_providers'), // New
                     getDoc(doc(db, 'system', 'promotions')),
                     getDocs(query(collection(db, 'funnel_events'), where('event_name', '==', 'sandbox_visited')))
                 ]);
@@ -189,6 +192,7 @@ export default function SuperAdminPage() {
                     totalUsers: users.length,
                     totalBookings: bookingsSnap?.size || 0,
                     totalSubscribers: subSnap?.size || 0,
+                    totalProviders: providersSnap?.size || 0,
                     sandboxVisits: sandboxVisitsSnap?.size || 0,
                     activeTasks,
                     allHouses: houses,
@@ -1454,8 +1458,23 @@ export default function SuperAdminPage() {
                                         ></div>
                                     </div>
 
+
                                     <p className="text-[10px] md:text-xs text-stone-400">
                                         {50 - stats.launchOfferCount} pláss eftir
+                                    </p>
+                                </div>
+
+                                {/* Total Providers */}
+                                <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
+                                            <UserCog className="w-4 h-4 text-amber" />
+                                        </div>
+                                        <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Verktakar</p>
+                                    </div>
+                                    <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalProviders}</p>
+                                    <p className="text-[10px] md:text-xs text-stone-400">
+                                        Skráðir þjónustuaðilar
                                     </p>
                                 </div>
                             </div>
