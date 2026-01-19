@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import MarketingLayout from '@/components/MarketingLayout';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
@@ -108,7 +108,15 @@ export default function MarketplacePage() {
             {/* Header / Filter Section */}
             <div className="bg-charcoal text-white py-12 px-6">
                 <div className="max-w-6xl mx-auto">
-                    <h1 className="text-3xl md:text-4xl font-serif font-bold mb-6">Torgið – Þjónusta í nágrenninu</h1>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                        <h1 className="text-3xl md:text-4xl font-serif font-bold">Torgið – Þjónusta í nágrenninu</h1>
+                        <Link
+                            to="/verktakar"
+                            className="btn btn-outline border-white/30 text-white hover:bg-white/10 hover:border-white text-sm px-4 py-2"
+                        >
+                            Ertu verktaki?
+                        </Link>
+                    </div>
 
                     <div className="flex flex-col md:flex-row gap-4 bg-white/10 p-4 rounded-xl border border-white/10 backdrop-blur-md">
                         <div className="flex-1 relative">
