@@ -337,6 +337,8 @@ export interface ServiceProvider {
     contact_email: string;
     contact_phone: string;
     website?: string;
+    address?: string;
+    location?: { lat: number; lng: number };
     status: ProviderStatus;
     rating_avg: number;
     rating_count: number;

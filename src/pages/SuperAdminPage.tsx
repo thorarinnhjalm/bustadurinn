@@ -1646,6 +1646,7 @@ export default function SuperAdminPage() {
                                         </div>
                                     )
                                 },
+                                { key: 'address', label: 'Heimilisfang', sortable: true },
                                 {
                                     key: 'contact_phone', label: 'Sími / Netfang', render: (row) => (
                                         <div className="text-xs">

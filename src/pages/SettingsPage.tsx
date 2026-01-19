@@ -27,7 +27,8 @@ import {
     Mail,
     Check,
     Trash2,
-    Plus
+    Plus,
+    Hammer
 } from 'lucide-react';
 import { requestPushPermission } from '@/utils/pushNotifications';
 import ImageCropper from '@/components/ImageCropper';
@@ -1086,6 +1087,14 @@ export default function SettingsPage() {
                             >
                                 <Heart className="w-5 h-5" />
                                 <span>Gestabók (Journal)</span>
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/thjonusta')}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left text-grey-dark hover:bg-bone transition-colors"
+                            >
+                                <Hammer className="w-5 h-5" />
+                                <span>Þjónustutorg</span>
                             </button>
 
                             <button

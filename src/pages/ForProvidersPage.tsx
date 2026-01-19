@@ -20,6 +20,7 @@ export default function ForProvidersPage() {
         contact_phone: '',
         website: '',
         description: '',
+        address: '',
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -201,6 +202,18 @@ export default function ForProvidersPage() {
                                             placeholder="https://..."
                                             value={formData.website}
                                             onChange={e => setFormData({ ...formData, website: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-charcoal">Heimilisfang / Aðsetur</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="input w-full"
+                                            placeholder="t.d. Smiðjuvegur 1, Kópavogur"
+                                            value={formData.address}
+                                            onChange={e => setFormData({ ...formData, address: e.target.value })}
                                         />
                                     </div>
 

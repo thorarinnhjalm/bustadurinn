@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Calendar, CheckSquare, Menu, Hammer } from 'lucide-react';
+import { Home, Calendar, CheckSquare, Menu } from 'lucide-react';
 
 export default function MobileNav() {
     const navigate = useNavigate();
@@ -12,7 +12,6 @@ export default function MobileNav() {
         { label: 'Heim', path: '/dashboard', icon: Home },
         { label: 'Dagatal', path: '/calendar', icon: Calendar },
         { label: 'Verkefni', path: '/tasks', icon: CheckSquare },
-        { label: 'Torgið', path: '/thjonusta', icon: Hammer },
         { label: 'Meira', path: '/settings', icon: Menu },
     ];
 

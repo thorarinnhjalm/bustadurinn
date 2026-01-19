@@ -6,7 +6,7 @@ import {
     Plus, Users, Wallet, Bell,
     ChevronRight, Loader2, Shield,
     ChevronDown, Home, LogOut,
-    X, Image as ImageIcon, ShoppingBag, Check, MapPin, Camera, HelpCircle, Hammer
+    X, Image as ImageIcon, ShoppingBag, Check, MapPin, Camera, HelpCircle
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import { useNavigate } from 'react-router-dom';
@@ -687,15 +687,6 @@ const UserDashboard = () => {
                         <span>{isCheckedIn ? 'Skrá brottför' : 'Skrá komu'}</span>
                     </button>
 
-                    <button
-                        onClick={() => navigate('/thjonusta')}
-                        className="flex-1 bg-white text-stone-600 border border-stone-200 py-4 rounded-xl font-bold text-sm hover:bg-stone-50 hover:text-amber hover:border-amber/30 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 group"
-                    >
-                        <div className="w-8 h-8 md:w-6 md:h-6 rounded-full bg-stone-100 flex items-center justify-center group-hover:bg-amber/10 group-hover:text-amber transition-colors">
-                            <Hammer size={16} />
-                        </div>
-                        <span>Finna verktaka</span>
-                    </button>
                 </div>
 
                 {/* Missing Address Warning */}

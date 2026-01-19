@@ -22,7 +22,7 @@ const CATEGORIES = [
 
 export default function MarketplacePage() {
     const navigate = useNavigate();
-    const { isAuthenticated } = useAppStore();
+    const { isAuthenticated, currentHouse } = useAppStore();
     const [searchParams, setSearchParams] = useSearchParams();
     const [providers, setProviders] = useState<ServiceProvider[]>([]);
     const [loading, setLoading] = useState(true);
@@ -53,6 +53,20 @@ export default function MarketplacePage() {
 
         fetchProviders();
     }, []);
+
+    // Auto-fill area from currentHouse
+    useEffect(() => {
+        if (!searchArea && currentHouse?.address && !searchParams.get('area')) {
+            // Try to extract city/area from address (e.g. "Street 1, Selfoss" -> "Selfoss")
+            const parts = currentHouse.address.split(',');
+            let area = parts.length > 1 ? parts[parts.length - 1].trim() : currentHouse.address;
+
+            // Remove zip code if present (e.g. "801 Selfoss" -> "Selfoss")
+            area = area.replace(/^\d{3}\s+/, '');
+
+            if (area) setSearchArea(area);
+        }
+    }, [currentHouse, searchArea, searchParams]);
 
     // Update URL when filters change
     useEffect(() => {
