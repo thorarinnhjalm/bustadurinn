@@ -24,7 +24,7 @@ import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
 import { logger } from '@/utils/logger';
 import { feedbackService } from '@/services/feedbackService';
 
-import type { House, User, Coupon, ContactSubmission, Feedback } from '@/types/models';
+import type { House, User, Coupon, ContactSubmission, Feedback, ServiceProvider } from '@/types/models';
 
 interface EmailTemplate {
     id: string; // 'welcome', 'inactive_engagement'
@@ -56,13 +56,14 @@ interface Stats {
     allCoupons: Coupon[];
     allSubscribers: NewsletterSubscriber[];
     allFeedback: Feedback[];
+    allProviders: ServiceProvider[];
     launchOfferCount: number;
     sandboxVisits: number; // Track /prufa engagement
 }
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'houses' | 'users' | 'contacts' | 'feedback' | 'coupons' | 'integrations' | 'emails' | 'newsletter' | 'audit'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'houses' | 'users' | 'contacts' | 'feedback' | 'coupons' | 'integrations' | 'emails' | 'newsletter' | 'audit' | 'providers'>('overview');
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [editingHouse, setEditingHouse] = useState<House | null>(null);
@@ -115,6 +116,7 @@ export default function SuperAdminPage() {
         allCoupons: [],
         allSubscribers: [],
         allFeedback: [],
+        allProviders: [],
         launchOfferCount: 0
     });
 
@@ -201,6 +203,7 @@ export default function SuperAdminPage() {
                     allCoupons: coupons,
                     allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
                     allFeedback: feedback.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+                    allProviders: providersSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceProvider)) || [],
                     launchOfferCount: promoSnapResult && promoSnapResult.exists() ? promoSnapResult.data().launch_offer_count || 0 : 0
                 });
 
@@ -881,6 +884,50 @@ export default function SuperAdminPage() {
         }
     };
 
+    // Provider Logic
+    const handleToggleProviderStatus = async (provider: ServiceProvider) => {
+        const newStatus = provider.status === 'active' ? 'pending' : 'active';
+        if (!confirm(`Breyta stöðu ${provider.name} í "${newStatus}"?`)) return;
+
+        setActionLoading(`provider-${provider.id}`);
+        try {
+            await updateDoc(doc(db, 'service_providers', provider.id), {
+                status: newStatus
+            });
+
+            setStats(prev => ({
+                ...prev,
+                allProviders: prev.allProviders.map(p =>
+                    p.id === provider.id ? { ...p, status: newStatus } : p
+                )
+            }));
+            alert(`✅ Staða uppfærð: ${newStatus}`);
+        } catch (error: any) {
+            console.error('Error updating provider:', error);
+            alert('Villa: ' + error.message);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleDeleteProvider = async (providerId: string) => {
+        if (!confirm('Ertu viss um að þú viljir eyða þessum verktaka?')) return;
+        setActionLoading(`delete-provider-${providerId}`);
+        try {
+            await deleteDoc(doc(db, 'service_providers', providerId));
+            setStats(prev => ({
+                ...prev,
+                allProviders: prev.allProviders.filter(p => p.id !== providerId)
+            }));
+            alert('✅ Verktaka eytt!');
+        } catch (error: any) {
+            console.error('Error deleting provider:', error);
+            alert('Villa: ' + error.message);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     // Audit & Health Logic
     const fetchOrphans = async () => {
         setAuditLoading(true);
@@ -1273,8 +1320,10 @@ export default function SuperAdminPage() {
                             { id: 'integrations', icon: Settings, label: 'Tengingar' },
                             { id: 'coupons', icon: Tag, label: 'Afslættir' },
                             { id: 'contacts', icon: Mail, label: 'Samskipti' },
+                            { id: 'contacts', icon: Mail, label: 'Samskipti' },
                             { id: 'newsletter', icon: Send, label: 'Póstlisti' },
-                            { id: 'feedback', icon: Star, label: 'Umsagnir' }
+                            { id: 'feedback', icon: Star, label: 'Umsagnir' },
+                            { id: 'providers', icon: UserCog, label: 'Verktakar' }
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -1570,6 +1619,69 @@ export default function SuperAdminPage() {
                                         onClick={() => handleDeleteFeedback(row.id)}
                                         className="p-2 text-stone-400 hover:text-red-600 hover:bg-stone-50 rounded transition-colors"
                                         title="Delete"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        />
+                    </div>
+                )}
+
+                {/* Providers Tab */}
+                {activeTab === 'providers' && (
+                    <div className="bg-white border border-stone-200 rounded-lg p-6">
+                        <h2 className="text-lg font-serif font-semibold mb-6">Skráðir Verktakar</h2>
+                        <DataTable
+                            columns={[
+                                { key: 'name', label: 'Nafn', sortable: true },
+                                { key: 'category', label: 'Flokkur', sortable: true },
+                                {
+                                    key: 'service_areas', label: 'Svæði', render: (row) => (
+                                        <div className="flex flex-wrap gap-1">
+                                            {row.service_areas?.map((area: string, i: number) => (
+                                                <span key={i} className="text-[10px] bg-stone-100 px-1.5 py-0.5 rounded text-stone-600">
+                                                    {area}
+                                                </span>
+                                            )) || '-'}
+                                        </div>
+                                    )
+                                },
+                                {
+                                    key: 'contact_phone', label: 'Sími / Netfang', render: (row) => (
+                                        <div className="text-xs">
+                                            <div>{row.contact_phone}</div>
+                                            <div className="text-stone-500">{row.contact_email}</div>
+                                        </div>
+                                    )
+                                },
+                                {
+                                    key: 'status', label: 'Staða', render: (row) => (
+                                        <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wide
+                                            ${row.status === 'active' ? 'bg-green-100 text-green-700' :
+                                                row.status === 'banned' ? 'bg-red-100 text-red-700' :
+                                                    'bg-amber-100 text-amber-700'}`}>
+                                            {row.status}
+                                        </span>
+                                    )
+                                },
+
+                            ]}
+                            data={stats.allProviders}
+                            searchKeys={['name', 'category', 'contact_email']}
+                            actions={(row) => (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleToggleProviderStatus(row)}
+                                        className={`p-2 rounded hover:bg-stone-50 transition-colors ${row.status === 'active' ? 'text-amber hover:text-amber-600' : 'text-green-600 hover:text-green-700'}`}
+                                        title={row.status === 'active' ? 'Gera Pending' : 'Samþykkja (Active)'}
+                                    >
+                                        {row.status === 'active' ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteProvider(row.id)}
+                                        className="p-2 text-stone-400 hover:text-red-600 hover:bg-stone-50 rounded transition-colors"
+                                        title="Eyða verktaka"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
