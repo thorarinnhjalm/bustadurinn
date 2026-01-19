@@ -216,6 +216,95 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* Marketplace Promo Section (NEW) */}
+            <section className="py-24 bg-charcoal text-white relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516934891124-766723223126?q=80&w=2069')] bg-cover bg-center opacity-10"></div>
+                <div className="container max-w-6xl mx-auto px-6 relative z-10">
+                    <div className="flex flex-col md:flex-row items-center gap-12">
+                        <div className="w-full md:w-1/2">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber text-charcoal text-sm font-bold mb-6">
+                                <Sparkles className="w-4 h-4" />
+                                <span>Nýtt á Bústaðurinn.is</span>
+                            </div>
+                            <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">
+                                Torgið: <span className="text-amber">Þjónusta</span> við dyrnar
+                            </h2>
+                            <p className="text-xl text-stone-300 mb-8 leading-relaxed font-light">
+                                Vantar þig snjómokstur, pípulagningamann eða einhvern til að þrífa?
+                                Á Torginu finnur þú þjónustuaðila í nágrenninu við bústaðinn þinn.
+                            </p>
+
+                            <ul className="space-y-4 mb-10">
+                                <li className="flex items-center gap-3">
+                                    <div className="p-1 rounded bg-amber/20 text-amber"><CheckCircle className="w-5 h-5" /></div>
+                                    <span className="text-lg">Finndu snjómokstur í þínu hverfi</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <div className="p-1 rounded bg-amber/20 text-amber"><CheckCircle className="w-5 h-5" /></div>
+                                    <span className="text-lg">Skoðaðu einkunnir og umsagnir</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <div className="p-1 rounded bg-amber/20 text-amber"><CheckCircle className="w-5 h-5" /></div>
+                                    <span className="text-lg">Hafðu beint samband við verktaka</span>
+                                </li>
+                            </ul>
+
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => navigate('/thjonusta')}
+                                    className="btn btn-primary bg-amber text-charcoal hover:bg-white hover:text-charcoal px-8 py-4 text-lg"
+                                >
+                                    Skoða Torgið
+                                </button>
+                                <button
+                                    onClick={() => navigate('/verktakar')}
+                                    className="btn btn-ghost border border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg"
+                                >
+                                    Ertu verktaki?
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Visual for Marketplace */}
+                        <div className="w-full md:w-1/2">
+                            <div className="card bg-white text-charcoal p-6 transform rotate-2 hover:rotate-0 transition-transform duration-500 shadow-2xl">
+                                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-stone-100">
+                                    <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center">
+                                        <Home className="w-5 h-5 text-stone-400" />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold">Hverfið mitt</div>
+                                        <div className="text-xs text-stone-400">Grímsnes og Grafningur</div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    {[
+                                        { name: 'Gunnar Snjómokstur', stars: '5.0', job: 'Snjómokstur' },
+                                        { name: 'Bústaðaþrif ehf.', stars: '4.8', job: 'Þrif & Umsjón' },
+                                        { name: 'Rafvirkni Suðurlands', stars: '4.9', job: 'Rafvirki' }
+                                    ].map((item, i) => (
+                                        <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-stone-50 hover:bg-amber/5 transition-colors border border-transparent hover:border-amber/20 cursor-pointer">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-charcoal text-white flex items-center justify-center font-bold text-sm">
+                                                    {item.name[0]}
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-sm">{item.name}</div>
+                                                    <div className="text-xs text-stone-500">{item.job}</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 text-xs font-bold text-amber">
+                                                <Sparkles className="w-3 h-3 fill-current" /> {item.stars}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* How it Works */}
             <section className="py-24 bg-white">
                 <div className="container max-w-6xl mx-auto px-6">
