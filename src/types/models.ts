@@ -321,7 +321,35 @@ export interface Feedback {
     comment: string;
     canContact: boolean;
     userAgent: string;
-    path: string;
-    createdAt: Date;
     featured?: boolean; // Admin toggle for landing page
+    createdAt: Date;
+}
+
+// Service Marketplace (Torgið)
+export type ProviderStatus = 'active' | 'banned' | 'pending';
+
+export interface ServiceProvider {
+    id: string;
+    name: string;
+    category: string; // e.g. 'snow_removal', 'cleaning', 'maintenance'
+    description: string;
+    service_areas: string[]; // e.g. ['Grímsnes', 'Biskupstungur']
+    contact_email: string;
+    contact_phone: string;
+    website?: string;
+    status: ProviderStatus;
+    rating_avg: number;
+    rating_count: number;
+    created_at: Date;
+    owner_uid?: string; // The user account managing this profile (optional)
+}
+
+export interface ServiceReview {
+    id: string;
+    provider_id: string;
+    user_id: string;
+    user_name: string;
+    rating: number; // 1-5
+    comment: string;
+    created_at: Date;
 }

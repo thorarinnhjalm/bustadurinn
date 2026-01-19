@@ -14,6 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "process-hms": "node scripts/process-hms.cjs",
     "seed-email-templates": "node scripts/seedEmailTemplatesAdmin.js",
+    "generate-sitemap": "node scripts/generate-sitemap.js",
     "test-payday": "node scripts/test-payday-integration.js"
   },
   "dependencies": {

@@ -35,6 +35,8 @@ import MarketingMapPage from '@/pages/MarketingMapPage';
 import PrivacyPage from '@/pages/PrivacyPage';
 import TermsPage from '@/pages/TermsPage';
 import SentryTestPage from '@/pages/SentryTestPage';
+import ForProvidersPage from '@/pages/ForProvidersPage';
+import MarketplacePage from '@/pages/MarketplacePage';
 
 // RBAC imports
 import { useUserRole } from '@/hooks/useUserRole';
@@ -141,6 +143,8 @@ function App() {
               <Route path="/personuvernd" element={<PrivacyPage />} />
               <Route path="/skilmalar" element={<TermsPage />} />
               <Route path="/sentry-example-page" element={<SentryTestPage />} />
+              <Route path="/verktakar" element={<ForProvidersPage />} />
+              <Route path="/thjonusta" element={<MarketplacePage />} />
 
               {/* Protected Routes */}
               <Route

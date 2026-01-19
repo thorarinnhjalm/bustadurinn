@@ -22,6 +22,7 @@ import BookingWeatherCard from '@/components/BookingWeatherCard';
 import { shouldShowWeather } from '@/services/weatherService';
 import { canViewBookingDetails } from '@/utils/permissions';
 
+import MyServiceWidget from '@/components/dashboard/MyServiceWidget';
 
 const ADMIN_EMAILS = [
     'thorarinnhjalmarsson@gmail.com',
@@ -619,6 +620,9 @@ const UserDashboard = () => {
 
             {/* --- MAIN CONTENT --- */}
             <main className="max-w-5xl mx-auto px-4 -mt-8 relative z-10 space-y-8">
+
+                {/* Service Provider Widget (Only visible for providers) */}
+                <MyServiceWidget />
 
                 {/* Setup Progress (shows if incomplete) */}
                 <SetupProgress

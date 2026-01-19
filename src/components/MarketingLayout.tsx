@@ -46,6 +46,7 @@ export default function MarketingLayout({
         { name: 'Eiginleikar', path: '/eiginleikar' },
         { name: 'Spurt & Svarað', path: '/spurt-og-svarad' },
         { name: 'Um Okkur', path: '/um-okkur' },
+        { name: 'Torgið', path: '/thjonusta' },
         { name: 'Hafa samband', path: '/hafa-samband' },
     ];
 
@@ -167,6 +168,7 @@ export default function MarketingLayout({
                             <Link to="/hafa-samband" className="text-white hover:text-amber transition-colors text-base font-bold whitespace-nowrap">Hafa samband</Link>
                             <Link to="/personuvernd" className="text-white hover:text-amber transition-colors text-base font-bold">Persónuvernd</Link>
                             <Link to="/skilmalar" className="text-white hover:text-amber transition-colors text-base font-bold">Skilmálar</Link>
+                            <Link to="/verktakar" className="text-amber-400 hover:text-amber-300 transition-colors text-base font-bold">Fyrir Verktaka</Link>
                         </div>
 
                         <div className="text-center space-y-12">
