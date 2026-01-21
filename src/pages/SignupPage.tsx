@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider, db } from '@/lib/firebase';
+import { auth, googleProvider, facebookProvider, db } from '@/lib/firebase';
 import { UserPlus } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { analytics } from '@/utils/analytics';
@@ -150,6 +150,47 @@ export default function SignupPage() {
         }
     };
 
+    const handleFacebookSignup = async () => {
+        setError('');
+        setIsLoading(true);
+        try {
+            const result = await signInWithPopup(auth, facebookProvider);
+            const user = result.user;
+
+            // Check if user exists
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+            if (!userDoc.exists()) {
+                const utmParams = getStoredUTMParams();
+                await createProfileWithRetry(user.uid, {
+                    uid: user.uid,
+                    email: user.email,
+                    name: user.displayName || '',
+                    avatar: user.photoURL || '',
+                    house_ids: [],
+                    utm_params: utmParams || null,
+                    created_at: serverTimestamp(),
+                    last_login: serverTimestamp()
+                });
+
+                analytics.signupCompleted('facebook');
+                navigate(returnUrl || '/onboarding');
+            } else {
+                await createProfileWithRetry(user.uid, {
+                    last_login: serverTimestamp()
+                });
+
+                analytics.signupCompleted('facebook-login');
+                navigate(returnUrl || '/dashboard');
+            }
+        } catch (err: any) {
+            setError('Villa við skráningu með Facebook');
+            console.error('Facebook signup error:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-bone flex items-center justify-center p-6">
             <SEO
@@ -280,6 +321,18 @@ export default function SignupPage() {
                                 />
                             </svg>
                             Nýskrá með Google
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleFacebookSignup}
+                            className="btn bg-[#1877F2] text-white hover:bg-[#166FE5] w-full flex items-center justify-center gap-2"
+                            disabled={isLoading}
+                        >
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                            </svg>
+                            Nýskrá með Facebook
                         </button>
 
                         <div className="text-center">

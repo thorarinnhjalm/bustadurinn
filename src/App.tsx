@@ -34,6 +34,7 @@ import MigrationPage from '@/pages/MigrationPage';
 import MarketingMapPage from '@/pages/MarketingMapPage';
 import PrivacyPage from '@/pages/PrivacyPage';
 import TermsPage from '@/pages/TermsPage';
+import DataDeletionPage from '@/pages/DataDeletionPage';
 import SentryTestPage from '@/pages/SentryTestPage';
 import ForProvidersPage from '@/pages/ForProvidersPage';
 import MarketplacePage from '@/pages/MarketplacePage';
@@ -141,7 +142,10 @@ function App() {
               <Route path="/prufa" element={<SandboxPage />} />
               <Route path="/marketing-map" element={<MarketingMapPage />} />
               <Route path="/personuvernd" element={<PrivacyPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/skilmalar" element={<TermsPage />} />
+              <Route path="/data-deletion" element={<DataDeletionPage />} />
+              <Route path="/gogn-eyding" element={<DataDeletionPage />} />
               <Route path="/sentry-example-page" element={<SentryTestPage />} />
               <Route path="/verktakar" element={<ForProvidersPage />} />
               <Route path="/torgid" element={<MarketplacePage />} />

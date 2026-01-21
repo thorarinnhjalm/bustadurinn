@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider, db } from '@/lib/firebase';
+import { auth, googleProvider, facebookProvider, db } from '@/lib/firebase';
 import { LogIn } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import SEO from '@/components/SEO';
@@ -101,6 +101,59 @@ export default function LoginPage() {
         } catch (err: any) {
             setError('Villa við innskráningu með Google');
             console.error('Google login error:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleFacebookLogin = async () => {
+        setError('');
+        setIsLoading(true);
+        try {
+            const result = await signInWithPopup(auth, facebookProvider);
+            const user = result.user;
+
+            // Check if user exists in Firestore
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+            if (!userDoc.exists()) {
+                // Create new user profile
+                await setDoc(doc(db, 'users', user.uid), {
+                    uid: user.uid,
+                    email: user.email,
+                    name: user.displayName || '',
+                    avatar: user.photoURL || '',
+                    house_ids: [],
+                    created_at: serverTimestamp(),
+                    last_login: serverTimestamp()
+                });
+
+                // Check if admin email
+                if (user.email && ADMIN_EMAILS.includes(user.email)) {
+                    navigate('/super-admin');
+                } else if (returnUrl) {
+                    navigate(returnUrl);
+                } else {
+                    navigate('/onboarding');
+                }
+            } else {
+                // Update last login
+                await setDoc(doc(db, 'users', user.uid), {
+                    last_login: serverTimestamp()
+                }, { merge: true });
+
+                // Check if admin email
+                if (user.email && ADMIN_EMAILS.includes(user.email)) {
+                    navigate('/super-admin');
+                } else if (returnUrl) {
+                    navigate(returnUrl);
+                } else {
+                    navigate('/dashboard');
+                }
+            }
+        } catch (err: any) {
+            setError('Villa við innskráningu með Facebook');
+            console.error('Facebook login error:', err);
         } finally {
             setIsLoading(false);
         }
@@ -211,6 +264,18 @@ export default function LoginPage() {
                                 />
                             </svg>
                             Google
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleFacebookLogin}
+                            className="btn bg-[#1877F2] text-white hover:bg-[#166FE5] w-full flex items-center justify-center gap-2"
+                            disabled={isLoading}
+                        >
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                            </svg>
+                            Facebook
                         </button>
 
                         <div className="text-center">

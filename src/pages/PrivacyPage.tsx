@@ -34,10 +34,19 @@ export default function PrivacyPage() {
                     <h2>2. Upplýsingasöfnun</h2>
                     <p>Við söfnum eftirfarandi upplýsingum:</p>
                     <ul>
-                        <li><strong>Reikningsupplýsingar:</strong> Nafn, netfang og mynd (ef þú skráir þig inn með Google)</li>
+                        <li><strong>Reikningsupplýsingar:</strong> Nafn, netfang og mynd (ef þú skráir þig inn með Google eða Facebook)</li>
                         <li><strong>Notkunarupplýsingar:</strong> Bókanir, verkefni og önnur gögn sem þú skráir í kerfið</li>
                         <li><strong>Tækniupplýsingar:</strong> IP-tala, vafraupplýsingar og kökur (cookies)</li>
                     </ul>
+
+                    <h3>Innskráning með Facebook</h3>
+                    <p>Ef þú velur að skrá þig inn með Facebook aðgangi þínum, söfnum við eftirfarandi upplýsingum frá Facebook:</p>
+                    <ul>
+                        <li>Nafn þitt</li>
+                        <li>Netfang (email)</li>
+                        <li>Prófílmynd</li>
+                    </ul>
+                    <p>Við söfnum AÐEINS þessum grunnupplýsingum og biðjum ekki um aðgang að vinum þínum, færslum eða öðrum gögnum á Facebook.</p>
 
                     <h2>3. Notkun upplýsinga</h2>
                     <p>Við notum upplýsingarnar til að:</p>
