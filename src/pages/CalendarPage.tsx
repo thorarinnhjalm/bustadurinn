@@ -591,7 +591,7 @@ export default function CalendarPage() {
                                 title: 'Ný bókun 🏠',
                                 body: `${currentUser.name} bókaði ${houseName} (${newBooking.start.toLocaleDateString('is-IS')} - ${newBooking.end.toLocaleDateString('is-IS')})`,
                                 data: {
-                                    link: 'https://bustadurinn.is/calendar',
+                                    link: 'https://www.bustadurinn.is/calendar',
                                     booking_id: bookingId
                                 }
                             })

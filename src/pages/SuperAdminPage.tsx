@@ -564,7 +564,7 @@ export default function SuperAdminPage() {
         </p>
 
         <div style="text-align: center; margin: 32px 0;">
-            <a href="https://bustadurinn.is/dashboard" style="background-color: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+            <a href="https://www.bustadurinn.is/dashboard" style="background-color: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
                 Fara á stjórnborð
             </a>
         </div>
@@ -617,7 +617,7 @@ export default function SuperAdminPage() {
                     variables: {
                         name: currentUser.name || 'Prófunarnotandi',
                         houseName: 'Sýnishornsbústaður',
-                        inviteLink: 'https://bustadurinn.is/join?test=1',
+                        inviteLink: 'https://www.bustadurinn.is/join?test=1',
                         expiryDate: '15. janúar 2025'
                     }
                 })

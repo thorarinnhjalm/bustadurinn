@@ -435,7 +435,7 @@ export default function GuestPage() {
                                                         title: 'Ný gestabókarfærsla 📖',
                                                         body: `${author} skráði í gestabókina í ${houseName}`,
                                                         data: {
-                                                            link: 'https://bustadurinn.is/settings?tab=guestbook'
+                                                            link: 'https://www.bustadurinn.is/settings?tab=guestbook'
                                                         }
                                                     })
                                                 });

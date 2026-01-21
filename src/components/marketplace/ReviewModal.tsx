@@ -84,7 +84,7 @@ export default function ReviewModal({ provider, onClose, onReviewSubmitted }: Re
                     variables: {
                         title: 'Ný umsögn á Torginu! ⭐',
                         message: `Þú hefur fengið nýja ${rating} stjörnu umsögn frá ${currentUser.name || 'notanda'}. Kíktu á Torgið til að sjá hvað viðskiptavinir eru að segja.`,
-                        actionUrl: 'https://bustadurinn.is/torgid'
+                        actionUrl: 'https://www.bustadurinn.is/torgid'
                     }
                 })
             }).catch(console.error); // Log error but don't block UI
