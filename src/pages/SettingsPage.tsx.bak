@@ -1179,7 +1179,7 @@ export default function SettingsPage() {
                                             <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 mb-3">Aðalmynd (Cover)</h3>
                                             {house.image_url ? (
                                                 <div className="relative aspect-video rounded-lg overflow-hidden border border-stone-200 group">
-                                                    <img loading="lazy" src={house.image_url} alt={house.name} className="w-full h-full object-cover" />
+                                                    <img src={house.image_url} alt={house.name} className="w-full h-full object-cover" />
                                                     <label className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs font-bold text-stone-600 border border-stone-200 cursor-pointer hover:bg-white transition-all shadow-sm opacity-0 group-hover:opacity-100">
                                                         <span className="flex items-center gap-2">
                                                             <Upload className="w-3 h-3" /> Skipta um mynd
@@ -1219,7 +1219,7 @@ export default function SettingsPage() {
                                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                                 {house.gallery_urls?.map((url, idx) => (
                                                     <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-stone-100 group shadow-sm bg-stone-100">
-                                                        <img loading="lazy" src={url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                                                        <img src={url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
                                                         <button
                                                             onClick={() => handleRemoveGalleryImage(url)}
                                                             className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
@@ -1453,7 +1453,7 @@ export default function SettingsPage() {
                                                                                 <div className="flex items-center gap-3">
                                                                                     <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-stone-600 text-xs font-bold overflow-hidden border border-stone-100">
                                                                                         {member.avatar ? (
-                                                                                            <img loading="lazy" src={member.avatar} alt="" className="w-full h-full object-cover" />
+                                                                                            <img src={member.avatar} alt="" className="w-full h-full object-cover" />
                                                                                         ) : (
                                                                                             (member.name || member.email || '?').substring(0, 2).toUpperCase()
                                                                                         )}
@@ -2152,7 +2152,7 @@ export default function SettingsPage() {
                                         <div className="relative group cursor-pointer mb-4">
                                             <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-stone-100">
                                                 {currentUser?.avatar ? (
-                                                    <img loading="lazy" src={currentUser.avatar} alt="Profile" className="w-full h-full object-cover" />
+                                                    <img src={currentUser.avatar} alt="Profile" className="w-full h-full object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center text-stone-400">
                                                         <UserIcon size={40} />

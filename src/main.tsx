@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import * as Sentry from '@sentry/react';
 import { logger } from './utils/logger';
+import { initPerformanceMonitoring, markPerformance } from './utils/performance';
 import './index.css'
 import App from './App.tsx'
 
@@ -90,6 +91,9 @@ if (dsn) {
   logger.debug('Sentry initialized', { environment: import.meta.env.MODE });
 }
 
+// Initialize performance monitoring
+initPerformanceMonitoring();
+
 // Force deploy check
 // Register Service Worker for Push Notifications
 if ('serviceWorker' in navigator) {
@@ -100,8 +104,14 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Mark when React starts rendering
+markPerformance('react-render-start');
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
 )
+
+// Mark when React finishes initial render
+setTimeout(() => markPerformance('react-render-end'), 0);
