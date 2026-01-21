@@ -36,10 +36,24 @@ export default function FAQPage() {
 
     const [openIndex, setOpenIndex] = useState<number | null>(0);
 
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqs.map(faq => ({
+            "@type": "Question",
+            "name": faq.q,
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": faq.a
+            }
+        }))
+    };
+
     return (
         <MarketingLayout
             title="Spurt og Svarað"
             description="Algengar spurningar um Bústaðurinn.is. Verðskrá, virkni og tæknilegar upplýsingar."
+            structuredData={structuredData}
         >
             <div className="bg-white py-24">
                 <div className="container max-w-3xl mx-auto px-6">

@@ -1,26 +1,12 @@
-import { useEffect, useState } from 'react';
-import { feedbackService } from '@/services/feedbackService';
 import type { Feedback } from '@/types/models';
 import { Star, Quote } from 'lucide-react';
 
-export default function Testimonials() {
-    const [reviews, setReviews] = useState<Feedback[]>([]);
-    const [loading, setLoading] = useState(true);
+interface TestimonialsProps {
+    reviews: Feedback[];
+    loading?: boolean;
+}
 
-    useEffect(() => {
-        const fetchReviews = async () => {
-            try {
-                const data = await feedbackService.getFeaturedFeedback();
-                setReviews(data);
-            } catch (error) {
-                console.error("Failed to fetch testimonials", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchReviews();
-    }, []);
-
+export default function Testimonials({ reviews, loading = false }: TestimonialsProps) {
     if (loading) return null; // Or a skeleton
     if (reviews.length === 0) return null; // Fallback to nothing if no featured reviews
 

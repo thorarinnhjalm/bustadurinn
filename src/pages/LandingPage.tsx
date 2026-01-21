@@ -11,19 +11,33 @@ import MarketingLayout from '@/components/MarketingLayout';
 import { useAppStore } from '@/store/appStore';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import Testimonials from '@/components/landing/Testimonials';
+import { feedbackService } from '@/services/feedbackService';
+import type { Feedback } from '@/types/models';
 // NewsletterPopup moved to MarketingLayout
 
 export default function LandingPage() {
     const navigate = useNavigate();
     const [remainingSlots, setRemainingSlots] = useState<number>(12); // Default to 12 as safe fallback
+    const [reviews, setReviews] = useState<Feedback[]>([]);
+    const [avgRating, setAvgRating] = useState<number>(5);
 
     useEffect(() => {
+        // Fetch remaining slots
         getDoc(doc(db, 'system', 'promotions')).then(snap => {
             if (snap.exists()) {
                 const count = snap.data().launch_offer_count || 0;
                 setRemainingSlots(Math.max(0, 50 - count));
             }
         }).catch(e => console.error("Failed to fetch promo count", e));
+
+        // Fetch reviews
+        feedbackService.getFeaturedFeedback().then(data => {
+            setReviews(data);
+            if (data.length > 0) {
+                const total = data.reduce((acc, r) => acc + r.rating, 0);
+                setAvgRating(Number((total / data.length).toFixed(1)));
+            }
+        }).catch(console.error);
     }, []);
 
     // Redirect if already logged in and has a house
@@ -45,6 +59,11 @@ export default function LandingPage() {
             "@type": "Offer",
             "price": "4990",
             "priceCurrency": "ISK"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": avgRating.toString(),
+            "ratingCount": Math.max(reviews.length, 1).toString()
         },
         "description": "Bókunarkerfi og bókunardagatal fyrir sameiginleg sumarhús. Einfaldar bókanir, sanngjarna skiptingu og gagnsæ fjármál fyrir íslenskar fjölskyldur."
     };
@@ -180,7 +199,7 @@ export default function LandingPage() {
 
 
             {/* Testimonials Section (Dynamic) */}
-            <Testimonials />
+            <Testimonials reviews={reviews} />
 
             {/* Features Preview */}
             <section className="py-24 bg-bone">
