@@ -102,9 +102,18 @@ export async function checkRateLimit(
 
         return { allowed: true };
     } catch (error) {
-        // If rate limiting fails (e.g., Redis down), allow the request
-        console.warn('Rate limit check failed:', error);
-        return { allowed: true };
+        // If rate limiting fails (e.g., Redis down), fail closed for security
+        console.error('Rate limit check failed:', error);
+        return {
+            allowed: false,
+            error: {
+                status: 503,
+                body: {
+                    error: 'Service temporarily unavailable',
+                    message: 'Rate limiting service temporarily unavailable. Please try again shortly.'
+                }
+            }
+        };
     }
 }
 

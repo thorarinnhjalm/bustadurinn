@@ -75,6 +75,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Step 2: Get or create customer
         const invoiceData: CreateInvoiceRequest = req.body;
 
+        // Validate invoice data
+        if (!invoiceData.lineItems || !Array.isArray(invoiceData.lineItems)) {
+            return res.status(400).json({ error: 'lineItems must be an array' });
+        }
+
+        if (invoiceData.lineItems.length === 0) {
+            return res.status(400).json({ error: 'At least one line item required' });
+        }
+
+        if (invoiceData.lineItems.length > 100) {
+            return res.status(400).json({ error: 'Maximum 100 line items allowed' });
+        }
+
+        // Validate each line item
+        for (const item of invoiceData.lineItems) {
+            if (!item.description || typeof item.description !== 'string') {
+                return res.status(400).json({ error: 'Each line item must have a description' });
+            }
+
+            if (item.description.length > 500) {
+                return res.status(400).json({ error: 'Description must be 500 characters or less' });
+            }
+
+            if (typeof item.quantity !== 'number' || item.quantity <= 0 || item.quantity > 10000) {
+                return res.status(400).json({ error: 'Quantity must be between 1 and 10,000' });
+            }
+
+            if (typeof item.unitPrice !== 'number' || item.unitPrice < 0 || item.unitPrice > 10000000) {
+                return res.status(400).json({ error: 'Unit price must be between 0 and 10,000,000' });
+            }
+
+            if (item.discount !== undefined && (typeof item.discount !== 'number' || item.discount < 0 || item.discount > 100)) {
+                return res.status(400).json({ error: 'Discount must be between 0 and 100' });
+            }
+        }
+
         // First, try to find existing customer by email
         const customersResponse = await fetch('https://api.payday.is/customers', {
             method: 'GET',

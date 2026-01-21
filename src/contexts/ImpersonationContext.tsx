@@ -3,7 +3,7 @@
  * Allows admin to view the app as any user
  */
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { auth } from '@/lib/firebase';
 import { logger } from '@/utils/logger';
 import type { User } from '@/types/models';
@@ -34,6 +34,14 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
         return null;
     });
 
+    const stopImpersonation = useCallback(() => {
+        logger.info('Stopped impersonation');
+        setImpersonatedUser(null);
+        localStorage.removeItem(IMPERSONATION_KEY);
+        localStorage.removeItem('admin_original_house');
+        localStorage.removeItem('admin_return_url');
+    }, []);
+
     // Listen for auth state changes to clear impersonation on logout
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -44,20 +52,12 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
             }
         });
         return () => unsubscribe();
-    }, [impersonatedUser]);
+    }, [impersonatedUser, stopImpersonation]);
 
     const startImpersonation = (user: User) => {
         setImpersonatedUser(user);
         localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(user));
         logger.info('Started impersonating:', user.name, user.email);
-    };
-
-    const stopImpersonation = () => {
-        logger.info('Stopped impersonation');
-        setImpersonatedUser(null);
-        localStorage.removeItem(IMPERSONATION_KEY);
-        localStorage.removeItem('admin_original_house');
-        localStorage.removeItem('admin_return_url');
     };
 
     return (

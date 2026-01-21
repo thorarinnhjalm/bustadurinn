@@ -11,10 +11,14 @@ export const useNotifications = () => {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
     useEffect(() => {
+        // Clear notifications immediately when house or user changes
+        setNotifications([]);
+
         if (!currentHouse || !currentUser) {
-            setNotifications([]);
             return;
         }
+
+        let unsubscribe: (() => void) | undefined;
 
         try {
             const notifsRef = collection(db, 'notifications');
@@ -25,7 +29,7 @@ export const useNotifications = () => {
                 limit(40)
             );
 
-            const unsubscribe = onSnapshot(qNotifs, (snapshot) => {
+            unsubscribe = onSnapshot(qNotifs, (snapshot) => {
                 const notifsData = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
@@ -37,11 +41,16 @@ export const useNotifications = () => {
             }, (error) => {
                 console.error("Error setting up notification listener:", error);
             });
-
-            return () => unsubscribe();
         } catch (e) {
             console.error("Error in useNotifications:", e);
         }
+
+        // Cleanup function that always runs
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
     }, [currentHouse?.id, currentUser?.uid]);
 
     const markAsRead = async (id: string) => {

@@ -69,6 +69,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Missing invite code or token' });
         }
 
+        // If using token, query invitation document BEFORE transaction
+        let inviteRef: admin.firestore.DocumentReference | null = null;
+        if (token) {
+            const inviteQ = db.collection('invitations').where('token', '==', token).limit(1);
+            const inviteSnap = await inviteQ.get();
+
+            if (inviteSnap.empty) {
+                return res.status(404).json({ error: 'Invalid or expired token' });
+            }
+
+            const inviteDoc = inviteSnap.docs[0];
+            const inviteData = inviteDoc.data();
+
+            // Verify token matches house
+            if (inviteData.house_id !== houseId) {
+                return res.status(400).json({ error: 'Token does not match this house' });
+            }
+
+            inviteRef = inviteDoc.ref;
+        }
+
+        // Now run transaction with document references only
         await db.runTransaction(async (t) => {
             const houseRef = db!.collection('houses').doc(houseId);
             const userRef = db!.collection('users').doc(userId);
@@ -92,23 +114,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 }
             }
 
-            // Method B: Token
-            if (token && !isValid) {
-                const inviteQ = db!.collection('invitations').where('token', '==', token).limit(1);
-                const inviteSnap = await t.get(inviteQ);
-
-                if (!inviteSnap.empty) {
-                    const inviteDoc = inviteSnap.docs[0];
-                    if (inviteDoc.data().house_id === houseId) {
-                        isValid = true;
-                        // Cleanup invitation
-                        t.delete(inviteDoc.ref);
-                    } else {
-                        throw new Error('Token does not match this house');
-                    }
-                } else {
-                    throw new Error('Invalid or expired token');
-                }
+            // Method B: Token (already validated above, just mark as valid)
+            if (token && inviteRef) {
+                isValid = true;
+                // Cleanup invitation within transaction
+                t.delete(inviteRef);
             }
 
             if (!isValid) {

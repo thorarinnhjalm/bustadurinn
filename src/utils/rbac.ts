@@ -32,7 +32,7 @@ export function checkHousePermission(role: HouseRole, permission: string): boole
 }
 
 /**
- * Generic permission check
+ * Generic permission check with hierarchical support
  * Works for both system and house roles
  */
 export function checkPermission(
@@ -40,15 +40,29 @@ export function checkPermission(
     requiredRole: SystemRole | HouseRole,
     permission: string
 ): boolean {
-    // If role doesn't match required role, deny
-    if (role !== requiredRole) return false;
+    const isSystemRole = (r: string): r is SystemRole =>
+        ['super_admin', 'support_admin', 'regular_user'].includes(r);
+    const isHouseRole = (r: string): r is HouseRole =>
+        ['owner', 'admin', 'member', 'viewer'].includes(r);
+
+    // Check if user role has sufficient level for house roles
+    if (isHouseRole(role) && isHouseRole(requiredRole)) {
+        // Check hierarchical level first
+        if (!hasRoleLevel(role, requiredRole)) return false;
+        // Then check if the required role has the permission
+        return checkHousePermission(requiredRole, permission);
+    }
+
+    // For system roles, require exact match
+    if (isSystemRole(role) && role !== requiredRole) return false;
 
     // Check if it's a system role
-    if (['super_admin', 'support_admin', 'regular_user'].includes(role)) {
+    if (isSystemRole(role)) {
         return checkSystemPermission(role as SystemRole, permission);
     }
 
-    // Otherwise it's a house role
+    // Otherwise it's a house role (exact match)
+    if (role !== requiredRole) return false;
     return checkHousePermission(role as HouseRole, permission);
 }
 

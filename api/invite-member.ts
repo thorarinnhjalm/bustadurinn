@@ -2,6 +2,7 @@ import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
 import admin from 'firebase-admin';
+import DOMPurify from 'isomorphic-dompurify';
 
 // Initialize Firebase Admin (inline to avoid module resolution)
 if (!admin.apps.length) {
@@ -151,14 +152,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 });
             });
 
-            // Send "Added" Email
-            const subject = `Þér hefur verið bætt við ${houseName || 'sumarbústað'}`;
-            // Use a simpler template for "Added" or the same one? Using simple for now to focus on Invite.
+            // Send "Added" Email - Sanitize all user-controlled data
+            const sanitizedHouseName = DOMPurify.sanitize(houseName || 'sumarbústað', { ALLOWED_TAGS: [] });
+            const sanitizedUserName = DOMPurify.sanitize(userData.name || 'vinur', { ALLOWED_TAGS: [] });
+            const sanitizedSenderName = DOMPurify.sanitize(senderName || 'Eigandi', { ALLOWED_TAGS: [] });
+
+            const subject = `Þér hefur verið bætt við ${sanitizedHouseName}`;
             const html = `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #333;">Hæ ${userData.name || 'vinur'}!</h2>
+                    <h2 style="color: #333;">Hæ ${sanitizedUserName}!</h2>
                     <p style="font-size: 16px; color: #555;">
-                        <strong>${senderName || 'Eigandi'}</strong> hefur bætt þér við sem meðeiganda í <strong>${houseName}</strong> á Bústaðurinn.is.
+                        <strong>${sanitizedSenderName}</strong> hefur bætt þér við sem meðeiganda í <strong>${sanitizedHouseName}</strong> á Bústaðurinn.is.
                     </p>
                     <div style="margin: 30px 0;">
                         <a href="https://bustadurinn.is/dashboard" style="background-color: #e8b058; color: #1a1a1a; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
@@ -206,8 +210,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 created_at: admin.firestore.FieldValue.serverTimestamp()
             });
 
+            // Sanitize user-controlled data for email
+            const sanitizedSenderNameInvite = DOMPurify.sanitize(senderName || 'Eigandi', { ALLOWED_TAGS: [] });
+            const sanitizedHouseNameInvite = DOMPurify.sanitize(houseName, { ALLOWED_TAGS: [] });
+
             const inviteUrl = `https://bustadurinn.is/join?token=${token}`;
-            const subject = `Boð frá ${senderName}`;
+            const subject = `Boð frá ${sanitizedSenderNameInvite}`;
 
             // New HTML Template based on user request
             const html = `
@@ -229,15 +237,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 <body>
   <div class="container">
     <div class="header">
-      <h1>Boð frá ${senderName}</h1>
+      <h1>Boð frá ${sanitizedSenderNameInvite}</h1>
     </div>
     <div class="content">
       <p>Hæ,</p>
 
-      <p><strong>${senderName}</strong> hefur boðið þér að gerast meðeigandi í sumarhúsinu.</p>
+      <p><strong>${sanitizedSenderNameInvite}</strong> hefur boðið þér að gerast meðeigandi í sumarhúsinu.</p>
 
       <div class="house-info">
-        <h2 style="margin-top: 0; font-family: 'Fraunces', serif; color: #1a1a1a;">${houseName}</h2>
+        <h2 style="margin-top: 0; font-family: 'Fraunces', serif; color: #1a1a1a;">${sanitizedHouseNameInvite}</h2>
         <p style="margin: 0; color: #4a4642;">Smelltu á hlekkinn hér að neðan til að samþykkja boðið.</p>
       </div>
 

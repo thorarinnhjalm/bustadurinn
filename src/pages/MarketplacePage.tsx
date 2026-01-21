@@ -10,6 +10,7 @@ import { Helmet } from 'react-helmet-async';
 import ReviewModal from '@/components/marketplace/ReviewModal';
 import { useAppStore } from '@/store/appStore';
 import { useNavigate } from 'react-router-dom';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const CATEGORIES = [
     { id: 'all', label: 'Allt', icon: Home },
@@ -268,14 +269,33 @@ export default function MarketplacePage() {
             </div>
 
             {reviewingProvider && (
-                <ReviewModal
-                    provider={reviewingProvider}
-                    onClose={() => setReviewingProvider(null)}
-                    onReviewSubmitted={() => {
-                        setReviewingProvider(null);
-                        window.location.reload();
-                    }}
-                />
+                <ErrorBoundary fallback={
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setReviewingProvider(null)} />
+                        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                            <div className="text-center">
+                                <div className="text-4xl mb-4">⚠️</div>
+                                <h3 className="font-serif font-bold text-xl mb-2">Villa kom upp</h3>
+                                <p className="text-stone-600 mb-4">Ekki tókst að hlaða umsagnarglugga</p>
+                                <button
+                                    onClick={() => setReviewingProvider(null)}
+                                    className="btn btn-primary"
+                                >
+                                    Loka
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }>
+                    <ReviewModal
+                        provider={reviewingProvider}
+                        onClose={() => setReviewingProvider(null)}
+                        onReviewSubmitted={() => {
+                            setReviewingProvider(null);
+                            window.location.reload();
+                        }}
+                    />
+                </ErrorBoundary>
             )}
         </>
     );

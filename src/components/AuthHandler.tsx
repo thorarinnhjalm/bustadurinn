@@ -45,8 +45,8 @@ export default function AuthHandler() {
                         // SELF-REPAIR: Missing profile but authenticated
                         console.warn("AuthHandler: Orphan user detected, triggering self-repair for:", firebaseUser.email);
                         try {
-                            // We don't wait for this to finish to avoid blocking the main auth flow
-                            setDoc(userDocRef, {
+                            // Wait for profile creation to prevent race conditions
+                            await setDoc(userDocRef, {
                                 uid: baseUser.uid,
                                 email: baseUser.email,
                                 name: baseUser.name || baseUser.email.split('@')[0],
@@ -55,8 +55,15 @@ export default function AuthHandler() {
                                 last_login: serverTimestamp(),
                                 repaired_auto: true
                             }, { merge: true });
+
+                            // Re-fetch to get complete profile with server timestamp
+                            const repairedSnap = await getDoc(userDocRef);
+                            if (repairedSnap.exists()) {
+                                baseUser = { ...baseUser, ...repairedSnap.data() };
+                            }
                         } catch (repairErr) {
                             console.error("AuthHandler: Self-repair failed:", repairErr);
+                            // Continue with baseUser even if repair fails
                         }
                     }
                 } catch (err) {
@@ -76,7 +83,7 @@ export default function AuthHandler() {
         });
 
         return () => unsubscribe();
-    }, [setAuthenticated, setCurrentUser, setCurrentHouse, setUserHouses]);
+    }, []); // Zustand setters are stable, don't need them in deps
 
     // 2. Handle Effective User Logic (Runs when realUser OR impersonatedUser changes)
     useEffect(() => {
@@ -98,6 +105,14 @@ export default function AuthHandler() {
             setCurrentUser(effectiveUser);
 
             // Fetch Houses for EFFECTIVE User
+            // Defensive check: ensure house_ids exists and is an array
+            if (!effectiveUser.house_ids || !Array.isArray(effectiveUser.house_ids) || effectiveUser.house_ids.length === 0) {
+                setUserHouses([]);
+                setCurrentHouse(null);
+                setLoading(false);
+                return;
+            }
+
             if (effectiveUser.house_ids && effectiveUser.house_ids.length > 0) {
                 try {
                     const housesPromises = effectiveUser.house_ids.map((id: string) => getDoc(doc(db, 'houses', id)));
@@ -141,7 +156,7 @@ export default function AuthHandler() {
         };
 
         handleUserData();
-    }, [realUser, impersonatedUser, isImpersonating, initialLoadDone, setCurrentUser, setCurrentHouse, setUserHouses, setLoading]);
+    }, [realUser, impersonatedUser, isImpersonating, initialLoadDone]); // Zustand setters are stable
 
     return null;
 }

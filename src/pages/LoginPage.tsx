@@ -12,11 +12,20 @@ import SEO from '@/components/SEO';
 
 import { useSearchParams } from 'react-router-dom';
 
-// Admin emails whitelist (same as App.tsx)
-const ADMIN_EMAILS = [
-    'thorarinnhjalmarsson@gmail.com',
-    // Add more admin emails here
-];
+// Helper function to check if user is super admin via RBAC
+async function isSuperAdmin(uid: string): Promise<boolean> {
+    try {
+        const roleDoc = await getDoc(doc(db, 'user_roles', uid));
+        if (roleDoc.exists()) {
+            const roleData = roleDoc.data();
+            return roleData.system_role === 'super_admin';
+        }
+        return false;
+    } catch (error) {
+        console.error('Error checking admin role:', error);
+        return false;
+    }
+}
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -36,8 +45,9 @@ export default function LoginPage() {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // Check if admin email
-            if (user.email && ADMIN_EMAILS.includes(user.email)) {
+            // Check if user has super_admin role via RBAC
+            const isAdmin = await isSuperAdmin(user.uid);
+            if (isAdmin) {
                 navigate('/super-admin');
             } else if (returnUrl) {
                 navigate(returnUrl);
@@ -75,8 +85,9 @@ export default function LoginPage() {
                     last_login: serverTimestamp()
                 });
 
-                // Check if admin email
-                if (user.email && ADMIN_EMAILS.includes(user.email)) {
+                // Check if user has super_admin role via RBAC
+                const isAdmin = await isSuperAdmin(user.uid);
+                if (isAdmin) {
                     navigate('/super-admin');
                 } else if (returnUrl) {
                     navigate(returnUrl);
@@ -89,8 +100,9 @@ export default function LoginPage() {
                     last_login: serverTimestamp()
                 }, { merge: true });
 
-                // Check if admin email
-                if (user.email && ADMIN_EMAILS.includes(user.email)) {
+                // Check if user has super_admin role via RBAC
+                const isAdmin = await isSuperAdmin(user.uid);
+                if (isAdmin) {
                     navigate('/super-admin');
                 } else if (returnUrl) {
                     navigate(returnUrl);
@@ -128,8 +140,9 @@ export default function LoginPage() {
                     last_login: serverTimestamp()
                 });
 
-                // Check if admin email
-                if (user.email && ADMIN_EMAILS.includes(user.email)) {
+                // Check if user has super_admin role via RBAC
+                const isAdmin = await isSuperAdmin(user.uid);
+                if (isAdmin) {
                     navigate('/super-admin');
                 } else if (returnUrl) {
                     navigate(returnUrl);
@@ -142,8 +155,9 @@ export default function LoginPage() {
                     last_login: serverTimestamp()
                 }, { merge: true });
 
-                // Check if admin email
-                if (user.email && ADMIN_EMAILS.includes(user.email)) {
+                // Check if user has super_admin role via RBAC
+                const isAdmin = await isSuperAdmin(user.uid);
+                if (isAdmin) {
                     navigate('/super-admin');
                 } else if (returnUrl) {
                     navigate(returnUrl);

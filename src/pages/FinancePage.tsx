@@ -59,7 +59,7 @@ export default function FinancePage() {
             }
         };
         fetchHouse();
-    }, [currentUser]);
+    }, [currentUser?.house_ids?.[0]]);
 
     const isManager = house?.manager_id === currentUser?.uid;
     const canViewFinances = isManager || (house?.finance_viewer_ids?.includes(currentUser?.uid || '') || false);

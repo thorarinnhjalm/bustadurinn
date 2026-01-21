@@ -5,15 +5,19 @@
 
 import { useAppStore } from '@/store/appStore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
 export function useEffectiveUser() {
     const { impersonatedUser, isImpersonating } = useImpersonation();
     const currentUser = useAppStore((state) => state.currentUser);
 
+    const effectiveUserId = isImpersonating ? impersonatedUser?.uid : currentUser?.uid;
+    const { systemRole } = useUserRole(effectiveUserId);
+
     // Return impersonated user if active, otherwise real user
     return {
         user: isImpersonating ? impersonatedUser : currentUser,
         isImpersonating,
-        isAdmin: !isImpersonating && currentUser?.email === 'thorarinnhjalmarsson@gmail.com'
+        isAdmin: !isImpersonating && systemRole === 'super_admin'
     };
 }

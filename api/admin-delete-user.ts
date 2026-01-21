@@ -3,7 +3,7 @@ import admin from 'firebase-admin';
 
 
 // Helper functions inlined to prevent module resolution issues in Vercel
-async function requireAdmin(req: VercelRequest): Promise<admin.auth.DecodedIdToken> {
+async function requireAdmin(req: VercelRequest, db: admin.firestore.Firestore): Promise<admin.auth.DecodedIdToken> {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -15,13 +15,10 @@ async function requireAdmin(req: VercelRequest): Promise<admin.auth.DecodedIdTok
     try {
         const decodedToken = await admin.auth().verifyIdToken(token);
 
-        // Super Admin email whitelist matching apiAuth.ts
-        const ADMIN_EMAILS = [
-            'thorarinnhjalmarsson@gmail.com',
-            'thorarinnhjalm@gmail.com',
-        ];
+        // Check if user has super_admin role via RBAC
+        const roleDoc = await db.collection('user_roles').doc(decodedToken.uid).get();
 
-        if (!decodedToken.email || !ADMIN_EMAILS.includes(decodedToken.email)) {
+        if (!roleDoc.exists || roleDoc.data()?.system_role !== 'super_admin') {
             throw new Error('FORBIDDEN: Admin access required');
         }
 
@@ -109,16 +106,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         initServices();
 
+        if (!db || !auth) {
+            throw new Error('Internal services failed to initialize');
+        }
+
         // 🔒 SECURITY: Verify admin authentication
         try {
-            await requireAdmin(req);
+            await requireAdmin(req, db);
         } catch (authError: any) {
             const errorResponse = getAuthErrorResponse(authError);
             return res.status(errorResponse.status).json(errorResponse.body);
-        }
-
-        if (!db || !auth) {
-            throw new Error('Internal services failed to initialize');
         }
 
         const { uid } = req.body;
@@ -173,13 +170,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
         console.error('❌ Server Error deleting user:', error);
 
-        // Don't expose stack traces in production
-        // Expose error details for Super Admins to debug
-        const errorResponse = {
-            error: error.message,
-            code: error.code || 'internal_server_error',
-            details: error.stack
-        };
+        // Only expose stack traces in development, not production
+        const errorResponse = process.env.NODE_ENV === 'production'
+            ? {
+                error: 'Internal server error',
+                code: error.code || 'internal_server_error'
+              }
+            : {
+                error: error.message,
+                code: error.code || 'internal_server_error',
+                details: error.stack
+              };
 
         return res.status(500).json(errorResponse);
     }

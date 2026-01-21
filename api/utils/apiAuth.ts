@@ -6,14 +6,8 @@
 import type { VercelRequest } from '@vercel/node';
 import { admin } from './firebaseAdmin';
 
-// Super Admin email whitelist
-const ADMIN_EMAILS = [
-    'thorarinnhjalmarsson@gmail.com',
-    'thorarinnhjalm@gmail.com',
-];
-
 /**
- * Verify Firebase ID token and check if user is a super admin
+ * Verify Firebase ID token and check if user is a super admin via RBAC
  * @throws Error if unauthorized or forbidden
  */
 export async function requireAdmin(req: VercelRequest): Promise<admin.auth.DecodedIdToken> {
@@ -29,8 +23,13 @@ export async function requireAdmin(req: VercelRequest): Promise<admin.auth.Decod
         // Verify Firebase ID token
         const decodedToken = await admin.auth().verifyIdToken(token);
 
-        // Check if user is in admin whitelist
-        if (!decodedToken.email || !ADMIN_EMAILS.includes(decodedToken.email)) {
+        // Check if user has super_admin role in user_roles collection
+        const roleDoc = await admin.firestore()
+            .collection('user_roles')
+            .doc(decodedToken.uid)
+            .get();
+
+        if (!roleDoc.exists || roleDoc.data()?.system_role !== 'super_admin') {
             throw new Error('FORBIDDEN: Admin access required');
         }
 

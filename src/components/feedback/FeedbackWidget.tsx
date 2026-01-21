@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MessageSquarePlus } from 'lucide-react';
 import FeedbackModal from './FeedbackModal';
 import { useAppStore } from '@/store/appStore';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function FeedbackWidget() {
     const [isOpen, setIsOpen] = useState(false);
@@ -26,10 +27,29 @@ export default function FeedbackWidget() {
                 </span>
             </button>
 
-            <FeedbackModal
-                isOpen={isOpen}
-                onClose={() => setIsOpen(false)}
-            />
+            <ErrorBoundary fallback={
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                        <div className="text-center">
+                            <div className="text-4xl mb-4">⚠️</div>
+                            <h3 className="font-serif font-bold text-xl mb-2">Villa kom upp</h3>
+                            <p className="text-stone-600 mb-4">Ekki tókst að hlaða umsagnarglugga</p>
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="btn btn-primary"
+                            >
+                                Loka
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }>
+                <FeedbackModal
+                    isOpen={isOpen}
+                    onClose={() => setIsOpen(false)}
+                />
+            </ErrorBoundary>
         </>
     );
 }

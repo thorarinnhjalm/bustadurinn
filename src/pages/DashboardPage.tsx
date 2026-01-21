@@ -24,6 +24,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import BookingDetailModal from '@/components/calendar/BookingDetailModal';
 import CheckoutModal from '@/components/dashboard/CheckoutModal';
 import Walkthrough from '@/components/Walkthrough';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const UserDashboard = () => {
     const navigate = useNavigate();
@@ -712,24 +713,62 @@ const UserDashboard = () => {
             </div>
 
             {nextBooking && (
-                <BookingDetailModal
-                    isOpen={showBookingDetailModal}
-                    onClose={() => setShowBookingDetailModal(false)}
-                    booking={nextBooking}
-                    currentHouse={currentHouse}
-                    currentUser={currentUser}
-                />
+                <ErrorBoundary fallback={
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+                        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                            <div className="text-center">
+                                <div className="text-4xl mb-4">⚠️</div>
+                                <h3 className="font-serif font-bold text-xl mb-2">Villa kom upp</h3>
+                                <p className="text-stone-600 mb-4">Ekki tókst að hlaða bókunarglugga</p>
+                                <button
+                                    onClick={() => setShowBookingDetailModal(false)}
+                                    className="btn btn-primary"
+                                >
+                                    Loka
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }>
+                    <BookingDetailModal
+                        isOpen={showBookingDetailModal}
+                        onClose={() => setShowBookingDetailModal(false)}
+                        booking={nextBooking}
+                        currentHouse={currentHouse}
+                        currentUser={currentUser}
+                    />
+                </ErrorBoundary>
             )}
 
             {showCheckoutModal && (
-                <CheckoutModal
-                    isOpen={showCheckoutModal}
-                    onClose={() => setShowCheckoutModal(false)}
-                    loading={checkoutLoading}
-                    onCheckout={handleCheckout}
-                    message={checkoutMessage}
-                    onMessageChange={setCheckoutMessage}
-                />
+                <ErrorBoundary fallback={
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+                        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                            <div className="text-center">
+                                <div className="text-4xl mb-4">⚠️</div>
+                                <h3 className="font-serif font-bold text-xl mb-2">Villa kom upp</h3>
+                                <p className="text-stone-600 mb-4">Ekki tókst að hlaða útskráningarglugga</p>
+                                <button
+                                    onClick={() => setShowCheckoutModal(false)}
+                                    className="btn btn-primary"
+                                >
+                                    Loka
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }>
+                    <CheckoutModal
+                        isOpen={showCheckoutModal}
+                        onClose={() => setShowCheckoutModal(false)}
+                        loading={checkoutLoading}
+                        onCheckout={handleCheckout}
+                        message={checkoutMessage}
+                        onMessageChange={setCheckoutMessage}
+                    />
+                </ErrorBoundary>
             )}
             {showWalkthrough && (
                 <Walkthrough onClose={() => setShowWalkthrough(false)} />

@@ -100,8 +100,10 @@ export function usePermissions(
                 (!!houseRole && checkPermission(houseRole, 'member', 'create_task')),
 
             canEditOwnTask:
-                checkPermission(systemRole, 'super_admin', 'delete_task') ||
-                (!!houseRole && !!houseRole),
+                checkPermission(systemRole, 'super_admin', 'edit_task') ||
+                (!!houseRole && checkPermission(houseRole, 'owner', 'edit_task')) ||
+                (!!houseRole && checkPermission(houseRole, 'admin', 'edit_task')) ||
+                (!!houseRole && checkPermission(houseRole, 'member', 'edit_task')),
 
             canDeleteAnyTask:
                 checkPermission(systemRole, 'super_admin', 'delete_task') ||

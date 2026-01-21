@@ -22,10 +22,6 @@ const CabinLogo = ({ size = 24, className = "" }: { size?: number, className?: s
     </svg>
 );
 
-const ADMIN_EMAILS = [
-    'thorarinnhjalmarsson@gmail.com',
-];
-
 interface DashboardLayoutProps {
     children: React.ReactNode;
 }
@@ -35,7 +31,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const currentHouse = useAppStore((state) => state.currentHouse);
     const userHouses = useAppStore((state) => state.userHouses);
     const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
-    const { user: currentUser } = useEffectiveUser();
+    const { user: currentUser, isAdmin } = useEffectiveUser();
 
     // Notification Hook
     const { notifications, markAsRead, markAllAsRead } = useNotifications();
@@ -117,7 +113,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     )}
                 </div>
                 <div className="flex items-center gap-4 relative">
-                    {currentUser?.email && ADMIN_EMAILS.includes(currentUser.email) && (
+                    {isAdmin && (
                         <button
                             onClick={() => handleNavigate('/super-admin')}
                             className="flex items-center gap-1 text-stone-400 hover:text-amber transition-colors text-xs font-bold uppercase tracking-wider"
