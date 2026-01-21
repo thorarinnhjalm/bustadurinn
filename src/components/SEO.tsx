@@ -19,7 +19,7 @@ export default function SEO({
     title = 'Bústaðurinn.is - Bókunarkerfi fyrir sumarhús',
     description = 'Bókunarkerfi og app fyrir sameiginleg sumarhús. Betra skipulag, gagnsæ fjármál og stafræn lyklakippa fyrir orlofshúsið.',
     keywords = 'sumarhús, bókunarkerfi, sameignarhús, orlofshús, íslenskt app, fjölskylduhús, veðurspá, bókunardagatal',
-    ogImage = 'https://bustadurinn.is/og-image.jpg',
+    ogImage = 'https://www.bustadurinn.is/og-image.jpg',
     canonical,
     structuredData,
     noIndex = false,
@@ -30,7 +30,7 @@ export default function SEO({
     // Construct canonical URL
     // If explicit canonical provided, use it.
     // Otherwise, construct from current location, ensuring no trailing slash and HTTPS
-    const effectiveCanonical = canonical || `https://bustadurinn.is${location.pathname === '/' ? '' : location.pathname.replace(/\/$/, '')}`;
+    const effectiveCanonical = canonical || `https://www.bustadurinn.is${location.pathname === '/' ? '' : location.pathname.replace(/\/$/, '')}`;
 
     return (
         <Helmet>

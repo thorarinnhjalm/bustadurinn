@@ -247,7 +247,7 @@ export default function OnboardingPage() {
                     variables: {
                         title: 'Beiðni um aðgang að húsi',
                         message: `${currentUser.name || currentUser.email} hefur óskað eftir aðgangi að húsinu ${duplicateHouse.name} (${houseData.address}).`,
-                        actionUrl: `https://bustadurinn.is/dashboard` // Ideally link to approvals
+                        actionUrl: 'https://www.bustadurinn.is/dashboard' // Ideally link to approvals
                     }
                 })
             });

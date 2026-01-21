@@ -8,7 +8,7 @@ export default function DataDeletionPage() {
             <SEO
                 title="Eyðing gagna - Bústaðurinn.is"
                 description="Leiðbeiningar um hvernig á að eyða aðgangi og gögnum á Bústaðurinn.is"
-                canonical="https://bustadurinn.is/data-deletion"
+                canonical="https://www.bustadurinn.is/data-deletion"
             />
 
             {/* Header */}

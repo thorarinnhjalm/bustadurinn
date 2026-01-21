@@ -164,7 +164,7 @@ export default function LoginPage() {
             <SEO
                 title="Innskráning - Bústaðurinn.is"
                 description="Skráðu þig inn á Bústaðurinn.is til að stjórna sumarhúsinu þínu."
-                canonical="https://bustadurinn.is/login"
+                canonical="https://www.bustadurinn.is/login"
             />
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">

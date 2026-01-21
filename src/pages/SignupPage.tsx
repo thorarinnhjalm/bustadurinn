@@ -196,7 +196,7 @@ export default function SignupPage() {
             <SEO
                 title="Búa til aðgang - Bústaðurinn.is"
                 description="Búðu til aðgang að Bústaðurinn.is og byrjaðu að skipuleggja sumarhúsið betur. Frítt í 30 daga."
-                canonical="https://bustadurinn.is/signup"
+                canonical="https://www.bustadurinn.is/signup"
             />
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">

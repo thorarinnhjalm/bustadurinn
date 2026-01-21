@@ -178,7 +178,7 @@ export default function FeaturesPage() {
                 title="Eiginleikar - Bústaðurinn.is | Bókunarkerfi, Sanngirnisregla og Verkefni"
                 description="Yfirlit yfir alla eiginleika Bústaðurinn.is: Bókunardagatal með sanngirnisreglu, verkefnastjórnun, hlutverkastýring og sjálfvirkur hússjóður. Hannað fyrir íslensk sumarhús í sameign."
                 keywords="sumarhús eiginleikar, bókunarkerfi, fjárhagskerfi, verkefnastjórnun, gestaaðgangur, sanngirnisregla, íslensk sumarhús"
-                canonical="https://bustadurinn.is/eiginleikar"
+                canonical="https://www.bustadurinn.is/eiginleikar"
                 structuredData={{
                     "@context": "https://schema.org",
                     "@type": "SoftwareApplication",
