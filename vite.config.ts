@@ -12,9 +12,11 @@ export default defineConfig({
   },
   build: {
     minify: 'esbuild',
+    sourcemap: true, // Enable source maps for better debugging
     rollupOptions: {
       output: {
         manualChunks: undefined,
+        sourcemapExcludeSources: true, // Don't include source code in maps for security
       },
     },
   },
