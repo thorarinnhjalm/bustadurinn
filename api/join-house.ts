@@ -1,35 +1,9 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import admin from 'firebase-admin';
+import { initializeFirebaseAdmin, admin, db } from './utils/firebaseAdmin';
 
-// Lazy init variables
-let db: admin.firestore.Firestore | null = null;
-
-function initServices() {
-    if (!admin.apps.length) {
-        try {
-            if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-                const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-                admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount),
-                    projectId: serviceAccount.project_id
-                });
-            } else {
-                admin.initializeApp({
-                    credential: admin.credential.applicationDefault(),
-                    projectId: 'bustadurinn-is'
-                });
-            }
-        } catch (error) {
-            console.error('❌ Firebase Admin initialization error:', error);
-            throw new Error(`Firebase Init Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-    }
-
-    if (!db) {
-        db = admin.firestore();
-    }
-}
+// Initialize Firebase Admin
+initializeFirebaseAdmin();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'OPTIONS') {
@@ -41,8 +15,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        initServices();
-
         // 🔒 SECURITY: Require authentication
         let authenticatedUser;
         try {
@@ -52,10 +24,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const { getAuthErrorResponse } = await import('./utils/apiAuth');
             const errorResponse = getAuthErrorResponse(authError);
             return res.status(errorResponse.status).json(errorResponse.body);
-        }
-
-        if (!db) {
-            throw new Error('Internal services failed to initialize');
         }
 
         const { houseId, inviteCode, token } = req.body;

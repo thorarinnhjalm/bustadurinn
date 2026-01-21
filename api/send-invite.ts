@@ -1,11 +1,13 @@
 
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { initializeFirebaseAdmin, db as firebaseDb } from './utils/firebaseAdmin';
 
-import admin from 'firebase-admin';
+// Initialize Firebase Admin
+initializeFirebaseAdmin();
+const db = firebaseDb;
 
-// Lazy init variables
-let db: admin.firestore.Firestore | null = null;
+// Lazy init Resend
 let resend: Resend | null = null;
 
 function initServices() {
@@ -15,32 +17,6 @@ function initServices() {
             console.warn('⚠️ RESEND_API_KEY is not set');
         }
         resend = new Resend(process.env.RESEND_API_KEY);
-    }
-
-    // Initialize Firebase Admin
-    if (!admin.apps.length) {
-        try {
-            if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-                const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-                admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount),
-                    projectId: serviceAccount.project_id
-                });
-            } else {
-                // Fallback for local or managed environment
-                admin.initializeApp({
-                    credential: admin.credential.applicationDefault(),
-                    projectId: 'bustadurinn-is'
-                });
-            }
-        } catch (error) {
-            console.error('❌ Firebase Admin initialization error:', error);
-            throw new Error(`Firebase Init Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-    }
-
-    if (!db) {
-        db = admin.firestore();
     }
 }
 
@@ -64,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         initServices();
 
-        if (!db || !resend) {
+        if (!resend) {
             throw new Error('Internal services failed to initialize');
         }
 

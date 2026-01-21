@@ -6,18 +6,12 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import admin from 'firebase-admin';
 import { Resend } from 'resend';
+import { initializeFirebaseAdmin, admin, db } from '../utils/firebaseAdmin';
 
 // Initialize Firebase Admin
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        projectId: 'bustadurinn-is'
-    });
-}
+initializeFirebaseAdmin();
 
-const db = admin.firestore();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**

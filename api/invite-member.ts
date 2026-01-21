@@ -1,31 +1,11 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
-import admin from 'firebase-admin';
 import DOMPurify from 'isomorphic-dompurify';
+import { initializeFirebaseAdmin, admin, db } from './utils/firebaseAdmin';
 
-// Initialize Firebase Admin (inline to avoid module resolution)
-if (!admin.apps.length) {
-    try {
-        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-            admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-                projectId: serviceAccount.project_id
-            });
-        } else {
-            admin.initializeApp({
-                credential: admin.credential.applicationDefault(),
-                projectId: 'bustadurinn-is'
-            });
-        }
-        console.log('✅ Firebase Admin initialized');
-    } catch (error) {
-        console.error('❌ Firebase Admin init error:', error);
-    }
-}
-
-const db = admin.firestore();
+// Initialize Firebase Admin
+initializeFirebaseAdmin();
 
 // Inline auth functions to avoid module resolution issues
 async function requireAuth(req: VercelRequest) {
