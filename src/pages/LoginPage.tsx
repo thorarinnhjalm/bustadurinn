@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, facebookProvider, db } from '@/lib/firebase';
 import { LogIn } from 'lucide-react';
@@ -277,6 +277,10 @@ export default function LoginPage() {
                             </svg>
                             Facebook
                         </button>
+
+                        <p className="text-xs text-center text-grey-mid mt-4">
+                            Með því að skrá þig inn samþykkir þú <Link to="/skilmalar" className="underline hover:text-charcoal" target="_blank">Notkunarskilmála</Link> og <Link to="/personuvernd" className="underline hover:text-charcoal" target="_blank">Persónuverndarstefnu</Link> okkar.
+                        </p>
 
                         <div className="text-center">
                             <button
