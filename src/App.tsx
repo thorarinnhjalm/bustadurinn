@@ -3,7 +3,7 @@
  */
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { useAppStore } from '@/store/appStore';
 import { ImpersonationProvider } from '@/contexts/ImpersonationContext';
@@ -12,32 +12,34 @@ import AuthHandler from '@/components/AuthHandler';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { captureUTMParams, sendUTMToSentry } from '@/utils/utm';
 
-// Pages
+// Critical pages - loaded immediately
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
 import OnboardingPage from '@/pages/OnboardingPage';
 import DashboardPage from '@/pages/DashboardPage';
-import CalendarPage from '@/pages/CalendarPage';
-import SettingsPage from '@/pages/SettingsPage';
-import FinancePage from '@/pages/FinancePage';
-import TasksPage from '@/pages/TasksPage';
-import SuperAdminPage from '@/pages/SuperAdminPage';
-import JoinPage from '@/pages/JoinPage';
-import GuestPage from '@/pages/GuestPage';
-import FeaturesPage from '@/pages/FeaturesPage';
-import FAQPage from '@/pages/FAQPage';
-import AboutPage from '@/pages/AboutPage';
-import ContactPage from '@/pages/ContactPage';
-import SandboxPage from '@/pages/SandboxPage';
-import MigrationPage from '@/pages/MigrationPage';
-import MarketingMapPage from '@/pages/MarketingMapPage';
-import PrivacyPage from '@/pages/PrivacyPage';
-import TermsPage from '@/pages/TermsPage';
-import DataDeletionPage from '@/pages/DataDeletionPage';
-import SentryTestPage from '@/pages/SentryTestPage';
-import ForProvidersPage from '@/pages/ForProvidersPage';
-import MarketplacePage from '@/pages/MarketplacePage';
+
+// Lazy-loaded pages - code split for better performance
+const CalendarPage = lazy(() => import('@/pages/CalendarPage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const FinancePage = lazy(() => import('@/pages/FinancePage'));
+const TasksPage = lazy(() => import('@/pages/TasksPage'));
+const SuperAdminPage = lazy(() => import('@/pages/SuperAdminPage'));
+const JoinPage = lazy(() => import('@/pages/JoinPage'));
+const GuestPage = lazy(() => import('@/pages/GuestPage'));
+const FeaturesPage = lazy(() => import('@/pages/FeaturesPage'));
+const FAQPage = lazy(() => import('@/pages/FAQPage'));
+const AboutPage = lazy(() => import('@/pages/AboutPage'));
+const ContactPage = lazy(() => import('@/pages/ContactPage'));
+const SandboxPage = lazy(() => import('@/pages/SandboxPage'));
+const MigrationPage = lazy(() => import('@/pages/MigrationPage'));
+const MarketingMapPage = lazy(() => import('@/pages/MarketingMapPage'));
+const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'));
+const TermsPage = lazy(() => import('@/pages/TermsPage'));
+const DataDeletionPage = lazy(() => import('@/pages/DataDeletionPage'));
+const SentryTestPage = lazy(() => import('@/pages/SentryTestPage'));
+const ForProvidersPage = lazy(() => import('@/pages/ForProvidersPage'));
+const MarketplacePage = lazy(() => import('@/pages/MarketplacePage'));
 
 // RBAC imports
 import { useUserRole } from '@/hooks/useUserRole';
@@ -110,6 +112,16 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 // Feedback
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-bone">
+    <div className="text-center">
+      <div className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
+      <p className="text-grey-mid">Hleð síðu...</p>
+    </div>
+  </div>
+);
+
 function App() {
 
   // Auth logic moved to AuthHandler
@@ -127,7 +139,8 @@ function App() {
         <HelmetProvider>
           <Router>
             <ImpersonationBanner />
-            <Routes>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
@@ -218,7 +231,8 @@ function App() {
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+              </Routes>
+            </Suspense>
             <FeedbackWidget />
           </Router>
         </HelmetProvider>

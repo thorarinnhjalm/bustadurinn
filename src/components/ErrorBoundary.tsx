@@ -4,6 +4,7 @@
  */
 
 import React, { Component, type ReactNode } from 'react';
+import * as Sentry from '@sentry/react';
 import { logger } from '@/utils/logger';
 
 interface Props {
@@ -47,10 +48,21 @@ class ErrorBoundary extends Component<Props, State> {
             errorInfo,
         });
 
-        // TODO: Send to Sentry in Phase 6
-        // if (import.meta.env.MODE === 'production') {
-        //   Sentry.captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
-        // }
+        // Send to Sentry with full context
+        if (import.meta.env.VITE_SENTRY_DSN) {
+            Sentry.captureException(error, {
+                contexts: {
+                    react: {
+                        componentStack: errorInfo.componentStack,
+                    },
+                },
+                level: 'error',
+                tags: {
+                    errorBoundary: 'global',
+                    environment: import.meta.env.MODE,
+                },
+            });
+        }
     }
 
     handleReset = (): void => {
