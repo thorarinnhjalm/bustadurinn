@@ -2,17 +2,19 @@ import { useState } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, writeBatch, doc } from 'firebase/firestore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
+import { useUserRole } from '@/hooks/useUserRole';
 import { ArrowLeft, Play, AlertTriangle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function MigrationPage() {
     const navigate = useNavigate();
     const { user: currentUser } = useEffectiveUser();
+    const { systemRole } = useUserRole(currentUser?.uid);
     const [loading, setLoading] = useState(false);
     const [logs, setLogs] = useState<string[]>([]);
     const [progress, setProgress] = useState(0);
 
-    const isSuperAdmin = currentUser?.email === 'thorarinnhjalmarsson@gmail.com' || currentUser?.email === 'thorarinnhjalm@gmail.com';
+    const isSuperAdmin = systemRole === 'super_admin';
 
     const log = (msg: string) => setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`]);
 

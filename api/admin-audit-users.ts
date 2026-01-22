@@ -1,12 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import admin from 'firebase-admin';
 
-// SECURITY: Whitelisted admin emails
-const ADMIN_EMAILS = [
-    'thorarinnhjalmarsson@gmail.com',
-    'thorarinnhjalm@gmail.com',
-];
-
 async function requireAdmin(req: VercelRequest): Promise<admin.auth.DecodedIdToken> {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -15,9 +9,13 @@ async function requireAdmin(req: VercelRequest): Promise<admin.auth.DecodedIdTok
     const token = authHeader.split('Bearer ')[1];
     try {
         const decodedToken = await admin.auth().verifyIdToken(token);
-        if (!decodedToken.email || !ADMIN_EMAILS.includes(decodedToken.email)) {
+
+        // Check RBAC user_roles collection for super_admin
+        const roleDoc = await admin.firestore().collection('user_roles').doc(decodedToken.uid).get();
+        if (!roleDoc.exists || roleDoc.data()?.system_role !== 'super_admin') {
             throw new Error('FORBIDDEN');
         }
+
         return decodedToken;
     } catch (error: any) {
         if (error.message === 'FORBIDDEN') throw error;
