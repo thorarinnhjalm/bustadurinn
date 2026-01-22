@@ -19,11 +19,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
   <!-- Performance: Preload critical fonts with font-display swap -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'" />
-  <noscript>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
-  </noscript>
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+    media="print" onload="this.media='all'" />
+
 
   <!-- Google Analytics - Deferred for performance -->
   <script>
@@ -33,7 +34,7 @@
     gtag('config', 'G-ZK96M9074D');
 
     // Load GA script after page load
-    window.addEventListener('load', function() {
+    window.addEventListener('load', function () {
       var script = document.createElement('script');
       script.async = true;
       script.src = 'https://www.googletagmanager.com/gtag/js?id=G-ZK96M9074D';
@@ -43,10 +44,10 @@
 
   <!-- Meta Pixel Code - Deferred for performance -->
   <script>
-    window.addEventListener('load', function() {
+    window.addEventListener('load', function () {
       // Stub fbq function to queue events before script loads
       if (!window.fbq) {
-        window.fbq = function() {
+        window.fbq = function () {
           window.fbq.callMethod ? window.fbq.callMethod.apply(window.fbq, arguments) : window.fbq.queue.push(arguments);
         };
         window.fbq.push = window.fbq;
@@ -62,7 +63,7 @@
       document.head.appendChild(script);
 
       // Initialize after script loads
-      script.onload = function() {
+      script.onload = function () {
         fbq('init', '1349173416958913');
         fbq('track', 'PageView');
       };
