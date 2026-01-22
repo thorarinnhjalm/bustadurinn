@@ -9,7 +9,7 @@ import {
     LayoutDashboard, Home, Users, BarChart2, Mail, Tag, Settings, Send,
     Database, LogOut, Trash2, CheckCircle, AlertTriangle,
     XCircle, RefreshCw, Loader2, Shield, Activity, TrendingUp, Reply, Star,
-    Edit, MapPin, UserCog
+    Edit, MapPin, UserCog, Zap
 } from 'lucide-react';
 import { db, auth } from '@/lib/firebase';
 import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
@@ -21,6 +21,7 @@ import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import AdminLayout from '@/components/AdminLayout';
 import DataTable from '@/components/DataTable';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
+import BusinessIntelligenceDashboard from '@/components/analytics/BusinessIntelligenceDashboard';
 import { logger } from '@/utils/logger';
 import { feedbackService } from '@/services/feedbackService';
 
@@ -52,6 +53,7 @@ interface Stats {
     activeTasks: number;
     allHouses: House[];
     allUsers: User[];
+    allBookings: any[]; // Booking data for BI dashboard
     allContacts: ContactSubmission[];
     allCoupons: Coupon[];
     allSubscribers: NewsletterSubscriber[];
@@ -63,7 +65,7 @@ interface Stats {
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'houses' | 'users' | 'contacts' | 'feedback' | 'coupons' | 'integrations' | 'emails' | 'newsletter' | 'audit' | 'providers'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'bi' | 'houses' | 'users' | 'contacts' | 'feedback' | 'coupons' | 'integrations' | 'emails' | 'newsletter' | 'audit' | 'providers'>('overview');
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [editingHouse, setEditingHouse] = useState<House | null>(null);
@@ -112,6 +114,7 @@ export default function SuperAdminPage() {
         sandboxVisits: 0,
         allHouses: [],
         allUsers: [],
+        allBookings: [],
         allContacts: [],
         allCoupons: [],
         allSubscribers: [],
@@ -189,6 +192,14 @@ export default function SuperAdminPage() {
                     createdAt: (doc.data().createdAt as any)?.toDate() || new Date()
                 } as Feedback)) || [];
 
+                const bookings = bookingsSnap?.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    start: doc.data().start?.toDate(),
+                    end: doc.data().end?.toDate(),
+                    created_at: doc.data().created_at?.toDate()
+                })) || [];
+
                 setStats({
                     totalHouses: houses.length,
                     totalUsers: users.length,
@@ -199,6 +210,7 @@ export default function SuperAdminPage() {
                     activeTasks,
                     allHouses: houses,
                     allUsers: users,
+                    allBookings: bookings,
                     allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
                     allCoupons: coupons,
                     allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
@@ -1314,6 +1326,7 @@ export default function SuperAdminPage() {
                         {/* Primary Tabs */}
                         {[
                             { id: 'overview', icon: LayoutDashboard, label: 'Yfirlit' },
+                            { id: 'bi', icon: Zap, label: 'Business Intel' },
                             { id: 'houses', icon: Home, label: 'Hús' },
                             { id: 'users', icon: Users, label: 'Notendur' },
                             { id: 'analytics', icon: BarChart2, label: 'Greining' },
@@ -1351,6 +1364,16 @@ export default function SuperAdminPage() {
 
             {/* Content */}
             <div className="p-4 md:p-8">
+                {/* Business Intelligence Tab */}
+                {activeTab === 'bi' && (
+                    <BusinessIntelligenceDashboard
+                        allHouses={stats.allHouses}
+                        allUsers={stats.allUsers}
+                        allBookings={stats.allBookings}
+                        sandboxVisits={stats.sandboxVisits}
+                    />
+                )}
+
                 {/* Analytics Tab */}
                 {activeTab === 'analytics' && <AnalyticsDashboard />}
 
