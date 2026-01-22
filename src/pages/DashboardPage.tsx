@@ -325,11 +325,15 @@ const UserDashboard = () => {
         <DashboardLayout>
             {/* --- HERO IMAGE & STATUS --- */}
             <div className="max-w-5xl mx-auto">
-                <div className="relative h-64 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50">
+                <div className="relative h-64 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50" style={{ minHeight: '256px' }}>
                     <img
-                        src={currentHouse?.image_url || "/hero_summer_house.webp"}
+                        src={currentHouse?.image_url || "/hero_summer_house.jpg"}
                         alt={currentHouse?.name || "Cabin"}
                         className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
+                        fetchPriority="high"
+                        decoding="async"
+                        width="800"
+                        height="800"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/20 to-transparent opacity-90"></div>
 
