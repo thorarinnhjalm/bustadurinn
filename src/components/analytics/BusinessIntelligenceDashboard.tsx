@@ -15,6 +15,7 @@ interface BIMetrics {
     mrr: number;
     mrrGrowth: number;
     arr: number;
+    potentialMrr: number; // Future MRR from launch offer houses
     averageRevenuePerHouse: number;
 
     // User Metrics
@@ -27,6 +28,7 @@ interface BIMetrics {
     activeHouses: number; // Activity within 30 days
     houseGrowth: number;
     averageHouseAge: number;
+    launchOfferHouses: number; // Houses in 1-year free period
 
     // Engagement Metrics
     averageBookingsPerHouse: number;
@@ -64,6 +66,16 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
         // === REVENUE CALCULATIONS ===
         const MONTHLY_PRICE = 2990; // ISK per month
 
+        // Separate houses in launch offer period (1-year free)
+        const launchOfferHouses = realHouses.filter(h => {
+            if (h.subscription_status === 'free') return false; // Permanently free houses don't count
+
+            const createdAt = h.created_at instanceof Date ? h.created_at : new Date(h.created_at);
+            const launchOfferEnds = new Date(createdAt.getTime() + 365 * 24 * 60 * 60 * 1000);
+            return now < launchOfferEnds;
+        });
+
+        // Currently paying houses (after launch offer period)
         const paidHouses = realHouses.filter(h => {
             // Exclude free houses
             if (h.subscription_status === 'free') return false;
@@ -77,15 +89,21 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
         });
 
         const mrr = paidHouses.length * MONTHLY_PRICE;
+        const potentialMrr = (paidHouses.length + launchOfferHouses.length) * MONTHLY_PRICE;
         const arr = mrr * 12;
         const averageRevenuePerHouse = realHouses.length > 0 ? mrr / realHouses.length : 0;
 
         // MRR Growth (compare to 30 days ago)
-        const housesThirtyDaysAgo = realHouses.filter(h => {
+        const paidHousesThirtyDaysAgo = realHouses.filter(h => {
+            if (h.subscription_status === 'free') return false;
+
             const created = h.created_at instanceof Date ? h.created_at : new Date(h.created_at);
-            return created < thirtyDaysAgo;
+            if (created >= thirtyDaysAgo) return false; // House didn't exist 30 days ago
+
+            const launchOfferEnds = new Date(created.getTime() + 365 * 24 * 60 * 60 * 1000);
+            return thirtyDaysAgo >= launchOfferEnds; // Was it paying 30 days ago?
         }).length;
-        const mrrThirtyDaysAgo = housesThirtyDaysAgo * MONTHLY_PRICE;
+        const mrrThirtyDaysAgo = paidHousesThirtyDaysAgo * MONTHLY_PRICE;
         const mrrGrowth = mrrThirtyDaysAgo > 0 ? ((mrr - mrrThirtyDaysAgo) / mrrThirtyDaysAgo) * 100 : 0;
 
         // === USER METRICS ===
@@ -149,6 +167,7 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
             mrr,
             mrrGrowth,
             arr,
+            potentialMrr,
             averageRevenuePerHouse,
             totalUsers: allUsers.length,
             activeUsers,
@@ -157,6 +176,7 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
             activeHouses,
             houseGrowth,
             averageHouseAge,
+            launchOfferHouses: launchOfferHouses.length,
             averageBookingsPerHouse,
             averageTasksPerHouse: 0, // TODO: Calculate from tasks
             averageLoginsPerUser: activeUsers / (allUsers.length || 1),
@@ -280,10 +300,10 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
 
             {/* Revenue Metrics */}
             <section>
-                <h3 className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-4">💰 Revenue Metrics</h3>
+                <h3 className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-4">💰 Tekjumælingar</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <MetricCard
-                        title="Monthly Recurring Revenue"
+                        title="Mánaðarlegar endurteknar tekjur"
                         value={metrics.mrr}
                         change={metrics.mrrGrowth}
                         icon={DollarSign}
@@ -291,52 +311,50 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
                         trend={metrics.mrrGrowth > 0 ? 'up' : metrics.mrrGrowth < 0 ? 'down' : 'neutral'}
                     />
                     <MetricCard
-                        title="Annual Recurring Revenue"
+                        title="Áætlaðar framtíðartekjur (MRR)"
+                        value={metrics.potentialMrr}
+                        icon={TrendingUp}
+                        format="currency"
+                    />
+                    <MetricCard
+                        title="Ársendurteknar tekjur (ARR)"
                         value={metrics.arr}
                         icon={TrendingUp}
                         format="currency"
                     />
                     <MetricCard
-                        title="Avg Revenue Per House"
-                        value={metrics.averageRevenuePerHouse}
+                        title="Hús í 1 árs fríi"
+                        value={metrics.launchOfferHouses}
                         icon={Home}
-                        format="currency"
-                    />
-                    <MetricCard
-                        title="Trial → Active Rate"
-                        value={metrics.trialToActive}
-                        icon={Target}
-                        format="percentage"
-                        trend={metrics.trialToActive > 50 ? 'up' : 'down'}
                     />
                 </div>
             </section>
 
             {/* Growth Metrics */}
             <section>
-                <h3 className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-4">📈 Growth Metrics</h3>
+                <h3 className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-4">📈 Vaxtarmælingar</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <MetricCard
-                        title="Total Houses"
+                        title="Hús alls"
                         value={metrics.totalHouses}
                         change={metrics.houseGrowth}
                         icon={Home}
                         trend={metrics.houseGrowth > 0 ? 'up' : 'down'}
                     />
                     <MetricCard
-                        title="Active Houses (30d)"
+                        title="Virk hús (30 dagar)"
                         value={metrics.activeHouses}
                         icon={Activity}
                     />
                     <MetricCard
-                        title="Total Users"
+                        title="Notendur alls"
                         value={metrics.totalUsers}
                         change={metrics.userGrowth}
                         icon={Users}
                         trend={metrics.userGrowth > 0 ? 'up' : 'down'}
                     />
                     <MetricCard
-                        title="Active Users (30d)"
+                        title="Virkir notendur (30 dagar)"
                         value={metrics.activeUsers}
                         icon={Zap}
                     />
@@ -345,26 +363,26 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
 
             {/* Engagement Metrics */}
             <section>
-                <h3 className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-4">🎯 Engagement Metrics</h3>
+                <h3 className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-4">🎯 Notkunarmælingar</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <MetricCard
-                        title="Avg House Age"
+                        title="Meðalaldur húsa"
                         value={metrics.averageHouseAge}
                         icon={Calendar}
                         format="days"
                     />
                     <MetricCard
-                        title="Avg Bookings/House"
+                        title="Meðaltal bókana/hús"
                         value={metrics.averageBookingsPerHouse}
                         icon={Calendar}
                     />
                     <MetricCard
-                        title="Landing Page Visits"
+                        title="Heimsóknir á /prufa"
                         value={metrics.landingPageVisits}
                         icon={Activity}
                     />
                     <MetricCard
-                        title="Signup Rate"
+                        title="Skráningarhlutfall"
                         value={metrics.signupRate}
                         icon={Target}
                         format="percentage"
@@ -375,24 +393,24 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
 
             {/* Health Score */}
             <section>
-                <h3 className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-4">🏥 House Health Score</h3>
+                <h3 className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-4">🏥 Heilsuskor húsa</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <HealthScoreCard
-                        label="Healthy Houses"
+                        label="Heilbrigð hús"
                         count={metrics.healthyHouses}
                         total={metrics.totalHouses}
                         color="bg-green-500"
                         icon={CheckCircle}
                     />
                     <HealthScoreCard
-                        label="At Risk (30-90d inactive)"
+                        label="Í áhættu (30-90 dagar óvirk)"
                         count={metrics.atRiskHouses}
                         total={metrics.totalHouses}
                         color="bg-amber"
                         icon={AlertCircle}
                     />
                     <HealthScoreCard
-                        label="Churned (90d+ inactive)"
+                        label="Fallin frá (90+ dagar óvirk)"
                         count={metrics.churnedHouses}
                         total={metrics.totalHouses}
                         color="bg-red-500"
