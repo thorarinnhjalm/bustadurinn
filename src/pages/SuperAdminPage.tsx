@@ -904,6 +904,33 @@ export default function SuperAdminPage() {
         }
     };
 
+    const handleSendRecoveryEmail = async (user: User) => {
+        if (!confirm(`Senda 'Finish Setup' póst á ${user.email}?`)) return;
+        setActionLoading(`recovery-${user.uid}`);
+        try {
+            await fetch('/api/send-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`
+                },
+                body: JSON.stringify({
+                    templateId: 'finish_setup',
+                    to: user.email,
+                    variables: {
+                        name: user.name || 'Vinur',
+                    }
+                })
+            });
+            alert('Póstur sendur!');
+        } catch (error) {
+            console.error(error);
+            alert('Mistókst að senda póst.');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     const handleToggleFeatured = async (feedback: Feedback) => {
         setActionLoading(`feature-${feedback.id}`);
         try {
@@ -2149,6 +2176,18 @@ export default function SuperAdminPage() {
                                                     <Loader2 className="w-4 h-4 animate-spin" />
                                                 ) : (
                                                     <Trash2 className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => handleSendRecoveryEmail(row)}
+                                                disabled={actionLoading === `recovery-${row.uid}`}
+                                                className="p-1.5 hover:bg-purple-50 text-stone-400 hover:text-purple-600 rounded transition-colors"
+                                                title="Senda 'Finish Setup' póst"
+                                            >
+                                                {actionLoading === `recovery-${row.uid}` ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Mail className="w-4 h-4" />
                                                 )}
                                             </button>
                                         </div>
