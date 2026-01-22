@@ -36,7 +36,9 @@ export function initializeFirebaseAdmin() {
         console.log('✅ Firebase Admin initialized successfully');
     } catch (error) {
         console.error('❌ Firebase Admin initialization error:', error);
-        throw new Error(`Firebase Admin initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error('❌ Firebase Admin initialization error:', error);
+        // Do NOT throw here, or the entire function crashes (FUNCTION_INVOCATION_FAILED)
+        // We let it continue so the API handler can return a proper 500 error.
     }
 }
 
@@ -45,5 +47,22 @@ initializeFirebaseAdmin();
 
 // Export admin and commonly used services
 export { admin };
-export const db = admin.firestore();
-export const auth = admin.auth();
+
+// Safe exports that won't crash the module if init failed
+export const db = (() => {
+    try {
+        return admin.firestore();
+    } catch (e) {
+        console.warn('⚠️ Failed to export db (likely init failed):', e);
+        return null as any;
+    }
+})();
+
+export const auth = (() => {
+    try {
+        return admin.auth();
+    } catch (e) {
+        console.warn('⚠️ Failed to export auth (likely init failed):', e);
+        return null as any;
+    }
+})();

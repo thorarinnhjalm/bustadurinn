@@ -72,8 +72,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(errorResponse.status).json(errorResponse.body);
         }
 
+
         if (!resend) {
-            throw new Error('Internal services failed to initialize');
+            throw new Error('Resend client failed to initialize (Missing API Key?)');
+        }
+
+        if (!db) {
+            throw new Error('Firebase DB failed to initialize (Missing/Invalid FIREBASE_SERVICE_ACCOUNT?)');
         }
 
         const { templateId, to, variables } = req.body;
@@ -290,9 +295,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('❌ Server Error sending email:', error);
 
         // Don't expose stack traces in production
-        const errorResponse = process.env.NODE_ENV === 'production'
-            ? { error: 'Internal server error' }
-            : { error: error.message, code: error.code || 'internal_server_error' };
+        // TEMPORARY DEBUG: Expose error details
+        const errorResponse = { error: error.message, code: error.code || 'internal_server_error', stack: error.stack };
 
         return res.status(500).json(errorResponse);
     }
