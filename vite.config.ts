@@ -13,6 +13,7 @@ export default defineConfig({
   build: {
     minify: 'esbuild',
     sourcemap: true, // Enable source maps for better debugging
+    target: 'es2020', // Target modern browsers only (no legacy polyfills)
     rollupOptions: {
       output: {
         manualChunks: undefined,

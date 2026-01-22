@@ -164,7 +164,7 @@ export default function LandingPage() {
                             {/* Blobs */}
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-amber/10 rounded-full blur-3xl -z-10 animate-pulse-slow"></div>
 
-                            <div className="relative transform rotate-y-[-5deg] rotate-x-[5deg] hover:rotate-0 transition-all duration-700 ease-out shadow-2xl rounded-2xl overflow-hidden border border-stone-100 bg-white min-h-[500px]">
+                            <div className="relative transform rotate-y-[-5deg] rotate-x-[5deg] hover:rotate-0 transition-all duration-700 ease-out shadow-2xl rounded-2xl overflow-hidden border border-stone-100 bg-white" style={{ minHeight: '500px', height: '500px' }}>
                                 <CalendarMockup />
 
                                 {/* Floating Badges */}
@@ -237,7 +237,7 @@ export default function LandingPage() {
 
             {/* Marketplace Promo Section (NEW) */}
             <section className="py-24 bg-charcoal text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516934891124-766723223126?q=80&w=2069')] bg-cover bg-center opacity-10"></div>
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516934891124-766723223126?q=80&w=2069')] bg-cover bg-center opacity-10" style={{ contentVisibility: 'auto' }}></div>
                 <div className="container max-w-6xl mx-auto px-6 relative z-10">
                     <div className="flex flex-col md:flex-row items-center gap-12">
                         <div className="w-full md:w-1/2">
