@@ -18,6 +18,7 @@ export default function AddToHomeScreenPrompt({ houseName, onDismiss }: AddToHom
         const isAndroid = /android/.test(userAgent);
         const isMobile = isIOS || isAndroid;
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (isIOS) setPlatform('ios');
         else if (isAndroid) setPlatform('android');
         else if (!isMobile) setPlatform('desktop');

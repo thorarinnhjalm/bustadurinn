@@ -84,7 +84,7 @@ export async function checkRateLimit(
     identifier: string
 ): Promise<{ allowed: boolean; error?: any }> {
     try {
-        const { success, remaining } = await ratelimit.limit(identifier);
+        const { success } = await ratelimit.limit(identifier);
 
         if (!success) {
             return {

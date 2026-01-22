@@ -20,14 +20,7 @@ interface AnalyticsData {
 }
 
 // Fallback data if API is not configured
-const MOCK_DATA: AnalyticsData = {
-    activeUsers: 0,
-    sessions: 0,
-    engagementRate: 0,
-    screenPageViews: 0,
-    trafficSources: [],
-    topPages: []
-};
+// MOCK_DATA removed as it was unused and causing lint errors
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { period = '30d' } = req.query;
@@ -46,14 +39,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 clientEmail = keyFile.client_email;
                 privateKey = keyFile.private_key;
             }
-        } catch (e) {
+        } catch {
             console.warn('Could not read gsc-key.json');
         }
     }
 
     if (!propertyId || !clientEmail || !privateKey) {
         console.warn('⚠️ Missing GA4 Environment Variables');
-        return res.status(200).json(MOCK_DATA);
+        return res.status(500).json({ error: 'Missing Analytics Configuration' });
     }
 
     // 🧹 Aggressive Cleanup
@@ -77,8 +70,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 🕵️‍♀️ Debug Info for the User
     const keyPreview = privateKey.substring(0, 40) + '...';
-    const keyLength = privateKey.length;
-    const hasNewlines = privateKey.includes('\n');
 
     if (!privateKey.includes(beginHeader)) {
         console.error('❌ Missing Header in Key');

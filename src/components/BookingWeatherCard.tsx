@@ -34,12 +34,9 @@ export default function BookingWeatherCard({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Don't render if booking is too far away
-    if (!shouldShowWeather(startDate)) {
-        return null;
-    }
-
     useEffect(() => {
+        if (!shouldShowWeather(startDate)) return;
+
         const fetchWeatherData = async () => {
             setLoading(true);
             setError(null);
@@ -62,6 +59,11 @@ export default function BookingWeatherCard({
 
         fetchWeatherData();
     }, [bookingId, houseLatitude, houseLongitude, startDate]);
+
+    // Don't render if booking is too far away
+    if (!shouldShowWeather(startDate)) {
+        return null;
+    }
 
     const getGradientForWeather = () => {
         if (!forecast || forecast.days.length === 0) return 'from-stone-100 to-stone-50';

@@ -139,7 +139,7 @@ export function observeINP(): void {
         });
       });
       fallbackObserver.observe({ type: 'first-input', buffered: true });
-    } catch (fallbackError) {
+    } catch {
       logger.error('Failed to observe INP:', e);
     }
   }
@@ -154,7 +154,7 @@ export function observeCLS(): void {
 
   try {
     let clsValue = 0;
-    let clsEntries: PerformanceEntry[] = [];
+    const clsEntries: PerformanceEntry[] = [];
 
     const observer = new PerformanceObserver((list) => {
       const entries = list.getEntries();

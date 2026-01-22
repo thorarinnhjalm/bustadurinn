@@ -884,7 +884,7 @@ export default function SettingsPage() {
             setHouseForm(prev => ({ ...prev, invite_code: newCode }));
             setHouse(prev => prev ? { ...prev, invite_code: newCode } : null);
             setSuccess('Nýr boðshlekkur búinn til!');
-        } catch (err) {
+        } catch {
             setError('Gat ekki búið til boðshlekk.');
         }
     };

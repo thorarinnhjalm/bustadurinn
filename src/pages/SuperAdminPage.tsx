@@ -627,7 +627,7 @@ export default function SuperAdminPage() {
             let parsedData: any = {};
             try {
                 parsedData = JSON.parse(data);
-            } catch (_e) {
+            } catch {
                 // Not JSON
             }
 
@@ -737,7 +737,7 @@ export default function SuperAdminPage() {
                     const data = JSON.parse(text);
                     errorMessage = data.error || data.message || errorMessage;
                     if (data.details) errorMessage += `\n\nDetails: ${data.details}`;
-                } catch (_e) {
+                } catch {
                     // Not JSON, use raw text (might be Vercel crash page)
                     errorMessage = `Server Error (${res.status}): ${text.slice(0, 200)}`;
                 }

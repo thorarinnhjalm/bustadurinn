@@ -57,6 +57,7 @@ export default function SetupProgress({ house, onShowWalkthrough }: SetupProgres
         if (house) {
             const dismissed = localStorage.getItem(`setup_dismissed_${house.id}`);
             if (dismissed === 'true') {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setIsDismissed(true);
             }
         }

@@ -34,7 +34,7 @@ export async function getRoadConditions(
         try {
             response = await fetch('/api/road-conditions');
             if (!response.ok) throw new Error('Internal proxy not available');
-        } catch (e) {
+        } catch {
             const apiUrl = 'https://gagnaveita.vegagerdin.is/api/faerd2017_1';
             // Use .get instead of .raw for better stability on allorigins
             const fallbackUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;

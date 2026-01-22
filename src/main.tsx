@@ -79,7 +79,7 @@ if (dsn) {
             id: user.uid,
             // Don't include email or other PII
           };
-        } catch (e) {
+        } catch {
           // Ignore JSON parse errors
         }
       }

@@ -3,7 +3,6 @@
  * Run this once to add 'type' field to existing budget items
  */
 
-import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 
 // This script adds the 'type' field to all existing budget items

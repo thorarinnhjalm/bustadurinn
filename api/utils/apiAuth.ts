@@ -59,7 +59,7 @@ export async function requireAuth(req: VercelRequest): Promise<admin.auth.Decode
     try {
         const decodedToken = await admin.auth().verifyIdToken(token);
         return decodedToken;
-    } catch (error) {
+    } catch {
         throw new Error('UNAUTHORIZED: Invalid or expired token');
     }
 }

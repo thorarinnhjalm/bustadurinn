@@ -17,7 +17,7 @@ async function requireAuth(req: VercelRequest) {
     try {
         const decodedToken = await admin.auth().verifyIdToken(token);
         return decodedToken;
-    } catch (error) {
+    } catch {
         throw new Error('UNAUTHORIZED: Invalid or expired token');
     }
 }

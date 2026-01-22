@@ -351,7 +351,7 @@ export default function CalendarPage() {
 
             const bookingsData = snapshot.docs.map(doc => {
                 const data = doc.data();
-                let start = data.start.toDate();
+                const start = data.start.toDate();
                 let end = data.end.toDate();
 
                 // Sanitize dates: If end is before start, fix it for display

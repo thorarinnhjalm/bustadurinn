@@ -12,6 +12,7 @@ export const useNotifications = () => {
 
     useEffect(() => {
         // Clear notifications immediately when house or user changes
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setNotifications([]);
 
         if (!currentHouse || !currentUser) {

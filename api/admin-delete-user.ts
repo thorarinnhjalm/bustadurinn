@@ -138,7 +138,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         try {
             await db.collection('user_roles').doc(uid).delete();
             console.log(`✅ User roles ${uid} deleted`);
-        } catch (roleError) {
+        } catch {
             // Non-critical if role document doesn't exist
             console.log(`ℹ️ No user_roles document for ${uid}`);
         }
@@ -175,12 +175,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ? {
                 error: 'Internal server error',
                 code: error.code || 'internal_server_error'
-              }
+            }
             : {
                 error: error.message,
                 code: error.code || 'internal_server_error',
                 details: error.stack
-              };
+            };
 
         return res.status(500).json(errorResponse);
     }

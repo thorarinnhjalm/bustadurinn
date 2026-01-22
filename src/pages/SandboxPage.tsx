@@ -321,25 +321,39 @@ const SandboxUsers = () => {
     );
 };
 
+// --- Reusable Components ---
+
+const MenuLink = ({
+    id,
+    icon: Icon,
+    label,
+    isActive,
+    onClick
+}: {
+    id: any,
+    icon: any,
+    label: string,
+    isActive: boolean,
+    onClick: (id: any) => void
+}) => (
+    <button
+        onClick={() => onClick(id)}
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium mb-1 ${isActive
+            ? 'bg-amber text-charcoal shadow-sm'
+            : 'text-stone-400 hover:text-white hover:bg-charcoal-light'
+            }`}
+    >
+        <Icon size={20} />
+        {label}
+    </button>
+);
+
 // --- Main Page Component ---
 
 export default function SandboxPage() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'calendar' | 'finance' | 'tasks' | 'users' | 'settings'>('calendar');
     const [sidebarOpen, setSidebarOpen] = useState(false);
-
-    const MenuLink = ({ id, icon: Icon, label }: { id: typeof activeTab, icon: any, label: string }) => (
-        <button
-            onClick={() => setActiveTab(id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium mb-1 ${activeTab === id
-                ? 'bg-amber text-charcoal shadow-sm'
-                : 'text-stone-400 hover:text-white hover:bg-charcoal-light'
-                }`}
-        >
-            <Icon size={20} />
-            {label}
-        </button>
-    );
 
     return (
         <div className="flex h-screen bg-bone font-sans overflow-hidden">
@@ -356,11 +370,11 @@ export default function SandboxPage() {
                 </div>
 
                 <nav className="px-3 mt-6">
-                    <MenuLink id="calendar" icon={Calendar} label="Dagatal" />
-                    <MenuLink id="finance" icon={DollarSign} label="Fjármál" />
-                    <MenuLink id="tasks" icon={CheckSquare} label="Verkefni" />
-                    <MenuLink id="users" icon={Users} label="Fjölskyldan" />
-                    <MenuLink id="settings" icon={Settings} label="Stillingar" />
+                    <MenuLink id="calendar" icon={Calendar} label="Dagatal" isActive={activeTab === 'calendar'} onClick={setActiveTab} />
+                    <MenuLink id="finance" icon={DollarSign} label="Fjármál" isActive={activeTab === 'finance'} onClick={setActiveTab} />
+                    <MenuLink id="tasks" icon={CheckSquare} label="Verkefni" isActive={activeTab === 'tasks'} onClick={setActiveTab} />
+                    <MenuLink id="users" icon={Users} label="Fjölskyldan" isActive={activeTab === 'users'} onClick={setActiveTab} />
+                    <MenuLink id="settings" icon={Settings} label="Stillingar" isActive={activeTab === 'settings'} onClick={setActiveTab} />
                 </nav>
 
                 <div className="absolute bottom-0 w-full p-4 border-t border-charcoal-light bg-charcoal">

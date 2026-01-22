@@ -54,7 +54,7 @@ async function deleteUserData(facebookUserId: string): Promise<string> {
         let userUid: string | null = null;
 
         for (const doc of usersSnapshot.docs) {
-            const userData = doc.data();
+            // const userData = doc.data();
             // Check if user has Facebook provider
             const user = await auth.getUser(doc.id);
             const facebookProvider = user.providerData.find(p => p.providerId === 'facebook.com');

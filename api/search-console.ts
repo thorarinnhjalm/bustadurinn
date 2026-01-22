@@ -17,16 +17,7 @@ interface SearchConsoleData {
 }
 
 // Fallback data
-const MOCK_DATA: SearchConsoleData = {
-    clicks: 124,
-    impressions: 4300,
-    ctr: 2.8,
-    position: 14.2,
-    topQueries: [
-        { query: 'sumarbústaður leiga', clicks: 45, impressions: 800 },
-        { query: 'bústaður til leigu', clicks: 32, impressions: 650 },
-    ]
-};
+// MOCK_DATA removed
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { period = '30d' } = req.query;
@@ -46,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 clientEmail = keyFile.client_email;
                 privateKey = keyFile.private_key;
             }
-        } catch (e) {
+        } catch {
             console.warn('Could not read gsc-key.json');
         }
     }

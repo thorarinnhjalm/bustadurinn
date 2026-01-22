@@ -64,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // 🔒 SECURITY: Require authentication to send emails
         try {
-            const { requireAuth, getAuthErrorResponse } = await import('./utils/apiAuth');
+            const { requireAuth } = await import('./utils/apiAuth');
             await requireAuth(req);
         } catch (authError: any) {
             const { getAuthErrorResponse } = await import('./utils/apiAuth');
