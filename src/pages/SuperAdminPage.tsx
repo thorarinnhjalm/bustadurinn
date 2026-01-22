@@ -2497,7 +2497,10 @@ export default function SuperAdminPage() {
                         <div className="max-w-4xl space-y-8">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-serif">Email Templates</h2>
-                                <button onClick={fetchTemplates} className="btn btn-ghost btn-sm">Refresh</button>
+                                <div className="flex gap-2">
+                                    <button onClick={handleSeedTemplates} className="btn btn-secondary btn-sm">Seed Defaults</button>
+                                    <button onClick={fetchTemplates} className="btn btn-ghost btn-sm">Refresh</button>
+                                </div>
                             </div>
 
                             {templates.length === 0 && !loading ? (
