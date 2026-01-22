@@ -589,6 +589,47 @@ export default function SuperAdminPage() {
             };
 
             await setDoc(doc(db, 'email_templates', 'welcome'), welcomeTpl);
+
+            const finishSetupTpl: EmailTemplate = {
+                id: 'finish_setup',
+                subject: 'Kláraðu uppsetninguna á Bústaðurinn.is 🏡',
+                active: true,
+                description: 'Recovery email for orphaned users who have not created a house.',
+                variables: ['name'],
+                html_content: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1a1a1a; background-color: #f5f5f0; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); color: white; padding: 40px 30px; text-align: center; }
+        .logo { font-size: 32px; margin-bottom: 10px; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+        .content { padding: 40px 30px; }
+        .greeting { font-size: 18px; color: #333; margin-bottom: 20px; }
+        .button { display: inline-block; background: #e8b058; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; text-align: center; width: 100%; box-sizing: border-box; }
+        .footer { background: #f5f5f0; padding: 30px; text-align: center; font-size: 13px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><div class="logo">🏡</div><h1>Eitt skref í viðbót...</h1></div>
+        <div class="content">
+            <p class="greeting">Hæ {name},</p>
+            <p>Við tókum eftir því að þú byrjaðir að skrá þig en kláraðir ekki að stofna húsið þitt.</p>
+            <p>Engar áhyggjur, aðgangurinn þinn er tilbúinn. Þú þarft bara að skrá inn upplýsingar um bústaðinn til að byrja.</p>
+            <a href="https://bustadurinn.is/onboarding" class="button">Klára uppsetningu</a>
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">Ef þú lendir í vandræðum, svaraðu þessum pósti og við hjálpum þér.</p>
+        </div>
+        <div class="footer"><p><strong>Bústaðurinn.is</strong></p></div>
+    </div>
+</body>
+</html>`
+            };
+            await setDoc(doc(db, 'email_templates', 'finish_setup'), finishSetupTpl);
+
             await fetchTemplates();
             alert('Templates seeded!');
         } catch (e) {
@@ -1333,6 +1374,7 @@ export default function SuperAdminPage() {
                             { id: 'integrations', icon: Settings, label: 'Tengingar' },
                             { id: 'coupons', icon: Tag, label: 'Afslættir' },
                             { id: 'contacts', icon: Mail, label: 'Samskipti' },
+                            { id: 'emails', icon: Mail, label: 'Sniðmát' },
                             { id: 'newsletter', icon: Send, label: 'Póstlisti' },
                             { id: 'feedback', icon: Star, label: 'Umsagnir' },
                             { id: 'providers', icon: UserCog, label: 'Verktakar' }
