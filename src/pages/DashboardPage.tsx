@@ -331,9 +331,12 @@ const UserDashboard = () => {
                         alt={currentHouse?.name || "Cabin"}
                         className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
                         fetchPriority="high"
+                        loading="eager"
                         decoding="async"
                         width="800"
-                        height="800"
+                        height="600"
+                        sizes="(max-width: 768px) 100vw, 800px"
+                        srcSet={`${currentHouse?.image_url || "/hero_summer_house.jpg"}?w=400 400w, ${currentHouse?.image_url || "/hero_summer_house.jpg"}?w=800 800w`}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/20 to-transparent opacity-90"></div>
 

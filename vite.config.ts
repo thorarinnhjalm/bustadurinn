@@ -16,7 +16,11 @@ export default defineConfig({
     target: 'es2020', // Target modern browsers only (no legacy polyfills)
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+          'ui-vendor': ['lucide-react', 'date-fns'],
+        },
         sourcemapExcludeSources: true, // Don't include source code in maps for security
       },
     },
