@@ -66,27 +66,32 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
         // === REVENUE CALCULATIONS ===
         const MONTHLY_PRICE = 2990; // ISK per month
 
-        // Separate houses in launch offer period (1-year free)
-        const launchOfferHouses = realHouses.filter(h => {
-            if (h.subscription_status === 'free') return false; // Permanently free houses don't count
+        // Categorize houses with detailed tracking
+        const launchOfferHousesList: House[] = [];
+        const paidHousesList: House[] = [];
+        const freeHousesList: House[] = [];
+
+        realHouses.forEach(h => {
+            // Explicitly marked as permanently free
+            if (h.subscription_status === 'free') {
+                freeHousesList.push(h);
+                return;
+            }
 
             const createdAt = h.created_at instanceof Date ? h.created_at : new Date(h.created_at);
             const launchOfferEnds = new Date(createdAt.getTime() + 365 * 24 * 60 * 60 * 1000);
-            return now < launchOfferEnds;
+
+            // Still in 1-year free launch period
+            if (now < launchOfferEnds) {
+                launchOfferHousesList.push(h);
+            } else {
+                // After launch offer = should be paying
+                paidHousesList.push(h);
+            }
         });
 
-        // Currently paying houses (after launch offer period)
-        const paidHouses = realHouses.filter(h => {
-            // Exclude free houses
-            if (h.subscription_status === 'free') return false;
-
-            // Check if still in 1-year free launch period
-            const createdAt = h.created_at instanceof Date ? h.created_at : new Date(h.created_at);
-            const launchOfferEnds = new Date(createdAt.getTime() + 365 * 24 * 60 * 60 * 1000);
-            if (now < launchOfferEnds) return false;
-
-            return true;
-        });
+        const launchOfferHouses = launchOfferHousesList;
+        const paidHouses = paidHousesList;
 
         const mrr = paidHouses.length * MONTHLY_PRICE;
         const potentialMrr = (paidHouses.length + launchOfferHouses.length) * MONTHLY_PRICE;
@@ -419,9 +424,42 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
                 </div>
             </section>
 
+            {/* Breakdown Detail */}
+            <section className="bg-blue-50 rounded-2xl p-6 border border-blue-200">
+                <h3 className="text-lg font-serif font-bold text-charcoal mb-4">🔍 Sundurliðun húsa</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-xl p-4 border border-stone-200">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                            <p className="text-sm font-bold text-stone-700 uppercase tracking-wider">Greiðandi hús</p>
+                        </div>
+                        <p className="text-3xl font-serif font-bold text-charcoal mb-1">{(metrics.mrr / 2990).toFixed(0)}</p>
+                        <p className="text-xs text-stone-500">Hús sem hafa lokið 1 árs launch offer</p>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-stone-200">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-3 h-3 rounded-full bg-amber"></div>
+                            <p className="text-sm font-bold text-stone-700 uppercase tracking-wider">Launch Offer</p>
+                        </div>
+                        <p className="text-3xl font-serif font-bold text-charcoal mb-1">{metrics.launchOfferHouses}</p>
+                        <p className="text-xs text-stone-500">Hús í 1 árs fríi (verða greiðendur)</p>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-stone-200">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-3 h-3 rounded-full bg-stone-400"></div>
+                            <p className="text-sm font-bold text-stone-700 uppercase tracking-wider">Hús alls</p>
+                        </div>
+                        <p className="text-3xl font-serif font-bold text-charcoal mb-1">{metrics.totalHouses}</p>
+                        <p className="text-xs text-stone-500">Demo og prufa hús eru útilokuð</p>
+                    </div>
+                </div>
+            </section>
+
             {/* Key Insights */}
             <section className="bg-gradient-to-br from-amber/5 to-stone-100 rounded-2xl p-8 border border-stone-200">
-                <h3 className="text-xl font-serif font-bold text-charcoal mb-4">🔍 Key Insights</h3>
+                <h3 className="text-xl font-serif font-bold text-charcoal mb-4">🔍 Lykilupplýsingar</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <div className="flex items-start gap-3">
