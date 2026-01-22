@@ -49,4 +49,7 @@ export const analytics = {
     // Conversion
     trialStarted: () => trackEvent('trial_started'),
     subscribed: (plan: 'monthly' | 'annual') => trackEvent('subscribe', { plan }),
+
+    // Generic
+    track: (eventName: string, params?: Record<string, any>) => trackEvent(eventName, params),
 };

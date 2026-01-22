@@ -4,7 +4,7 @@ declare const google: any;
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Home, MapPin, Users, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, setDoc, doc, arrayUnion, query, where, getDocs, limit, getDoc, runTransaction } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, arrayUnion, query, where, getDocs, limit, getDoc, runTransaction } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
@@ -322,7 +322,15 @@ export default function OnboardingPage() {
             await runTransaction(db, async (transaction) => {
                 // Check promotion status
                 const promoRef = doc(db, 'system', 'promotions');
+                const userRef = doc(db, 'users', currentUser.uid);
+
                 const promoDoc = await transaction.get(promoRef);
+                // We don't strictly need to read the user doc for arrayUnion, but it's good practice in transactions
+                // to fail fast if user doesn't exist.
+                const userDoc = await transaction.get(userRef);
+                if (!userDoc.exists()) {
+                    throw new Error("User does not exist");
+                }
 
                 let currentCount = 0;
                 if (promoDoc.exists()) {
@@ -364,6 +372,11 @@ export default function OnboardingPage() {
 
                 // Commit House
                 transaction.set(houseRef, newHouseData);
+
+                // Link to User (Atomic)
+                transaction.update(userRef, {
+                    house_ids: arrayUnion(houseId)
+                });
             });
 
             // We need to reconstruct the objects for local state since 'serverTimestamp' is not a date yet
@@ -414,13 +427,6 @@ export default function OnboardingPage() {
                 id: houseId!,
                 invite_code: inviteCode!
             }));
-
-            // 2. Link to User (CRITICAL for Dashboard)
-            await setDoc(doc(db, 'users', currentUser.uid), {
-                email: currentUser.email,
-                name: currentUser.name || currentUser.email?.split('@')[0],
-                house_ids: arrayUnion(houseId!)
-            }, { merge: true });
 
             // 3. Update Local State (Immediate Reflection)
             setCurrentHouse(createdHouseLocalState as any);
@@ -500,7 +506,9 @@ export default function OnboardingPage() {
             nextStep();
         } catch (err: any) {
             console.error('Error creating house:', err);
-            setError('Villa kom upp við að búa til hús: ' + err.message);
+            setError('Villa kom upp við að búa til hús: ' + (err.message || 'Óþekkt villa'));
+            analytics.track('house_creation_failed', { error: err.message });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             setLoading(false);
         }
