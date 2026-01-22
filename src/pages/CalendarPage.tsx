@@ -31,9 +31,9 @@ interface CustomToolbarProps {
     views: CalendarView[];
     label: string;
     onNavigate: (action: 'PREV' | 'NEXT' | 'TODAY' | 'DATE', newDate?: Date) => void;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     onView: (view: any) => void;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     localizer: { messages: any };
 }
 
@@ -242,7 +242,7 @@ interface BookingEvent {
     start: Date;
     end: Date;
     allDay?: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     resource?: any;
 }
 
@@ -281,7 +281,6 @@ export default function CalendarPage() {
         return () => window.removeEventListener('resize', handleResize);
     }, [view]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleViewChange = (newView: any) => {
         setView(newView);
     };
@@ -294,7 +293,6 @@ export default function CalendarPage() {
     // Touch handling for pull-to-refresh removed for now to cleanup
 
     // House Settings for Booking Rules
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [houseSettings, setHouseSettings] = useState<any>(null);
 
     useEffect(() => {
@@ -305,7 +303,7 @@ export default function CalendarPage() {
                 const docRef = doc(db, 'houses', houseId);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
                     const houseData = docSnap.data() as any;
                     setHouseSettings(houseData);
                 }

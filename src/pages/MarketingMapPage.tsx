@@ -88,57 +88,57 @@ export default function MarketingMapPage() {
 
     // Initialize Map
     useEffect(() => {
+        const initMap = async () => {
+            if (!mapRef.current) return;
+
+            // Default to Iceland center
+            const icelandCenter = { lat: 64.9631, lng: -19.0208 };
+            // Create map with privacy-focused restrictions
+            const map = new google.maps.Map(mapRef.current, {
+                center: icelandCenter,
+                zoom: 7,
+                minZoom: 6,  // Prevent zooming out too far
+                maxZoom: 11, // Prevent zooming in to street level (privacy protection)
+                mapId: '4504f8b37365c3d0',
+                disableDefaultUI: false,
+                streetViewControl: false, // Disable street view for privacy
+                mapTypeControl: false,    // Disable switching to satellite view
+                fullscreenControl: true,
+                zoomControl: true,
+                styles: [
+                    {
+                        "featureType": "poi",
+                        "stylers": [{ "visibility": "off" }]
+                    }
+                ]
+            });
+
+            // Add Markers
+            // Using AdvancedMarkerElement if available (new API) or generic Marker
+            const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker") as any;
+
+            houses.forEach(house => {
+                // Create a custom pin content
+                const pin = new PinElement({
+                    background: '#D97706', // Amber-600
+                    borderColor: '#92400E', // Amber-800
+                    glyphColor: '#FFF',
+                    scale: 0.8
+                });
+
+                new AdvancedMarkerElement({
+                    map,
+                    position: house.location,
+                    title: 'Sumarhús',
+                    content: pin.element
+                });
+            });
+        };
+
         if (scriptLoaded && mapRef.current && houses.length > 0) {
             initMap();
         }
     }, [scriptLoaded, houses]);
-
-    const initMap = async () => {
-        if (!mapRef.current) return;
-
-        // Default to Iceland center
-        const icelandCenter = { lat: 64.9631, lng: -19.0208 };
-        // Create map with privacy-focused restrictions
-        const map = new google.maps.Map(mapRef.current, {
-            center: icelandCenter,
-            zoom: 7,
-            minZoom: 6,  // Prevent zooming out too far
-            maxZoom: 11, // Prevent zooming in to street level (privacy protection)
-            mapId: '4504f8b37365c3d0',
-            disableDefaultUI: false,
-            streetViewControl: false, // Disable street view for privacy
-            mapTypeControl: false,    // Disable switching to satellite view
-            fullscreenControl: true,
-            zoomControl: true,
-            styles: [
-                {
-                    "featureType": "poi",
-                    "stylers": [{ "visibility": "off" }]
-                }
-            ]
-        });
-
-        // Add Markers
-        // Using AdvancedMarkerElement if available (new API) or generic Marker
-        const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker") as any;
-
-        houses.forEach(house => {
-            // Create a custom pin content
-            const pin = new PinElement({
-                background: '#D97706', // Amber-600
-                borderColor: '#92400E', // Amber-800
-                glyphColor: '#FFF',
-                scale: 0.8
-            });
-
-            new AdvancedMarkerElement({
-                map,
-                position: house.location,
-                title: 'Sumarhús',
-                content: pin.element
-            });
-        });
-    };
 
     return (
         <div className="min-h-screen flex flex-col">

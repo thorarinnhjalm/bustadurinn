@@ -23,6 +23,8 @@ export function useMembers(houseId: string | undefined, ownerIds: string[] | und
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    const ownerIdsKey = ownerIds?.join(',');
+
     useEffect(() => {
         if (!houseId || !ownerIds?.length) return;
 
@@ -64,7 +66,7 @@ export function useMembers(houseId: string | undefined, ownerIds: string[] | und
         };
 
         fetchMembers();
-    }, [houseId, ownerIds?.join(',')]); // Use join to avoid array reference issues
+    }, [houseId, ownerIds, ownerIdsKey]); // Use join string to detect changes properly
 
     return { members, setMembers, invitations, setInvitations, loading, error };
 }

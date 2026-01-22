@@ -10,12 +10,15 @@ export const useNotifications = () => {
     const { user: currentUser } = useEffectiveUser();
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
+    const currentHouseId = currentHouse?.id;
+    const currentUserId = currentUser?.uid;
+
     useEffect(() => {
         // Clear notifications immediately when house or user changes
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setNotifications([]);
 
-        if (!currentHouse || !currentUser) {
+        if (!currentHouseId || !currentUserId) {
             return;
         }
 
@@ -25,8 +28,8 @@ export const useNotifications = () => {
             const notifsRef = collection(db, 'notifications');
             const qNotifs = query(
                 notifsRef,
-                where('house_id', '==', currentHouse.id),
-                where('user_id', '==', currentUser.uid),
+                where('house_id', '==', currentHouseId),
+                where('user_id', '==', currentUserId),
                 limit(40)
             );
 
@@ -52,7 +55,7 @@ export const useNotifications = () => {
                 unsubscribe();
             }
         };
-    }, [currentHouse?.id, currentUser?.uid]);
+    }, [currentHouseId, currentUserId]);
 
     const markAsRead = async (id: string) => {
         try {

@@ -49,17 +49,19 @@ export default function FinancePage() {
     const [activeTab, setActiveTab] = useState<Tab>('budget');
     const [house, setHouse] = useState<House | null>(null);
 
+    const primaryHouseId = currentUser?.house_ids?.[0];
+
     useEffect(() => {
-        if (!currentUser?.house_ids?.[0]) return;
+        if (!primaryHouseId) return;
 
         const fetchHouse = async () => {
-            const houseDoc = await getDoc(doc(db, 'houses', currentUser.house_ids[0]));
+            const houseDoc = await getDoc(doc(db, 'houses', primaryHouseId));
             if (houseDoc.exists()) {
                 setHouse({ id: houseDoc.id, ...houseDoc.data() } as House);
             }
         };
         fetchHouse();
-    }, [currentUser?.house_ids?.[0]]);
+    }, [primaryHouseId]);
 
     const isManager = house?.manager_id === currentUser?.uid;
     const canViewFinances = isManager || (house?.finance_viewer_ids?.includes(currentUser?.uid || '') || false);

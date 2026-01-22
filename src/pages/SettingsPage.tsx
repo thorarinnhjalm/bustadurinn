@@ -624,21 +624,25 @@ export default function SettingsPage() {
 
     const currentHouse = useAppStore((state) => state.currentHouse);
 
+    const userHouseIds = currentUser?.house_ids;
+    const currentUserId = currentUser?.uid;
+    const currentStoredHouseId = currentHouse?.id;
+
     useEffect(() => {
-        if (!currentUser?.house_ids?.[0]) return;
+        if (!userHouseIds?.[0]) return;
 
         const loadHouse = async () => {
             setLoading(true);
             try {
                 // Prioritize the globally selected house, otherwise default to first available
-                const houseId = currentHouse?.id || currentUser.house_ids[0];
+                const houseId = currentStoredHouseId || userHouseIds[0];
                 const houseSnap = await getDoc(doc(db, 'houses', houseId));
 
                 if (houseSnap.exists()) {
                     const houseData = { id: houseSnap.id, ...houseSnap.data() } as House;
 
                     // Auto-generate invite code if missing (for legacy houses)
-                    if (!houseData.invite_code && houseData.manager_id === currentUser.uid) {
+                    if (currentUserId && !houseData.invite_code && houseData.manager_id === currentUserId) {
                         logger.info('Auto-generating invite code for house:', houseId);
                         const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
                         try {
@@ -653,7 +657,7 @@ export default function SettingsPage() {
                     } else {
                         console.log('Invite code status:', {
                             hasCode: !!houseData.invite_code,
-                            isManager: houseData.manager_id === currentUser.uid,
+                            isManager: houseData.manager_id === currentUserId,
                             code: houseData.invite_code
                         });
                     }
@@ -694,7 +698,7 @@ export default function SettingsPage() {
         };
 
         loadHouse();
-    }, [currentUser?.house_ids]);
+    }, [userHouseIds, currentStoredHouseId, currentUserId]);
 
     // Allow any owner to edit house settings, not just the designated manager
     const isManager = house && currentUser && house.owner_ids?.includes(currentUser.uid);
@@ -786,7 +790,7 @@ export default function SettingsPage() {
             };
             fetchMembers();
         }
-    }, [activeTab, house?.owner_ids]);
+    }, [activeTab, house?.owner_ids, house?.id]);
 
     const handleSaveHouse = async (e: React.FormEvent) => {
         e.preventDefault();

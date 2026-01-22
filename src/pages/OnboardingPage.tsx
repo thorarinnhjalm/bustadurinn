@@ -96,7 +96,7 @@ export default function OnboardingPage() {
             analytics.onboardingStep('welcome');
             logFunnelEvent('onboarding_started');
         }
-    }, [currentUser, navigate, currentStep, logFunnelEvent]);
+    }, [currentUser, navigate, currentStep, logFunnelEvent, searchParams]);
 
     // Initialize Google Maps API Script
     useEffect(() => {

@@ -83,7 +83,7 @@ export default function AuthHandler() {
         });
 
         return () => unsubscribe();
-    }, []); // Zustand setters are stable, don't need them in deps
+    }, [setAuthenticated, setCurrentUser, setCurrentHouse, setUserHouses]); // Zustand setters are stable
 
     // 2. Handle Effective User Logic (Runs when realUser OR impersonatedUser changes)
     useEffect(() => {
@@ -156,7 +156,7 @@ export default function AuthHandler() {
         };
 
         handleUserData();
-    }, [realUser, impersonatedUser, isImpersonating, initialLoadDone]); // Zustand setters are stable
+    }, [realUser, impersonatedUser, isImpersonating, initialLoadDone, setCurrentUser, setUserHouses, setCurrentHouse, setLoading]); // Zustand setters are stable
 
     return null;
 }
