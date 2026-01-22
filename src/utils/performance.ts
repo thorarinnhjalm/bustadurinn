@@ -16,7 +16,7 @@ export interface PerformanceMetric {
 // Core Web Vitals thresholds
 const THRESHOLDS = {
   LCP: { good: 2500, poor: 4000 },
-  FID: { good: 100, poor: 300 },
+  INP: { good: 200, poor: 500 }, // Replaced FID (deprecated in 2024)
   CLS: { good: 0.1, poor: 0.25 },
   TTFB: { good: 800, poor: 1800 },
   FCP: { good: 1800, poor: 3000 },
@@ -92,31 +92,56 @@ export function observeLCP(): void {
 }
 
 /**
- * Monitor First Input Delay (FID)
- * Measures interactivity - should be < 100ms
+ * Monitor Interaction to Next Paint (INP)
+ * Measures interactivity responsiveness - should be < 200ms
+ * Replaced FID (deprecated in 2024)
  */
-export function observeFID(): void {
+export function observeINP(): void {
   if (!('PerformanceObserver' in window)) return;
 
   try {
+    // Track all event interactions for INP calculation
     const observer = new PerformanceObserver((list) => {
       const entries = list.getEntries();
-      entries.forEach((entry: PerformanceEntry & { processingStart?: number }) => {
-        const value = entry.processingStart ? entry.processingStart - entry.startTime : 0;
-        const metric: PerformanceMetric = {
-          name: 'FID',
-          value,
-          rating: getRating(value, THRESHOLDS.FID),
-          timestamp: Date.now(),
-        };
+      entries.forEach((entry: PerformanceEntry & { processingStart?: number; processingEnd?: number; duration?: number }) => {
+        // INP measures the full interaction latency (input delay + processing + presentation delay)
+        const value = entry.duration || (entry.processingStart ? entry.processingStart - entry.startTime : 0);
 
-        reportMetric(metric);
+        if (value > 0) {
+          const metric: PerformanceMetric = {
+            name: 'INP',
+            value,
+            rating: getRating(value, THRESHOLDS.INP),
+            timestamp: Date.now(),
+          };
+
+          reportMetric(metric);
+        }
       });
     });
 
-    observer.observe({ type: 'first-input', buffered: true });
+    // Observe event timing entries (interactions like clicks, taps, keyboard)
+    observer.observe({ type: 'event', buffered: true } as PerformanceObserverInit);
   } catch (e) {
-    logger.error('Failed to observe FID:', e);
+    // Fallback to first-input for older browsers that don't support 'event' type
+    try {
+      const fallbackObserver = new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        entries.forEach((entry: PerformanceEntry & { processingStart?: number }) => {
+          const value = entry.processingStart ? entry.processingStart - entry.startTime : 0;
+          const metric: PerformanceMetric = {
+            name: 'INP',
+            value,
+            rating: getRating(value, THRESHOLDS.INP),
+            timestamp: Date.now(),
+          };
+          reportMetric(metric);
+        });
+      });
+      fallbackObserver.observe({ type: 'first-input', buffered: true });
+    } catch (fallbackError) {
+      logger.error('Failed to observe INP:', e);
+    }
   }
 }
 
@@ -181,22 +206,26 @@ export function observeCLS(): void {
  * Measures server response time - should be < 800ms
  */
 export function measureTTFB(): void {
-  if (!('performance' in window) || !performance.timing) return;
+  if (!('performance' in window)) return;
 
   try {
-    // Use Navigation Timing API
-    const timing = performance.timing;
-    const ttfb = timing.responseStart - timing.requestStart;
+    // Use modern Navigation Timing Level 2 API
+    const navigationEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
 
-    if (ttfb > 0) {
-      const metric: PerformanceMetric = {
-        name: 'TTFB',
-        value: ttfb,
-        rating: getRating(ttfb, THRESHOLDS.TTFB),
-        timestamp: Date.now(),
-      };
+    if (navigationEntries.length > 0) {
+      const navTiming = navigationEntries[0];
+      const ttfb = navTiming.responseStart - navTiming.requestStart;
 
-      reportMetric(metric);
+      if (ttfb > 0) {
+        const metric: PerformanceMetric = {
+          name: 'TTFB',
+          value: ttfb,
+          rating: getRating(ttfb, THRESHOLDS.TTFB),
+          timestamp: Date.now(),
+        };
+
+        reportMetric(metric);
+      }
     }
   } catch (e) {
     logger.error('Failed to measure TTFB:', e);
@@ -279,7 +308,7 @@ export function initPerformanceMonitoring(): void {
 
   // Observe Core Web Vitals
   observeLCP();
-  observeFID();
+  observeINP();
   observeCLS();
   observeFCP();
 
