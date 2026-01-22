@@ -18,10 +18,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 🔒 SECURITY: Require authentication
         let authenticatedUser;
         try {
-            const { requireAuth } = await import('./utils/apiAuth');
+            const { requireAuth } = await import('./utils/apiAuth.js');
             authenticatedUser = await requireAuth(req);
         } catch (authError: any) {
-            const { getAuthErrorResponse } = await import('./utils/apiAuth');
+            const { getAuthErrorResponse } = await import('./utils/apiAuth.js');
             const errorResponse = getAuthErrorResponse(authError);
             return res.status(errorResponse.status).json(errorResponse.body);
         }

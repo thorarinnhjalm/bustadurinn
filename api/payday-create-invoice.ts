@@ -26,10 +26,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 🔒 SECURITY: Verify admin authentication
     try {
-        const { requireAdmin } = await import('./utils/apiAuth');
+        const { requireAdmin } = await import('./utils/apiAuth.js');
         await requireAdmin(req);
     } catch (authError: any) {
-        const { getAuthErrorResponse } = await import('./utils/apiAuth');
+        const { getAuthErrorResponse } = await import('./utils/apiAuth.js');
         const errorResponse = getAuthErrorResponse(authError);
         return res.status(errorResponse.status).json(errorResponse.body);
     }
