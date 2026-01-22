@@ -99,7 +99,7 @@ export default function LandingPage() {
         >
 
             {/* Hero Section */}
-            <section className="relative min-h-[90vh] flex items-center bg-bone overflow-hidden pt-20">
+            <section className="relative min-h-[90vh] flex items-center bg-bone overflow-x-hidden pt-20">
                 {/* Background Decor */}
                 <div className="absolute top-0 right-0 w-2/3 h-full bg-stone-100 rounded-l-[5rem] hidden lg:block"></div>
 
@@ -120,9 +120,9 @@ export default function LandingPage() {
                                 </div>
                             </div>
 
-                            <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-8 text-charcoal">
+                            <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-8 text-charcoal overflow-visible">
                                 Sumarbústaðurinn <br />
-                                <span className="text-amber inline-block transform -rotate-2">í vasanum</span>
+                                <span className="text-amber inline-block transform -rotate-2 my-2">í vasanum</span>
                             </h1>
 
                             <p className="text-xl md:text-2xl mb-10 text-grey-dark leading-relaxed font-light">
