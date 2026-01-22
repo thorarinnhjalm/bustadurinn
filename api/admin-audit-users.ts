@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import admin from 'firebase-admin';
+import { initializeFirebaseAdmin, admin, db, auth } from './utils/firebaseAdmin';
 
 async function requireAdmin(req: VercelRequest): Promise<admin.auth.DecodedIdToken> {
     const authHeader = req.headers.authorization;
@@ -23,44 +23,13 @@ async function requireAdmin(req: VercelRequest): Promise<admin.auth.DecodedIdTok
     }
 }
 
-let db: admin.firestore.Firestore | null = null;
-let auth: admin.auth.Auth | null = null;
-
-function initServices() {
-    if (admin.apps.length > 0) {
-        db = admin.firestore();
-        auth = admin.auth();
-        return;
-    }
-
-    try {
-        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-            admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-                projectId: serviceAccount.project_id
-            });
-        } else {
-            admin.initializeApp({
-                credential: admin.credential.applicationDefault(),
-                projectId: 'bustadurinn-is'
-            });
-        }
-        db = admin.firestore();
-        auth = admin.auth();
-    } catch (error: any) {
-        console.error('Firebase Init Failed:', error.message);
-        throw new Error('FIREBASE_INIT_FAILED');
-    }
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
-        initServices();
+        initializeFirebaseAdmin();
         await requireAdmin(req);
 
         if (!auth || !db) throw new Error('Services not initialized');
