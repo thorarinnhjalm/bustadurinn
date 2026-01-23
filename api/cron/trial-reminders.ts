@@ -7,7 +7,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
-import { initializeFirebaseAdmin, admin, db } from '../utils/firebaseAdmin';
+import { initializeFirebaseAdmin, admin, db } from '../utils/firebaseAdmin.js';
 
 // Initialize Firebase Admin
 initializeFirebaseAdmin();

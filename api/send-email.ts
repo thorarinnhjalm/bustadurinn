@@ -6,7 +6,7 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import DOMPurify from 'isomorphic-dompurify';
-import { initializeFirebaseAdmin, db as firebaseDb } from './utils/firebaseAdmin';
+import { initializeFirebaseAdmin, db as firebaseDb } from './utils/firebaseAdmin.js';
 
 // Initialize Firebase Admin
 initializeFirebaseAdmin();
