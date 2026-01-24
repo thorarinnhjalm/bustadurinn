@@ -11,6 +11,7 @@ import MarketingLayout from '@/components/MarketingLayout';
 import { useAppStore } from '@/store/appStore';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import Testimonials from '@/components/landing/Testimonials';
+import HolidayPriorityVisualizer from '@/components/landing/HolidayPriorityVisualizer';
 import { feedbackService } from '@/services/feedbackService';
 import type { Feedback } from '@/types/models';
 // NewsletterPopup moved to MarketingLayout
@@ -232,6 +233,24 @@ export default function LandingPage() {
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </button>
                     </div>
+                </div>
+            </section>
+
+            {/* Fairness Rule Visualizer Section (New) */}
+            <section className="py-24 bg-white border-y border-stone-100">
+                <div className="container max-w-6xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <div className="inline-flex items-center gap-2 bg-amber/10 text-amber-800 px-4 py-2 rounded-full text-sm font-bold mb-4">
+                            <Shield className="w-4 h-4" />
+                            <span>Sanngirnisreglan</span>
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-serif mb-6">Hvernig virkar "Sanngirni"?</h2>
+                        <p className="text-xl text-stone-500 max-w-2xl mx-auto">
+                            Kerfið fylgist með því hverjir nýta helgidagana. Prófaðu að sjá hvernig reglan virkar hér að neðan.
+                        </p>
+                    </div>
+
+                    <HolidayPriorityVisualizer />
                 </div>
             </section>
 
