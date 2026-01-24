@@ -165,7 +165,7 @@ export default function LandingPage() {
                             {/* Blobs */}
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-amber/10 rounded-full blur-3xl -z-10 animate-pulse-slow"></div>
 
-                            <div className="relative transform rotate-y-[-5deg] rotate-x-[5deg] hover:rotate-0 transition-all duration-700 ease-out shadow-2xl rounded-2xl overflow-hidden border border-stone-100 bg-white" style={{ minHeight: '500px', height: '500px' }}>
+                            <div className="relative transform rotate-y-[-5deg] rotate-x-[5deg] hover:rotate-0 transition-all duration-700 ease-out shadow-2xl rounded-2xl overflow-hidden border border-stone-100 bg-white max-w-xl mx-auto" style={{ minHeight: '500px' }}>
                                 <CalendarMockup />
 
                                 {/* Floating Badges */}
