@@ -163,9 +163,9 @@ export default function HandbokPage() {
             <section className="py-20 bg-white border-t border-stone-100">
                 <div className="container max-w-4xl mx-auto px-6">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-serif font-bold mb-4">Algengar mistök í sameignarhúsum</h2>
+                        <h2 className="text-3xl font-serif font-bold mb-4">Algeng mistök í sameignarhúsum</h2>
                         <p className="text-xl text-grey-dark max-w-2xl mx-auto">
-                            Lærðu af reynslu annarra og forðastu þessi algeng mistök
+                            Lærðu af reynslu annarra og forðastu þessi algengu mistök
                         </p>
                     </div>
 
