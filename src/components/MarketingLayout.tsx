@@ -45,6 +45,7 @@ export default function MarketingLayout({
 
     const navLinks = [
         { name: 'Eiginleikar', path: '/eiginleikar' },
+        { name: 'Handbók', path: '/handbok' },
         { name: 'Spurt & Svarað', path: '/spurt-og-svarad' },
         { name: 'Um Okkur', path: '/um-okkur' },
         { name: 'Torgið', path: '/torgid' },
@@ -164,6 +165,7 @@ export default function MarketingLayout({
                     <div className="border-t border-white/20 pt-12">
                         <div className="grid grid-cols-2 md:flex md:flex-wrap justify-center gap-x-12 gap-y-6 mb-12">
                             <Link to="/eiginleikar" className="text-white hover:text-amber transition-colors text-base font-bold">Eiginleikar</Link>
+                            <Link to="/handbok" className="text-white hover:text-amber transition-colors text-base font-bold">Handbók</Link>
                             <Link to="/spurt-og-svarad" className="text-white hover:text-amber transition-colors text-base font-bold whitespace-nowrap">Algengar spurningar</Link>
                             <Link to="/um-okkur" className="text-white hover:text-amber transition-colors text-base font-bold">Um Okkur</Link>
                             <Link to="/hafa-samband" className="text-white hover:text-amber transition-colors text-base font-bold whitespace-nowrap">Hafa samband</Link>
