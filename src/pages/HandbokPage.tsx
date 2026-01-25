@@ -178,7 +178,7 @@ export default function HandbokPage() {
                                 Engar skýrar reglur frá byrjun
                             </h3>
                             <p className="text-grey-dark leading-relaxed">
-                                Margir byrja án þess að setja niður skýrar reglur um bókanir, fjármál og ábyrgð. Þetta leiðir oft til misskilnings og ágreinings.
+                                Margir byrja án þess að setja niður skýrar reglur um bókanir, fjármál og ábyrgð. Þetta leiðir oft til misskilnings og deilna.
                                 <strong className="text-charcoal"> Lausn:</strong> Notaðu <button onClick={() => navigate('/handbok/uppsetning')} className="text-amber hover:underline">uppsetningarleiðbeiningar</button> til að byrja rétt.
                             </p>
                         </div>
@@ -191,7 +191,7 @@ export default function HandbokPage() {
                                 Ekki halda utan um reikninga og kvittanir
                             </h3>
                             <p className="text-grey-dark leading-relaxed">
-                                Excel töf lur týnast, kvittanir gleymast og enginn veit hvað hefur raunverulega verið keypt.
+                                Excel töflur týnast, kvittanir gleymast og enginn veit hvað hefur raunverulega verið keypt.
                                 <strong className="text-charcoal"> Lausn:</strong> Notaðu <button onClick={() => navigate('/handbok/fjarmal')} className="text-amber hover:underline">hússjóð með sjálfvirku bókhaldi</button>.
                             </p>
                         </div>
@@ -204,7 +204,7 @@ export default function HandbokPage() {
                                 Ekki skipuleggja viðhald
                             </h3>
                             <p className="text-grey-dark leading-relaxed">
-                                Húsið fer að eyðileggjast þegar enginn tekur ábyrgð á viðhaldi. Grasflötur vaxa yfir, málning flagnast og smáviðgerðir verða að stórum kostnaði.
+                                Húsið fer að eyðileggjast þegar enginn tekur ábyrgð á viðhaldi. Grasflöt vex yfir, málning flagnast og smáviðgerðir verða að stórum kostnaði.
                                 <strong className="text-charcoal"> Lausn:</strong> Settu upp <button onClick={() => navigate('/handbok/vidhald')} className="text-amber hover:underline">verkefnalista með seasonal checklist</button>.
                             </p>
                         </div>
