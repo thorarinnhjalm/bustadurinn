@@ -153,8 +153,26 @@ export default function HandbokPage() {
                 </div>
             </section>
 
+            {/* Cross-link to FAQ */}
+            <section className="py-16 bg-white border-t border-stone-200">
+                <div className="container max-w-5xl mx-auto px-6 text-center">
+                    <h2 className="text-3xl font-serif font-bold mb-4">Hefurðu fleiri spurningar?</h2>
+                    <p className="text-xl text-grey-dark mb-8 max-w-2xl mx-auto">
+                        Skoðaðu algengar spurningar og svör um Bústaðinn.is
+                    </p>
+                    <button
+                        onClick={() => navigate('/spurt-og-svarad')}
+                        className="inline-flex items-center gap-2 text-amber hover:text-amber-600 font-bold text-lg transition-colors"
+                    >
+                        Spurt og svarað
+                        <ArrowRight className="w-5 h-5" />
+                    </button>
+                </div>
+            </section>
+
             {/* CTA Section */}
-            <section className="bg-charcoal text-white py-20">
+            <section className="bg-charcoal text-white py-20"
+            >
                 <div className="container max-w-4xl mx-auto px-6 text-center">
                     <Home className="w-16 h-16 text-amber mx-auto mb-6" />
                     <h2 className="text-4xl font-serif font-bold mb-6">Tilbúinn að prófa?</h2>

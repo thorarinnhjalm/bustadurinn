@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MarketingLayout from '@/components/MarketingLayout';
 import { Plus, Minus } from 'lucide-react';
 
 export default function FAQPage() {
+    const navigate = useNavigate();
+
     const faqs = [
         {
             q: "Hvað kostar þjónustan?",
@@ -93,6 +96,27 @@ export default function FAQPage() {
                         <a href="mailto:hall@bustadurinn.is" className="text-amber hover:text-amber-dark font-medium underline underline-offset-4">
                             hafa samband
                         </a>
+                    </div>
+                </div>
+            </div>
+
+            {/* Cross-link to Handbook */}
+            <div className="py-16 bg-bone border-t border-stone-200">
+                <div className="container max-w-4xl mx-auto px-6">
+                    <div className="bg-gradient-to-br from-amber/10 to-white rounded-2xl p-8 md:p-12 text-center border-2 border-amber/20">
+                        <h2 className="text-3xl font-serif font-bold mb-4">Viltu læra meira?</h2>
+                        <p className="text-xl text-grey-dark mb-8 max-w-2xl mx-auto">
+                            Skoðaðu ítarlega handbók okkar með leiðbeiningum um bókunarkerfi, fjármál, viðhald og uppsetningu.
+                        </p>
+                        <button
+                            onClick={() => navigate('/handbok')}
+                            className="btn btn-primary bg-amber text-charcoal hover:bg-amber/90 px-8 py-4 text-lg inline-flex items-center gap-2"
+                        >
+                            Skoða handbók
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
