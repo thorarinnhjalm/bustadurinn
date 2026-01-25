@@ -26,6 +26,13 @@ const routes = [
     { path: '/hafa-samband', priority: '0.7', changefreq: 'yearly' },
     { path: '/marketing-map', priority: '0.6', changefreq: 'monthly' },
 
+    // Handbook (SEO Goldmine!)
+    { path: '/handbok', priority: '0.9', changefreq: 'monthly' },
+    { path: '/handbok/bokunarkerfi', priority: '0.9', changefreq: 'monthly' },
+    { path: '/handbok/fjarmal', priority: '0.9', changefreq: 'monthly' },
+    { path: '/handbok/vidhald', priority: '0.9', changefreq: 'monthly' },
+    { path: '/handbok/uppsetning', priority: '0.9', changefreq: 'monthly' },
+
     // Legal
     { path: '/personuvernd', priority: '0.5', changefreq: 'yearly' },
     { path: '/skilmalar', priority: '0.5', changefreq: 'yearly' },
