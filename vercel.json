@@ -1,4 +1,22 @@
 {
+    "redirects": [
+        {
+            "source": "/:path*",
+            "has": [
+                {
+                    "type": "host",
+                    "value": "bustadurinn.is"
+                }
+            ],
+            "destination": "https://www.bustadurinn.is/:path*",
+            "permanent": true
+        },
+        {
+            "source": "/thjonusta/:category*",
+            "destination": "/torgid",
+            "permanent": true
+        }
+    ],
     "rewrites": [
         {
             "source": "/(.*)",
