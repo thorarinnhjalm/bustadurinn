@@ -92,7 +92,12 @@ export default function FjarmalPage() {
                             <h3 className="text-xl font-bold mb-4">Hvað er hægt að áætla:</h3>
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div className="border border-stone-200 rounded-lg p-4">
-                                    <h4 className="font-bold text-green-700 mb-2">📈 Tekjur</h4>
+                                    <h4 className="font-bold text-green-700 mb-2 flex items-center gap-2">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                        </svg>
+                                        Tekjur
+                                    </h4>
                                     <ul className="text-sm space-y-1 text-grey-dark">
                                         <li>• Útleigutekjur</li>
                                         <li>• Innborganir eigenda</li>
@@ -100,7 +105,12 @@ export default function FjarmalPage() {
                                     </ul>
                                 </div>
                                 <div className="border border-stone-200 rounded-lg p-4">
-                                    <h4 className="font-bold text-red-700 mb-2">📉 Gjöld</h4>
+                                    <h4 className="font-bold text-red-700 mb-2 flex items-center gap-2">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                                        </svg>
+                                        Gjöld
+                                    </h4>
                                     <ul className="text-sm space-y-1 text-grey-dark">
                                         <li>• Fasteignaskattur</li>
                                         <li>• Rafmagn og hiti</li>
@@ -215,7 +225,12 @@ export default function FjarmalPage() {
 
                     {/* Privacy settings */}
                     <div className="bg-amber/10 rounded-xl p-6 border-l-4 border-amber">
-                        <h3 className="font-bold text-lg mb-2">💡 Athugið:</h3>
+                        <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                            Athugið:
+                        </h3>
                         <p className="text-grey-dark">
                             Stjórnandi húss getur valið að loka aðgangi að fjármálum fyrir almenna meðeigendur ef það hentar ykkur betur.
                             Þá sjá aðeins stjórnendur og þeir sem fá sérstaklega heimild fjármálaupplýsingar.

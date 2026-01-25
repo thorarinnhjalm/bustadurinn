@@ -83,7 +83,12 @@ export default function UppsetningPage() {
 
                             <div className="bg-amber/10 rounded-lg p-5 border-l-4 border-amber">
                                 <p className="text-sm text-charcoal">
-                                    <strong>💡 Ábending:</strong> Þú færð 30 daga frítt til að prófa kerfið.
+                                    <strong className="flex items-center gap-1.5">
+                                        <svg className="w-4 h-4 text-amber inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                        </svg>
+                                        Ábending:
+                                    </strong> Þú færð 30 daga frítt til að prófa kerfið.
                                     Engin greiðslukort þarf fyrr en að þeim tíma liðnum.
                                 </p>
                             </div>
@@ -162,7 +167,12 @@ export default function UppsetningPage() {
 
                             <div className="bg-blue-50 rounded-lg p-5 border-l-4 border-blue-500">
                                 <p className="text-sm text-charcoal">
-                                    <strong>🔒 Öryggi:</strong> Boðshlekkurinn er einkvæmur fyrir þitt hús.
+                                    <strong className="flex items-center gap-1.5">
+                                        <svg className="w-4 h-4 text-blue-600 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                        Öryggi:
+                                    </strong> Boðshlekkurinn er einkvæmur fyrir þitt hús.
                                     Aðeins þeir sem fá hlekkinn geta gengið til liðs.
                                 </p>
                             </div>
@@ -193,7 +203,7 @@ export default function UppsetningPage() {
                                         <p className="text-sm text-grey-mid mt-1">Hverjum sem bókar fyrst er úthlutað fyrst. Engin sanngirni.</p>
                                     </div>
                                     <div className="border-l-4 border-amber pl-4">
-                                        <h5 className="font-bold text-amber-900">Sanngirnisregla ⭐</h5>
+                                        <h5 className="font-bold text-amber-900">Sanngirnisregla</h5>
                                         <p className="text-sm text-grey-dark mt-1">
                                             Kerfið fylgist með hver fékk helstu hátíðisdaga í fyrra og kemur í veg fyrir
                                             að sami eigandi bóki sömu helgi aftur næsta ár.
@@ -243,25 +253,45 @@ export default function UppsetningPage() {
                         <h3 className="text-2xl font-serif font-bold mb-6">Algengar spurningar</h3>
                         <div className="space-y-6">
                             <div>
-                                <h4 className="font-bold mb-2">💳 Þarf ég að skrá greiðslukort strax?</h4>
+                                <h4 className="font-bold mb-2 flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                    </svg>
+                                    Þarf ég að skrá greiðslukort strax?
+                                </h4>
                                 <p className="text-grey-dark">
                                     Nei! Þú færð 30 daga frí til að prófa kerfið. Þú þarft ekki að skrá greiðslukort fyrr en að þeim tíma liðnum.
                                 </p>
                             </div>
                             <div>
-                                <h4 className="font-bold mb-2">👥 Hversu margir eigendur geta verið í sama húsi?</h4>
+                                <h4 className="font-bold mb-2 flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    Hversu margir eigendur geta verið í sama húsi?
+                                </h4>
                                 <p className="text-grey-dark">
                                     Engin takmörk! Þú getur bætt við eins mörgum eigendum og þú vilt.
                                 </p>
                             </div>
                             <div>
-                                <h4 className="font-bold mb-2">📱 Virkar þetta í símanum?</h4>
+                                <h4 className="font-bold mb-2 flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                    Virkar þetta í símanum?
+                                </h4>
                                 <p className="text-grey-dark">
                                     Já! Bústaðurinn.is er fullkomlega responsive og virkar í símanum, spjaldtölvu og tölvu.
                                 </p>
                             </div>
                             <div>
-                                <h4 className="font-bold mb-2">🏠 Get ég verið með mörg hús?</h4>
+                                <h4 className="font-bold mb-2 flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                    </svg>
+                                    Get ég verið með mörg hús?
+                                </h4>
                                 <p className="text-grey-dark">
                                     Já! Þú getur verið með ótakmarkaðan fjölda húsa í sama aðgangnum.
                                 </p>
