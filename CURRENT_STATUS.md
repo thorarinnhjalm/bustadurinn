@@ -1,6 +1,6 @@
 # Bústaðurinn.is - Current Project Status
-**Last Updated**: 2026-01-07 11:00 UTC  
-**Version**: 1.2.4  
+**Last Updated**: 2026-01-27 10:45 UTC  
+**Version**: 1.3.0  
 **Environment**: Production
 
 ---
@@ -10,10 +10,13 @@
 | Category | Status | Notes |
 |----------|--------|-------|
 | **Core Platform** | ✅ Production | Fully functional, deployed on Vercel |
-| **Mobile UX** | ✅ Optimized | Recent improvements to calendar & budget |
+| **Mobile UX** | ✅ Optimized | Calendar, Budget, PWA-like features |
 | **Authentication** | ✅ Stable | Email/password + Google OAuth |
-| **Payment Integration** | 🟡 Planned | Payday.is integration pending |
-| **Analytics** | 🟡 Partial | GA4 setup, dashboard widget planned |
+| **Tasks** | ✅ Live | Kanban board & assignments active |
+| **Guest Access** | ✅ Live | Magic links & Guest View active |
+| **Notifications** | ✅ Live | Push notifications & Email implemented |
+| **Payment Integration** | ⏸️ Paused | Payday.is pending account setup |
+| **Analytics** | ✅ Basic | GA4 event tracking active |
 
 ---
 
@@ -47,8 +50,10 @@
   - Budget Planning (Rekstraráætlun)
   - Income/Expense tracking
   - Ledger (Bókhald) 
-  - Mobile-optimized layouts ⭐ NEW
-  - Responsive summary cards ⭐ NEW
+  - Variance Analysis widget
+  - Monthly breakdown
+  - Mobile-optimized layouts
+  - Responsive summary cards
   
 - [x] **Dashboard Features**
   - Weather widget (Open-Meteo)
@@ -60,12 +65,27 @@
   - House financial snapshot
   
 - [x] **House Management**
-  - Image upload
+  - Image upload (Cropping & Gallery)
   - WiFi credentials
   - House rules
   - Check-in instructions
   - GPS location with HMS integration
   - Member invitation system
+  - Ownership transfer
+
+- [x] **Guest Access System**
+  - Magic link generation (48h validity)
+  - Guest View interface
+  - House manual & WiFi access
+  - Guestbook submission
+  - No-login required for guests
+
+- [x] **Notifications**
+  - Push Notifications (Firebase Cloud Messaging)
+  - Service Worker integration
+  - Browser permission handling
+  - In-app notification center
+  - Email notifications (Resend)
   
 - [x] **Guest Access**
   - Magic link generation
@@ -90,39 +110,20 @@
 
 ## 🟡 In Progress / Planned
 
-### Short-Term (Q1 2026)
-- [ ] **Payment Integration**
-  - Payday.is checkout
-  - Subscription management
-  - Auto-renewal handling
-  - Payment failure recovery
-  
-- [ ] **Analytics Dashboard**
-  - GA4 widget in Super Admin
-  - Facebook Ads metrics
-  - Conversion tracking
-  
-- [ ] **Performance Optimization**
-  - Code splitting
-  - Lazy loading
-  - Image optimization
-  - Bundle size reduction
+### Priority 1: Payment Integration (Paused)
+- [ ] **Payday.is Checkout** (Waiting on account)
+- [ ] Subscription management
+- [ ] Auto-renewal handling
 
-### Medium-Term (Q2 2026)
-- [ ] **Push Notifications**
-  - PWA setup
-  - Booking reminders
-  - Task due date alerts
-  
-- [ ] **Email Automation**
-  - Automated trial reminders
-  - Booking confirmations
-  - Payment receipts
-  
-- [ ] **Advanced Features**
-  - Recurring bookings
-  - Multi-house management UI
-  - Export data (PDF reports)
+### Priority 2: Polish & Growth
+- [ ] **Marketing/Ads** (Meta Pixel & Campaign management)
+- [ ] **Analytics Dashboard** (Visualize GA4 data in Admin)
+- [ ] **User Guide** (Video tutorials & FAQ)
+
+### Future Enhancements
+- [ ] **Recurring Bookings**
+- [ ] **Multi-house Dashboard** (Unified view)
+- [ ] **Export Data** (PDF/Excel reports)
 
 ---
 
