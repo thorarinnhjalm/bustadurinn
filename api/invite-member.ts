@@ -120,7 +120,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return res.status(400).json({ error: 'User is already a member of this house.' });
             }
 
-            await db.runTransaction(async (t) => {
+            await db.runTransaction(async (t: any) => {
                 const houseRef = db!.collection('houses').doc(houseId);
                 const userRef = db!.collection('users').doc(userId);
 

@@ -264,7 +264,7 @@ export default function LandingPage() {
                                 <Sparkles className="w-4 h-4" />
                                 <span>Nýtt á Bústaðurinn.is</span>
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">
+                            <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight text-white">
                                 Torgið: <span className="text-amber">Þjónusta</span> við dyrnar
                             </h2>
                             <p className="text-xl text-stone-300 mb-8 leading-relaxed font-light">

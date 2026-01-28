@@ -57,7 +57,7 @@ async function deleteUserData(facebookUserId: string): Promise<string> {
             // const userData = doc.data();
             // Check if user has Facebook provider
             const user = await auth.getUser(doc.id);
-            const facebookProvider = user.providerData.find(p => p.providerId === 'facebook.com');
+            const facebookProvider = user.providerData.find((p: any) => p.providerId === 'facebook.com');
 
             if (facebookProvider && facebookProvider.uid === facebookUserId) {
                 userUid = doc.id;
@@ -87,7 +87,7 @@ async function deleteUserData(facebookUserId: string): Promise<string> {
                 .get();
 
             const batch = db.batch();
-            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+            snapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
             await batch.commit();
         }
 
