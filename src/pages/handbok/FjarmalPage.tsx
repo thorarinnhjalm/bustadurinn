@@ -82,7 +82,7 @@ export default function FjarmalPage() {
 
                     {/* Rekstraráætlun */}
                     <div>
-                        <h2 className="text-3xl font-serif font-bold mb-6">Rekstraráætlun (Budget)</h2>
+                        <h2 className="text-3xl font-serif font-bold mb-6">Rekstraráætlun</h2>
                         <div className="bg-white rounded-xl p-8 shadow-sm mb-6">
                             <p className="text-lg text-grey-dark leading-relaxed mb-6">
                                 Í Bústaðnum getur þú búið til rekstraráætlun fyrir árið. Þetta hjálpar ykkur að áætla hversu mikið þið þurfið
@@ -160,7 +160,7 @@ export default function FjarmalPage() {
 
                     {/* Bókhald */}
                     <div>
-                        <h2 className="text-3xl font-serif font-bold mb-6">Bókhald (Ledger)</h2>
+                        <h2 className="text-3xl font-serif font-bold mb-6">Bókhald</h2>
                         <div className="bg-white rounded-xl p-8 shadow-sm">
                             <p className="text-lg text-grey-dark leading-relaxed mb-6">
                                 Eftir að þið hafið sett upp rekstraráætlun, þá er mikilvægt að halda utan um raunverulegan kostnað.

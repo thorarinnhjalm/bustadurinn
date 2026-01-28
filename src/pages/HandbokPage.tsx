@@ -11,7 +11,7 @@ export default function HandbokPage() {
             icon: Calendar,
             title: 'Bókunarkerfi fyrir sameignarhús',
             color: 'amber',
-            description: 'Lærðu hvernig þú getur skipulagt bókanir sanngjarnt og forðast tvöfaldar bókanir. Við förum yfir sanngirnisreglur og best practices.',
+            description: 'Lærðu hvernig þú getur skipulagt bókanir sanngjarnt og forðast tvöfaldar bókanir. Við förum yfir sanngirnisreglur og góðar venjur.',
             path: '/handbok/bokunarkerfi'
         },
         {
@@ -27,7 +27,7 @@ export default function HandbokPage() {
             icon: CheckSquare,
             title: 'Viðhald og verkefnastjórnun',
             color: 'blue',
-            description: 'Haltu utan um viðhald yfir árið. Verkefnalisti, seasonal checklist og pro tips fyrir eigendur.',
+            description: 'Haltu utan um viðhald yfir árið. Verkefnalisti, árstíðabundinn gátlisti og góð ráð fyrir eigendur.',
             path: '/handbok/vidhald'
         },
         {
@@ -35,7 +35,7 @@ export default function HandbokPage() {
             icon: BookOpen,
             title: 'Hvernig á að setja upp kerfið',
             color: 'purple',
-            description: 'Step-by-step leiðarvísir um hvernig þú setur upp Bústaðinn.is á innan við 5 mínútum.',
+            description: 'Skref-fyrir-skref leiðarvísir um hvernig þú setur upp Bústaðinn.is á innan við 5 mínútum.',
             path: '/handbok/uppsetning'
         }
     ];
@@ -205,7 +205,7 @@ export default function HandbokPage() {
                             </h3>
                             <p className="text-grey-dark leading-relaxed">
                                 Húsið fer að eyðileggjast þegar enginn tekur ábyrgð á viðhaldi. Grasflöt vex yfir, málning flagnast og smáviðgerðir verða að stórum kostnaði.
-                                <strong className="text-charcoal"> Lausn:</strong> Settu upp <button onClick={() => navigate('/handbok/vidhald')} className="text-amber hover:underline">verkefnalista með seasonal checklist</button>.
+                                <strong className="text-charcoal"> Lausn:</strong> Settu upp <button onClick={() => navigate('/handbok/vidhald')} className="text-amber hover:underline">verkefnalista með árstíðabundnum gátlista</button>.
                             </p>
                         </div>
 
@@ -229,7 +229,7 @@ export default function HandbokPage() {
             <section className="py-20 bg-gradient-to-br from-green-50 to-white border-t border-stone-100">
                 <div className="container max-w-4xl mx-auto px-6">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-serif font-bold mb-4">Best Practices fyrir sameignarhús</h2>
+                        <h2 className="text-3xl font-serif font-bold mb-4">Góðar venjur fyrir sameignarhús</h2>
                         <p className="text-xl text-grey-dark max-w-2xl mx-auto">
                             Prófaðar leiðir til að tryggja ánægjulega samveru
                         </p>

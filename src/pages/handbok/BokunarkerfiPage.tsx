@@ -9,7 +9,7 @@ export default function BokunarkerfiPage() {
         "@context": "https://schema.org",
         "@type": "HowTo",
         "name": "Bókunarkerfi fyrir sameignarhús",
-        "description": "Lærðu hvernig bókunarkerfi virkar fyrir sameignarhús og sumarhús, með sanngirnisreglu og conflict prevention.",
+        "description": "Lærðu hvernig bókunarkerfi virkar fyrir sameignarhús og sumarhús, með sanngirnisreglu og árekstrarvörn.",
         "step": [
             {
                 "@type": "HowToStep",
@@ -32,8 +32,8 @@ export default function BokunarkerfiPage() {
     return (
         <MarketingLayout
             title="Bókunarkerfi fyrir sameignarhús - Bústaðurinn.is"
-            description="Hvernig bókunarkerfi fyrir sameignarhús virkar. Sanngirnisregla, conflict detection og sjálfvirkar tilkynningar. Aldrei tvöfaldar bókanir aftur."
-            keywords="bókunarkerfi sameignarhús, bókun sumarhús, sanngirnisregla, dagatal sameign, conflict detection"
+            description="Hvernig bókunarkerfi fyrir sameignarhús virkar. Sanngirnisregla, árekstrarvörn og sjálfvirkar tilkynningar. Aldrei tvöfaldar bókanir aftur."
+            keywords="bókunarkerfi sameignarhús, bókun sumarhús, sanngirnisregla, dagatal sameign, árekstrarvörn"
             structuredData={structuredData}
             canonical="https://www.bustadurinn.is/handbok/bokunarkerfi"
         >
@@ -124,23 +124,23 @@ export default function BokunarkerfiPage() {
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
-                                    <span><strong>Rauntíma uppfærslur:</strong> Þegar einhver bókar, sjá allir það strakst</span>
+                                    <span><strong>Rauntíma uppfærslur:</strong> Þegar einhver bókar, sjá allir það strax</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
-                                    <span><strong>Conflict detection:</strong> Kerfið kemur sjálfkrafa í veg fyrir tvöfaldar bókanir</span>
+                                    <span><strong>Árekstrarvörn:</strong> Kerfið kemur sjálfkrafa í veg fyrir tvöfaldar bókanir</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
-                                    <span><strong>Sjálfvirkar tilkynningar:</strong> Email, push og in-app tilkynningar þegar nýjar bókanir fara fram</span>
+                                    <span><strong>Sjálfvirkar tilkynningar:</strong> Email, tilkynningar (push) og í kerfinu þegar nýjar bókanir fara fram</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
-                                    <span><strong>Mismunandi bókunartegundir:</strong> Personal, Rental, Maintenance eða Guest</span>
+                                    <span><strong>Mismunandi bókunartegundir:</strong> Einkanot, Útleiga, Viðhald eða Gestir</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
-                                    <span><strong>Íslenskir hátíðisdagar:</strong> Sjálfkrafa highlighted í dagatalinu</span>
+                                    <span><strong>Íslenskir hátíðisdagar:</strong> Sjálfkrafa auðkenndir í dagatalinu</span>
                                 </li>
                             </ul>
                         </div>
@@ -242,7 +242,7 @@ export default function BokunarkerfiPage() {
                                         </li>
                                         <li className="flex items-start gap-2">
                                             <span className="text-green-600 mt-0.5">✓</span>
-                                            <span>Sendir tilkynningar á alla eigendur (email + push)</span>
+                                            <span>Sendir tilkynningar á alla eigendur (email + tilkynningar)</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -256,12 +256,12 @@ export default function BokunarkerfiPage() {
                             <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                             </svg>
-                            Pro tips
+                            Góð ráð
                         </h3>
                         <ul className="space-y-3 text-grey-dark">
                             <li>• Bókaðu snemma fyrir helstu helgarnar til að tryggja þinn tíma</li>
                             <li>• Notaðu athugasemdareitung til að láta aðra vita um sérstakar aðstæður</li>
-                            <li>• Athugaðu hátíðisdaga - þeir eru highlighted í dagatalinu</li>
+                            <li>• Athugaðu hátíðisdaga - þeir eru auðkenndir í dagatalinu</li>
                             <li>• Ef þú þarft að afbóka, geturðu eytt bókun (aðeins þú eða stjórnandi)</li>
                         </ul>
                     </div>

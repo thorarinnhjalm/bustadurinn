@@ -7,8 +7,8 @@ export default function UppsetningPage() {
 
     return (
         <MarketingLayout
-            title="Hvernig á að setja upp Bústaðinn.is - Setup Guide"
-            description="Step-by-step leiðarvísir um hvernig þú setur upp sumarhúsið þitt í Bústaðnum á innan við 5 mínútum. Stofna aðgang, bjóða meðeigendum og byrja að nota."
+            title="Hvernig á að setja upp Bústaðinn.is - Uppsetningarleiðbeiningar"
+            description="Skref-fyrir-skref leiðarvísir um hvernig þú setur upp sumarhúsið þitt í Bústaðnum á innan við 5 mínútum. Stofna aðgang, bjóða meðeigendum og byrja að nota."
             keywords="bústaðurinn setup, setja upp sumarhús, stofna aðgang, bjóða meðeigendum, onboarding"
             canonical="https://www.bustadurinn.is/handbok/uppsetning"
         >
@@ -38,7 +38,7 @@ export default function UppsetningPage() {
                     </div>
                     <p className="text-xl text-grey-dark leading-relaxed">
                         Það tekur innan við 5 mínútur að setja upp húsið þitt í Bústaðnum.
-                        Hér er step-by-step leiðarvísir sem leiðir þig í gegnum allt ferlið.
+                        Hér er skref-fyrir-skref leiðarvísir sem leiðir þig í gegnum allt ferlið.
                     </p>
                 </div>
             </section>
@@ -282,7 +282,7 @@ export default function UppsetningPage() {
                                     Virkar þetta í símanum?
                                 </h4>
                                 <p className="text-grey-dark">
-                                    Já! Bústaðurinn.is er fullkomlega responsive og virkar í símanum, spjaldtölvu og tölvu.
+                                    Já! Bústaðurinn.is virkar í öllum tækjum og virkar vel í símanum, spjaldtölvu og tölvu.
                                 </p>
                             </div>
                             <div>
