@@ -337,8 +337,8 @@ export default function OnboardingPage() {
                     currentCount = promoDoc.data().launch_offer_count || 0;
                 }
 
-                // Determine status
-                isFree = currentCount < 50;
+                // Determine status (Reduced availability by 20 internally)
+                isFree = (currentCount + 20) < 50;
 
                 // Prepare House Data
                 inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -652,9 +652,9 @@ export default function OnboardingPage() {
                     {currentStep === 'welcome' && (
                         <div className="text-center py-8 animate-fade-in relative">
                             {/* Urgency Badge */}
-                            {launchOfferCount !== null && launchOfferCount < 50 && (
+                            {launchOfferCount !== null && (launchOfferCount + 20) < 50 && (
                                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg animate-pulse whitespace-nowrap z-10">
-                                    🔥 Aðeins {50 - launchOfferCount} pláss eftir í frítt ár!
+                                    🔥 Aðeins {50 - (launchOfferCount + 20)} pláss eftir í frítt ár!
                                 </div>
                             )}
 
@@ -666,7 +666,7 @@ export default function OnboardingPage() {
                             </p>
 
                             {/* Offer Info */}
-                            {launchOfferCount !== null && launchOfferCount < 50 && (
+                            {launchOfferCount !== null && (launchOfferCount + 20) < 50 && (
                                 <div className="bg-amber/10 border border-amber/30 rounded-lg p-4 mb-8 max-w-md mx-auto">
                                     <p className="text-amber-800 font-medium text-sm">
                                         <strong>Starttilboð í gangi:</strong> Fyrstu 50 húsin fá kerfið frítt í heilt ár.

@@ -27,7 +27,8 @@ export default function LandingPage() {
         getDoc(doc(db, 'system', 'promotions')).then(snap => {
             if (snap.exists()) {
                 const count = snap.data().launch_offer_count || 0;
-                setRemainingSlots(Math.max(0, 50 - count));
+                // Reduce availability by 20 (internal offset)
+                setRemainingSlots(Math.max(0, 50 - (count + 20)));
             }
         }).catch(e => console.error("Failed to fetch promo count", e));
 
