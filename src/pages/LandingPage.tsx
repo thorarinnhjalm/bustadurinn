@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
-    Calendar, TrendingUp, CheckCircle, ArrowRight, Users,
-    CheckSquare, Home, Plus, Settings, Shield, Bell, UserPlus, Sparkles
+    Calendar, CheckCircle, ArrowRight, Users,
+    Home, Plus, Shield, Bell, Sparkles, CheckCircle2,
+    TrendingUp, CheckSquare, Settings
 } from 'lucide-react';
-import { CalendarMockup } from '@/components/FeatureMockups';
 import MarketingLayout from '@/components/MarketingLayout';
 import { useAppStore } from '@/store/appStore';
 import NewsletterSignup from '@/components/NewsletterSignup';
@@ -101,79 +101,151 @@ export default function LandingPage() {
         >
 
             {/* Hero Section */}
-            <section className="relative min-h-[90vh] flex items-center bg-bone overflow-x-hidden pt-20">
-                {/* Background Decor */}
-                <div className="absolute top-0 right-0 w-2/3 h-full bg-stone-100 rounded-l-[5rem] hidden lg:block"></div>
+            <section className="relative flex flex-col justify-center pt-12 pb-24 lg:pt-20 lg:pb-32">
+                {/* Background Decor - Mesh Gradient - Optimized */}
+                <div className="absolute inset-0 bg-[#FDFCF8] overflow-hidden pointer-events-none">
+                    <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-gradient-to-br from-amber/20 to-transparent rounded-full blur-[80px] opacity-60 translate-z-0 will-change-transform"></div>
+                    <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-gradient-to-tr from-stone-200/40 to-transparent rounded-full blur-[60px] opacity-60 translate-z-0 will-change-transform"></div>
+                </div>
 
                 <div className="container mx-auto px-6 relative z-10">
-                    <div className="flex flex-col lg:flex-row items-center gap-16">
+                    <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
                         {/* Text Content */}
-                        <div className="w-full lg:w-1/2">
+                        <div className="w-full lg:w-1/2 relative">
                             {/* Badge */}
-                            <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-8">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8 animate-fade-in">
                                 {(remainingSlots > 0) && (
-                                    <div className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-[0_0_20px_rgba(220,38,38,0.4)] animate-pulse">
-                                        <span className="w-2 h-2 bg-white rounded-full"></span>
-                                        Fyrstu 50 húsin fá 1 ár frítt! (Aðeins {remainingSlots} pláss eftir)
+                                    <div className="inline-flex items-center gap-2 bg-red-600/90 backdrop-blur-sm text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-[0_4px_14px_rgba(220,38,38,0.3)] border border-red-500/20">
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-200 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                                        </span>
+                                        Aðeins {remainingSlots} pláss eftir í frítt ár!
                                     </div>
                                 )}
-                                <div className="inline-flex items-center gap-2 bg-amber/20 text-charcoal border border-amber/30 px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm">
-                                    Engin skuldbinding • 30 daga prufa
+                                <div className="inline-flex items-center gap-2 bg-white/60 text-stone-600 border border-stone-200/50 px-4 py-1.5 rounded-full text-xs font-medium backdrop-blur-md shadow-sm">
+                                    <Sparkles className="w-3 h-3 text-amber" />
+                                    Ný kynslóð af bústaðakerfi
                                 </div>
                             </div>
 
-                            <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-8 text-charcoal overflow-visible">
-                                Sumarbústaðurinn <br />
-                                <span className="text-amber inline-block transform -rotate-2 my-2">í vasanum</span>
+                            <h1 className="text-6xl md:text-7xl lg:text-[5.5rem] font-serif font-medium leading-[1.1] mb-8 text-charcoal tracking-tight">
+                                Sumarbústaðurinn, <br />
+                                <span className="text-amber italic">eins og hann á að vera.</span>
                             </h1>
 
-                            <p className="text-xl md:text-2xl mb-10 text-grey-dark leading-relaxed font-light">
-                                Bústaðurinn.is einfaldar yfirsýn yfir <strong>bókanir, fjármál, verkefni og innkaupalista</strong>...allt aðgengilegt beint í símann. Nútímalegt kerfi hannað fyrir íslenskar fjölskyldur.
+                            <p className="text-xl md:text-2xl mb-10 text-stone-600 leading-relaxed font-light max-w-xl">
+                                Eitt app fyrir alla fjölskylduna. Einfaldaðu bókanir, skiptu verkefnum og búðu til minningar — beint í símanum.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 mb-12">
                                 <button
-                                    onClick={() => navigate('/prufa')}
-                                    className="btn btn-primary bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-lg px-10 py-5 shadow-[0_0_30px_rgba(37,99,235,0.2)] hover:shadow-[0_0_40px_rgba(37,99,235,0.3)] transform hover:scale-105 transition-all flex items-center justify-center gap-2 group rounded-xl"
-                                >
-                                    <Sparkles className="w-5 h-5" />
-                                    Prófa kerfið núna
-                                    <span className="ml-1 text-sm opacity-75">• Engin skráning</span>
-                                </button>
-                                <button
                                     onClick={() => navigate('/signup')}
-                                    className="btn btn-secondary border-2 border-amber/50 text-charcoal hover:bg-amber/10 hover:border-amber text-lg px-10 py-5 transition-all rounded-xl flex items-center justify-center gap-2"
+                                    className="btn btn-primary bg-charcoal hover:bg-black text-white text-lg px-8 py-4 h-auto shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)] transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 rounded-2xl group border-0"
                                 >
-                                    <UserPlus className="w-5 h-5" />
-                                    Eða stofna aðgang
+                                    <div className="bg-white/10 p-2 rounded-full group-hover:bg-amber group-hover:text-charcoal transition-colors">
+                                        <Home className="w-5 h-5" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="text-xs text-white/60 font-medium uppercase tracking-wider">Byrjaðu strax</div>
+                                        <div className="font-bold">Stofna Húsið Mitt</div>
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => navigate('/prufa')}
+                                    className="btn btn-secondary bg-white/50 backdrop-blur-md border border-white/60 hover:bg-white text-stone-600 hover:text-charcoal text-lg px-8 py-4 h-auto shadow-sm hover:shadow-md transition-all rounded-2xl flex items-center justify-center gap-2"
+                                >
+                                    <Sparkles className="w-5 h-5 opacity-60" />
+                                    Skoða sýnishorn
                                 </button>
                             </div>
 
-                            <div className="flex items-center gap-8 text-sm text-grey-mid font-medium">
+                            <div className="flex items-center gap-8 text-sm text-stone-500 font-medium border-t border-stone-200/60 pt-8 max-w-md">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                    <span>Virkar í síma & tölvu</span>
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                    <span>Engin kreditkort</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                    <span>Engin öpp að sækja</span>
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                    <span>30 dagar frítt</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                    <span>Virkar í öllum tækjum</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Hero Visual - Calendar Mockup */}
-                        <div className="w-full lg:w-1/2 relative perspective-1000">
+                        {/* Hero Visual - Phone Mockup */}
+                        <div className="w-full lg:w-1/2 relative perspective-1000 hidden lg:block">
                             {/* Blobs */}
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-amber/10 rounded-full blur-3xl -z-10 animate-pulse-slow"></div>
 
-                            <div className="relative transform rotate-y-[-5deg] rotate-x-[5deg] hover:rotate-0 transition-all duration-700 ease-out shadow-2xl rounded-2xl overflow-hidden border border-stone-100 bg-white max-w-xl mx-auto" style={{ minHeight: '500px' }}>
-                                <CalendarMockup />
+                            <div className="relative transform rotate-y-[-5deg] rotate-x-[5deg] hover:rotate-0 transition-all duration-700 ease-out z-10">
+                                {/* Use a placeholder frame if no image, or a nice CSS mock */}
+                                <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[14px] rounded-[2.5rem] h-[600px] w-[300px] shadow-xl">
+                                    <div className="w-[148px] h-[18px] bg-gray-800 top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute"></div>
+                                    <div className="h-[32px] w-[3px] bg-gray-800 absolute -start-[17px] top-[72px] rounded-s-lg"></div>
+                                    <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[124px] rounded-s-lg"></div>
+                                    <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[178px] rounded-s-lg"></div>
+                                    <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[17px] top-[142px] rounded-e-lg"></div>
+                                    <div className="rounded-[2rem] overflow-hidden w-[272px] h-[572px] bg-white dark:bg-gray-800 relative">
+                                        {/* Mock Screen Content */}
+                                        <div className="bg-bone h-full w-full flex flex-col relative overflow-hidden">
+                                            {/* Header */}
+                                            <div className="bg-white p-6 pt-12 border-b border-stone-100 flex justify-between items-center">
+                                                <div>
+                                                    <div className="text-xs text-stone-400 font-medium">Bústaðurinn</div>
+                                                    <div className="font-serif font-bold text-xl text-charcoal">Yfirlit</div>
+                                                </div>
+                                                <div className="w-8 h-8 bg-amber/10 rounded-full flex items-center justify-center">
+                                                    <div className="w-4 h-4 bg-amber rounded-full"></div>
+                                                </div>
+                                            </div>
 
-                                {/* Floating Badges */}
-                                <div className="absolute -right-4 top-12 bg-white p-4 rounded-xl shadow-xl border border-stone-100 animate-float">
+                                            {/* Content */}
+                                            <div className="p-4 space-y-4">
+                                                {/* Booking Card */}
+                                                <div className="bg-white p-4 rounded-xl shadow-sm border border-stone-100">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Næsta helgi</span>
+                                                        <span className="text-stone-400 text-xs">3 dagar</span>
+                                                    </div>
+                                                    <div className="font-bold text-charcoal">Jón & Sigga</div>
+                                                    <div className="text-xs text-stone-500 flex items-center gap-1 mt-1">
+                                                        <Calendar size={12} />
+                                                        14. Júl - 17. Júl
+                                                    </div>
+                                                </div>
+
+                                                {/* Task Card */}
+                                                <div className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 opacity-60">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center">
+                                                            <CheckCircle size={14} className="text-stone-400" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-sm font-bold text-stone-600">Klárað verkefni</div>
+                                                            <div className="text-xs text-stone-400 line-through">Mála pallinn</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Floating 'Add' Button Mock */}
+                                                <div className="absolute bottom-6 right-6 w-12 h-12 bg-charcoal rounded-full flex items-center justify-center shadow-lg text-white">
+                                                    <Plus size={24} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Floating Badges - Outside Phone */}
+                                <div className="absolute -right-12 top-24 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/50 animate-float w-56 z-20">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                                            <CheckCircle className="w-5 h-5" />
+                                            <CheckCircle2 size={20} />
                                         </div>
                                         <div>
                                             <p className="text-xs font-bold text-stone-900">Bókun staðfest</p>
@@ -182,14 +254,14 @@ export default function LandingPage() {
                                     </div>
                                 </div>
 
-                                <div className="absolute -left-4 bottom-24 bg-white p-4 rounded-xl shadow-xl border border-stone-100 animate-float-delayed">
+                                <div className="absolute -left-12 bottom-32 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/50 animate-float-delayed w-64 z-20">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-amber/10 text-amber flex items-center justify-center">
                                             <Shield className="w-5 h-5" />
                                         </div>
                                         <div>
                                             <p className="text-xs font-bold text-stone-900">Sanngirnisregla</p>
-                                            <p className="text-[10px] text-stone-500">Allir fá jafnan aðgang</p>
+                                            <p className="text-[10px] text-stone-500">Allir fá jafnan aðgang í sumar</p>
                                         </div>
                                     </div>
                                 </div>
@@ -685,7 +757,7 @@ export default function LandingPage() {
                             onClick={() => navigate('/signup')}
                             className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-8 py-4 shadow-xl shadow-amber/20"
                         >
-                            Stofna aðgang núna
+                            Stofna aðgang núna (Frítt)
                         </button>
                         <button
                             onClick={() => navigate('/prufa')}

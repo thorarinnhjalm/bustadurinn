@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, googleProvider, facebookProvider, db } from '@/lib/firebase';
 import { UserPlus } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -22,8 +22,7 @@ export default function SignupPage() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        password: '',
-        confirmPassword: ''
+        password: ''
     });
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -53,11 +52,7 @@ export default function SignupPage() {
         e.preventDefault();
         setError('');
 
-        if (formData.password !== formData.confirmPassword) {
-            setError('Lykilorð stemma ekki');
-            return;
-        }
-
+        // Basic password validation
         if (formData.password.length < 6) {
             setError('Lykilorð verður að vera að minnsta kosti 6 stafir');
             return;
@@ -80,6 +75,7 @@ export default function SignupPage() {
             // Create user doc robustly
             const user = userCredential.user;
             const utmParams = getStoredUTMParams();
+
             await createProfileWithRetry(user.uid, {
                 uid: user.uid,
                 email: user.email,
@@ -98,8 +94,44 @@ export default function SignupPage() {
                 navigate('/onboarding');
             }
         } catch (err: any) {
+            // "Ghost User" Recovery
             if (err.code === 'auth/email-already-in-use') {
-                setError('Þetta netfang er þegar í notkun');
+                console.log('Email taken, attempting ghost user recovery...');
+                try {
+                    // Try to sign in with the provided password
+                    const credential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+                    const user = credential.user;
+
+                    // Check if they have a profile
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+                    if (!userDoc.exists()) {
+                        console.log('Ghost user found! Ensuring profile exists...');
+                        // They are a "ghost", create their profile now
+                        const utmParams = getStoredUTMParams();
+                        await createProfileWithRetry(user.uid, {
+                            uid: user.uid,
+                            email: user.email,
+                            name: formData.name || '', // Use the name they just typed
+                            house_ids: [],
+                            utm_params: utmParams || null,
+                            created_at: serverTimestamp(),
+                            last_login: serverTimestamp()
+                        });
+
+                        analytics.signupCompleted('recovered_ghost');
+                        navigate('/onboarding');
+                        return;
+                    } else {
+                        // They have a profile, just redirect them
+                        console.log('User already exists fully, redirecting...');
+                        navigate(returnUrl || '/dashboard');
+                        return;
+                    }
+                } catch (recoveryErr) {
+                    // Password didn't match or other error
+                    setError('Þetta netfang er þegar í notkun. Prófaðu að skrá þig inn.');
+                }
             } else {
                 setError(`Villa kom upp við skráningu: ${err.message} (${err.code || 'unknown'})`);
             }
@@ -202,7 +234,7 @@ export default function SignupPage() {
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-serif mb-2">Bústaðurinn.is</h1>
                     <p className="text-grey-mid">Búa til aðgang</p>
-                    <div className="badge mt-4">Frítt í 30 daga</div>
+                    <div className="badge mt-4 bg-amber text-charcoal font-bold border-amber">Frítt í heilt ár (Fyrstu 50)</div>
                 </div>
 
                 <div className="card">
@@ -244,18 +276,6 @@ export default function SignupPage() {
                                 className="input"
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                placeholder="••••••••"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="label">Staðfesta lykilorð</label>
-                            <input
-                                type="password"
-                                className="input"
-                                value={formData.confirmPassword}
-                                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                 placeholder="••••••••"
                                 required
                             />

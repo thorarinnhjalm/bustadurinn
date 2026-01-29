@@ -5,19 +5,37 @@
 
 import { logger } from './logger';
 
-// Declare gtag function for TypeScript
+// Declare fbq function for TypeScript
 declare global {
     interface Window {
         gtag?: (...args: any[]) => void;
         dataLayer?: any[];
+        fbq?: (...args: any[]) => void;
     }
 }
 
 export const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
+    // Google Analytics
     if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', eventName, eventParams);
-        logger.debug('GA Event:', eventName, eventParams);
     }
+
+    // Facebook Pixel
+    if (typeof window !== 'undefined' && window.fbq) {
+        // Map GA4 events to standard Facebook events where possible
+        if (eventName === 'signup_completed') {
+            window.fbq('track', 'CompleteRegistration');
+        } else if (eventName === 'purchase' || eventName === 'subscribe') {
+            window.fbq('track', 'Purchase', { currency: 'ISK', value: eventParams?.value || 0 });
+        } else if (eventName === 'contact_form_submitted') {
+            window.fbq('track', 'Contact');
+        } else {
+            // Default custom event
+            window.fbq('trackCustom', eventName, eventParams);
+        }
+    }
+
+    logger.debug('Analytics Event:', eventName, eventParams);
 };
 
 // Common events
