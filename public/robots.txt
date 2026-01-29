@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://bustadurinn.is/sitemap.xml
+Sitemap: https://www.bustadurinn.is/sitemap.xml

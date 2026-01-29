@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const baseUrl = 'https://bustadurinn.is';
+const baseUrl = 'https://www.bustadurinn.is';
 const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
 const routes = [
@@ -18,7 +18,7 @@ const routes = [
     { path: '/', priority: '1.0', changefreq: 'weekly' },
     { path: '/eiginleikar', priority: '0.9', changefreq: 'monthly' },
     { path: '/verktakar', priority: '0.9', changefreq: 'monthly' }, // New!
-    { path: '/thjonusta', priority: '0.9', changefreq: 'daily' },   // New!
+    { path: '/torgid', priority: '0.9', changefreq: 'daily' },   // New!
 
     // Support & Info
     { path: '/spurt-og-svarad', priority: '0.8', changefreq: 'monthly' },
@@ -57,7 +57,7 @@ const categories = [
 // Add category pages
 categories.forEach(cat => {
     routes.push({
-        path: `/thjonusta?category=${cat}`,
+        path: `/torgid?category=${cat}`,
         priority: '0.8',
         changefreq: 'weekly'
     });

@@ -308,10 +308,13 @@ export default function MarketplacePage() {
         );
     }
 
+    const canonicalUrl = `https://www.bustadurinn.is/torgid${selectedCategory !== 'all' ? `?category=${selectedCategory}` : ''}`;
+
     return (
         <MarketingLayout
             title="Torgið - Þjónusta fyrir sumarbústaði | Snjómokstur, Viðhald o.fl."
             description="Finndu iðnaðarmenn, snjómokstur og þjónustuaðila fyrir sumarbústaðinn þinn. Tengjum saman eigendur og verktaka."
+            canonical={canonicalUrl}
         >
             {content}
         </MarketingLayout>
