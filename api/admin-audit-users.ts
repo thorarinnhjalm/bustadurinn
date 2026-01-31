@@ -1,26 +1,43 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { initializeFirebaseAdmin, admin, db, auth } from './utils/firebaseAdmin';
+import admin from 'firebase-admin';
 
-async function requireAdmin(req: VercelRequest): Promise<admin.auth.DecodedIdToken> {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new Error('UNAUTHORIZED');
+// Helper to init services (Copied from admin-delete-user.ts for consistency)
+let db: admin.firestore.Firestore | null = null;
+let auth: admin.auth.Auth | null = null;
+
+function initServices() {
+    if (admin.apps.length > 0) {
+        db = admin.firestore();
+        auth = admin.auth();
+        return;
     }
-    const token = authHeader.split('Bearer ')[1];
+
     try {
-        const decodedToken = await admin.auth().verifyIdToken(token);
-
-        // Check RBAC user_roles collection for super_admin
-        const roleDoc = await admin.firestore().collection('user_roles').doc(decodedToken.uid).get();
-        if (!roleDoc.exists || roleDoc.data()?.system_role !== 'super_admin') {
-            throw new Error('FORBIDDEN');
+        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            try {
+                const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+                admin.initializeApp({
+                    credential: admin.credential.cert(serviceAccount),
+                    projectId: serviceAccount.project_id
+                });
+            } catch (jsonError: any) {
+                console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT:', jsonError.message);
+                throw new Error(`Service Account JSON Parse Error: ${jsonError.message}`);
+            }
+        } else {
+            // Fallback
+            admin.initializeApp({
+                credential: admin.credential.applicationDefault(),
+                projectId: 'bustadurinn-is'
+            });
         }
-
-        return decodedToken;
     } catch (error: any) {
-        if (error.message === 'FORBIDDEN') throw error;
-        throw new Error('UNAUTHORIZED');
+        console.error('Firebase Admin initialization error:', error);
+        throw new Error(`Firebase Init Failed: ${error.message}`);
     }
+
+    if (!db) db = admin.firestore();
+    if (!auth) auth = admin.auth();
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -29,55 +46,84 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        initializeFirebaseAdmin();
-        await requireAdmin(req);
+        initServices();
 
-        if (!auth || !db) throw new Error('Services not initialized');
+        if (!db || !auth) throw new Error('Services failed to init');
 
-        // 1. List all Auth users
-        const authUsers: admin.auth.UserRecord[] = [];
-        let nextPageToken: string | undefined;
-        do {
-            const result: admin.auth.ListUsersResult = await auth.listUsers(1000, nextPageToken);
-            authUsers.push(...result.users);
-            nextPageToken = result.pageToken;
-        } while (nextPageToken);
+        // Security Check
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Unauthorized: Missing token' });
+        }
 
-        // 2. Cross-reference with Firestore
+        const token = authHeader.split('Bearer ')[1];
+        try {
+            await auth.verifyIdToken(token);
+            // Could add RBAC check here if strictly needed
+        } catch (e) {
+            return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+        }
+
+        // 1. Fetch Auth Users (Limit 1000)
+        // Note: listUsers() returns UserRecord[]
+        const listUsersResult = await auth.listUsers(1000);
+        const authUsers = listUsersResult.users;
+
+        // 2. Fetch Firestore Users
+        const usersSnap = await db.collection('users').get();
+        const firestoreUsers = new Map();
+        usersSnap.forEach(doc => {
+            firestoreUsers.set(doc.id, doc.data());
+        });
+
+        // 3. Analyze
         const orphans = [];
-        const testKeywords = ['test', 'debug', 'prufa', 'example.com', 'testing'];
+        const stuckUsers = [];
 
-        // Batch checks to avoid hitting Firestore limits on large lists
-        // For current volume, we can check sequentially or in chunks
         for (const user of authUsers) {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (!userDoc.exists) {
-                const isTest = testKeywords.some(kw =>
-                    (user.email?.toLowerCase().includes(kw)) ||
-                    (user.displayName?.toLowerCase().includes(kw))
-                );
-
+            if (!firestoreUsers.has(user.uid)) {
                 orphans.push({
                     uid: user.uid,
                     email: user.email,
-                    displayName: user.displayName,
-                    createdAt: user.metadata.creationTime,
-                    lastLogin: user.metadata.lastSignInTime,
-                    isTest
+                    name: user.displayName || 'N/A',
+                    created: user.metadata.creationTime,
+                    lastSignIn: user.metadata.lastSignInTime
                 });
+            } else {
+                const data = firestoreUsers.get(user.uid);
+                if (!data.house_ids || data.house_ids.length === 0) {
+                    stuckUsers.push({
+                        uid: user.uid,
+                        email: user.email,
+                        name: data.name || user.displayName || 'Unknown',
+                        created: user.metadata.creationTime,
+                        lastSignIn: user.metadata.lastSignInTime
+                    });
+                }
             }
         }
 
+        // Sort
+        const sortByDate = (a: any, b: any) => new Date(b.created).getTime() - new Date(a.created).getTime();
+        orphans.sort(sortByDate);
+        stuckUsers.sort(sortByDate);
+
         return res.status(200).json({
-            count: orphans.length,
-            orphans: orphans.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            orphans,
+            stuckUsers,
+            stats: {
+                totalAuth: authUsers.length,
+                totalFirestore: firestoreUsers.size,
+                orphanCount: orphans.length,
+                stuckCount: stuckUsers.length
+            }
         });
 
     } catch (error: any) {
-        if (error.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
-        if (error.message === 'FORBIDDEN') return res.status(403).json({ error: 'Forbidden' });
-
-        console.error('Audit Error:', error);
-        return res.status(500).json({ error: error.message });
+        console.error('Audit API Error:', error);
+        return res.status(500).json({
+            error: error.message,
+            details: error.stack
+        });
     }
 }

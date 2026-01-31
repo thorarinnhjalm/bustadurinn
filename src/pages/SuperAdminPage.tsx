@@ -1016,7 +1016,14 @@ export default function SuperAdminPage() {
             const res = await fetch('/api/admin-audit-users', {
                 headers: { 'Authorization': `Bearer ${idToken}` }
             });
-            const data = await res.json();
+            let data;
+            try {
+                data = await res.json();
+            } catch (jsonError) {
+                // If parsing fails (e.g. 404 HTML page), throw specific error
+                throw new Error(`Server returned non-JSON response (${res.status}). Ensure API is deployed.`);
+            }
+
             if (res.ok) {
                 setOrphans(data.orphans || []);
             } else {
