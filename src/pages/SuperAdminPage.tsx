@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    LayoutDashboard, Home, Users, BarChart2, Mail, Tag, Settings, Send,
+    LayoutDashboard, Home, Users, BarChart2, Mail, Tag, FileSearch, Settings, Send,
     Database, LogOut, Trash2, CheckCircle, AlertTriangle,
     XCircle, RefreshCw, Loader2, Shield, Activity, TrendingUp, Reply, Star,
     Edit, MapPin, UserCog, Zap
@@ -1399,6 +1399,7 @@ export default function SuperAdminPage() {
                             { id: 'users', icon: Users, label: 'Notendur' },
                             { id: 'analytics', icon: BarChart2, label: 'Greining' },
                             { id: 'integrations', icon: Settings, label: 'Tengingar' },
+                            { id: 'audit', icon: FileSearch, label: 'Audit' },
                             { id: 'coupons', icon: Tag, label: 'Afslættir' },
                             { id: 'contacts', icon: Mail, label: 'Samskipti' },
                             { id: 'emails', icon: Mail, label: 'Sniðmát' },
@@ -1445,6 +1446,101 @@ export default function SuperAdminPage() {
 
                 {/* Analytics Tab */}
                 {activeTab === 'analytics' && <AnalyticsDashboard />}
+
+                {/* Audit Tab */}
+                {activeTab === 'audit' && (
+                    <div className="space-y-6">
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                            <h3 className="text-lg font-bold text-charcoal mb-2">User Audit</h3>
+                            <p className="text-stone-500 mb-6">Checking for consistency between Auth and Firestore.</p>
+
+                            {auditLoading ? (
+                                <div className="text-center py-10">
+                                    <div className="animate-spin w-8 h-8 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
+                                    <p>Scanning database...</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* ORPHANS */}
+                                    <div className="border border-red-100 bg-red-50/30 rounded-lg p-4">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="font-bold text-red-700 flex items-center gap-2">
+                                                <AlertTriangle className="w-4 h-4" />
+                                                Orphan Users ({orphans.length})
+                                            </h4>
+                                            <button onClick={exportOrphansCSV} className="text-xs text-stone-500 underline">Export CSV</button>
+                                        </div>
+                                        <p className="text-sm text-stone-600 mb-4">
+                                            Users who exist in Authentication but have <strong>NO Firestore Profile</strong>.
+                                            This usually means the signup process crashed after account creation but before profile creation.
+                                        </p>
+
+                                        <div className="max-h-60 overflow-y-auto bg-white rounded border border-red-100">
+                                            {orphans.length === 0 ? (
+                                                <div className="p-4 text-center text-stone-400 text-sm">No orphans found. ✅</div>
+                                            ) : (
+                                                <table className="w-full text-left text-xs">
+                                                    <thead className="bg-stone-50 sticky top-0">
+                                                        <tr>
+                                                            <th className="p-2">Email</th>
+                                                            <th className="p-2">Created</th>
+                                                            <th className="p-2">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {orphans.map(u => (
+                                                            <tr key={u.uid} className="border-b border-stone-100">
+                                                                <td className="p-2 font-mono">{u.email}</td>
+                                                                <td className="p-2 text-stone-500">{new Date(u.created).toLocaleDateString()}</td>
+                                                                <td className="p-2">
+                                                                    <div className="flex gap-2">
+                                                                        <button
+                                                                            onClick={() => handleRepairOrphan(u.uid)}
+                                                                            className="px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100"
+                                                                        >
+                                                                            Repair
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDeleteUser({ uid: u.uid, name: u.name || 'Unknown', email: u.email } as any)}
+                                                                            className="px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100"
+                                                                        >
+                                                                            Delete
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* STUCK USERS */}
+                                    <div className="border border-orange-100 bg-orange-50/30 rounded-lg p-4">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="font-bold text-orange-700 flex items-center gap-2">
+                                                <AlertTriangle className="w-4 h-4" />
+                                                Stuck Users (No House)
+                                            </h4>
+                                        </div>
+                                        <p className="text-sm text-stone-600 mb-4">
+                                            Users who have a profile but <strong>no house linked</strong>.
+                                            They likely dropped off during the "Create House" step.
+                                        </p>
+                                        <div className="max-h-60 overflow-y-auto bg-white rounded border border-orange-100">
+                                            {/* We need to fetch/filter these too, usually passed from API as well. 
+                                                 Note: Current state 'orphans' only has orphans. We need to update state to hold stuck users too (logic was added to API but not frontend state yet) */}
+                                            <div className="p-4 text-center text-stone-400 text-sm">
+                                                (See "Stuck Users" in API response - implementation pending state update)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Overview Tab */}
                 {activeTab === 'overview' && (() => {
