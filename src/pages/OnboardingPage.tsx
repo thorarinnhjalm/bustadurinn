@@ -506,7 +506,11 @@ export default function OnboardingPage() {
             nextStep();
         } catch (err: any) {
             console.error('Error creating house:', err);
-            setError('Villa kom upp við að búa til hús: ' + (err.message || 'Óþekkt villa'));
+            if (err.message && err.message.includes("User does not exist")) {
+                setError('Villa: Notandaskráningu ekki lokið. Vinsamlegast endurhladdu síðuna til að klára uppsetningu.');
+            } else {
+                setError('Villa kom upp við að búa til hús: ' + (err.message || 'Óþekkt villa'));
+            }
             analytics.track('house_creation_failed', { error: err.message });
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {

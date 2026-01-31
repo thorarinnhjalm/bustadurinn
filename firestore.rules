@@ -31,7 +31,7 @@ service cloud.firestore {
 
     // SYSTEM DOCUMENTS - Allow authenticated users to read promotions for launch offer validation
     match /system/promotions {
-      allow read: if request.auth != null; 
+      allow read: if true; 
       
       // Allow authenticated users to atomic increment for launch offer tracking
       // Relaxed rules to prevent transaction failures
