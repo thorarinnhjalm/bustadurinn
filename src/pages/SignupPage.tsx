@@ -14,6 +14,7 @@ import { getStoredUTMParams } from '@/utils/utm';
 import SEO from '@/components/SEO';
 
 import { useSearchParams } from 'react-router-dom';
+import { analytics } from '@/utils/analytics';
 
 export default function SignupPage() {
     const navigate = useNavigate();
