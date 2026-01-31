@@ -41,29 +41,43 @@ export default function AuthHandler() {
                     if (userSnap.exists()) {
                         const firestoreData = userSnap.data();
                         baseUser = { ...baseUser, ...firestoreData };
+                        logger.debug('AuthHandler: User profile loaded:', baseUser.email);
                     } else {
                         // SELF-REPAIR: Missing profile but authenticated
-                        console.warn("AuthHandler: Orphan user detected, triggering self-repair for:", firebaseUser.email);
-                        try {
-                            // Wait for profile creation to prevent race conditions
-                            await setDoc(userDocRef, {
-                                uid: baseUser.uid,
-                                email: baseUser.email,
-                                name: baseUser.name || baseUser.email.split('@')[0],
-                                house_ids: [],
-                                created_at: serverTimestamp(),
-                                last_login: serverTimestamp(),
-                                repaired_auto: true
-                            }, { merge: true });
+                        // CRITICAL: Check if user was JUST created (e.g. within last 15 seconds)
+                        // If so, do NOT self-repair yet, as SignupPage is likely still writing the doc.
+                        const creationTime = firebaseUser.metadata.creationTime ? new Date(firebaseUser.metadata.creationTime).getTime() : 0;
+                        const now = Date.now();
+                        const isBrandNew = (now - creationTime) < 15000; // 15 seconds buffer
 
-                            // Re-fetch to get complete profile with server timestamp
-                            const repairedSnap = await getDoc(userDocRef);
-                            if (repairedSnap.exists()) {
-                                baseUser = { ...baseUser, ...repairedSnap.data() };
+                        if (isBrandNew) {
+                            logger.info("AuthHandler: User is brand new, skipping self-repair to allow SignupPage to finish.", firebaseUser.email);
+                            // We still set realUser, but we don't create a dummy doc yet.
+                            // The user might see a "loading" state or a partial state until they refresh or the doc appears.
+                        } else {
+                            logger.warn("AuthHandler: Orphan user detected (older than 15s), triggering self-repair for:", firebaseUser.email);
+                            try {
+                                // Wait for profile creation to prevent race conditions
+                                await setDoc(userDocRef, {
+                                    uid: baseUser.uid,
+                                    email: baseUser.email,
+                                    name: baseUser.name || baseUser.email.split('@')[0],
+                                    house_ids: [],
+                                    created_at: serverTimestamp(),
+                                    last_login: serverTimestamp(),
+                                    repaired_auto: true
+                                }, { merge: true });
+
+                                // Re-fetch to get complete profile with server timestamp
+                                const repairedSnap = await getDoc(userDocRef);
+                                if (repairedSnap.exists()) {
+                                    baseUser = { ...baseUser, ...repairedSnap.data() };
+                                    logger.info("AuthHandler: Self-repair successful for:", firebaseUser.email);
+                                }
+                            } catch (repairErr) {
+                                logger.error("AuthHandler: Self-repair failed:", repairErr);
+                                // Continue with baseUser even if repair fails
                             }
-                        } catch (repairErr) {
-                            console.error("AuthHandler: Self-repair failed:", repairErr);
-                            // Continue with baseUser even if repair fails
                         }
                     }
                 } catch (err) {

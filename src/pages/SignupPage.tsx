@@ -8,7 +8,7 @@ import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, signInW
 import { auth, googleProvider, facebookProvider, db } from '@/lib/firebase';
 import { UserPlus } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { analytics } from '@/utils/analytics';
+import { logger } from '@/utils/logger';
 import { useEffect } from 'react';
 import { getStoredUTMParams } from '@/utils/utm';
 import SEO from '@/components/SEO';
@@ -36,7 +36,7 @@ export default function SignupPage() {
                 return true;
             } catch (err) {
                 retryCount++;
-                console.error(`Firestore profile creation attempt ${retryCount} failed:`, err);
+                logger.warn(`SignupPage: Firestore profile creation attempt ${retryCount} failed:`, err);
                 if (retryCount === maxRetries) throw err;
                 await new Promise(r => setTimeout(r, 1000 * retryCount));
             }
@@ -76,6 +76,7 @@ export default function SignupPage() {
             const user = userCredential.user;
             const utmParams = getStoredUTMParams();
 
+            logger.info('SignupPage: Creating profile for', user.uid);
             await createProfileWithRetry(user.uid, {
                 uid: user.uid,
                 email: user.email,
@@ -87,6 +88,7 @@ export default function SignupPage() {
             });
 
             analytics.signupCompleted('email');
+            logger.info('SignupPage: Signup successful, redirecting');
 
             if (returnUrl) {
                 navigate(returnUrl);
@@ -96,7 +98,7 @@ export default function SignupPage() {
         } catch (err: any) {
             // "Ghost User" Recovery
             if (err.code === 'auth/email-already-in-use') {
-                console.log('Email taken, attempting ghost user recovery...');
+                logger.warn('SignupPage: Email taken, attempting ghost user recovery...');
                 try {
                     // Try to sign in with the provided password
                     const credential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
@@ -106,7 +108,7 @@ export default function SignupPage() {
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
 
                     if (!userDoc.exists()) {
-                        console.log('Ghost user found! Ensuring profile exists...');
+                        logger.info('SignupPage: Ghost user found! Ensuring profile exists...');
                         // They are a "ghost", create their profile now
                         const utmParams = getStoredUTMParams();
                         await createProfileWithRetry(user.uid, {
@@ -124,18 +126,19 @@ export default function SignupPage() {
                         return;
                     } else {
                         // They have a profile, just redirect them
-                        console.log('User already exists fully, redirecting...');
+                        logger.info('SignupPage: User already exists fully, redirecting...');
                         navigate(returnUrl || '/dashboard');
                         return;
                     }
                 } catch (recoveryErr) {
                     // Password didn't match or other error
+                    logger.warn('SignupPage: Recovery failed', recoveryErr);
                     setError('Þetta netfang er þegar í notkun. Prófaðu að skrá þig inn.');
                 }
             } else {
+                logger.error('SignupPage: Signup error:', err);
                 setError(`Villa kom upp við skráningu: ${err.message} (${err.code || 'unknown'})`);
             }
-            console.error('Signup error:', err);
         } finally {
             setIsLoading(false);
         }
@@ -176,7 +179,7 @@ export default function SignupPage() {
             }
         } catch (err: any) {
             setError('Villa við skráningu með Google');
-            console.error('Google signup error:', err);
+            logger.error('SignupPage: Google signup error:', err);
         } finally {
             setIsLoading(false);
         }
@@ -217,7 +220,7 @@ export default function SignupPage() {
             }
         } catch (err: any) {
             setError('Villa við skráningu með Facebook');
-            console.error('Facebook signup error:', err);
+            logger.error('SignupPage: Facebook signup error:', err);
         } finally {
             setIsLoading(false);
         }
