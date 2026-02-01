@@ -4,7 +4,7 @@ declare const google: any;
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Home, MapPin, Users, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, doc, arrayUnion, query, where, getDocs, limit, getDoc, runTransaction } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, arrayUnion, getDoc, runTransaction } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
@@ -292,27 +292,10 @@ export default function OnboardingPage() {
         setError('');
 
         try {
-            // 0. Check for duplicate address (If address provided)
-            if (houseData.address) {
-                try {
-                    const q = query(collection(db, 'houses'), where('address', '==', houseData.address), limit(1));
-                    const querySnapshot = await getDocs(q);
+            // 0. Skip duplicate address check (Privacy rules prevent clients from searching all houses)
+            // We rely on backend constraints or ignore duplicates for now as address is not a unique key.
+            // (Permission denied errors were causing issues here)
 
-                    if (!querySnapshot.empty) {
-                        const existingHouse = querySnapshot.docs[0].data();
-                        setDuplicateHouse({
-                            id: querySnapshot.docs[0].id,
-                            name: existingHouse.name,
-                            manager_id: existingHouse.manager_id
-                        });
-                        setLoading(false);
-                        return;
-                    }
-                } catch (dupErr) {
-                    // If permission denied (users can't search all houses), we skip the check
-                    console.warn("Skipping duplicate check due to permissions:", dupErr);
-                }
-            }
 
             // 1. Create House with Transaction (Atomic Check for "First 50 Free")
             let houseId: string;
