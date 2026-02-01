@@ -68,6 +68,11 @@ export const analytics = {
     trialStarted: () => trackEvent('trial_started'),
     subscribed: (plan: 'monthly' | 'annual') => trackEvent('subscribe', { plan }),
 
+    // Funnel & Errors
+    loginStarted: (method?: string) => trackEvent('login_started', { method }),
+    error: (context: string, message: string, code?: string) => trackEvent('error', { context, message, code }),
+    funnelDropoff: (step: string, reason?: string) => trackEvent('funnel_dropoff', { step_name: step, reason }),
+
     // Generic
     track: (eventName: string, params?: Record<string, any>) => trackEvent(eventName, params),
 };

@@ -56,6 +56,7 @@ export default function SignupPage() {
         // Basic password validation
         if (formData.password.length < 6) {
             setError('Lykilorð verður að vera að minnsta kosti 6 stafir');
+            analytics.error('signup_validation', 'Password too short');
             return;
         }
 
@@ -100,6 +101,7 @@ export default function SignupPage() {
             // "Ghost User" Recovery
             if (err.code === 'auth/email-already-in-use') {
                 logger.warn('SignupPage: Email taken, attempting ghost user recovery...');
+                analytics.error('signup_error', 'Email already in use', err.code);
                 try {
                     // Try to sign in with the provided password
                     const credential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
@@ -139,6 +141,7 @@ export default function SignupPage() {
             } else {
                 logger.error('SignupPage: Signup error:', err);
                 setError(`Villa kom upp við skráningu: ${err.message} (${err.code || 'unknown'})`);
+                analytics.error('signup_error', err.message, err.code);
             }
         } finally {
             setIsLoading(false);

@@ -195,6 +195,8 @@ export default function OnboardingPage() {
         const lat = typeof suggestion.location.lat === 'function' ? suggestion.location.lat() : suggestion.location.lat;
         const lng = typeof suggestion.location.lng === 'function' ? suggestion.location.lng() : suggestion.location.lng;
 
+        analytics.track('address_selected', { source: suggestion.source || 'unknown' });
+
         setHouseData(prev => ({
             ...prev,
             address: suggestion.description,
@@ -217,7 +219,10 @@ export default function OnboardingPage() {
     const prevStep = () => {
         const prevIndex = currentStepIndex - 1;
         if (prevIndex >= 0) {
-            setCurrentStep(steps[prevIndex].id as OnboardingStep);
+            const prevStepId = steps[prevIndex].id;
+            // Track backtracking
+            analytics.funnelDropoff(currentStep, 'back_button');
+            setCurrentStep(prevStepId as OnboardingStep);
         }
     };
 
@@ -280,6 +285,7 @@ export default function OnboardingPage() {
         // Only name is strictly required now
         if (!houseData.name) {
             setError('Vinsamlegast settu inn nafn á húsið');
+            analytics.error('house_creation', 'Missing house name');
             return;
         }
 
@@ -420,6 +426,14 @@ export default function OnboardingPage() {
 
             console.log("House transaction complete. ID:", houseId!);
 
+            // Track key conversion events
+            analytics.onboardingCompleted();
+            if (isFree) {
+                analytics.track('launch_offer_claimed');
+            } else {
+                analytics.trialStarted();
+            }
+
             // 4. Send Welcome Email
             (async () => {
                 try {
@@ -494,7 +508,7 @@ export default function OnboardingPage() {
             } else {
                 setError('Villa kom upp við að búa til hús: ' + (err.message || 'Óþekkt villa'));
             }
-            analytics.track('house_creation_failed', { error: err.message });
+            analytics.error('house_creation', err.message, err.code);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             setLoading(false);

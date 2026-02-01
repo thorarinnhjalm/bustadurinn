@@ -9,6 +9,7 @@ import { auth, googleProvider, facebookProvider, db } from '@/lib/firebase';
 import { LogIn } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import SEO from '@/components/SEO';
+import { analytics } from '@/utils/analytics';
 
 import { useSearchParams } from 'react-router-dom';
 
@@ -40,10 +41,13 @@ export default function LoginPage() {
         e.preventDefault();
         setError('');
         setIsLoading(true);
+        analytics.loginStarted('email');
 
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
+
+            analytics.loginCompleted('email');
 
             // Check if user has super_admin role via RBAC
             const isAdmin = await isSuperAdmin(user.uid);
@@ -57,6 +61,7 @@ export default function LoginPage() {
         } catch (err: any) {
             setError('Rangt netfang eða lykilorð');
             console.error('Login error:', err);
+            analytics.error('login_email', err.message, err.code);
         } finally {
             setIsLoading(false);
         }
@@ -65,6 +70,7 @@ export default function LoginPage() {
     const handleGoogleLogin = async () => {
         setError('');
         setIsLoading(true);
+        analytics.loginStarted('google');
         try {
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
@@ -75,6 +81,7 @@ export default function LoginPage() {
             if (!userDoc.exists()) {
                 // Determine if this is a signup via login page - allow it?
                 // Yes, Google Login acts as signup if needed.
+                analytics.signupCompleted('google');
                 await setDoc(doc(db, 'users', user.uid), {
                     uid: user.uid,
                     email: user.email,
@@ -95,6 +102,7 @@ export default function LoginPage() {
                     navigate('/onboarding');
                 }
             } else {
+                analytics.loginCompleted('google');
                 // Update last login
                 await setDoc(doc(db, 'users', user.uid), {
                     last_login: serverTimestamp()
@@ -113,6 +121,7 @@ export default function LoginPage() {
         } catch (err: any) {
             setError('Villa við innskráningu með Google');
             console.error('Google login error:', err);
+            analytics.error('login_google', err.message, err.code);
         } finally {
             setIsLoading(false);
         }
@@ -121,6 +130,7 @@ export default function LoginPage() {
     const handleFacebookLogin = async () => {
         setError('');
         setIsLoading(true);
+        analytics.loginStarted('facebook');
         try {
             const result = await signInWithPopup(auth, facebookProvider);
             const user = result.user;
@@ -130,6 +140,7 @@ export default function LoginPage() {
 
             if (!userDoc.exists()) {
                 // Create new user profile
+                analytics.signupCompleted('facebook');
                 await setDoc(doc(db, 'users', user.uid), {
                     uid: user.uid,
                     email: user.email,
@@ -150,6 +161,7 @@ export default function LoginPage() {
                     navigate('/onboarding');
                 }
             } else {
+                analytics.loginCompleted('facebook');
                 // Update last login
                 await setDoc(doc(db, 'users', user.uid), {
                     last_login: serverTimestamp()
@@ -168,6 +180,7 @@ export default function LoginPage() {
         } catch (err: any) {
             setError('Villa við innskráningu með Facebook');
             console.error('Facebook login error:', err);
+            analytics.error('login_facebook', err.message, err.code);
         } finally {
             setIsLoading(false);
         }
