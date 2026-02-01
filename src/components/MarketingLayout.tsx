@@ -46,10 +46,7 @@ export default function MarketingLayout({
     const navLinks = [
         { name: 'Eiginleikar', path: '/eiginleikar' },
         { name: 'Handbók', path: '/handbok' },
-        { name: 'Spurt & Svarað', path: '/spurt-og-svarad' },
-        { name: 'Um Okkur', path: '/um-okkur' },
         { name: 'Torgið', path: '/torgid' },
-        { name: 'Hafa samband', path: '/hafa-samband' },
     ];
 
     return (
