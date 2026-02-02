@@ -52,8 +52,26 @@ export default function ForProvidersPage() {
         }
     };
 
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Verktakar og Þjónusta fyrir Sumarhús",
+        "description": "Skráðu þig frítt og fáðu fleiri verkefni í sumarhúsum. Snjómokstur, pípulagnir, smíðavinna og fleira.",
+        "url": "https://www.bustadurinn.is/verktakar",
+        "audience": {
+            "@type": "BusinessAudience",
+            "audienceType": "Contractors, Service Providers"
+        }
+    };
+
     return (
-        <MarketingLayout>
+        <MarketingLayout
+            title="Verktakar og Þjónusta fyrir Sumarhús | Skráðu þig frítt"
+            description="Ertu verktaki eða þjónustuaðili? Skráðu þig frítt á Bústaðurinn.is og fáðu verkefni í sumarhúsum. Snjómokstur, pípulagnir, smíðavinna og fleira."
+            keywords="verktakar, sumarhús, snjómokstur, pípulagnir, smíðavinna, þjónusta, verktakaskráning, iðnaðarmenn"
+            canonical="https://www.bustadurinn.is/verktakar"
+            structuredData={jsonLd}
+        >
             {/* Hero Section */}
             <section className="relative py-20 bg-charcoal text-white overflow-hidden">
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20"></div>
