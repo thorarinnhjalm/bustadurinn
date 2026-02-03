@@ -701,7 +701,7 @@ export default function SettingsPage() {
     }, [userHouseIds, currentStoredHouseId, currentUserId]);
 
     // Allow any owner to edit house settings, not just the designated manager
-    const isManager = house && currentUser && house.owner_ids?.includes(currentUser.uid);
+    const isManager = house && currentUser && (house.owner_ids?.includes(currentUser.uid) || house.manager_id === currentUser.uid);
 
     const handleDeleteHouse = async () => {
         if (!house || !currentUser) return;
@@ -1679,7 +1679,7 @@ export default function SettingsPage() {
                                     )}
 
                                     {/* Invite Section */}
-                                    {house.owner_ids?.includes(currentUser?.uid || '') && (
+                                    {(house.owner_ids?.includes(currentUser?.uid || '') || house.manager_id === currentUser?.uid) && (
                                         <div className="mt-8 pt-6 border-t border-grey-warm">
                                             <h3 className="text-lg font-serif mb-4">Bjóða nýjum aðilum</h3>
                                             <p className="text-sm text-grey-dark mb-4">

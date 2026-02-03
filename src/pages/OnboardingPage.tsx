@@ -526,24 +526,47 @@ export default function OnboardingPage() {
 
         try {
             const token = await auth.currentUser?.getIdToken();
-            const res = await fetch('/api/send-invite', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    emails: inviteEmails,
-                    houseName: houseData.name,
-                    houseId: houseData.id,
-                    inviteCode: houseData.invite_code,
-                    senderName: currentUser?.name || currentUser?.email?.split('@')[0]
-                })
-            });
+            const emailList = inviteEmails.split(',').map(e => e.trim()).filter(e => e.includes('@'));
 
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || 'Gat ekki sent boð');
+            if (emailList.length === 0) {
+                // If user typed something but no valid emails, just move on or warn? 
+                // Let's move on to avoid blocking flow, similar to previous behavior
+                nextStep();
+                return;
+            }
+
+            // Send invites in parallel using the robust invite-member API
+            // This API handles checking if user exists (adds them) or creates a formal pending invitation
+            const results = await Promise.allSettled(emailList.map(email =>
+                fetch('/api/invite-member', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        houseId: houseData.id,
+                        houseName: houseData.name,
+                        senderName: currentUser?.name || currentUser?.email?.split('@')[0],
+                        senderUid: currentUser?.uid
+                    })
+                }).then(async res => {
+                    if (!res.ok) {
+                        const data = await res.json();
+                        throw new Error(data.error || 'Failed');
+                    }
+                    return res.json();
+                })
+            ));
+
+            // Check for failures
+            const failures = results.filter(r => r.status === 'rejected');
+            if (failures.length > 0) {
+                console.error('Some invites failed:', failures);
+                // We don't block the flow for partial failures in onboarding to keep it smooth,
+                // but we could show a toast or log it.
+                // For now, we proceed as the critical path is creating the house.
             }
 
             nextStep();
