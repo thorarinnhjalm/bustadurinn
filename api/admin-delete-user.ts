@@ -1,102 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import admin from 'firebase-admin';
-
-
-// Helper functions inlined to prevent module resolution issues in Vercel
-async function requireAdmin(req: VercelRequest, db: admin.firestore.Firestore): Promise<admin.auth.DecodedIdToken> {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new Error('UNAUTHORIZED: Missing or invalid authorization header');
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-
-    try {
-        const decodedToken = await admin.auth().verifyIdToken(token);
-
-        // Check if user has super_admin role via RBAC
-        const roleDoc = await db.collection('user_roles').doc(decodedToken.uid).get();
-
-        if (!roleDoc.exists || roleDoc.data()?.system_role !== 'super_admin') {
-            throw new Error('FORBIDDEN: Admin access required');
-        }
-
-        return decodedToken;
-    } catch (error: any) {
-        if (error.message?.startsWith('FORBIDDEN')) {
-            throw error;
-        }
-        throw new Error('UNAUTHORIZED: Invalid or expired token');
-    }
-}
-
-function getAuthErrorResponse(error: Error): { status: number; body: any } {
-    if (error.message.startsWith('UNAUTHORIZED')) {
-        return {
-            status: 401,
-            body: { error: 'Unauthorized', message: 'Authentication required' }
-        };
-    }
-
-    if (error.message.startsWith('FORBIDDEN')) {
-        return {
-            status: 403,
-            body: { error: 'Forbidden', message: 'Insufficient permissions' }
-        };
-    }
-
-    console.error('Auth error:', error);
-    return {
-        status: 500,
-        body: { error: 'Internal server error' }
-    };
-}
-
-// Lazy init
-let db: admin.firestore.Firestore | null = null;
-let auth: admin.auth.Auth | null = null;
-
-function initServices() {
-    console.log('Testing InitServices...');
-    if (admin.apps.length > 0) {
-        console.log('Firebase Admin already initialized');
-        db = admin.firestore();
-        auth = admin.auth();
-        return;
-    }
-
-    try {
-        console.log('Initializing Firebase Admin...');
-        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-            console.log('Found FIREBASE_SERVICE_ACCOUNT env var');
-            try {
-                const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-                admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount),
-                    projectId: serviceAccount.project_id
-                });
-                console.log('Initialized with Service Account');
-            } catch (jsonError: any) {
-                console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT:', jsonError.message);
-                throw new Error(`Service Account JSON Parse Error: ${jsonError.message}`);
-            }
-        } else {
-            console.log('No FIREBASE_SERVICE_ACCOUNT, trying applicationDefault');
-            // Fallback for local or managed environment
-            admin.initializeApp({
-                credential: admin.credential.applicationDefault(),
-                projectId: 'bustadurinn-is'
-            });
-        }
-    } catch (error: any) {
-        console.error('❌ Firebase Admin initialization error:', error);
-        throw new Error(`Firebase Init Failed: ${error.message}`);
-    }
-
-    if (!db) db = admin.firestore();
-    if (!auth) auth = admin.auth();
-}
+import { db, auth, admin, initializeFirebaseAdmin } from './utils/firebaseAdmin';
+import { verifyAdminToken } from './utils/admin-auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -104,19 +8,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        initServices();
+        initializeFirebaseAdmin();
 
         if (!db || !auth) {
             throw new Error('Internal services failed to initialize');
         }
 
         // 🔒 SECURITY: Verify admin authentication
-        try {
-            await requireAdmin(req, db);
-        } catch (authError: any) {
-            const errorResponse = getAuthErrorResponse(authError);
-            return res.status(errorResponse.status).json(errorResponse.body);
-        }
+        const decodedToken = await verifyAdminToken(req, res);
+        if (!decodedToken) return;
 
         const { uid } = req.body;
 

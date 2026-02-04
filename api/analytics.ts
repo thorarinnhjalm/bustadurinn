@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
+import admin from 'firebase-admin';
+import { verifyAdminToken } from './utils/admin-auth';
 
 import fs from 'fs';
 import path from 'path';
@@ -23,6 +25,10 @@ interface AnalyticsData {
 // MOCK_DATA removed as it was unused and causing lint errors
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    // 0. Security Check
+    const decodedToken = await verifyAdminToken(req, res);
+    if (!decodedToken) return;
+
     const { period = '30d' } = req.query;
 
     // 1. Check for configuration

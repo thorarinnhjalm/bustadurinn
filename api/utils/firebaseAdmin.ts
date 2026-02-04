@@ -24,6 +24,17 @@ export function initializeFirebaseAdmin() {
                 credential: admin.credential.cert(serviceAccount),
                 projectId: serviceAccount.project_id
             });
+        } else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+            // Support for direct env vars (Vercel / .env.local)
+            const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+            admin.initializeApp({
+                credential: admin.credential.cert({
+                    projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'bustadurinn-599f2',
+                    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                    privateKey: privateKey,
+                }),
+                projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'bustadurinn-599f2'
+            });
         } else {
             // Fallback to application default credentials (for local dev)
             admin.initializeApp({
