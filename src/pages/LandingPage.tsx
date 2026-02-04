@@ -129,7 +129,7 @@ export default function LandingPage() {
                                 </div>
                             </div>
 
-                            <h1 className="text-6xl md:text-7xl lg:text-[5.5rem] font-serif font-medium leading-[1.1] mb-8 text-charcoal tracking-tight">
+                            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-[5.5rem] font-serif font-medium leading-[1.1] mb-8 text-charcoal tracking-tight">
                                 Sumarbústaðurinn, <br />
                                 <span className="text-amber italic">eins og hann á að vera.</span>
                             </h1>
