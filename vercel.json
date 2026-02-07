@@ -17,12 +17,7 @@
             "permanent": true
         }
     ],
-    "rewrites": [
-        {
-            "source": "/((?!api/).*)",
-            "destination": "/index.html"
-        }
-    ],
+    "rewrites": [],
     "headers": [
         {
             "source": "/(.*)",
