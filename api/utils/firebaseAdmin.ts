@@ -19,11 +19,17 @@ export function initializeFirebaseAdmin() {
         }
 
         if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+            let config = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
+            // Handle cases where Vercel might add extra quotes or escaping
+            if (config.startsWith("'") && config.endsWith("'")) config = config.slice(1, -1);
+            if (config.startsWith('"') && config.endsWith('"')) config = config.slice(1, -1);
+
+            const serviceAccount = JSON.parse(config);
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
                 projectId: serviceAccount.project_id
             });
+            console.log('✅ Firebase Admin initialized with Service Account JSON');
         } else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
             // Support for direct env vars (Vercel / .env.local)
             const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
@@ -35,21 +41,21 @@ export function initializeFirebaseAdmin() {
                 }),
                 projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'bustadurinn-599f2'
             });
+            console.log('✅ Firebase Admin initialized with Individual Env Vars');
         } else {
             // Fallback to application default credentials (for local dev)
             admin.initializeApp({
                 credential: admin.credential.applicationDefault(),
                 projectId: 'bustadurinn-is'
             });
+            console.log('ℹ️ Firebase Admin initialized with Application Default Credentials');
         }
 
         isInitialized = true;
-        console.log('✅ Firebase Admin initialized successfully');
-    } catch (error) {
-        console.error('❌ Firebase Admin initialization error:', error);
-        console.error('❌ Firebase Admin initialization error:', error);
-        // Do NOT throw here, or the entire function crashes (FUNCTION_INVOCATION_FAILED)
-        // We let it continue so the API handler can return a proper 500 error.
+    } catch (error: any) {
+        console.error('❌ Firebase Admin initialization error:', error.message);
+        if (error.stack) console.error(error.stack);
+        // Do NOT set isInitialized = true here, let retry happen or fail gracefully later
     }
 }
 

@@ -101,6 +101,7 @@ export default function SuperAdminPage() {
 
     // Audit State
     const [orphans, setOrphans] = useState<any[]>([]);
+    const [stuckUsers, setStuckUsers] = useState<any[]>([]);
     const [auditLoading, setAuditLoading] = useState(false);
 
 
@@ -1026,6 +1027,7 @@ export default function SuperAdminPage() {
 
             if (res.ok) {
                 setOrphans(data.orphans || []);
+                setStuckUsers(data.stuckUsers || []);
             } else {
                 throw new Error(data.error || 'Failed to fetch orphans');
             }
@@ -1528,7 +1530,7 @@ export default function SuperAdminPage() {
                                         <div className="flex items-center justify-between mb-4">
                                             <h4 className="font-bold text-orange-700 flex items-center gap-2">
                                                 <AlertTriangle className="w-4 h-4" />
-                                                Stuck Users (No House)
+                                                Stuck Users (No House) ({stuckUsers.length})
                                             </h4>
                                         </div>
                                         <p className="text-sm text-stone-600 mb-4">
@@ -1536,11 +1538,49 @@ export default function SuperAdminPage() {
                                             They likely dropped off during the "Create House" step.
                                         </p>
                                         <div className="max-h-60 overflow-y-auto bg-white rounded border border-orange-100">
-                                            {/* We need to fetch/filter these too, usually passed from API as well. 
-                                                 Note: Current state 'orphans' only has orphans. We need to update state to hold stuck users too (logic was added to API but not frontend state yet) */}
-                                            <div className="p-4 text-center text-stone-400 text-sm">
-                                                (See "Stuck Users" in API response - implementation pending state update)
-                                            </div>
+                                            {stuckUsers.length === 0 ? (
+                                                <div className="p-4 text-center text-stone-400 text-sm">No stuck users found. ✅</div>
+                                            ) : (
+                                                <table className="w-full text-left text-xs">
+                                                    <thead className="bg-stone-50 sticky top-0">
+                                                        <tr>
+                                                            <th className="p-2">Name / Email</th>
+                                                            <th className="p-2">Created</th>
+                                                            <th className="p-2">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {stuckUsers.map(u => (
+                                                            <tr key={u.uid} className="border-b border-stone-100">
+                                                                <td className="p-2">
+                                                                    <div className="font-bold">{u.name}</div>
+                                                                    <div className="text-[10px] font-mono text-stone-500">{u.email}</div>
+                                                                </td>
+                                                                <td className="p-2 text-stone-500">{new Date(u.created).toLocaleDateString()}</td>
+                                                                <td className="p-2">
+                                                                    <div className="flex gap-2">
+                                                                        <button
+                                                                            onClick={() => handleImpersonate(u as any)}
+                                                                            className="px-2 py-1 bg-amber/10 text-amber rounded hover:bg-amber hover:text-charcoal"
+                                                                            title="Start onboarding for them"
+                                                                        >
+                                                                            Impersonate
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleSendRecoveryEmail(u as any)}
+                                                                            disabled={actionLoading === `recovery-${u.uid}`}
+                                                                            className="px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100"
+                                                                            title="Send Finish Setup email"
+                                                                        >
+                                                                            Contact
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

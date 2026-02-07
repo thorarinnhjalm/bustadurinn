@@ -17,16 +17,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!decodedToken) return; // Response handled in helper
 
         // 1. Fetch Auth Users (Limit 1000)
-        // Note: listUsers() returns UserRecord[]
-        const listUsersResult = await auth.listUsers(1000);
-        const authUsers = listUsersResult.users;
+        let authUsers: any[] = [];
+        try {
+            const listUsersResult = await auth.listUsers(1000);
+            authUsers = listUsersResult.users;
+        } catch (authError: any) {
+            console.error('Audit Error (Auth):', authError);
+            return res.status(500).json({
+                error: 'Failed to fetch users from Firebase Auth',
+                details: authError.message
+            });
+        }
 
         // 2. Fetch Firestore Users
-        const usersSnap = await db.collection('users').get();
         const firestoreUsers = new Map();
-        usersSnap.forEach(doc => {
-            firestoreUsers.set(doc.id, doc.data());
-        });
+        try {
+            const usersSnap = await db.collection('users').get();
+            usersSnap.forEach((doc: any) => {
+                firestoreUsers.set(doc.id, doc.data());
+            });
+        } catch (dbError: any) {
+            console.error('Audit Error (Firestore):', dbError);
+            return res.status(500).json({
+                error: 'Failed to fetch user profiles from Firestore',
+                details: dbError.message
+            });
+        }
 
         // 3. Analyze
         const orphans = [];
@@ -55,8 +71,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
         }
 
-        // Sort
-        const sortByDate = (a: any, b: any) => new Date(b.created).getTime() - new Date(a.created).getTime();
+        // Sort - with safety for missing dates
+        const sortByDate = (a: any, b: any) => {
+            const dateA = a.created ? new Date(a.created).getTime() : 0;
+            const dateB = b.created ? new Date(b.created).getTime() : 0;
+            return dateB - dateA;
+        };
         orphans.sort(sortByDate);
         stuckUsers.sort(sortByDate);
 
@@ -72,10 +92,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
 
     } catch (error: any) {
-        console.error('Audit API Error:', error);
+        console.error('Global Audit API Error:', error);
         return res.status(500).json({
-            error: error.message,
-            details: error.stack
+            error: 'Unexpected server error during audit',
+            details: error.message
         });
     }
 }
