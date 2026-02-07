@@ -1,32 +1,26 @@
 import { initializeFirebaseAdmin, getDb } from './utils/firebaseAdmin.js';
 
 export default async function handler(req, res) {
-    let firebase_status = 'not_attempted';
-    let firebase_info = {};
+    console.log('Health Check v26 START');
+    let info = {
+        version: 'v26-forced-push',
+        time: new Date().toISOString(),
+        node: process.version,
+        env: {
+            NODE_ENV: process.env.NODE_ENV,
+            FB_SA_LEN: process.env.FIREBASE_SERVICE_ACCOUNT?.length || 0,
+            FB_PROJ: process.env.VITE_FIREBASE_PROJECT_ID || 'missing'
+        }
+    };
 
     try {
+        console.log('Attempting Firebase Init...');
         initializeFirebaseAdmin();
         const db = getDb();
-        firebase_status = db ? 'initialized' : 'failed_to_get_db';
-
-        firebase_info = {
-            sa_exists: !!process.env.FIREBASE_SERVICE_ACCOUNT,
-            sa_length: process.env.FIREBASE_SERVICE_ACCOUNT?.length || 0,
-            project_id: process.env.VITE_FIREBASE_PROJECT_ID || 'missing'
-        };
+        info.firebase = db ? 'initialized' : 'failed';
     } catch (e) {
-        firebase_status = 'error';
-        firebase_info.error = e.message;
+        info.firebase_error = e.message;
     }
 
-    return res.status(200).json({
-        status: 'ok',
-        version: 'v25-diag',
-        timestamp: new Date().toISOString(),
-        node_version: process.version,
-        firebase: {
-            status: firebase_status,
-            info: firebase_info
-        }
-    });
+    return res.status(200).json(info);
 }
