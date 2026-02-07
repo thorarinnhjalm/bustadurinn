@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
         return res.status(200).json({
             status: 'ok',
-            version: 'v28-fixed',
+            version: 'v29-lazy',
             node: process.version,
             firebase: {
                 initialized: !!db,

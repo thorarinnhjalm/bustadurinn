@@ -1,18 +1,15 @@
-import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth as getAuthLib } from 'firebase-admin/auth';
-
 let isInitialized = false;
 let lastError: string | null = null;
-let app: App | null = null;
+let _admin: any = null;
 
 export function initializeFirebaseAdmin() {
     if (isInitialized) return;
 
     try {
-        const existingApps = getApps();
-        if (existingApps.length > 0) {
-            app = existingApps[0];
+        // Dynamic require to avoid top-level load weight
+        _admin = require('firebase-admin');
+
+        if (_admin.apps.length > 0) {
             isInitialized = true;
             return;
         }
@@ -21,18 +18,20 @@ export function initializeFirebaseAdmin() {
         if (sa && sa.trim().length > 10) {
             try {
                 let saString = sa.trim();
+                // Strip wrapper quotes if they exist
                 if (saString.startsWith('"') && saString.endsWith('"')) {
                     saString = saString.substring(1, saString.length - 1);
                 }
 
                 const serviceAccount = JSON.parse(saString);
 
+                // Handle newlines in private key
                 if (serviceAccount.private_key) {
                     serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
                 }
 
-                app = initializeApp({
-                    credential: cert(serviceAccount),
+                _admin.initializeApp({
+                    credential: _admin.credential.cert(serviceAccount),
                     projectId: serviceAccount.project_id
                 });
                 console.log('Firebase Admin: Initialized successfully');
@@ -56,8 +55,7 @@ export const getLastError = () => lastError;
 export const getDb = () => {
     initializeFirebaseAdmin();
     try {
-        const apps = getApps();
-        return apps.length > 0 ? getFirestore() : null;
+        return _admin && _admin.apps.length > 0 ? _admin.firestore() : null;
     } catch (e) {
         console.error('getDb Error:', e);
         return null;
@@ -67,8 +65,7 @@ export const getDb = () => {
 export const getAuth = () => {
     initializeFirebaseAdmin();
     try {
-        const apps = getApps();
-        return apps.length > 0 ? getAuthLib() : null;
+        return _admin && _admin.apps.length > 0 ? _admin.auth() : null;
     } catch (e) {
         console.error('getAuth Error:', e);
         return null;
