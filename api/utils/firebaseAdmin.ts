@@ -1,6 +1,6 @@
 import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
+import { getAuth as getAuthLib } from 'firebase-admin/auth';
 
 let isInitialized = false;
 let lastError: string | null = null;
@@ -68,14 +68,9 @@ export const getAuth = () => {
     initializeFirebaseAdmin();
     try {
         const apps = getApps();
-        return apps.length > 0 ? getAuthService() : null;
+        return apps.length > 0 ? getAuthLib() : null;
     } catch (e) {
         console.error('getAuth Error:', e);
         return null;
     }
 };
-
-// Internal helper to avoid name collision with the import
-function getAuthService() {
-    return getAuth();
-}
