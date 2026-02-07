@@ -1,4 +1,12 @@
 {
+    "functions": {
+        "api/**/*.ts": {
+            "runtime": "vercel-node@latest"
+        },
+        "api/**/*.js": {
+            "runtime": "vercel-node@latest"
+        }
+    },
     "redirects": [
         {
             "source": "/:path*",
