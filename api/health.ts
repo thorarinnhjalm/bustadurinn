@@ -16,6 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({
         status: 'ok',
+        version: 'v8',
         timestamp: new Date().toISOString(),
         node_version: process.version,
         firebase: {
