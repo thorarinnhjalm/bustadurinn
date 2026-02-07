@@ -59,41 +59,38 @@ export function initializeFirebaseAdmin() {
     }
 }
 
-// Auto-initialize on import
-initializeFirebaseAdmin();
+// REMOVED top-level call to allow lazy initialization
+// initializeFirebaseAdmin();
 
 // Export admin directly
 export { admin };
 
 /**
- * Defensive database accessor
+ * Defensive database accessor (Lazy Load)
  */
-export const db = (() => {
+export const getDb = () => {
+    initializeFirebaseAdmin();
     try {
-        // Only attempt to access firestore if there's at least one app
-        if (admin.apps.length === 0) {
-            console.warn('⚠️ db accessed before Firebase Admin was initialized.');
-            return null as any;
-        }
+        if (admin.apps.length === 0) return null;
         return admin.firestore();
     } catch (e: any) {
-        console.warn('⚠️ Failed to export db:', e.message);
-        return null as any;
+        console.error('⚠️ Failed to get firestore:', e.message);
+        return null;
     }
-})();
+};
 
 /**
- * Defensive auth accessor
+ * Defensive auth accessor (Lazy Load)
  */
-export const auth = (() => {
+export const getAuth = () => {
+    initializeFirebaseAdmin();
     try {
-        if (admin.apps.length === 0) {
-            console.warn('⚠️ auth accessed before Firebase Admin was initialized.');
-            return null as any;
-        }
+        if (admin.apps.length === 0) return null;
         return admin.auth();
     } catch (e: any) {
-        console.warn('⚠️ Failed to export auth:', e.message);
-        return null as any;
+        console.error('⚠️ Failed to get auth:', e.message);
+        return null;
     }
-})();
+};
+
+

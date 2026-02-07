@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as admin from 'firebase-admin';
-import { auth, db, initializeFirebaseAdmin } from './firebaseAdmin';
+import { getAuth, getDb, initializeFirebaseAdmin } from './firebaseAdmin';
 
 const ADMIN_EMAILS = [
     'thorarinnhjalmarsson@gmail.com',
@@ -24,6 +24,7 @@ export async function verifyAdminToken(req: VercelRequest, res: VercelResponse):
     const token = authHeader.split('Bearer ')[1];
 
     try {
+        const auth = getAuth();
         if (!auth) throw new Error('Auth service not initialized');
         const decodedToken = await auth.verifyIdToken(token);
 
@@ -36,6 +37,7 @@ export async function verifyAdminToken(req: VercelRequest, res: VercelResponse):
         }
 
         // 2. RBAC Check (Database)
+        const db = getDb();
         if (db) {
             const roleDoc = await db.collection('user_roles').doc(decodedToken.uid).get();
             if (roleDoc.exists && roleDoc.data()?.system_role === 'super_admin') {
