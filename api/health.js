@@ -8,12 +8,11 @@ export default async function handler(req, res) {
 
         return res.status(200).json({
             status: 'ok',
-            version: 'v27-final',
+            version: 'v28-fixed',
             node: process.version,
             firebase: {
                 initialized: !!db,
-                error: error,
-                apps: (global as any).adminAppsCount || 0 // fallback if needed
+                error: error
             }
         });
     } catch (e) {
