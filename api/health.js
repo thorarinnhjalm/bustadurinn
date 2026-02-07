@@ -1,26 +1,22 @@
-import { initializeFirebaseAdmin, getDb } from './utils/firebaseAdmin.js';
+import { initializeFirebaseAdmin, getDb, getLastError } from './utils/firebaseAdmin.js';
 
 export default async function handler(req, res) {
-    console.log('Health Check v26 START');
-    let info = {
-        version: 'v26-forced-push',
-        time: new Date().toISOString(),
-        node: process.version,
-        env: {
-            NODE_ENV: process.env.NODE_ENV,
-            FB_SA_LEN: process.env.FIREBASE_SERVICE_ACCOUNT?.length || 0,
-            FB_PROJ: process.env.VITE_FIREBASE_PROJECT_ID || 'missing'
-        }
-    };
-
     try {
-        console.log('Attempting Firebase Init...');
         initializeFirebaseAdmin();
         const db = getDb();
-        info.firebase = db ? 'initialized' : 'failed';
-    } catch (e) {
-        info.firebase_error = e.message;
-    }
+        const error = getLastError();
 
-    return res.status(200).json(info);
+        return res.status(200).json({
+            status: 'ok',
+            version: 'v27-final',
+            node: process.version,
+            firebase: {
+                initialized: !!db,
+                error: error,
+                apps: (global as any).adminAppsCount || 0 // fallback if needed
+            }
+        });
+    } catch (e) {
+        return res.status(500).json({ error: e.message });
+    }
 }

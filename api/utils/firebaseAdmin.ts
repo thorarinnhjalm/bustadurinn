@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 
 let isInitialized = false;
+let lastError: string | null = null;
 
 export function initializeFirebaseAdmin() {
     if (isInitialized) return;
@@ -14,29 +15,40 @@ export function initializeFirebaseAdmin() {
         const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
         if (sa && sa.trim().length > 10) {
             try {
-                const serviceAccount = JSON.parse(sa.trim());
-                console.log('Firebase Admin: Attempting initializeApp with project:', serviceAccount.project_id);
+                // Remove potential quotes if the whole JSON was wrapped
+                let saString = sa.trim();
+                if (saString.startsWith('"') && saString.endsWith('"')) {
+                    saString = saString.substring(1, saString.length - 1);
+                }
+
+                const serviceAccount = JSON.parse(saString);
+
+                // Ensure private key newlines are handled correctly
+                if (serviceAccount.private_key) {
+                    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+                }
+
                 admin.initializeApp({
                     credential: admin.credential.cert(serviceAccount),
                     projectId: serviceAccount.project_id
                 });
-                console.log('Firebase Admin: Initialized via Service Account');
+                console.log('Firebase Admin: Initialized successfully');
+                isInitialized = true;
             } catch (jsonErr: any) {
-                console.error('Firebase Admin: JSON Parse Error:', jsonErr.message);
-                console.log('Firebase Admin: SA starts with:', sa.trim().substring(0, 10));
+                lastError = `JSON/Init Error: ${jsonErr.message}`;
+                console.error('Firebase Admin: Initialization failure:', jsonErr.message);
             }
         } else {
-            console.log('Firebase Admin: No valid credentials found. SA Length:', sa?.length || 0);
-            if (sa) {
-                console.log('Firebase Admin: SA value sample:', sa.substring(0, 5) + '...' + sa.substring(sa.length - 5));
-            }
+            lastError = `Env var missing or too short. Length: ${sa?.length || 0}`;
+            isInitialized = true; // Mark as attempted so we don't spam
         }
-
-        isInitialized = true;
     } catch (e: any) {
-        console.error('Firebase Admin: Initialization crash:', e.message);
+        lastError = `Outer Crash: ${e.message}`;
+        console.error('Firebase Admin: Outer initialization crash:', e.message);
     }
 }
+
+export const getLastError = () => lastError;
 
 export const getDb = () => {
     initializeFirebaseAdmin();
