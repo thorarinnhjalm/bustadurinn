@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import admin from 'firebase-admin';
+import * as admin from 'firebase-admin';
 import { auth, db, initializeFirebaseAdmin } from './firebaseAdmin';
 
 const ADMIN_EMAILS = [

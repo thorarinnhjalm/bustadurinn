@@ -3,7 +3,7 @@
  * Ensures firebase-admin is initialized exactly once across all API routes
  */
 
-import admin from 'firebase-admin';
+import * as admin from 'firebase-admin';
 
 let isInitialized = false;
 
@@ -55,31 +55,45 @@ export function initializeFirebaseAdmin() {
     } catch (error: any) {
         console.error('❌ Firebase Admin initialization error:', error.message);
         if (error.stack) console.error(error.stack);
-        // Do NOT set isInitialized = true here, let retry happen or fail gracefully later
+        // Do NOT set isInitialized = true here
     }
 }
 
 // Auto-initialize on import
 initializeFirebaseAdmin();
 
-// Export admin and commonly used services
+// Export admin directly
 export { admin };
 
-// Safe exports that won't crash the module if init failed
+/**
+ * Defensive database accessor
+ */
 export const db = (() => {
     try {
+        // Only attempt to access firestore if there's at least one app
+        if (admin.apps.length === 0) {
+            console.warn('⚠️ db accessed before Firebase Admin was initialized.');
+            return null as any;
+        }
         return admin.firestore();
-    } catch (e) {
-        console.warn('⚠️ Failed to export db (likely init failed):', e);
+    } catch (e: any) {
+        console.warn('⚠️ Failed to export db:', e.message);
         return null as any;
     }
 })();
 
+/**
+ * Defensive auth accessor
+ */
 export const auth = (() => {
     try {
+        if (admin.apps.length === 0) {
+            console.warn('⚠️ auth accessed before Firebase Admin was initialized.');
+            return null as any;
+        }
         return admin.auth();
-    } catch (e) {
-        console.warn('⚠️ Failed to export auth (likely init failed):', e);
+    } catch (e: any) {
+        console.warn('⚠️ Failed to export auth:', e.message);
         return null as any;
     }
 })();
