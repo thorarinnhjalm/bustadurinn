@@ -241,7 +241,6 @@ export default function SignupPage() {
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-serif mb-2">Bústaðurinn.is</h1>
                     <p className="text-grey-mid">Búa til aðgang</p>
-                    <div className="badge mt-4 bg-amber text-charcoal font-bold border-amber">Frítt í heilt ár (Fyrstu 50)</div>
                 </div>
 
                 <div className="card">

@@ -12,6 +12,7 @@ import { useAppStore } from '@/store/appStore';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import Testimonials from '@/components/landing/Testimonials';
 import HolidayPriorityVisualizer from '@/components/landing/HolidayPriorityVisualizer';
+import MarketingMap from '@/components/MarketingMap';
 import { feedbackService } from '@/services/feedbackService';
 import type { Feedback } from '@/types/models';
 // NewsletterPopup moved to MarketingLayout
@@ -114,15 +115,6 @@ export default function LandingPage() {
                         <div className="w-full lg:w-1/2 relative">
                             {/* Badge */}
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8 animate-fade-in">
-                                {(remainingSlots > 0) && (
-                                    <div className="inline-flex items-center gap-2 bg-red-600/90 backdrop-blur-sm text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-[0_4px_14px_rgba(220,38,38,0.3)] border border-red-500/20">
-                                        <span className="relative flex h-2 w-2">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-200 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                                        </span>
-                                        Aðeins {remainingSlots} pláss eftir í frítt ár!
-                                    </div>
-                                )}
                                 <div className="inline-flex items-center gap-2 bg-white/60 text-stone-600 border border-stone-200/50 px-4 py-1.5 rounded-full text-xs font-medium backdrop-blur-md shadow-sm">
                                     <Sparkles className="w-3 h-3 text-amber" />
                                     Ný kynslóð af bústaðakerfi
@@ -630,29 +622,22 @@ export default function LandingPage() {
                             </button>
                         </div>
 
-                        {/* Annual Plan Card - Early Bird Edition */}
+                        {/* Annual Plan Card */}
                         <div className="card relative ring-4 ring-amber transform hover:-translate-y-1 transition-transform bg-white overflow-hidden">
-                            <div className="absolute top-0 right-0 bg-red-600 text-white px-8 py-1 rotate-45 translate-x-8 translate-y-4 text-[10px] font-bold uppercase tracking-widest shadow-sm">
-                                TAKMARKAÐ
-                            </div>
-                            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                                <span className="bg-amber text-charcoal px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">Stofn-tilboð</span>
-                            </div>
                             <div className="text-center mb-8 pt-4">
                                 <h3 className="text-2xl font-serif mb-2">Ársáskrift</h3>
                                 <div className="flex flex-col items-center">
-                                    <div className="text-stone-400 line-through text-lg">4.990 kr</div>
-                                    <div className="text-5xl font-bold font-serif mb-2 text-charcoal">0 kr <span className="text-base font-normal text-grey-mid">/ fyrsta árið</span></div>
+                                    <div className="text-5xl font-bold font-serif mb-2 text-charcoal">4.990 kr <span className="text-base font-normal text-grey-mid">/ ári</span></div>
                                 </div>
                                 <p className="text-sm text-charcoal/80 bg-amber/10 inline-block px-3 py-1 rounded">
-                                    Aðeins krónur 0 greiddar í dag
+                                    Besti kosturinn
                                 </p>
                             </div>
 
                             <ul className="space-y-4 mb-8">
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                    <span className="font-bold">Innifalið í "Fyrstu 50" tilboði</span>
+                                    <span className="font-bold">Einföldun á rekstri</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
@@ -664,20 +649,25 @@ export default function LandingPage() {
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                    <span>Frítt í 12 mánuði</span>
+                                    <span>Allar uppfærslur innifaldar</span>
                                 </li>
                             </ul>
 
                             <button onClick={() => navigate('/signup')} className="btn btn-primary bg-amber w-full py-4 text-lg shadow-lg shadow-amber/20 border-0">
-                                Tryggja mér pláss (Ókeypis)
+                                Velja Ársáskrift
                             </button>
                             <p className="text-[10px] text-center mt-4 text-stone-400">
-                                Eftir 1 ár kostar áskriftin 4.990 kr. á ári. <br />
-                                Engin greiðslukortaupplýsingar krafist í dag.
+                                Endurnýjast sjálfkrafa. <br />
+                                Engin binding, hægt að segja upp hvenær sem er.
                             </p>
                         </div>
                     </div>
                 </div>
+            </section>
+
+            {/* Marketing Map Section */}
+            <section className="relative h-[600px] w-full bg-stone-100 border-b border-stone-200">
+                <MarketingMap fakeCount={77} excludeReykjavik={true} className="h-full w-full" />
             </section>
 
             {/* Newsletter Section */}

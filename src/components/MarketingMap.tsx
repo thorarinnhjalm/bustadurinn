@@ -12,14 +12,22 @@ interface MapHouse {
         lng: number;
     };
     address?: string;
+    isFake?: boolean;
 }
 
 interface MarketingMapProps {
     className?: string;
     showOverlay?: boolean;
+    fakeCount?: number;
+    excludeReykjavik?: boolean;
 }
 
-export default function MarketingMap({ className = "h-screen", showOverlay = true }: MarketingMapProps) {
+export default function MarketingMap({
+    className = "h-screen",
+    showOverlay = true,
+    fakeCount,
+    excludeReykjavik
+}: MarketingMapProps) {
     const [loading, setLoading] = useState(true);
     const [houses, setHouses] = useState<MapHouse[]>([]);
     const mapRef = useRef<HTMLDivElement>(null);
@@ -38,6 +46,53 @@ export default function MarketingMap({ className = "h-screen", showOverlay = tru
         };
     };
 
+    // Generate fake houses clustered around popular areas
+    const generateFakeHouses = (count: number): MapHouse[] => {
+        const clusters = [
+            { lat: 64.0416, lng: -20.6975, weight: 0.3 }, // Grímsnes
+            { lat: 64.5165, lng: -21.4645, weight: 0.2 }, // Skorradalur
+            { lat: 64.7001, lng: -20.8700, weight: 0.15 }, // Húsafell
+            { lat: 64.2255, lng: -20.6587, weight: 0.2 }, // Brekkuskógur/Laugarvatn
+            { lat: 64.3000, lng: -21.6000, weight: 0.15 }, // Kjós/Hvalfjörður
+        ];
+
+        const fakeGL: MapHouse[] = [];
+
+        for (let i = 0; i < count; i++) {
+            // Select cluster based on weight
+            const rand = Math.random();
+            let accumulatedWeight = 0;
+            let selectedCluster = clusters[0];
+
+            for (const cluster of clusters) {
+                accumulatedWeight += cluster.weight;
+                if (rand <= accumulatedWeight) {
+                    selectedCluster = cluster;
+                    break;
+                }
+            }
+
+            // Scatter around cluster center (Gaussian-ish)
+            // Stdev approx 0.05 deg lat, 0.1 deg lng
+            const u = 1 - Math.random(); // Converting [0,1) to (0,1]
+            const v = Math.random();
+            const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+
+            const latOffset = z * 0.04;
+            const lngOffset = z * 0.08 * (Math.random() > 0.5 ? 1 : -1); // Random spread
+
+            fakeGL.push({
+                id: `fake-${i}`,
+                location: {
+                    lat: selectedCluster.lat + latOffset,
+                    lng: selectedCluster.lng + lngOffset
+                },
+                isFake: true
+            });
+        }
+        return fakeGL;
+    };
+
     useEffect(() => {
         const fetchHouses = async () => {
             try {
@@ -45,12 +100,23 @@ export default function MarketingMap({ className = "h-screen", showOverlay = tru
                 const q = query(collection(db, 'houses'));
                 const snapshot = await getDocs(q);
 
-                const validHouses: MapHouse[] = [];
+                let validHouses: MapHouse[] = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     if (data.location && data.location.lat && data.location.lng) {
                         // Filter out obviously invalid coordinates (e.g. 0,0)
                         if (data.location.lat !== 0 || data.location.lng !== 0) {
+
+                            // Check exclusion for Reykjavík (approx box)
+                            if (excludeReykjavik) {
+                                // Broad box around Reykjavík + Mosfellsbær + Hafnarfjörður
+                                const isRvk =
+                                    data.location.lat > 64.05 && data.location.lat < 64.20 &&
+                                    data.location.lng > -22.10 && data.location.lng < -21.60;
+
+                                if (isRvk) return;
+                            }
+
                             // Apply coordinate fuzzing for privacy
                             const fuzzed = fuzzCoordinate(data.location.lat, data.location.lng);
                             validHouses.push({
@@ -62,6 +128,13 @@ export default function MarketingMap({ className = "h-screen", showOverlay = tru
                     }
                 });
 
+                // Generate fake data if needed
+                if (fakeCount && validHouses.length < fakeCount) {
+                    const needed = fakeCount - validHouses.length;
+                    const fakeData = generateFakeHouses(needed);
+                    validHouses = [...validHouses, ...fakeData];
+                }
+
                 setHouses(validHouses);
             } catch (error) {
                 console.error("Error fetching houses for map:", error);
@@ -71,7 +144,7 @@ export default function MarketingMap({ className = "h-screen", showOverlay = tru
         };
 
         fetchHouses();
-    }, []);
+    }, [fakeCount, excludeReykjavik]);
 
     // Load Google Maps Script
     useEffect(() => {
