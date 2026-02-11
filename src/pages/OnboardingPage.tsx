@@ -43,23 +43,6 @@ export default function OnboardingPage() {
 
     const [duplicateHouse, setDuplicateHouse] = useState<{ id: string; name: string; manager_id: string } | null>(null);
     const [joinRequestSent, setJoinRequestSent] = useState(false);
-    const [launchOfferCount, setLaunchOfferCount] = useState<number | null>(null);
-
-    // Fetch launch offer status
-    useEffect(() => {
-        const fetchOfferStatus = async () => {
-            try {
-                const docRef = doc(db, 'system', 'promotions');
-                const snap = await getDoc(docRef);
-                if (snap.exists()) {
-                    setLaunchOfferCount(snap.data().launch_offer_count || 0);
-                }
-            } catch (e) {
-                console.error("Error fetching offer status", e);
-            }
-        };
-        fetchOfferStatus();
-    }, []);
 
     const steps = [
         { id: 'welcome', label: 'Velkomin' },
@@ -303,31 +286,19 @@ export default function OnboardingPage() {
             // (Permission denied errors were causing issues here)
 
 
-            // 1. Create House with Transaction (Atomic Check for "First 50 Free")
+            // 1. Create House with Standard Trial (30 Days)
             let houseId: string;
             let inviteCode: string;
-            let isFree = false;
 
             await runTransaction(db, async (transaction) => {
-                // Check promotion status
-                const promoRef = doc(db, 'system', 'promotions');
                 const userRef = doc(db, 'users', currentUser.uid);
 
-                const promoDoc = await transaction.get(promoRef);
                 // We don't strictly need to read the user doc for arrayUnion, but it's good practice in transactions
                 // to fail fast if user doesn't exist.
                 const userDoc = await transaction.get(userRef);
                 if (!userDoc.exists()) {
                     throw new Error("User does not exist");
                 }
-
-                let currentCount = 0;
-                if (promoDoc.exists()) {
-                    currentCount = promoDoc.data().launch_offer_count || 0;
-                }
-
-                // Determine status (Reduced availability by 20 internally)
-                isFree = (currentCount + 20) < 50;
 
                 // Prepare House Data
                 inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -336,13 +307,7 @@ export default function OnboardingPage() {
 
                 const startDate = new Date();
                 const endDate = new Date(startDate);
-                if (isFree) {
-                    endDate.setFullYear(endDate.getFullYear() + 1); // 1 Year Free
-                    // Increment counter
-                    transaction.set(promoRef, { launch_offer_count: currentCount + 1 }, { merge: true });
-                } else {
-                    endDate.setDate(endDate.getDate() + 30); // 30 Day Trial
-                }
+                endDate.setDate(endDate.getDate() + 30); // 30 Day Trial (Standard)
 
                 const newHouseData = {
                     name: houseData.name,
@@ -353,7 +318,7 @@ export default function OnboardingPage() {
                     invite_code: inviteCode,
                     holiday_mode: 'fairness',
                     seo_slug: houseData.name.toLowerCase().replace(/\s+/g, '-'),
-                    subscription_status: isFree ? 'active' : 'trial', // Active if free
+                    subscription_status: 'trial',
                     subscription_end: endDate,
                     created_at: new Date(),
                     updated_at: new Date()
@@ -378,10 +343,8 @@ export default function OnboardingPage() {
                 manager_id: currentUser.uid,
                 owner_ids: [currentUser.uid],
                 invite_code: inviteCode!,
-                subscription_status: isFree ? 'active' : 'trial',
-                subscription_end: isFree
-                    ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-                    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                subscription_status: 'trial',
+                subscription_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
             };
 
             // Initialize Subcollections (Post-Transaction, non-critical)
@@ -399,7 +362,7 @@ export default function OnboardingPage() {
 
                 // 2. Initial Log Entry
                 await addDoc(collection(db, 'houses', houseId!, 'internal_logs'), {
-                    text: isFree ? 'Hús stofnað (Fékk 1 ár frítt!).' : 'Hús stofnað.',
+                    text: 'Hús stofnað.',
                     house_id: houseId!,
                     user_id: currentUser.uid,
                     user_name: currentUser.name || currentUser.email,
@@ -428,11 +391,7 @@ export default function OnboardingPage() {
 
             // Track key conversion events
             analytics.onboardingCompleted();
-            if (isFree) {
-                analytics.track('launch_offer_claimed');
-            } else {
-                analytics.trialStarted();
-            }
+            analytics.trialStarted();
 
             // 4. Send Welcome Email
             (async () => {
@@ -675,12 +634,7 @@ export default function OnboardingPage() {
 
                     {currentStep === 'welcome' && (
                         <div className="text-center py-8 animate-fade-in relative">
-                            {/* Urgency Badge */}
-                            {launchOfferCount !== null && (launchOfferCount + 20) < 50 && (
-                                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg animate-pulse whitespace-nowrap z-10">
-                                    🔥 Aðeins {50 - (launchOfferCount + 20)} pláss eftir í frítt ár!
-                                </div>
-                            )}
+                            {/* Removed Urgency Badge */}
 
                             <Home className="w-16 h-16 mx-auto mb-6 text-amber" />
                             <h2 className="mb-4">Velkomin í Bústaðurinn.is</h2>
@@ -689,15 +643,7 @@ export default function OnboardingPage() {
                                 Þetta tekur bara nokkrar mínútur.
                             </p>
 
-                            {/* Offer Info */}
-                            {launchOfferCount !== null && (launchOfferCount + 20) < 50 && (
-                                <div className="bg-amber/10 border border-amber/30 rounded-lg p-4 mb-8 max-w-md mx-auto">
-                                    <p className="text-amber-800 font-medium text-sm">
-                                        <strong>Starttilboð í gangi:</strong> Fyrstu 50 húsin fá kerfið frítt í heilt ár.
-                                        Kláraðu skráningu núna til að tryggja þér pláss!
-                                    </p>
-                                </div>
-                            )}
+                            {/* Removed Launch Offer Info */}
 
                             <button onClick={nextStep} className="btn btn-primary w-full md:w-auto px-8 relative overflow-hidden group">
                                 <span className="relative z-10">Byrja uppsetningu</span>

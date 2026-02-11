@@ -1,7 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import {
     Calendar, CheckCircle, ArrowRight, Users,
     Home, Plus, Shield, Bell, Sparkles, CheckCircle2,
@@ -19,20 +17,10 @@ import type { Feedback } from '@/types/models';
 
 export default function LandingPage() {
     const navigate = useNavigate();
-    const [remainingSlots, setRemainingSlots] = useState<number>(12); // Default to 12 as safe fallback
     const [reviews, setReviews] = useState<Feedback[]>([]);
     const [avgRating, setAvgRating] = useState<number>(5);
 
     useEffect(() => {
-        // Fetch remaining slots
-        getDoc(doc(db, 'system', 'promotions')).then(snap => {
-            if (snap.exists()) {
-                const count = snap.data().launch_offer_count || 0;
-                // Reduce availability by 20 (internal offset)
-                setRemainingSlots(Math.max(0, 50 - (count + 20)));
-            }
-        }).catch(e => console.error("Failed to fetch promo count", e));
-
         // Fetch reviews
         feedbackService.getFeaturedFeedback().then(data => {
             setReviews(data);
