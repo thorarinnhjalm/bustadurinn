@@ -40,7 +40,12 @@ service cloud.firestore {
     }
 
     // PUBLIC ACCESS
-    match /guest_views/{id} { allow read: if true; }
+    match /guest_views/{id} { 
+      allow read: if true;
+      allow create: if isHouseMember(request.resource.data.houseId);
+      allow delete: if isHouseMember(resource.data.houseId);
+      allow update: if isHouseMember(resource.data.houseId);
+    }
     match /guestbook/{id} { allow read, create: if true; }
     
     // 🔒 SECURITY FIX: Protected System Collections
@@ -87,6 +92,7 @@ service cloud.firestore {
                        request.resource.data.owner_ids.hasAny([request.auth.uid]);
       
       allow update: if request.auth != null && (
+        resource.data.owner_ids.hasAny([request.auth.uid]) ||
         resource.data.manager_id == request.auth.uid ||
         isSuperAdmin()
       );
