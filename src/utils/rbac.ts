@@ -1,0 +1,103 @@
+/**
+ * RBAC Utility Functions
+ * Permission checking helpers
+ */
+
+import { SYSTEM_PERMISSIONS, HOUSE_PERMISSIONS } from '@/types/rbac';
+import type { SystemRole, HouseRole } from '@/types/rbac';
+
+/**
+ * Check if a system role has a specific permission
+ */
+export function checkSystemPermission(role: SystemRole, permission: string): boolean {
+    const rolePermissions = SYSTEM_PERMISSIONS[role];
+
+    if (!rolePermissions) return false;
+
+    // Super admin has all permissions
+    if ((rolePermissions as readonly string[]).includes('all')) return true;
+
+    return (rolePermissions as readonly string[]).includes(permission);
+}
+
+/**
+ *Check if a house role has a specific permission
+ */
+export function checkHousePermission(role: HouseRole, permission: string): boolean {
+    const rolePermissions = HOUSE_PERMISSIONS[role];
+
+    if (!rolePermissions) return false;
+
+    return (rolePermissions as readonly string[]).includes(permission);
+}
+
+/**
+ * Generic permission check with hierarchical support
+ * Works for both system and house roles
+ */
+export function checkPermission(
+    role: SystemRole | HouseRole,
+    requiredRole: SystemRole | HouseRole,
+    permission: string
+): boolean {
+    const isSystemRole = (r: string): r is SystemRole =>
+        ['super_admin', 'support_admin', 'regular_user'].includes(r);
+    const isHouseRole = (r: string): r is HouseRole =>
+        ['owner', 'admin', 'member', 'viewer'].includes(r);
+
+    // Check if user role has sufficient level for house roles
+    if (isHouseRole(role) && isHouseRole(requiredRole)) {
+        // Check hierarchical level first
+        if (!hasRoleLevel(role, requiredRole)) return false;
+        // Then check if the required role has the permission
+        return checkHousePermission(requiredRole, permission);
+    }
+
+    // For system roles, require exact match
+    if (isSystemRole(role) && role !== requiredRole) return false;
+
+    // Check if it's a system role
+    if (isSystemRole(role)) {
+        return checkSystemPermission(role as SystemRole, permission);
+    }
+
+    // Otherwise it's a house role (exact match)
+    if (role !== requiredRole) return false;
+    return checkHousePermission(role as HouseRole, permission);
+}
+
+/**
+ * Check if user is at least a certain role level
+ */
+export function hasRoleLevel(
+    userRole: HouseRole | undefined,
+    minimumRole: HouseRole
+): boolean {
+    const roleHierarchy: HouseRole[] = ['viewer', 'member', 'admin', 'owner'];
+
+    if (!userRole) return false;
+
+    const userLevel = roleHierarchy.indexOf(userRole);
+    const minLevel = roleHierarchy.indexOf(minimumRole);
+
+    return userLevel >= minLevel;
+}
+
+/**
+ * Check if user is super admin
+ */
+export function isSuperAdmin(systemRole: SystemRole): boolean {
+    return systemRole === 'super_admin';
+}
+
+/**
+ * Check if user is any kind of admin (system or house)
+ */
+export function isAnyAdmin(systemRole: SystemRole, houseRole?: HouseRole): boolean {
+    return (
+        isSuperAdmin(systemRole) ||
+        systemRole === 'support_admin' ||
+        houseRole === 'owner' ||
+        houseRole === 'admin'
+    );
+}

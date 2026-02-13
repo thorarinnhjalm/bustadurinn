@@ -1,0 +1,600 @@
+/* Typography - Google Fonts loaded in index.html for better performance */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================================================================
+   BÚSTAÐURINN.IS - SCANDI-MINIMALIST DESIGN SYSTEM
+   ============================================================================= */
+
+/* =============================================================================
+   BASE LAYER - Custom base styles
+   ============================================================================= */
+
+@layer base {
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    @apply overflow-x-hidden;
+  }
+
+  body {
+    @apply font-sans text-charcoal bg-bone;
+    width: 100%;
+    position: relative;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif font-semibold text-charcoal;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    @apply text-5xl mb-8;
+  }
+
+  h2 {
+    @apply text-4xl mb-6;
+  }
+
+  h3 {
+    @apply text-3xl mb-4;
+  }
+
+  h4 {
+    @apply text-2xl mb-4;
+  }
+}
+
+/* =============================================================================
+   COMPONENTS LAYER - Reusable components
+   ============================================================================= */
+
+@layer components {
+
+  /* Buttons - Premium Scandi Style */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-sans text-sm font-medium border-none cursor-pointer transition-all;
+    border-radius: 6px;
+    white-space: nowrap;
+    transition-duration: 200ms;
+  }
+
+  .btn-primary {
+    @apply bg-charcoal text-bone border border-charcoal;
+  }
+
+  .btn-primary:hover {
+    @apply bg-amber text-charcoal border-amber;
+  }
+
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-charcoal border border-stone-300;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-stone-50 border-stone-400;
+  }
+
+  .btn-secondary:active {
+    transform: scale(0.95);
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-charcoal px-4 py-2 border border-transparent;
+  }
+
+  .btn-ghost:hover {
+    @apply bg-stone-50;
+  }
+
+  .btn:disabled {
+    @apply opacity-50 cursor-not-allowed;
+    transform: none;
+  }
+
+  /* Cards - Borders over Shadows */
+  .card {
+    @apply bg-white rounded-lg p-8 transition-all border border-stone-200;
+    transition-duration: 200ms;
+  }
+
+  .card:hover {
+    @apply border-stone-300 shadow-sm;
+    transform: translateY(-1px);
+  }
+
+  /* Form Inputs - Clean and Minimal */
+  .input {
+    @apply w-full px-4 py-3 font-sans text-base text-stone-900 bg-white border border-stone-300 transition-all outline-none;
+    border-radius: 6px;
+    transition-duration: 200ms;
+    font-size: 16px;
+    /* Prevents iOS zoom */
+    line-height: 1.5;
+  }
+
+  .input:focus {
+    @apply border-charcoal ring-2 ring-charcoal/10;
+  }
+
+  .input::placeholder {
+    @apply text-stone-400;
+  }
+
+  /* Select elements - ensure perfect alignment */
+  select.input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a4642' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-stone-700 mb-2;
+    letter-spacing: -0.01em;
+  }
+
+  /* Badge - Subtle and Refined */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 text-xs font-medium bg-amber/10 text-amber border border-amber/20 rounded-md;
+  }
+
+  /* Layout Helpers */
+  .section {
+    @apply py-24 px-6;
+  }
+
+  .split-screen {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-0 min-h-screen;
+  }
+
+  /* Toast Notification */
+  .toast {
+    @apply fixed bottom-6 right-6 bg-white border border-stone-200 rounded-lg p-4 shadow-lg;
+    animation: slideInUp 200ms ease-out;
+    z-index: 9999;
+  }
+
+  .toast-success {
+    @apply border-green-200 bg-green-50;
+  }
+
+  .toast-error {
+    @apply border-red-200 bg-red-50;
+  }
+
+  /* Skeleton Loader */
+  .skeleton {
+    @apply bg-stone-200 animate-pulse rounded;
+  }
+
+  /* Premium Link Style */
+  a,
+  .link {
+    @apply text-charcoal transition-colors duration-200;
+    text-decoration: none;
+  }
+
+  a:hover,
+  .link:hover {
+    @apply text-amber;
+  }
+}
+
+/* =============================================================================
+   UTILITIES LAYER - Custom utilities
+   ============================================================================= */
+
+@layer utilities {
+  .text-grey-warm {
+    color: #e8e4df;
+  }
+
+  .text-grey-mid {
+    color: #8a8580;
+  }
+
+  .text-grey-dark {
+    color: #4a4642;
+  }
+
+  .bg-bone\/95 {
+    background-color: rgba(253, 252, 248, 0.95);
+  }
+
+  .bg-amber\/10 {
+    background-color: rgba(232, 176, 88, 0.1);
+  }
+
+  .border-grey-warm {
+    border-color: #e8e4df;
+  }
+
+  .border-amber\/30 {
+    border-color: rgba(232, 176, 88, 0.3);
+  }
+
+  .hover\:bg-amber-dark:hover {
+    background-color: #d49b3d;
+  }
+
+  .bg-gradient-charcoal {
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+
+    100% {
+      transform: translateY(0px);
+    }
+  }
+
+  @keyframes pulse-slow {
+
+    0%,
+    100% {
+      opacity: 0.6;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 300ms ease-out;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float 6s ease-in-out infinite;
+    animation-delay: 3s;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 8s ease-in-out infinite;
+  }
+}
+
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+@media (max-width: 768px) {
+
+  /* Typography adjustments for mobile */
+  h1 {
+    @apply text-3xl mb-4;
+  }
+
+  h2 {
+    @apply text-2xl mb-3;
+  }
+
+  h3 {
+    @apply text-xl mb-2;
+  }
+
+  /* Spacing adjustments */
+  .section {
+    @apply py-12 px-4;
+  }
+
+  /* Button touch targets (min 44px height) */
+  .btn {
+    @apply px-6 py-3 text-sm;
+    min-height: 44px;
+  }
+
+  /* Card padding for mobile */
+  .card {
+    @apply p-6 rounded-lg;
+  }
+
+  /* Form inputs */
+  .input {
+    @apply px-4 py-3 text-base;
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+  }
+
+  /* Container spacing */
+  .container {
+    @apply px-4;
+  }
+
+  /* Grid adjustments */
+  .grid {
+    @apply gap-4;
+  }
+
+  /* Hide desktop-only elements */
+  .hidden-mobile {
+    display: none !important;
+  }
+
+  /* Full width on mobile */
+  .mobile-full {
+    width: 100% !important;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 375px) {
+  h1 {
+    @apply text-2xl;
+  }
+
+  .btn {
+    @apply px-4 py-2.5 text-sm;
+  }
+
+  .card {
+    @apply p-4;
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .min-h-screen {
+    min-height: auto !important;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+
+  /* Larger touch targets */
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Remove hover states on touch */
+  .btn:hover,
+  .card:hover {
+    transform: none;
+  }
+
+  /* Add active states instead */
+  .btn:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  .card:active {
+    transform: scale(0.99);
+  }
+}
+
+@media (max-width: 768px) {
+  .rbc-calendar {
+    font-size: 14px;
+    min-height: 500px;
+    width: 100% !important;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .rbc-header {
+    padding: 12px 4px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .rbc-month-view .rbc-date-cell {
+    padding: 4px;
+    font-size: 12px;
+  }
+
+  /* Make month view events just small colored dots/bars on mobile to save space */
+  /* The user can switch to List view for details */
+  .rbc-month-view .rbc-event {
+    padding: 0;
+    font-size: 0;
+    min-height: 6px;
+    height: 6px;
+    width: 6px;
+    border-radius: 50%;
+    margin: 1px auto;
+    overflow: hidden;
+    position: relative;
+    /* We need to override the inline styles from the component for mobile */
+    background-color: currentColor !important;
+  }
+
+  /* We need to ensure the color passes through or we rely on the component inline style background-color */
+  /* Since inline styles have high specificity, the component's background color will work for the background. */
+  /* But we want to hide the text */
+  .rbc-month-view .rbc-event-content {
+    display: none;
+  }
+
+  .rbc-month-row {
+    /* Allow content to flow naturally without forced scrollbars */
+  }
+
+  /* Toolbar adjustments */
+  .rbc-toolbar {
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .rbc-toolbar-label {
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding: 10px 0;
+  }
+
+  .rbc-btn-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .rbc-btn-group button {
+    flex: 1;
+    padding: 8px;
+    font-size: 14px;
+  }
+
+
+  /* Agenda view - better for mobile */
+  .rbc-agenda-view {
+    font-size: 14px;
+    background: transparent;
+    /* Remove default background */
+    border: none;
+  }
+
+  /* Hide the table header in agenda view on mobile */
+  .rbc-agenda-view table.rbc-agenda-table thead {
+    display: none;
+  }
+
+  .rbc-agenda-table {
+    width: 100%;
+    border-spacing: 0 8px;
+    /* Add spacing between rows */
+    border-collapse: separate;
+  }
+
+  /* Hide date/time columns to create a "Card" look */
+  .rbc-agenda-date-cell,
+  .rbc-agenda-time-cell {
+    display: none;
+  }
+
+  /* Make the event cell full width and card-like */
+  .rbc-agenda-event-cell {
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  /* Add date header before the card? */
+  .rbc-agenda-view .rbc-date-cell {
+    /* We can't easily insert content here via CSS only without structural changes */
+    /* So we rely on the custom component to show date info if needed */
+  }
+
+  /* Style for the custom agenda event */
+  .custom-agenda-event {
+    width: 100%;
+  }
+
+  /* Month dots improvement */
+  .rbc-month-view .rbc-event {
+    margin: 1px auto;
+    width: 6px;
+    height: 6px;
+  }
+
+  /* Hide 'show more' link on mobile month view to reduce clutter */
+  .rbc-month-view .rbc-show-more {
+    font-size: 10px;
+    color: #9ca3af;
+    background: transparent;
+    padding: 0;
+    margin-top: 2px;
+  }
+
+  /* Ensure toolbar doesn't break */
+  .rbc-toolbar {
+    flex-wrap: wrap;
+  }
+
+  /* Remove the default today background if it clashes */
+  .rbc-today {
+    background-color: #f3f4f6;
+  }
+}
+
+/* Desktop Calendar Interactivity Enhancements */
+@media (min-width: 769px) {
+  .rbc-day-bg {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .rbc-day-bg:hover {
+    background-color: rgba(232, 176, 88, 0.05) !important;
+  }
+
+  .rbc-event {
+    cursor: pointer;
+    transition: transform 0.1s ease, filter 0.1s ease;
+  }
+
+  .rbc-event:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
+
+  .rbc-date-cell {
+    cursor: pointer;
+  }
+}

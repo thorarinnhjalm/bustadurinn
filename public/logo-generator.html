@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="is">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bústaðurinn Marketing Assets</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #1c1917;
+        }
+
+        h2 {
+            font-family: 'Fraunces', serif;
+            font-size: 22px;
+            margin: 40px 0 20px;
+            color: #1c1917;
+            border-bottom: 2px solid #D97706;
+            padding-bottom: 10px;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .logo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .logo-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .logo-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            background:
+                linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+                linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .image-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #1c1917;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+
+        .download-btn:hover {
+            background: #D97706;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Bústaðurinn Marketing Assets</h1>
+    <p>Download logos and screenshots for marketing materials.</p>
+
+    <!-- LOGOS SECTION -->
+    <h2>🏠 Logos</h2>
+    <div class="logo-grid">
+        <!-- Full Logo -->
+        <div class="logo-card">
+            <h3>Full Logo (Icon + Name)</h3>
+            <div class="canvas-container">
+                <canvas id="logo-full" width="600" height="120"></canvas>
+            </div>
+            <button class="download-btn" onclick="downloadCanvas('logo-full', 'bustadurinn-logo-full.png')">
+                ⬇ Download PNG
+            </button>
+        </div>
+
+        <!-- Icon Only - White BG -->
+        <div class="logo-card">
+            <h3>Icon Only (White Background)</h3>
+            <div class="canvas-container">
+                <canvas id="logo-icon-white" width="200" height="200"></canvas>
+            </div>
+            <button class="download-btn" onclick="downloadCanvas('logo-icon-white', 'bustadurinn-icon-white.png')">
+                ⬇ Download PNG
+            </button>
+        </div>
+
+        <!-- Icon Only - Transparent -->
+        <div class="logo-card">
+            <h3>Icon Only (Transparent)</h3>
+            <div class="canvas-container">
+                <canvas id="logo-icon-transparent" width="200" height="200"></canvas>
+            </div>
+            <button class="download-btn"
+                onclick="downloadCanvas('logo-icon-transparent', 'bustadurinn-icon-transparent.png')">
+                ⬇ Download PNG
+            </button>
+        </div>
+
+        <!-- Icon Only - Dark BG -->
+        <div class="logo-card">
+            <h3>Icon Only (Dark Background)</h3>
+            <div class="canvas-container">
+                <canvas id="logo-icon-dark" width="200" height="200"></canvas>
+            </div>
+            <button class="download-btn" onclick="downloadCanvas('logo-icon-dark', 'bustadurinn-icon-dark.png')">
+                ⬇ Download PNG
+            </button>
+        </div>
+    </div>
+
+    <!-- SCREENSHOTS SECTION -->
+    <h2>📱 System Screenshots</h2>
+    <div class="logo-grid">
+        <!-- Dashboard -->
+        <div class="logo-card">
+            <h3>Dashboard</h3>
+            <div class="image-container">
+                <img src="/screenshots/dashboard.png" alt="Dashboard" id="img-dashboard">
+            </div>
+            <a class="download-btn" href="/screenshots/dashboard.png" download="bustadurinn-dashboard.png">
+                ⬇ Download PNG
+            </a>
+        </div>
+
+        <!-- Calendar -->
+        <div class="logo-card">
+            <h3>Calendar / Bókunardagatal</h3>
+            <div class="image-container">
+                <img src="/screenshots/calendar.png" alt="Calendar" id="img-calendar">
+            </div>
+            <a class="download-btn" href="/screenshots/calendar.png" download="bustadurinn-calendar.png">
+                ⬇ Download PNG
+            </a>
+        </div>
+
+        <!-- Finance -->
+        <div class="logo-card">
+            <h3>Finance / Fjármál</h3>
+            <div class="image-container">
+                <img src="/screenshots/finance.png" alt="Finance" id="img-finance">
+            </div>
+            <a class="download-btn" href="/screenshots/finance.png" download="bustadurinn-finance.png">
+                ⬇ Download PNG
+            </a>
+        </div>
+
+        <!-- Tasks -->
+        <div class="logo-card">
+            <h3>Tasks / Verkefni</h3>
+            <div class="image-container">
+                <img src="/screenshots/tasks.png" alt="Tasks" id="img-tasks">
+            </div>
+            <a class="download-btn" href="/screenshots/tasks.png" download="bustadurinn-tasks.png">
+                ⬇ Download PNG
+            </a>
+        </div>
+
+        <!-- Guest Settings -->
+        <div class="logo-card">
+            <h3>Guest Link / Gestaaðgangur</h3>
+            <div class="image-container">
+                <img src="/screenshots/guest-settings.png" alt="Guest Settings" id="img-guest">
+            </div>
+            <a class="download-btn" href="/screenshots/guest-settings.png" download="bustadurinn-guest-settings.png">
+                ⬇ Download PNG
+            </a>
+        </div>
+
+        <!-- Hero Image -->
+        <div class="logo-card">
+            <h3>Hero Image (Summerhouse)</h3>
+            <div class="image-container">
+                <img src="/hero_summer_house.webp" alt="Hero Summerhouse" id="img-hero">
+            </div>
+            <a class="download-btn" href="/hero_summer_house.webp" download="bustadurinn-hero.webp">
+                ⬇ Download WEBP
+            </a>
+        </div>
+
+        <!-- Mobile App Screenshot -->
+        <div class="logo-card">
+            <h3>Mobile App Screenshot</h3>
+            <div class="image-container">
+                <img src="/mobile-app-screenshot.jpg" alt="Mobile App" id="img-mobile" style="max-height: 400px;">
+            </div>
+            <a class="download-btn" href="/mobile-app-screenshot.jpg" download="bustadurinn-mobile-app.jpg">
+                ⬇ Download JPG
+            </a>
+        </div>
+
+        <!-- OG Preview -->
+        <div class="logo-card">
+            <h3>Social Preview (og-preview)</h3>
+            <div class="image-container">
+                <img src="/og-preview.png" alt="OG Preview" id="img-og">
+            </div>
+            <a class="download-btn" href="/og-preview.png" download="bustadurinn-og-preview.png">
+                ⬇ Download PNG
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Wait for font to load
+        document.fonts.ready.then(() => {
+            drawFullLogo();
+            drawIconWhite();
+            drawIconTransparent();
+            drawIconDark();
+        });
+
+        function drawAFrame(ctx, x, y, size, strokeColor, strokeWidth) {
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = strokeWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Triangle
+            ctx.beginPath();
+            ctx.moveTo(x + size / 2, y);
+            ctx.lineTo(x, y + size);
+            ctx.lineTo(x + size, y + size);
+            ctx.closePath();
+            ctx.stroke();
+
+            // Door line
+            ctx.beginPath();
+            ctx.moveTo(x + size / 2, y + size * 0.6);
+            ctx.lineTo(x + size / 2, y + size);
+            ctx.stroke();
+        }
+
+        function drawFullLogo() {
+            const canvas = document.getElementById('logo-full');
+            const ctx = canvas.getContext('2d');
+
+            // Clear (transparent)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw A-frame icon
+            drawAFrame(ctx, 20, 10, 100, '#D97706', 6);
+
+            // Draw text
+            ctx.font = '600 56px Fraunces';
+            ctx.fillStyle = '#1c1917';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Bústaðurinn', 140, 62);
+        }
+
+        function drawIconWhite() {
+            const canvas = document.getElementById('logo-icon-white');
+            const ctx = canvas.getContext('2d');
+
+            // White background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw A-frame icon centered
+            drawAFrame(ctx, 40, 30, 120, '#D97706', 8);
+        }
+
+        function drawIconTransparent() {
+            const canvas = document.getElementById('logo-icon-transparent');
+            const ctx = canvas.getContext('2d');
+
+            // Clear (transparent)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw A-frame icon centered
+            drawAFrame(ctx, 40, 30, 120, '#D97706', 8);
+        }
+
+        function drawIconDark() {
+            const canvas = document.getElementById('logo-icon-dark');
+            const ctx = canvas.getContext('2d');
+
+            // Dark background
+            ctx.fillStyle = '#1c1917';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw A-frame icon centered
+            drawAFrame(ctx, 40, 30, 120, '#D97706', 8);
+        }
+
+        function downloadCanvas(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+
+            // Convert canvas to blob
+            canvas.toBlob(function (blob) {
+                // Create a URL for the blob
+                const url = URL.createObjectURL(blob);
+
+                // Create a temporary link element
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+
+                // Append to body, click, and remove
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Clean up the URL
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1 @@
+const React = require('react'); const db = require('./src/lib/firebase'); const { collection, getCountFromServer, getFirestore } = require('firebase/firestore'); const { initializeApp } = require('firebase/app');

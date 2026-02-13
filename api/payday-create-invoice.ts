@@ -1,0 +1,232 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+interface InvoiceLineItem {
+    productCode: string;
+    quantity: number;
+    unitPrice: number;
+    description: string;
+    discount?: number;
+}
+
+interface CreateInvoiceRequest {
+    customerName: string;
+    customerEmail: string;
+    customerPhone?: string;
+    customerKennitala?: string;
+    lineItems: InvoiceLineItem[];
+    dueDate?: string;
+    notes?: string;
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+    // Only allow POST
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // 🔒 SECURITY: Verify admin authentication
+    try {
+        const { requireAdmin } = await import('./utils/apiAuth.js');
+        await requireAdmin(req);
+    } catch (authError: any) {
+        const { getAuthErrorResponse } = await import('./utils/apiAuth.js');
+        const errorResponse = getAuthErrorResponse(authError);
+        return res.status(errorResponse.status).json(errorResponse.body);
+    }
+
+    const clientId = process.env.VITE_PAYDAY_CLIENT_ID;
+    const clientSecret = process.env.PAYDAY_SECRET_KEY;
+    const tokenUrl = process.env.PAYDAY_TOKEN_URL || 'https://api.payday.is/auth/token';
+
+    if (!clientId || !clientSecret) {
+        return res.status(500).json({ error: 'Missing Payday credentials in environment' });
+    }
+
+    try {
+        // Step 1: Get access token
+        const tokenResponse = await fetch(tokenUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Api-Version': 'alpha',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                clientId: clientId,
+                clientSecret: clientSecret
+            })
+        });
+
+        if (!tokenResponse.ok) {
+            const errorData = await tokenResponse.json();
+            return res.status(tokenResponse.status).json({
+                error: 'Failed to authenticate with Payday',
+                details: errorData
+            });
+        }
+
+        const tokenData = await tokenResponse.json();
+        const accessToken = tokenData.accessToken || tokenData.access_token;
+
+        if (!accessToken) {
+            return res.status(500).json({ error: 'No access token received from Payday' });
+        }
+
+        // Step 2: Get or create customer
+        const invoiceData: CreateInvoiceRequest = req.body;
+
+        // Validate invoice data
+        if (!invoiceData.lineItems || !Array.isArray(invoiceData.lineItems)) {
+            return res.status(400).json({ error: 'lineItems must be an array' });
+        }
+
+        if (invoiceData.lineItems.length === 0) {
+            return res.status(400).json({ error: 'At least one line item required' });
+        }
+
+        if (invoiceData.lineItems.length > 100) {
+            return res.status(400).json({ error: 'Maximum 100 line items allowed' });
+        }
+
+        // Validate each line item
+        for (const item of invoiceData.lineItems) {
+            if (!item.description || typeof item.description !== 'string') {
+                return res.status(400).json({ error: 'Each line item must have a description' });
+            }
+
+            if (item.description.length > 500) {
+                return res.status(400).json({ error: 'Description must be 500 characters or less' });
+            }
+
+            if (typeof item.quantity !== 'number' || item.quantity <= 0 || item.quantity > 10000) {
+                return res.status(400).json({ error: 'Quantity must be between 1 and 10,000' });
+            }
+
+            if (typeof item.unitPrice !== 'number' || item.unitPrice < 0 || item.unitPrice > 10000000) {
+                return res.status(400).json({ error: 'Unit price must be between 0 and 10,000,000' });
+            }
+
+            if (item.discount !== undefined && (typeof item.discount !== 'number' || item.discount < 0 || item.discount > 100)) {
+                return res.status(400).json({ error: 'Discount must be between 0 and 100' });
+            }
+        }
+
+        // First, try to find existing customer by email
+        const customersResponse = await fetch('https://api.payday.is/customers', {
+            method: 'GET',
+            headers: {
+                'Api-Version': 'alpha',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        let customerId = null;
+
+        if (customersResponse.ok) {
+            const customersData = await customersResponse.json();
+            // Handle both array and object responses
+            const customersList = Array.isArray(customersData) ? customersData : (customersData.items || customersData.data || customersData.customers || []);
+            const existingCustomer = customersList.find((c: any) => c.email === invoiceData.customerEmail);
+            if (existingCustomer) {
+                customerId = existingCustomer.id;
+            }
+        }
+
+        // If customer doesn't exist, create it
+        if (!customerId) {
+            const createCustomerResponse = await fetch('https://api.payday.is/customers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Api-Version': 'alpha',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({
+                    name: invoiceData.customerName,
+                    email: invoiceData.customerEmail,
+                    phone: invoiceData.customerPhone || '',
+                    kennitala: invoiceData.customerKennitala || ''
+                })
+            });
+
+            if (!createCustomerResponse.ok) {
+                const errorData = await createCustomerResponse.json();
+                return res.status(createCustomerResponse.status).json({
+                    error: 'Failed to create customer in Payday',
+                    details: errorData
+                });
+            }
+
+            const customerData = await createCustomerResponse.json();
+            customerId = customerData.id;
+        }
+
+        // Step 3: Create invoice with proper format
+        const today = new Date();
+        const dueDate = invoiceData.dueDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        const invoicePayload = {
+            customer: {
+                id: customerId
+            },
+            description: invoiceData.notes || `Bústaðurinn.is - Mánaðarleg áskrift`,
+            invoiceDate: today.toISOString().split('T')[0],
+            dueDate: dueDate,
+            finalDueDate: dueDate,
+            currencyCode: 'ISK',
+            sendEmail: true,
+            createClaim: true,
+            lines: invoiceData.lineItems.map(item => ({
+                description: item.description,
+                quantity: item.quantity,
+                unitPriceIncludingVat: item.unitPrice,
+                vatPercentage: 0, // Company not VAT registered
+                discountPercentage: item.discount || 0,
+                productId: item.productCode // This should be a GUID from Payday
+            }))
+        };
+
+        console.log('Creating invoice with payload:', JSON.stringify(invoicePayload, null, 2));
+
+        const invoiceResponse = await fetch('https://api.payday.is/invoices', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Api-Version': 'alpha',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(invoicePayload)
+        });
+
+        const invoiceResult = await invoiceResponse.json();
+
+        if (!invoiceResponse.ok) {
+            console.error('Payday invoice error:', invoiceResult);
+            return res.status(invoiceResponse.status).json({
+                error: 'Failed to create invoice',
+                details: invoiceResult
+            });
+        }
+
+        // Return success with invoice details
+        return res.status(200).json({
+            success: true,
+            invoice: invoiceResult,
+            customerId: customerId,
+            message: 'Invoice created successfully and sent to customer'
+        });
+
+    } catch (error: any) {
+        console.error('Payday invoice creation error:', error);
+
+        // Don't expose stack traces in production
+        const errorResponse = process.env.NODE_ENV === 'production'
+            ? { error: 'Internal server error' }
+            : { error: error.message, stack: error.stack };
+
+        return res.status(500).json(errorResponse);
+    }
+}
