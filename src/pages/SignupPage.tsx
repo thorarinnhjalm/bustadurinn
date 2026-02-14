@@ -169,6 +169,7 @@ export default function SignupPage() {
                     avatar: user.photoURL || '',
                     house_ids: [],
                     utm_params: utmParams || null,
+                    trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
                     created_at: serverTimestamp(),
                     last_login: serverTimestamp()
                 });
@@ -210,6 +211,7 @@ export default function SignupPage() {
                     avatar: user.photoURL || '',
                     house_ids: [],
                     utm_params: utmParams || null,
+                    trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
                     created_at: serverTimestamp(),
                     last_login: serverTimestamp()
                 });
