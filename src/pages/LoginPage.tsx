@@ -84,6 +84,7 @@ export default function LoginPage() {
                 analytics.signupCompleted('google');
                 await setDoc(doc(db, 'users', user.uid), {
                     uid: user.uid,
+                    trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
                     email: user.email,
                     name: user.displayName || '',
                     avatar: user.photoURL || '',
@@ -143,6 +144,7 @@ export default function LoginPage() {
                 analytics.signupCompleted('facebook');
                 await setDoc(doc(db, 'users', user.uid), {
                     uid: user.uid,
+                    trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
                     email: user.email,
                     name: user.displayName || '',
                     avatar: user.photoURL || '',

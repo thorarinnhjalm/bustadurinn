@@ -47,6 +47,7 @@ export default function MarketingLayout({
         { name: 'Eiginleikar', path: '/eiginleikar' },
         { name: 'Handbók', path: '/handbok' },
         { name: 'Torgið', path: '/torgid' },
+        { name: 'Fyrir Verktaka', path: '/verktakar' },
     ];
 
     return (

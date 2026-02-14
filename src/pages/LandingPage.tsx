@@ -128,7 +128,7 @@ export default function LandingPage() {
                                     </div>
                                     <div className="text-left">
                                         <div className="text-xs text-white/60 font-medium uppercase tracking-wider">Byrjaðu strax</div>
-                                        <div className="font-bold">Stofna Húsið Mitt</div>
+                                        <div className="font-bold">Stofna Húsið (30 dagar frítt)</div>
                                     </div>
                                 </button>
 
@@ -351,7 +351,7 @@ export default function LandingPage() {
                                     onClick={() => navigate('/verktakar')}
                                     className="btn btn-ghost border border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg"
                                 >
-                                    Ertu verktaki?
+                                    Skráðu þjónustu (Frítt)
                                 </button>
                             </div>
                         </div>

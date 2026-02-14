@@ -85,6 +85,7 @@ export default function SignupPage() {
                 name: formData.name || '',
                 house_ids: [],
                 utm_params: utmParams || null,
+                trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
                 created_at: serverTimestamp(),
                 last_login: serverTimestamp()
             });
@@ -120,6 +121,7 @@ export default function SignupPage() {
                             name: formData.name || '', // Use the name they just typed
                             house_ids: [],
                             utm_params: utmParams || null,
+                            trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
                             created_at: serverTimestamp(),
                             last_login: serverTimestamp()
                         });
@@ -293,7 +295,7 @@ export default function SignupPage() {
                             disabled={isLoading}
                         >
                             <UserPlus className="w-5 h-5" />
-                            {isLoading ? 'Býr til aðgang...' : 'Búa til aðgang'}
+                            {isLoading ? 'Býr til aðgang...' : 'Stofna aðgang (30 dagar frítt)'}
                         </button>
 
                         <div className="text-center text-sm text-grey-mid">

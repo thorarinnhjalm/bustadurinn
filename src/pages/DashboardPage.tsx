@@ -6,7 +6,7 @@ import {
     ChevronRight, Loader2, Shield,
     Home, LogOut,
     Image as ImageIcon, MapPin, Camera,
-    ShoppingCart, CheckSquare
+    ShoppingCart, CheckSquare, Sparkles
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
@@ -414,6 +414,31 @@ const UserDashboard = () => {
             {/* --- MAIN CONTENT --- */}
             <div className="max-w-5xl mx-auto px-4 relative z-10 space-y-8 -mt-8">
 
+                {/* TRIAL BANNER */}
+                {(() => {
+                    if (!currentUser?.trial_ends_at) return null;
+                    const trialEnds = currentUser.trial_ends_at as any;
+                    const date = trialEnds.toDate ? trialEnds.toDate() : new Date(trialEnds);
+                    const daysLeft = Math.ceil((date.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+
+                    if (daysLeft < 0) return null; // Expired (handle elsewhere or show specific expired state)
+
+                    return (
+                        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-4 rounded-2xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                            <div className="flex items-center gap-3 relative z-10">
+                                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                    <Sparkles className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-sm md:text-base">Prufuáskrift í gangi</p>
+                                    <p className="text-indigo-100 text-xs md:text-sm">Þú átt {daysLeft} daga eftir af ókeypis aðgangi.</p>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
                 {/* Service Provider Widget (Only visible for providers) */}
                 <MyServiceWidget />
 
@@ -432,7 +457,7 @@ const UserDashboard = () => {
                 />
 
                 {/* Quick Actions Bar */}
-                <div className="bg-white p-2 rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-100 flex p-1.5 gap-2">
+                <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-100 flex p-1.5 gap-2">
                     <button
                         onClick={() => navigate('/calendar')}
                         className="flex-1 bg-[#1a1a1a] text-white py-4 rounded-xl font-bold text-sm hover:bg-stone-800 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 group relative overflow-hidden"
