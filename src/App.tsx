@@ -33,7 +33,7 @@ const AboutPage = lazy(() => import('@/pages/AboutPage'));
 const ContactPage = lazy(() => import('@/pages/ContactPage'));
 const SandboxPage = lazy(() => import('@/pages/SandboxPage'));
 const MigrationPage = lazy(() => import('@/pages/MigrationPage'));
-const MarketingMapPage = lazy(() => import('@/pages/MarketingMapPage'));
+
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'));
 const TermsPage = lazy(() => import('@/pages/TermsPage'));
 const DataDeletionPage = lazy(() => import('@/pages/DataDeletionPage'));
@@ -169,7 +169,7 @@ function App() {
                 <Route path="/handbok/vidhald" element={<VidhaldPage />} />
                 <Route path="/handbok/uppsetning" element={<UppsetningPage />} />
                 <Route path="/prufa" element={<SandboxPage />} />
-                <Route path="/marketing-map" element={<MarketingMapPage />} />
+
                 <Route path="/personuvernd" element={<PrivacyPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />
                 <Route path="/skilmalar" element={<TermsPage />} />

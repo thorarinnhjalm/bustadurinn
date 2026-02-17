@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import MarketingLayout from '@/components/MarketingLayout';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Check, Star, Loader2, MapPin } from 'lucide-react';
+import { Check, Star, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
-import MarketingMap from '@/components/MarketingMap';
+
 
 export default function ForProvidersPage() {
     const navigate = useNavigate();
@@ -106,30 +106,6 @@ export default function ForProvidersPage() {
                 </div>
             </section>
 
-            {/* Demand Map Section */}
-            <section className="bg-stone-100 border-b border-stone-200">
-                <div className="flex flex-col md:flex-row min-h-[500px]">
-                    <div className="w-full md:w-1/3 p-8 md:p-12 flex flex-col justify-center">
-                        <div className="inline-flex items-center gap-2 bg-amber/10 text-amber-800 px-4 py-2 rounded-full text-sm font-bold mb-4 w-fit">
-                            <MapPin className="w-4 h-4" />
-                            <span>Eftirspurn</span>
-                        </div>
-                        <h2 className="text-3xl font-serif font-bold text-charcoal mb-4">
-                            Sjáðu tækifærin
-                        </h2>
-                        <p className="text-stone-600 mb-6 leading-relaxed">
-                            Hundruð sumarhúsa alls staðar á landinu nota kerfið okkar í dag.
-                            Eigendur þessara húsa eru að leita að traustum þjónustuaðilum.
-                        </p>
-                        <p className="text-sm text-stone-500 italic">
-                            * Kortið sýnir áætlaða staðsetningu húsa í kerfinu.
-                        </p>
-                    </div>
-                    <div className="w-full md:w-2/3 relative h-[500px] md:h-auto">
-                        <MarketingMap className="h-full w-full" showOverlay={false} />
-                    </div>
-                </div>
-            </section>
 
             {/* Registration Section */}
             <section id="register" className="py-20 bg-bone">

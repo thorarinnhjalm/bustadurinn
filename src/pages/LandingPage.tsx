@@ -10,7 +10,7 @@ import { useAppStore } from '@/store/appStore';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import Testimonials from '@/components/landing/Testimonials';
 import HolidayPriorityVisualizer from '@/components/landing/HolidayPriorityVisualizer';
-import MarketingMap from '@/components/MarketingMap';
+
 import { feedbackService } from '@/services/feedbackService';
 import type { Feedback } from '@/types/models';
 // NewsletterPopup moved to MarketingLayout
@@ -653,10 +653,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Marketing Map Section */}
-            <section className="relative h-[600px] w-full bg-stone-100 border-b border-stone-200">
-                <MarketingMap fakeCount={77} excludeReykjavik={true} className="h-full w-full" />
-            </section>
 
             {/* Newsletter Section */}
             <section className="py-24 bg-bone relative overflow-hidden">
