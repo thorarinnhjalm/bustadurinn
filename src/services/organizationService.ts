@@ -11,7 +11,6 @@ import {
     orderBy,
     Timestamp,
     serverTimestamp,
-    writeBatch,
 } from 'firebase/firestore';
 import type {
     Organization,
@@ -170,7 +169,7 @@ export const approveAccessRequest = async (
 
     // Create organization member with guest access
     const membersRef = collection(db, 'organizations', orgId, 'members');
-    const memberDoc = await addDoc(membersRef, {
+    await addDoc(membersRef, {
         user_id: '', // Will be filled when user creates account
         email: requestData.email,
         name: requestData.name,
@@ -563,7 +562,6 @@ export const setUserOrgRole = async (
 
     if (userRolesSnap.exists()) {
         // Update existing roles
-        const currentRoles = userRolesSnap.data().organization_roles || {};
         await updateDoc(userRolesRef, {
             [`organization_roles.${orgId}`]: {
                 organization_id: orgId,
@@ -663,7 +661,7 @@ export const createOrganizationHouse = async (
 export const addHouseToOrganization = async (
     houseId: string,
     orgId: string,
-    adminUserId: string
+    _adminUserId: string
 ): Promise<void> => {
     const houseRef = doc(db, 'houses', houseId);
 

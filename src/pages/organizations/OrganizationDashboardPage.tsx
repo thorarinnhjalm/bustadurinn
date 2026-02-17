@@ -31,7 +31,7 @@ import {
     getOrganizationHouses,
     createOrganizationHouse,
     removeHouseFromOrganization,
-    updateOrganizationHouse,
+    updateOrganization,
 } from '@/services/organizationService';
 import type {
     Organization,
@@ -113,7 +113,7 @@ export default function OrganizationDashboardPage() {
                 orgId,
                 requestId,
                 currentUser.uid,
-                currentUser.displayName || 'Admin'
+                currentUser.name || 'Admin'
             );
             await loadData(); // Reload data
         } catch (err) {
@@ -133,7 +133,7 @@ export default function OrganizationDashboardPage() {
                 orgId,
                 requestId,
                 currentUser.uid,
-                currentUser.displayName || 'Admin',
+                currentUser.name || 'Admin',
                 reason
             );
             await loadData();
@@ -151,7 +151,7 @@ export default function OrganizationDashboardPage() {
                 orgId,
                 requestId,
                 currentUser.uid,
-                currentUser.displayName || 'Admin'
+                currentUser.name || 'Admin'
             );
             await loadData();
         } catch (err) {
@@ -171,7 +171,7 @@ export default function OrganizationDashboardPage() {
                 orgId,
                 requestId,
                 currentUser.uid,
-                currentUser.displayName || 'Admin',
+                currentUser.name || 'Admin',
                 reason
             );
             await loadData();

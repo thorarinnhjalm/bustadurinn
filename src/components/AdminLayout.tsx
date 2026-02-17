@@ -4,8 +4,6 @@
  */
 
 import {
-    Home,
-    Users,
     BarChart2,
     Database,
     ArrowLeft,
@@ -13,9 +11,6 @@ import {
     Menu,
     X,
     LogOut,
-    Send,
-    Shield,
-    Star,
     Settings,
     LayoutDashboard
 } from 'lucide-react';

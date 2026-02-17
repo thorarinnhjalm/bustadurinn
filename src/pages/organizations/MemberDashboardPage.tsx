@@ -118,7 +118,7 @@ export default function MemberDashboardPage() {
         try {
             await submitBookingRequest(orgId, {
                 user_id: currentUser.uid,
-                user_name: currentUser.displayName || currentUser.email || 'Unknown',
+                user_name: currentUser.name || currentUser.email || 'Unknown',
                 user_email: currentUser.email || '',
                 house_id: selectedHouse.id,
                 house_name: selectedHouse.name,
@@ -416,7 +416,7 @@ export default function MemberDashboardPage() {
                                     }
                                     className="input w-full"
                                     min="1"
-                                    max={selectedHouse.capacity || 10}
+                                    max={10}
                                 />
                             </div>
 
