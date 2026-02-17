@@ -1,43 +1,44 @@
 rules_version = '2';
-
-// Firebase Storage Security Rules for Bústaðurinn.is
-// Allows authenticated users to upload house images
-
 service firebase.storage {
   match /b/{bucket}/o {
-    
-    // House images: Only authenticated house owners/members can upload
-    match /houses/{houseId}/{imageFile} {
-      // Anyone can read (for guest views, public sharing)
+
+    // Organization logos
+    match /organizations/{orgId}/logo/{fileName} {
+      // Anyone can read logos
       allow read: if true;
-      
-      // Only authenticated users who are members of this house can write/delete
-      allow write, delete: if request.auth != null && 
-        request.auth.uid in get(/databases/(default)/documents/houses/$(houseId)).data.owner_ids;
-      
-      // Validate file size (max 5MB) and type (images only)
-      allow write: if request.resource.size < 5 * 1024 * 1024 &&
-                      request.resource.contentType.matches('image/.*');
+
+      // Only org admins can upload/update logos
+      allow write: if request.auth != null &&
+                      (isOrgAdmin(orgId) || isSuperAdmin());
     }
-    
-    // User profile images
-    match /users/{userId}/profile.jpg {
+
+    // House images
+    match /houses/{houseId}/images/{fileName} {
+      // Anyone can read house images
       allow read: if true;
+
+      // Only admins can upload house images
+      allow write: if request.auth != null && isSuperAdmin();
+    }
+
+    // User profile pictures
+    match /users/{userId}/profile/{fileName} {
+      // Anyone can read profile pictures
+      allow read: if true;
+
+      // Users can upload their own profile picture
       allow write: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.resource.size < 2 * 1024 * 1024 &&
-                      request.resource.contentType.matches('image/.*');
     }
-    
-    // Guest uploads (if needed in future)
-    match /guest_uploads/{guestToken}/{imageFile} {
-      allow read: if true;
-      allow write: if request.resource.size < 3 * 1024 * 1024 &&
-                      request.resource.contentType.matches('image/.*');
+
+    // Helper functions
+    function isSuperAdmin() {
+      return request.auth != null &&
+             firestore.get(/databases/(default)/documents/user_roles/$(request.auth.uid)).data.is_super_admin == true;
     }
-    
-    // Deny all other access by default
-    match /{allPaths=**} {
-      allow read, write: if false;
+
+    function isOrgAdmin(orgId) {
+      return request.auth != null &&
+             firestore.get(/databases/(default)/documents/user_roles/$(request.auth.uid)).data.organization_roles[orgId].role == 'org_admin';
     }
   }
 }

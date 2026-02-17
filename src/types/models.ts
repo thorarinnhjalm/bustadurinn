@@ -49,6 +49,7 @@ export interface House {
 
     manager_id: string; // The designated administrator (Bústaðastjóri)
     owner_ids: string[]; // All members
+    organization_id?: string; // Optional: if house belongs to an organization
 
     // Settings
     holiday_mode: 'fairness' | 'first_come';
@@ -355,4 +356,178 @@ export interface ServiceReview {
     rating: number; // 1-5
     comment: string;
     created_at: Date;
+}
+
+// ============================================
+// Organization (Starfsmannafélög) Features
+// ============================================
+
+export type OrganizationType = 'company' | 'union' | 'municipality';
+export type SubscriptionTier = 'basic' | 'pro' | 'enterprise';
+export type SubscriptionStatus = 'trial' | 'active' | 'expired';
+export type PaymentMethod = 'invoice' | 'online' | 'payroll' | 'free';
+
+export interface OrganizationSettings {
+    require_access_approval: boolean;
+    auto_approve_company_email: boolean;
+    allowed_email_domains: string[];
+    require_booking_approval: boolean;
+    payment_required: boolean;
+    payment_method?: PaymentMethod;
+    price_per_night?: number;
+    max_nights_per_booking?: number;
+    max_bookings_per_year?: number;
+    advance_booking_days?: number;
+}
+
+export interface OrganizationStats {
+    total_properties: number;
+    total_members: number;
+    active_members: number;
+    total_bookings: number;
+}
+
+export interface Organization {
+    id: string;
+    name: string;
+    slug: string;
+    type: OrganizationType;
+    logo_url?: string;
+    primary_color?: string;
+    secondary_color?: string;
+    subscription_tier: SubscriptionTier;
+    subscription_status: SubscriptionStatus;
+    subscription_start: Date;
+    subscription_end: Date;
+    billing_email: string;
+    settings: OrganizationSettings;
+    admin_user_ids: string[];
+    stats: OrganizationStats;
+    created_at: Date;
+    created_by: string;
+    updated_at: Date;
+}
+
+export type AccessRequestStatus = 'pending' | 'approved' | 'denied';
+
+export interface AccessRequest {
+    id: string;
+    email: string;
+    name: string;
+    employee_id?: string;
+    department?: string;
+    phone?: string;
+    reason?: string;
+    status: AccessRequestStatus;
+    email_domain_verified: boolean;
+    employee_id_verified: boolean;
+    reviewed_by?: string;
+    reviewed_at?: Date;
+    review_notes?: string;
+    denial_reason?: string;
+    requested_at: Date;
+    ip_address?: string;
+}
+
+export type MemberStatus = 'pending' | 'approved' | 'active' | 'suspended';
+export type AccessLevel = 'guest' | 'full';
+
+export interface OrganizationMember {
+    id: string;
+    user_id: string;
+    email: string;
+    name: string;
+    employee_id?: string;
+    department?: string;
+    hire_date?: Date;
+    status: MemberStatus;
+    access_level: AccessLevel;
+    approved_by?: string;
+    approved_at?: Date;
+    approval_method?: 'manual' | 'auto';
+    bookings_this_year: number;
+    bookings_total: number;
+    days_booked_this_year: number;
+    last_booking_date?: Date;
+    payment_balance: number;
+    total_paid: number;
+    created_at: Date;
+    updated_at: Date;
+}
+
+export type BookingRequestStatus = 'pending' | 'approved' | 'denied' | 'cancelled';
+export type BookingPurpose = 'personal' | 'family' | 'work_retreat';
+export type PaymentStatus = 'pending' | 'paid' | 'invoiced';
+
+export interface BookingRequest {
+    id: string;
+    user_id: string;
+    user_name: string;
+    user_email: string;
+    house_id: string;
+    house_name: string;
+    start_date: Date;
+    end_date: Date;
+    num_nights: number;
+    num_guests: number;
+    purpose: BookingPurpose;
+    notes?: string;
+    status: BookingRequestStatus;
+    has_conflicts: boolean;
+    conflict_details?: string;
+    quota_check_passed: boolean;
+    reviewed_by?: string;
+    reviewed_at?: Date;
+    review_notes?: string;
+    denial_reason?: string;
+    payment_required: boolean;
+    payment_amount?: number;
+    payment_method?: PaymentMethod;
+    payment_status?: PaymentStatus;
+    invoice_id?: string;
+    booking_id?: string; // Created booking ID after approval
+    requested_at: Date;
+    ip_address?: string;
+}
+
+export type AdminActionType =
+    | 'approve_access'
+    | 'deny_access'
+    | 'approve_booking'
+    | 'deny_booking'
+    | 'cancel_booking'
+    | 'suspend_member'
+    | 'reactivate_member'
+    | 'update_settings';
+
+export type AdminActionTarget = 'access_request' | 'booking_request' | 'member' | 'settings';
+
+export interface AdminAction {
+    id: string;
+    admin_user_id: string;
+    admin_name: string;
+    action_type: AdminActionType;
+    target_id: string;
+    target_type: AdminActionTarget;
+    target_name?: string;
+    details?: string;
+    notes?: string;
+    timestamp: Date;
+    ip_address?: string;
+}
+
+// User role for organization access control
+export interface UserOrgRole {
+    organization_id: string;
+    role: 'org_admin' | 'member';
+    status: MemberStatus;
+    member_id: string;
+}
+
+export interface UserRoles {
+    id: string; // Same as user.uid
+    is_super_admin: boolean;
+    organization_roles: Record<string, UserOrgRole>;
+    created_at: Date;
+    updated_at: Date;
 }

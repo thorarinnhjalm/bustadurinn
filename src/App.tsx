@@ -46,6 +46,12 @@ const FjarmalPage = lazy(() => import('@/pages/handbok/FjarmalPage'));
 const VidhaldPage = lazy(() => import('@/pages/handbok/VidhaldPage'));
 const UppsetningPage = lazy(() => import('@/pages/handbok/UppsetningPage'));
 
+// Organization pages
+const OrganizationSignupPage = lazy(() => import('@/pages/organizations/OrganizationSignupPage'));
+const OrganizationDashboardPage = lazy(() => import('@/pages/organizations/OrganizationDashboardPage'));
+const AccessRequestFormPage = lazy(() => import('@/pages/organizations/AccessRequestFormPage'));
+const MemberDashboardPage = lazy(() => import('@/pages/organizations/MemberDashboardPage'));
+
 // RBAC imports
 import { useUserRole } from '@/hooks/useUserRole';
 import { isSuperAdmin } from '@/utils/rbac';
@@ -173,6 +179,10 @@ function App() {
                 <Route path="/verktakar" element={<ForProvidersPage />} />
                 <Route path="/torgid" element={<MarketplacePage />} />
 
+                {/* Organization Routes - Public */}
+                <Route path="/organizations/signup" element={<OrganizationSignupPage />} />
+                <Route path="/organizations/:orgId/request-access" element={<AccessRequestFormPage />} />
+
                 {/* Protected Routes */}
                 <Route
                   path="/onboarding"
@@ -219,6 +229,22 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <CalendarPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/organizations/:orgId/admin"
+                  element={
+                    <ProtectedRoute>
+                      <OrganizationDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/organizations/:orgId/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <MemberDashboardPage />
                     </ProtectedRoute>
                   }
                 />

@@ -9,7 +9,7 @@ import {
     LayoutDashboard, Home, Users, BarChart2, Mail, Tag, FileSearch, Settings, Send,
     Database, LogOut, Trash2, CheckCircle, AlertTriangle,
     XCircle, RefreshCw, Loader2, Shield, Activity, TrendingUp, Reply, Star,
-    Edit, MapPin, UserCog, Zap
+    Edit, MapPin, UserCog, Zap, Building2, Eye
 } from 'lucide-react';
 import { db, auth } from '@/lib/firebase';
 import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
@@ -24,8 +24,9 @@ import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
 import BusinessIntelligenceDashboard from '@/components/analytics/BusinessIntelligenceDashboard';
 import { logger } from '@/utils/logger';
 import { feedbackService } from '@/services/feedbackService';
+import { getAllOrganizations } from '@/services/organizationService';
 
-import type { House, User, Coupon, ContactSubmission, Feedback, ServiceProvider } from '@/types/models';
+import type { House, User, Coupon, ContactSubmission, Feedback, ServiceProvider, Organization } from '@/types/models';
 
 interface EmailTemplate {
     id: string; // 'welcome', 'inactive_engagement'
@@ -49,7 +50,8 @@ interface Stats {
     totalUsers: number;
     totalBookings: number;
     totalSubscribers: number;
-    totalProviders: number; // New
+    totalProviders: number;
+    totalOrganizations: number; // NEW
     activeTasks: number;
     allHouses: House[];
     allUsers: User[];
@@ -59,13 +61,21 @@ interface Stats {
     allSubscribers: NewsletterSubscriber[];
     allFeedback: Feedback[];
     allProviders: ServiceProvider[];
+    allOrganizations: Organization[]; // NEW
     launchOfferCount: number;
     sandboxVisits: number; // Track /prufa engagement
 }
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'bi' | 'houses' | 'users' | 'contacts' | 'feedback' | 'coupons' | 'integrations' | 'emails' | 'newsletter' | 'audit' | 'providers'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'data' | 'communications' | 'analytics' | 'system'>('overview');
+
+    // Sub-tab states for consolidated tabs
+    const [dataSubTab, setDataSubTab] = useState<'houses' | 'users' | 'organizations' | 'providers'>('houses');
+    const [communicationsSubTab, setCommunicationsSubTab] = useState<'contacts' | 'emails' | 'newsletter' | 'feedback'>('contacts');
+    const [analyticsSubTab, setAnalyticsSubTab] = useState<'bi' | 'analytics'>('bi');
+    const [systemSubTab, setSystemSubTab] = useState<'audit' | 'integrations' | 'coupons'>('audit');
+
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [editingHouse, setEditingHouse] = useState<House | null>(null);
@@ -111,6 +121,7 @@ export default function SuperAdminPage() {
         totalBookings: 0,
         totalSubscribers: 0,
         totalProviders: 0,
+        totalOrganizations: 0,
         activeTasks: 0,
         sandboxVisits: 0,
         allHouses: [],
@@ -121,6 +132,7 @@ export default function SuperAdminPage() {
         allSubscribers: [],
         allFeedback: [],
         allProviders: [],
+        allOrganizations: [],
         launchOfferCount: 0
     });
 
@@ -151,7 +163,7 @@ export default function SuperAdminPage() {
                     }
                 };
 
-                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, providersSnap, promoSnapResult, sandboxVisitsSnap] = await Promise.all([
+                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, providersSnap, organizationsData, promoSnapResult, sandboxVisitsSnap] = await Promise.all([
                     safeFetch('houses'),
                     safeFetch('users'),
                     safeFetch('bookings'),
@@ -160,7 +172,8 @@ export default function SuperAdminPage() {
                     safeFetch('coupons'),
                     safeFetch('newsletter_subscribers'),
                     safeFetch('feedback'),
-                    safeFetch('service_providers'), // New
+                    safeFetch('service_providers'),
+                    getAllOrganizations().catch(() => []), // NEW
                     getDoc(doc(db, 'system', 'promotions')),
                     getDocs(query(collection(db, 'funnel_events'), where('event_name', '==', 'sandbox_visited')))
                 ]);
@@ -207,6 +220,7 @@ export default function SuperAdminPage() {
                     totalBookings: bookingsSnap?.size || 0,
                     totalSubscribers: subSnap?.size || 0,
                     totalProviders: providersSnap?.size || 0,
+                    totalOrganizations: organizationsData.length || 0, // NEW
                     sandboxVisits: sandboxVisitsSnap?.size || 0,
                     activeTasks,
                     allHouses: houses,
@@ -217,6 +231,7 @@ export default function SuperAdminPage() {
                     allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
                     allFeedback: feedback.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
                     allProviders: providersSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceProvider)) || [],
+                    allOrganizations: organizationsData || [], // NEW
                     launchOfferCount: promoSnapResult && promoSnapResult.exists() ? promoSnapResult.data().launch_offer_count || 0 : 0
                 });
 
@@ -237,10 +252,10 @@ export default function SuperAdminPage() {
 
     // Fetch email templates when emails tab is active
     useEffect(() => {
-        if (activeTab === 'emails') {
+        if (activeTab === 'communications' && communicationsSubTab === 'emails') {
             fetchTemplates();
         }
-    }, [activeTab]);
+    }, [activeTab, communicationsSubTab]);
 
     // Seed demo data
     const handleSeedDemo = async () => {
@@ -1092,10 +1107,10 @@ export default function SuperAdminPage() {
     };
 
     useEffect(() => {
-        if (activeTab === 'audit') {
+        if (activeTab === 'system' && systemSubTab === 'audit') {
             fetchOrphans();
         }
-    }, [activeTab]);
+    }, [activeTab, systemSubTab]);
 
     const handleCreateCoupon = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1171,7 +1186,7 @@ export default function SuperAdminPage() {
         return (
             <AdminLayout
                 activeTab={activeTab}
-                onTabChange={(tab) => setActiveTab(tab as 'overview' | 'houses' | 'users')}
+                onTabChange={(tab) => setActiveTab(tab as 'overview' | 'data' | 'communications' | 'analytics' | 'system')}
                 onBackClick={() => navigate('/dashboard')}
                 userHouses={userHouses}
                 onHouseSelect={handleHouseSwitch}
@@ -1191,7 +1206,7 @@ export default function SuperAdminPage() {
         return (
             <AdminLayout
                 activeTab={activeTab}
-                onTabChange={(tab) => setActiveTab(tab as 'overview' | 'houses' | 'users')}
+                onTabChange={(tab) => setActiveTab(tab as 'overview' | 'data' | 'communications' | 'analytics' | 'system')}
                 onBackClick={() => navigate('/dashboard')}
                 userHouses={userHouses}
                 onHouseSelect={handleHouseSwitch}
@@ -1218,7 +1233,7 @@ export default function SuperAdminPage() {
         return (
             <AdminLayout
                 activeTab={activeTab}
-                onTabChange={(tab) => setActiveTab(tab as 'overview' | 'houses' | 'users')}
+                onTabChange={(tab) => setActiveTab(tab as 'overview' | 'data' | 'communications' | 'analytics' | 'system')}
                 onBackClick={() => navigate('/dashboard')}
                 userHouses={userHouses}
                 onHouseSelect={handleHouseSwitch}
@@ -1398,23 +1413,14 @@ export default function SuperAdminPage() {
                         </div>
                     </div>
 
-                    {/* Scrollable Navigation Tabs */}
-                    <div className="flex items-center gap-1 md:gap-2 pb-0 overflow-x-auto no-scrollbar [mask-image:linear-gradient(to_right,transparent,black_10px,black_calc(100%-10px),transparent)]">
-                        {/* Primary Tabs */}
+                    {/* Streamlined 5-Tab Navigation */}
+                    <div className="flex items-center gap-1 md:gap-2 pb-0 overflow-x-auto no-scrollbar">
                         {[
                             { id: 'overview', icon: LayoutDashboard, label: 'Yfirlit' },
-                            { id: 'bi', icon: Zap, label: 'Business Intel' },
-                            { id: 'houses', icon: Home, label: 'Hús' },
-                            { id: 'users', icon: Users, label: 'Notendur' },
+                            { id: 'data', icon: Database, label: 'Gögn' },
+                            { id: 'communications', icon: Mail, label: 'Samskipti' },
                             { id: 'analytics', icon: BarChart2, label: 'Greining' },
-                            { id: 'integrations', icon: Settings, label: 'Tengingar' },
-                            { id: 'audit', icon: FileSearch, label: 'Audit' },
-                            { id: 'coupons', icon: Tag, label: 'Afslættir' },
-                            { id: 'contacts', icon: Mail, label: 'Samskipti' },
-                            { id: 'emails', icon: Mail, label: 'Sniðmát' },
-                            { id: 'newsletter', icon: Send, label: 'Póstlisti' },
-                            { id: 'feedback', icon: Star, label: 'Umsagnir' },
-                            { id: 'providers', icon: UserCog, label: 'Verktakar' }
+                            { id: 'system', icon: Settings, label: 'Kerfi' }
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -1443,21 +1449,230 @@ export default function SuperAdminPage() {
 
             {/* Content */}
             <div className="p-4 md:p-8">
-                {/* Business Intelligence Tab */}
-                {activeTab === 'bi' && (
-                    <BusinessIntelligenceDashboard
-                        allHouses={stats.allHouses}
-                        allUsers={stats.allUsers}
-                        allBookings={stats.allBookings}
-                        sandboxVisits={stats.sandboxVisits}
-                    />
+                {/* Analytics Tab - Consolidated */}
+                {activeTab === 'analytics' && (
+                    <div className="space-y-6">
+                        {/* Sub-tab Navigation */}
+                        <div className="flex gap-2 border-b border-stone-200">
+                            <button
+                                onClick={() => setAnalyticsSubTab('bi')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                                    analyticsSubTab === 'bi'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Zap className="w-4 h-4" />
+                                    Business Intel
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setAnalyticsSubTab('analytics')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                                    analyticsSubTab === 'analytics'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <BarChart2 className="w-4 h-4" />
+                                    Greining
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Sub-tab Content */}
+                        {analyticsSubTab === 'bi' && (
+                            <BusinessIntelligenceDashboard
+                                allHouses={stats.allHouses}
+                                allUsers={stats.allUsers}
+                                allBookings={stats.allBookings}
+                                sandboxVisits={stats.sandboxVisits}
+                            />
+                        )}
+                        {analyticsSubTab === 'analytics' && <AnalyticsDashboard />}
+                    </div>
                 )}
 
-                {/* Analytics Tab */}
-                {activeTab === 'analytics' && <AnalyticsDashboard />}
+                {/* Data Tab - Consolidated */}
+                {activeTab === 'data' && (
+                    <div className="space-y-6">
+                        {/* Sub-tab Navigation */}
+                        <div className="flex gap-2 border-b border-stone-200 overflow-x-auto">
+                            <button
+                                onClick={() => setDataSubTab('houses')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                    dataSubTab === 'houses'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Home className="w-4 h-4" />
+                                    Hús
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setDataSubTab('users')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                    dataSubTab === 'users'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Users className="w-4 h-4" />
+                                    Notendur
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setDataSubTab('organizations')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                    dataSubTab === 'organizations'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Building2 className="w-4 h-4" />
+                                    Félög
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setDataSubTab('providers')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                    dataSubTab === 'providers'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <UserCog className="w-4 h-4" />
+                                    Verktakar
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Sub-tab Content - will be populated below by changing conditions */}
+                    </div>
+                )}
+
+                {/* Communications Tab - Consolidated */}
+                {activeTab === 'communications' && (
+                    <div className="space-y-6">
+                        {/* Sub-tab Navigation */}
+                        <div className="flex gap-2 border-b border-stone-200 overflow-x-auto">
+                            <button
+                                onClick={() => setCommunicationsSubTab('contacts')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                    communicationsSubTab === 'contacts'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Mail className="w-4 h-4" />
+                                    Samskipti
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setCommunicationsSubTab('emails')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                    communicationsSubTab === 'emails'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Mail className="w-4 h-4" />
+                                    Sniðmát
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setCommunicationsSubTab('newsletter')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                    communicationsSubTab === 'newsletter'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Send className="w-4 h-4" />
+                                    Póstlisti
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setCommunicationsSubTab('feedback')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                    communicationsSubTab === 'feedback'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Star className="w-4 h-4" />
+                                    Umsagnir
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Sub-tab Content - will be populated below by changing conditions */}
+                    </div>
+                )}
+
+                {/* System Tab - Consolidated */}
+                {activeTab === 'system' && (
+                    <div className="space-y-6">
+                        {/* Sub-tab Navigation */}
+                        <div className="flex gap-2 border-b border-stone-200 overflow-x-auto">
+                            <button
+                                onClick={() => setSystemSubTab('audit')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                    systemSubTab === 'audit'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <FileSearch className="w-4 h-4" />
+                                    Audit
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setSystemSubTab('integrations')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                    systemSubTab === 'integrations'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Settings className="w-4 h-4" />
+                                    Tengingar
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setSystemSubTab('coupons')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                    systemSubTab === 'coupons'
+                                        ? 'text-charcoal border-b-2 border-amber'
+                                        : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Tag className="w-4 h-4" />
+                                    Afslættir
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Sub-tab Content - will be populated below by changing conditions */}
+                    </div>
+                )}
 
                 {/* Audit Tab */}
-                {activeTab === 'audit' && (
+                {activeTab === 'system' && systemSubTab === 'audit' && (
                     <div className="space-y-6">
                         <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
                             <h3 className="text-lg font-bold text-charcoal mb-2">User Audit</h3>
@@ -1760,6 +1975,26 @@ export default function SuperAdminPage() {
                                         Skráðir þjónustuaðilar
                                     </p>
                                 </div>
+
+                                {/* Organizations */}
+                                <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center">
+                                            <Building2 className="w-4 h-4 text-indigo-600" />
+                                        </div>
+                                        <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Félög</p>
+                                    </div>
+                                    <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalOrganizations}</p>
+                                    <div className="flex items-center gap-2 text-[10px] md:text-xs text-stone-400">
+                                        <span className="text-green-600 font-medium">
+                                            {stats.allOrganizations.filter(org => org.subscription_status === 'active').length} virk
+                                        </span>
+                                        <span className="w-1 h-1 bg-stone-300 rounded-full"></span>
+                                        <span>
+                                            {stats.allOrganizations.filter(org => org.subscription_status === 'trial').length} prufa
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Recent Activity Feed */}
@@ -1797,6 +2032,90 @@ export default function SuperAdminPage() {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Organizations Overview */}
+                            {stats.allOrganizations.length > 0 && (
+                                <div className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm">
+                                    <h3 className="text-lg font-serif font-bold mb-4 flex items-center gap-2">
+                                        <Building2 className="w-4 h-4 text-stone-400" />
+                                        Félög - Yfirlit
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Top Organizations by Members */}
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-stone-600 mb-3">Stærstu félög (eftir meðlimum)</h4>
+                                            <div className="space-y-3">
+                                                {stats.allOrganizations
+                                                    .sort((a, b) => (b.stats?.total_members || 0) - (a.stats?.total_members || 0))
+                                                    .slice(0, 5)
+                                                    .map((org, idx) => (
+                                                        <div key={org.id} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg hover:bg-stone-100 transition-colors">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">
+                                                                    {idx + 1}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-medium text-sm text-charcoal">{org.name}</p>
+                                                                    <p className="text-xs text-stone-500">
+                                                                        {org.type === 'company' ? 'Fyrirtæki' : 'Félag'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="font-bold text-charcoal">{org.stats?.total_members || 0}</p>
+                                                                <p className="text-xs text-stone-500">meðlimir</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                {stats.allOrganizations.length === 0 && (
+                                                    <p className="text-stone-500 text-sm italic">Engin félög skráð ennþá.</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Recent Organizations */}
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-stone-600 mb-3">Nýjustu félög</h4>
+                                            <div className="space-y-3">
+                                                {stats.allOrganizations
+                                                    .sort((a, b) => {
+                                                        const dateA = a.created_at instanceof Date ? a.created_at : new Date(0);
+                                                        const dateB = b.created_at instanceof Date ? b.created_at : new Date(0);
+                                                        return dateB.getTime() - dateA.getTime();
+                                                    })
+                                                    .slice(0, 5)
+                                                    .map((org) => (
+                                                        <div key={org.id} className="flex items-start gap-3 p-3 bg-stone-50 rounded-lg hover:bg-stone-100 transition-colors">
+                                                            <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                                                                <Building2 className="w-4 h-4 text-indigo-600" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-medium text-sm text-charcoal truncate">{org.name}</p>
+                                                                <div className="flex items-center gap-2 text-xs text-stone-500 mt-1">
+                                                                    <span>
+                                                                        {org.created_at instanceof Date
+                                                                            ? org.created_at.toLocaleDateString('is-IS', { month: 'short', day: 'numeric' })
+                                                                            : 'Óþekkt dagsetning'}
+                                                                    </span>
+                                                                    <span className="w-1 h-1 bg-stone-300 rounded-full"></span>
+                                                                    <span className={`font-medium ${
+                                                                        org.subscription_status === 'active' ? 'text-green-600' :
+                                                                        org.subscription_status === 'trial' ? 'text-amber' :
+                                                                        'text-stone-500'
+                                                                    }`}>
+                                                                        {org.subscription_status === 'active' ? 'Virkt' :
+                                                                         org.subscription_status === 'trial' ? 'Prufa' :
+                                                                         'Óvirkt'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     );
                 })()}
@@ -1804,7 +2123,7 @@ export default function SuperAdminPage() {
                 {/* Houses Tab Start */}
 
                 {/* Feedback Tab */}
-                {activeTab === 'feedback' && (
+                {activeTab === 'communications' && communicationsSubTab === 'feedback' && (
                     <div className="bg-white border border-stone-200 rounded-lg p-6">
                         <h2 className="text-lg font-serif font-semibold mb-6">Umsagnir</h2>
                         <DataTable
@@ -1862,8 +2181,109 @@ export default function SuperAdminPage() {
                     </div>
                 )}
 
+                {/* Organizations Tab */}
+                {activeTab === 'data' && dataSubTab === 'organizations' && (
+                    <div className="bg-white border border-stone-200 rounded-lg p-6">
+                        <h2 className="text-lg font-serif font-semibold mb-6">Skráð félög</h2>
+                        <DataTable
+                            columns={[
+                                { key: 'name', label: 'Nafn', sortable: true },
+                                {
+                                    key: 'type', label: 'Tegund', sortable: true, render: (row) => (
+                                        <span className="capitalize">
+                                            {row.type === 'company' ? 'Fyrirtæki' : 'Félag'}
+                                        </span>
+                                    )
+                                },
+                                {
+                                    key: 'subscription_status', label: 'Staða', render: (row) => {
+                                        const status = row.subscription_status || 'trial';
+                                        const statusLabels = { active: 'Virkt', trial: 'Prufa', expired: 'Útrunnið', cancelled: 'Hætt' };
+                                        const colors = {
+                                            active: 'bg-green-100 text-green-700',
+                                            trial: 'bg-amber-100 text-amber-700',
+                                            expired: 'bg-red-100 text-red-700',
+                                            cancelled: 'bg-stone-100 text-stone-700'
+                                        };
+                                        return (
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${colors[status] || colors.trial}`}>
+                                                {statusLabels[status] || statusLabels.trial}
+                                            </span>
+                                        );
+                                    }
+                                },
+                                {
+                                    key: 'stats', label: 'Hús', render: (row) => (
+                                        <span className="text-sm font-medium">
+                                            {row.stats?.total_properties || 0}
+                                        </span>
+                                    )
+                                },
+                                {
+                                    key: 'stats', label: 'Meðlimir', render: (row) => (
+                                        <span className="text-sm font-medium">
+                                            {row.stats?.total_members || 0}
+                                        </span>
+                                    )
+                                },
+                                {
+                                    key: 'stats', label: 'Bókanir', render: (row) => (
+                                        <span className="text-sm font-medium">
+                                            {row.stats?.total_bookings || 0}
+                                        </span>
+                                    )
+                                },
+                                {
+                                    key: 'created_at', label: 'Stofnað', render: (row) => (
+                                        <span className="text-xs text-stone-500">
+                                            {row.created_at ? new Date(row.created_at).toLocaleDateString('is-IS') : '-'}
+                                        </span>
+                                    )
+                                },
+                            ]}
+                            data={stats.allOrganizations}
+                            searchKeys={['name', 'billing_email']}
+                            actions={(row) => (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            // Navigate to organization dashboard or show details
+                                            window.open(`/organizations/${row.id}`, '_blank');
+                                        }}
+                                        className="p-2 text-stone-400 hover:text-charcoal hover:bg-stone-50 rounded transition-colors"
+                                        title="Skoða félag"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (window.confirm(`Ertu viss um að þú viljir eyða ${row.name}?`)) {
+                                                try {
+                                                    await deleteDoc(doc(db, 'organizations', row.id));
+                                                    setStats(prev => ({
+                                                        ...prev,
+                                                        allOrganizations: prev.allOrganizations.filter(org => org.id !== row.id),
+                                                        totalOrganizations: prev.totalOrganizations - 1
+                                                    }));
+                                                } catch (error) {
+                                                    console.error('Error deleting organization:', error);
+                                                    alert('Villa kom upp við að eyða félagi');
+                                                }
+                                            }
+                                        }}
+                                        className="p-2 text-stone-400 hover:text-red-600 hover:bg-stone-50 rounded transition-colors"
+                                        title="Eyða félagi"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        />
+                    </div>
+                )}
+
                 {/* Providers Tab */}
-                {activeTab === 'providers' && (
+                {activeTab === 'data' && dataSubTab === 'providers' && (
                     <div className="bg-white border border-stone-200 rounded-lg p-6">
                         <h2 className="text-lg font-serif font-semibold mb-6">Skráðir Verktakar</h2>
                         <DataTable
@@ -1928,7 +2348,7 @@ export default function SuperAdminPage() {
 
                 {/* Houses Tab */}
                 {
-                    activeTab === 'houses' && (
+                    activeTab === 'data' && dataSubTab === 'houses' && (
                         <div className="space-y-6">
                             {/* Desktop Table */}
                             <div className="hidden md:block bg-white border border-stone-200 rounded-lg p-6">
@@ -2135,7 +2555,7 @@ export default function SuperAdminPage() {
 
                 {/* Coupons Tab */}
                 {
-                    activeTab === 'coupons' && (
+                    activeTab === 'system' && systemSubTab === 'coupons' && (
                         <div className="space-y-8">
                             {/* Create Coupon Form */}
                             <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
@@ -2256,7 +2676,7 @@ export default function SuperAdminPage() {
 
                 {/* Users Tab */}
                 {
-                    activeTab === 'users' && (
+                    activeTab === 'data' && dataSubTab === 'users' && (
                         <div className="space-y-6">
                             {/* Desktop Table */}
                             <div className="hidden md:block bg-white border border-stone-200 rounded-lg p-6">
@@ -2403,7 +2823,7 @@ export default function SuperAdminPage() {
 
                 {/* Contacts Tab */}
                 {
-                    activeTab === 'contacts' && (
+                    activeTab === 'communications' && communicationsSubTab === 'contacts' && (
                         <div>
                             <h2 className="text-2xl font-serif mb-6">Samskipti frá síðu</h2>
                             <DataTable
@@ -2465,7 +2885,7 @@ export default function SuperAdminPage() {
 
                 {/* Integrations Tab */}
                 {
-                    activeTab === 'integrations' && (
+                    activeTab === 'system' && systemSubTab === 'integrations' && (
                         <div className="max-w-4xl space-y-6">
                             <h2 className="text-2xl font-serif mb-6">Integrations</h2>
 
@@ -2600,7 +3020,7 @@ export default function SuperAdminPage() {
                 }
                 {/* Newsletter Tab */}
                 {
-                    activeTab === 'newsletter' && (
+                    activeTab === 'communications' && communicationsSubTab === 'newsletter' && (
                         <div className="space-y-6">
                             <div className="flex justify-between items-center">
                                 <h2 className="text-2xl font-serif">Póstlisti</h2>
@@ -2675,7 +3095,7 @@ export default function SuperAdminPage() {
 
                 {/* Emails Tab (Old Templates - keeping for logic) */}
                 {
-                    activeTab === 'emails' && (
+                    activeTab === 'communications' && communicationsSubTab === 'emails' && (
                         <div className="max-w-4xl space-y-8">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-serif">Email Templates</h2>
@@ -3023,7 +3443,7 @@ export default function SuperAdminPage() {
                     )
                 }
 
-                {activeTab === 'audit' && (
+                {activeTab === 'system' && systemSubTab === 'audit' && (
                     <div className="space-y-8">
                         <div className="flex justify-between items-center text-charcoal">
                             <div>

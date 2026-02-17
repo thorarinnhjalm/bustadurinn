@@ -1,151 +1,224 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // 🔒 SECURITY FIX: Newsletter subscribers - only admins can read/update/delete
-    match /newsletter_subscribers/{id} {
-      allow create: if true; // Anyone can subscribe
-      allow read, update, delete: if isSuperAdmin(); // Only admin can manage
-    }
-    
-    // 🔒 SECURITY FIX: Contact submissions - only admins can read
-    match /contact_submissions/{id} {
-      allow create: if true; // Anyone can submit contact form
-      allow read, update, delete: if isSuperAdmin(); // Only admin can view/manage
+
+    // ============================================
+    // Helper Functions
+    // ============================================
+
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // THE MASTER KEY (UID + Email)
+    function getUserId() {
+      return request.auth.uid;
+    }
+
+    function getUserEmail() {
+      return request.auth.token.email;
+    }
+
     function isSuperAdmin() {
-      return request.auth != null && (
-        request.auth.uid == 'sxcToczAAwT3Fmh8FPXa1P6hMHB3' || 
-        request.auth.token.get('email', '') == 'thorarinnhjalmarsson@gmail.com' ||
-        request.auth.token.get('email', '') == 'thorarinnhjalm@gmail.com'
-      );
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/user_roles/$(getUserId())) &&
+             get(/databases/$(database)/documents/user_roles/$(getUserId())).data.is_super_admin == true;
     }
 
-    // MASTER BYPASS
-    match /{document=**} {
-      allow read, write: if isSuperAdmin();
+    function isOrgAdmin(orgId) {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/user_roles/$(getUserId())) &&
+             get(/databases/$(database)/documents/user_roles/$(getUserId())).data.organization_roles[orgId].role == 'org_admin';
     }
 
-    // SYSTEM DOCUMENTS - Allow authenticated users to read promotions for launch offer validation
-    match /system/promotions {
-      allow read: if true; 
-      
-      // Allow authenticated users to atomic increment for launch offer tracking
-      // Relaxed rules to prevent transaction failures
-      allow create, update: if request.auth != null;
+    function isOrgMember(orgId) {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/user_roles/$(getUserId())) &&
+             orgId in get(/databases/$(database)/documents/user_roles/$(getUserId())).data.organization_roles;
+    }
+
+    function getOrgMemberStatus(orgId) {
+      return get(/databases/$(database)/documents/user_roles/$(getUserId())).data.organization_roles[orgId].status;
+    }
+
+    function canAccessOrg(orgId) {
+      return isSuperAdmin() || isOrgAdmin(orgId) ||
+             (isOrgMember(orgId) && getOrgMemberStatus(orgId) in ['approved', 'active']);
+    }
+
+    // ============================================
+    // Organizations Collection
+    // ============================================
+
+    match /organizations/{orgId} {
+      // Super admins can do anything
+      // Org admins can read and update their org
+      // Members can read their org
+      allow read: if canAccessOrg(orgId);
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || isOrgAdmin(orgId);
+      allow delete: if isSuperAdmin();
+
+      // ============================================
+      // Access Requests Subcollection
+      // ============================================
+
+      match /access_requests/{requestId} {
+        // Anyone can create an access request (before auth)
+        allow create: if true;
+
+        // User can read their own request
+        allow read: if isAuthenticated() &&
+                       (resource.data.email == getUserEmail() ||
+                        isOrgAdmin(orgId) ||
+                        isSuperAdmin());
+
+        // Only admins can update/delete
+        allow update, delete: if isOrgAdmin(orgId) || isSuperAdmin();
+      }
+
+      // ============================================
+      // Members Subcollection
+      // ============================================
+
+      match /members/{memberId} {
+        // Admins can read all members
+        // Members can read all members in their org (if active)
+        allow read: if canAccessOrg(orgId);
+
+        // Only admins can create/update/delete members
+        allow create, update, delete: if isOrgAdmin(orgId) || isSuperAdmin();
+      }
+
+      // ============================================
+      // Booking Requests Subcollection
+      // ============================================
+
+      match /booking_requests/{requestId} {
+        // Members can create booking requests
+        allow create: if canAccessOrg(orgId) &&
+                         request.resource.data.user_id == getUserId();
+
+        // User can read their own requests
+        // Admins can read all requests
+        allow read: if isAuthenticated() &&
+                       (resource.data.user_id == getUserId() ||
+                        isOrgAdmin(orgId) ||
+                        isSuperAdmin());
+
+        // User can update their own pending requests (to cancel)
+        // Admins can update any request (to approve/deny)
+        allow update: if isAuthenticated() &&
+                         ((resource.data.user_id == getUserId() &&
+                           resource.data.status == 'pending' &&
+                           request.resource.data.status == 'cancelled') ||
+                          isOrgAdmin(orgId) ||
+                          isSuperAdmin());
+
+        // Only admins can delete
+        allow delete: if isOrgAdmin(orgId) || isSuperAdmin();
+      }
+
+      // ============================================
+      // Admin Actions Subcollection
+      // ============================================
+
+      match /admin_actions/{actionId} {
+        // Admins and members can read actions
+        allow read: if canAccessOrg(orgId);
+
+        // Only admins can create actions (logged automatically)
+        allow create: if isOrgAdmin(orgId) || isSuperAdmin();
+
+        // Nobody can update/delete actions (audit log)
+        allow update, delete: if false;
+      }
+    }
+
+    // ============================================
+    // Users Collection
+    // ============================================
+
+    match /users/{userId} {
+      // Users can read their own profile
+      // Super admins can read any profile
+      allow read: if isAuthenticated() && (userId == getUserId() || isSuperAdmin());
+
+      // Users can create/update their own profile
+      allow create, update: if isAuthenticated() && userId == getUserId();
+
+      // Only super admins can delete users
       allow delete: if isSuperAdmin();
     }
 
-    // PUBLIC ACCESS
-    match /guest_views/{id} { 
-      allow read: if true;
-      allow create: if isHouseMember(request.resource.data.houseId);
-      allow delete: if isHouseMember(resource.data.houseId);
-      allow update: if isHouseMember(resource.data.houseId);
-    }
-    match /guestbook/{id} { allow read, create: if true; }
-    
-    // 🔒 SECURITY FIX: Protected System Collections
-    match /settings/{id} {
-      allow read, write: if isSuperAdmin();
-    }
-    
-    match /courses/{id} {
-      allow read, write: if isSuperAdmin();
-    }
+    // ============================================
+    // User Roles Collection
+    // ============================================
 
-    // USER ACCESS - Strict Privacy
-    match /users/{userId} {
-      // User can read/write ONLY their own profile
-      allow read, write: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
-      
-      // Removed co-owner read to prevent PII leakage (Privacy First)
-      // If co-owner features break, we must query only necessary fields via a dedicated function 
-      // or duplicate minimal data into the house document.
-    }
-
-    // RBAC ROLES - Allow users to read their own role
     match /user_roles/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isSuperAdmin());
-      allow write: if isSuperAdmin();
+      // Users can read their own roles
+      // Super admins can read any roles
+      allow read: if isAuthenticated() && (userId == getUserId() || isSuperAdmin());
+
+      // Only super admins and org admins can update roles
+      allow create, update: if isSuperAdmin() ||
+                               (isAuthenticated() &&
+                                request.resource.data.keys().hasAny(['organization_roles']) &&
+                                request.resource.data.organization_roles.keys().hasAny(
+                                  get(/databases/$(database)/documents/user_roles/$(getUserId())).data.organization_roles.keys()
+                                ));
+
+      // Only super admins can delete roles
+      allow delete: if isSuperAdmin();
     }
-    
-    // House Member Check Helper
-    function isHouseMember(houseId) {
-      let houseData = get(/databases/$(database)/documents/houses/$(houseId)).data;
-      return request.auth != null && (
-        houseData.owner_ids.hasAny([request.auth.uid]) ||
-        houseData.manager_id == request.auth.uid ||
-        isSuperAdmin()
-      );
-    }
+
+    // ============================================
+    // Houses Collection
+    // ============================================
 
     match /houses/{houseId} {
-      allow get: if true;
-      
-      // 🔒 SECURITY FIX: Ensure user can only create houses they own
-      allow create: if request.auth != null &&
-                       request.resource.data.manager_id == request.auth.uid &&
-                       request.resource.data.owner_ids.hasAny([request.auth.uid]);
-      
-      allow update: if request.auth != null && (
-        resource.data.owner_ids.hasAny([request.auth.uid]) ||
-        resource.data.manager_id == request.auth.uid ||
-        isSuperAdmin()
-      );
-      
-      allow delete: if request.auth != null && (
-        resource.data.manager_id == request.auth.uid ||
-        isSuperAdmin()
-      );
-      
-      allow list: if request.auth != null && (
-        resource.data.owner_ids.hasAny([request.auth.uid]) ||
-        resource.data.manager_id == request.auth.uid ||
-        isSuperAdmin()
-      );
+      // Anyone can read houses (for browsing)
+      // But org-specific houses require org membership for booking
+      allow read: if true;
 
-      // Subcollections
+      // Only super admins can create/update/delete houses
+      // Org admins can create/update houses for their org
+      allow create, update: if isSuperAdmin() ||
+                               (isAuthenticated() &&
+                                request.resource.data.organization_id != null &&
+                                isOrgAdmin(request.resource.data.organization_id));
+
+      allow delete: if isSuperAdmin();
+
+      // ============================================
+      // Bookings Subcollection (per house)
+      // ============================================
+
       match /bookings/{bookingId} {
-        allow read, create, update: if isHouseMember(houseId);
-        // Explicitly check for auth and strictly match user_id
-        allow delete: if request.auth != null && (
-          resource.data.user_id == request.auth.uid || 
-          isHouseMember(houseId)
-        );
-      }
-      match /tasks/{taskId} {
-        allow read, write: if isHouseMember(houseId);
-      }
-      match /shopping_list/{itemId} {
-        allow read, write: if isHouseMember(houseId);
-      }
-      match /internal_logs/{logId} {
-        allow read, write: if isHouseMember(houseId);
-      }
-      match /budget_plans/{planId} {
-        allow read, write: if isHouseMember(houseId);
-      }
-      match /finance_entries/{entryId} {
-        allow read, write: if isHouseMember(houseId);
+        // Anyone can read bookings (to see availability)
+        allow read: if true;
+
+        // Members can create bookings (after approval)
+        // This is created via booking_request approval, not directly
+        allow create: if isSuperAdmin() ||
+                         (isAuthenticated() &&
+                          resource.data.organization_id != null &&
+                          isOrgAdmin(resource.data.organization_id));
+
+        // User can update their own booking (to cancel)
+        // Admins can update any booking
+        allow update: if isAuthenticated() &&
+                         ((resource.data.user_id == getUserId() &&
+                           resource.data.status == 'confirmed' &&
+                           request.resource.data.status == 'cancelled') ||
+                          isSuperAdmin() ||
+                          (resource.data.organization_id != null &&
+                           isOrgAdmin(resource.data.organization_id)));
+
+        // Only admins can delete bookings
+        allow delete: if isSuperAdmin() ||
+                         (resource.data.organization_id != null &&
+                          isOrgAdmin(resource.data.organization_id));
       }
     }
-
-    // LEGACY / TOP-LEVEL (Keep for migration)
-    match /bookings/{id} { allow read, write: if request.auth != null; }
-    match /tasks/{id} { allow read, write: if request.auth != null; }
-    match /shopping_list/{id} { allow read, write: if request.auth != null; }
-    match /internal_logs/{id} { allow read, write: if request.auth != null; }
-    match /finance_entries/{id} { allow read, write: if request.auth != null; }
-    match /budget_plans/{id} { allow read, write: if request.auth != null; }
-
-    match /coupons/{id} { allow read: if request.auth != null; }
-    match /email_templates/{id} { allow read: if true; }
-    match /invitations/{id} { allow read, write: if request.auth != null; }
-    match /notifications/{id} { allow read, write: if request.auth != null; }
-    match /funnel_events/{id} { allow create: if true; }
   }
 }

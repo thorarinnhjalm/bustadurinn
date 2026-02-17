@@ -15,7 +15,9 @@ import {
     LogOut,
     Send,
     Shield,
-    Star
+    Star,
+    Settings,
+    LayoutDashboard
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import type { House } from '@/types/models';
@@ -40,13 +42,11 @@ export default function AdminLayout({
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const navigation = [
-        { name: 'Yfirlit', id: 'overview', icon: BarChart2 },
-        { name: 'Hús', id: 'houses', icon: Home },
-        { name: 'Notendur', id: 'users', icon: Users },
-        { name: 'Samskipti', id: 'contacts', icon: Mail },
-        { name: 'Póstlisti', id: 'newsletter', icon: Send },
-        { name: 'Umsagnir', id: 'feedback', icon: Star },
-        { name: 'Audit', id: 'audit', icon: Shield },
+        { name: 'Yfirlit', id: 'overview', icon: LayoutDashboard },
+        { name: 'Gögn', id: 'data', icon: Database },
+        { name: 'Samskipti', id: 'communications', icon: Mail },
+        { name: 'Greining', id: 'analytics', icon: BarChart2 },
+        { name: 'Kerfi', id: 'system', icon: Settings },
     ];
 
     const handleTabClick = (id: string) => {

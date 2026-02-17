@@ -1,0 +1,44 @@
+# Bústaðurinn.is
+
+> Bústaðurinn.is er íslenskt SaaS bókunarkerfi og app fyrir sameiginleg sumarhús, starfsmannafélög og stéttarfélög.
+
+## Um þjónustuna
+
+Bústaðurinn.is hjálpar eigendum og stjórnendum sameiginlegra sumarhúsa að stjórna bókunum, fjármálum og aðgangi með einföldum hætti. Þjónustan er sérstaklega hönnuð fyrir:
+
+- **Sameignarhús** - Hópar fjölskyldna eða vina sem deila sumarhúsi
+- **Starfsmannafélag** - Fyrirtæki og stéttarfélög sem bjóða starfsmönnum sumarbústaði
+- **Sveitarfélög** - Opinberar stofnanir með sumarhús til útleigu á íslenskt
+
+## Aðaláhersla
+
+- Rafrænt bókunarkerfi með dagbók og samþykktarferli
+- Fjármálastjórnun með skiptingu kostnaðar á milli eigenda
+- Stafræn lyklakippa (fjarlæg opnun hurða)
+- Markaðstorg þar sem verktakar bjóða upp á þrif, viðhald og aðrar þjónustur
+- Sérstakar lausnir fyrir starfsmannafélög með aðgangsstjórnun og bókunarmörk
+
+## Tenglar
+
+- [Forsíða](https://www.bustadurinn.is/)
+- [Eiginleikar](https://www.bustadurinn.is/eiginleikar)
+- [Starfsmannafélag - Fá tilboð](https://www.bustadurinn.is/organizations/signup)
+- [Verktakar / Þjónustuveitendur](https://www.bustadurinn.is/verktakar)
+- [Markaðstorg](https://www.bustadurinn.is/torgid)
+- [Handbók](https://www.bustadurinn.is/handbok)
+- [Spurt og Svarað](https://www.bustadurinn.is/spurt-og-svarad)
+- [Um okkur](https://www.bustadurinn.is/um-okkur)
+- [Hafa samband](https://www.bustadurinn.is/hafa-samband)
+
+## Verðlag
+
+Bústaðurinn.is er í boði með mismunandi áskriftarplönum fyrir einstaklinga og félög. Félög og stéttarfélög fá sérsniðið tilboð. Hafðu samband í gegnum [fyrirspurnarform](https://www.bustadurinn.is/organizations/signup).
+
+## Tungumál
+
+Þjónustan er á íslensku og er sérstaklega hugsuð fyrir íslenskan markað.
+
+## Samband
+
+- Vefur: https://www.bustadurinn.is
+- Samskipti: https://www.bustadurinn.is/hafa-samband
