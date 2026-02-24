@@ -755,7 +755,7 @@ export default function OnboardingPage() {
                             </div>
 
                             <p className="text-grey-dark mb-6">
-                                Sendu boð til fjölskyldumeðlima og meðeigenda sem eiga að hafa aðgang að húsinu.
+                                Við mælum með að bjóða að minnsta kosti einum meðeiganda eða fjölskyldumeðlim strax til að þið getið prófað kerfið saman. Það tekur enga stund!
                             </p>
 
                             <div className="bg-bone border border-stone-200 rounded-lg p-4 mb-6">
@@ -774,7 +774,7 @@ export default function OnboardingPage() {
 
                             <div className="bg-amber/10 border border-amber/30 rounded p-4 mb-6">
                                 <p className="text-sm">
-                                    <strong>Ábending:</strong> Þú getur boðið fleiri aðilum síðar í stillingunum.
+                                    <strong>Engar áhyggjur:</strong> Ef þú hefur ekki netföngin við höndina núna, þá geturðu rekið inn aukaaðila hvenær sem er inni í stillingum hússins.
                                 </p>
                             </div>
 
@@ -794,9 +794,8 @@ export default function OnboardingPage() {
                                 <button onClick={prevStep} className="btn btn-ghost" disabled={loading}>
                                     Til baka
                                 </button>
-                                <button onClick={handleSendInvites} className="btn btn-secondary" disabled={loading}>
-                                    Sleppa þessu skrefi
-                                </button>
+                                <button onClick={handleSendInvites} className="btn btn-secondary font-medium border-transparent hover:border-stone-200" disabled={loading}>
+                                    Sleppa þessu (Bæta við seinna)
                                 <button onClick={handleSendInvites} className="btn btn-primary" disabled={loading}>
                                     {loading ? (
                                         <>
@@ -804,7 +803,7 @@ export default function OnboardingPage() {
                                             Sendi boð...
                                         </>
                                     ) : (
-                                        'Senda boð'
+                                        'Senda boð & Klára'
                                     )}
                                 </button>
                             </div>

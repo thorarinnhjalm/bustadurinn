@@ -128,7 +128,7 @@ export default function LandingPage() {
                                     </div>
                                     <div className="text-left">
                                         <div className="text-xs text-white/60 font-medium uppercase tracking-wider">Byrjaðu strax</div>
-                                        <div className="font-bold">Stofna Húsið (30 dagar frítt)</div>
+                                        <div className="font-bold">Prófa frítt í 30 daga</div>
                                     </div>
                                 </button>
 
@@ -137,7 +137,7 @@ export default function LandingPage() {
                                     className="btn btn-secondary bg-white/50 backdrop-blur-md border border-white/60 hover:bg-white text-stone-600 hover:text-charcoal text-lg px-8 py-4 h-auto shadow-sm hover:shadow-md transition-all rounded-2xl flex items-center justify-center gap-2"
                                 >
                                     <Sparkles className="w-5 h-5 opacity-60" />
-                                    Skoða sýnishorn
+                                    Skoða prufu-útgáfu (Engin skráning)
                                 </button>
                             </div>
 
@@ -661,13 +661,13 @@ export default function LandingPage() {
                     <div className="text-center mb-12">
                         <h2 className="text-3xl md:text-4xl font-serif mb-4">Langar þig að byrja strax?</h2>
                         <p className="text-stone-500 max-w-xl mx-auto mb-8">
-                            Þú getur stofnað aðgang á tveimur mínútum og byrjað að skipuleggja sumarhúsið í dag.
+                            Þú færð 30 daga frítt til að prófa kerfið og sjá hvernig það gagnast ykkur, algjörlega án bindindis.
                         </p>
                         <button
                             onClick={() => navigate('/signup')}
                             className="btn btn-primary mb-12 px-10 py-4 text-lg"
                         >
-                            Stofna Aðgang Núna
+                            Prófa kerfið ókeypis
                         </button>
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
@@ -731,13 +731,13 @@ export default function LandingPage() {
                             onClick={() => navigate('/signup')}
                             className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-8 py-4 shadow-xl shadow-amber/20"
                         >
-                            Stofna aðgang núna (Frítt)
+                            Prófa kerfið frítt
                         </button>
                         <button
                             onClick={() => navigate('/prufa')}
                             className="btn btn-ghost border-2 border-white/20 text-bone hover:bg-white/10 text-lg px-8 py-4"
                         >
-                            Skoða sýnishorn
+                            Skoða prufu-útgáfu (Engin skráning)
                         </button>
                     </div>
                 </div>
