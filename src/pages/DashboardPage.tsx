@@ -13,9 +13,9 @@ import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
-import { collection, query, where, orderBy, limit, addDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, addDoc, onSnapshot, serverTimestamp, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry } from '@/types/models';
+import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, House } from '@/types/models';
 import { fetchWeather } from '@/utils/weather';
 import MyServiceWidget from '@/components/dashboard/MyServiceWidget';
 import SetupProgress from '@/components/SetupProgress';
@@ -61,6 +61,7 @@ const UserDashboard = () => {
     const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [_selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
     const [showBookingDetailModal, setShowBookingDetailModal] = useState(false);
+    const [justActivated, setJustActivated] = useState(false);
 
 
     useEffect(() => {
@@ -78,6 +79,24 @@ const UserDashboard = () => {
                 setDashboardLoading(true);
                 const now = new Date();
                 const todayStart = new Date(now.setHours(0, 0, 0, 0));
+
+                // 0. Listen to the House itself (for subscription updates)
+                const houseRef = doc(db, 'houses', currentHouse.id);
+                unsubscribes.push(onSnapshot(houseRef, (snap) => {
+                    if (snap.exists()) {
+                        const newData = { id: snap.id, ...snap.data() } as House;
+                        const oldStatus = currentHouse.subscription_status;
+                        const newStatus = newData.subscription_status;
+
+                        // Local state update via store
+                        useAppStore.getState().setCurrentHouse(newData);
+
+                        // Success Feedback
+                        if (oldStatus === 'trial' && newStatus === 'active') {
+                            setJustActivated(true);
+                        }
+                    }
+                }));
 
                 // 1. Bookings & Occupancy (Subcollection)
                 const qBookings = query(
@@ -436,7 +455,7 @@ const UserDashboard = () => {
                                 </div>
                             </div>
                             <a
-                                href="https://askell.is/public/payments/170/"
+                                href={`https://askell.is/public/payments/170/?subscription_reference=${currentHouse?.id || ''}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="bg-white text-indigo-600 px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-stone-50 transition-all shadow-lg relative z-10"
@@ -457,6 +476,26 @@ const UserDashboard = () => {
                 />
 
                 {/* What's Next nudges (shows when setup complete but actions pending) */}
+                {/* Success Popup */}
+                {justActivated && (
+                    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 pointer-events-none md:items-center">
+                        <div className="bg-white rounded-2xl shadow-2xl border border-green-100 p-6 max-w-sm w-full animate-in slide-in-from-bottom-8 fade-in duration-500 pointer-events-auto">
+                            <div className="flex flex-col items-center text-center">
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                                    <Sparkles className="w-8 h-8 text-green-600" />
+                                </div>
+                                <h3 className="text-xl font-bold text-charcoal mb-2">Áskrift virkjuð!</h3>
+                                <p className="text-stone-600 mb-6 font-medium">Bústaðurinn þinn er nú fullvirkur. Velkomin(n) til leiks!</p>
+                                <button
+                                    onClick={() => setJustActivated(false)}
+                                    className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors"
+                                >
+                                    FRÁBÆRT
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 <WhatsNext
                     house={currentHouse}
                     currentUser={currentUser}

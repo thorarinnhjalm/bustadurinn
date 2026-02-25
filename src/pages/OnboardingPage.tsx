@@ -796,6 +796,7 @@ export default function OnboardingPage() {
                                 </button>
                                 <button onClick={handleSendInvites} className="btn btn-secondary font-medium border-transparent hover:border-stone-200" disabled={loading}>
                                     Sleppa þessu (Bæta við seinna)
+                                </button>
                                 <button onClick={handleSendInvites} className="btn btn-primary" disabled={loading}>
                                     {loading ? (
                                         <>
