@@ -104,7 +104,6 @@ export default function SuperAdminPage() {
     });
 
     const [paydayStatus, setPaydayStatus] = useState<{ success: boolean; message: string } | null>(null);
-    const [invoiceTestResult, setInvoiceTestResult] = useState<{ success: boolean; message: string; invoice?: any } | null>(null);
     const [selectedHouseForInvoice, setSelectedHouseForInvoice] = useState<string>('');
     const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
     const [addressSearchTimer, setAddressSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
@@ -448,61 +447,11 @@ export default function SuperAdminPage() {
             return;
         }
 
-        setActionLoading('invoice-test');
-        setInvoiceTestResult(null);
-
-        try {
-            // Get house details
-            const house = stats.allHouses.find(h => h.id === selectedHouseForInvoice);
-            if (!house) {
-                setInvoiceTestResult({ success: false, message: 'Hús fannst ekki' });
-                return;
-            }
-
-            // Get manager details
-            const manager = stats.allUsers.find(u => u.uid === house.manager_id);
-            if (!manager) {
-                setInvoiceTestResult({ success: false, message: 'Stjórnandi fannst ekki' });
-                return;
-            }
-
-            const productId = import.meta.env.VITE_PAYDAY_PRODUCT_ANNUAL || '005';
-
-            // Create invoice via API
-            const res = await fetch('/api/payday-create-invoice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    customerName: house.name || manager.name || 'Viðskiptavinur',
-                    customerEmail: manager.email,
-                    lineItems: [{
-                        productCode: productId,
-                        description: `Bústaðurinn.is - Ársáskrift fyrir ${house.name}`,
-                        quantity: 1,
-                        unitPrice: 4990
-                    }],
-                    notes: `Test invoice for ${house.name} (${house.address || 'Enging staðsetning'})`
-                })
-            });
-
-            const data = await res.json();
-
-            if (res.ok && data.success) {
-                setInvoiceTestResult({
-                    success: true,
-                    message: `Reikningur stofnaður! Send á ${manager.email}`,
-                    invoice: data.invoice
-                });
-            } else {
-                setInvoiceTestResult({
-                    success: false,
-                    message: data.error || data.details?.error_description || 'Mistókst að búa til reikning'
-                });
-            }
-        } catch (err: any) {
-            setInvoiceTestResult({ success: false, message: err.message });
-        } finally {
-            setActionLoading(null);
+        // Instead of triggering an API call, we can now just open the Askell page
+        // with prefilled data if possible, or just the link.
+        const confirmPay = window.confirm('Viltu opna Áskell greiðslugáttina fyrir þetta hús?');
+        if (confirmPay) {
+            window.open('https://askell.is/public/payments/170/', '_blank');
         }
     };
 
@@ -819,6 +768,10 @@ export default function SuperAdminPage() {
                 allUsers: prev.allUsers.filter(u => u.uid !== user.uid)
             }));
 
+            // Also update audit lists if they exist
+            setOrphans(prev => prev.filter(o => o.uid !== user.uid));
+            setStuckUsers(prev => prev.filter(s => s.uid !== user.uid));
+
             alert('✅ Notanda eytt!');
         } catch (error: any) {
             console.error('Error deleting user:', error);
@@ -945,6 +898,42 @@ export default function SuperAdminPage() {
         } finally {
             setActionLoading(null);
         }
+    };
+
+    const handleBulkRecoveryEmails = async () => {
+        const count = stuckUsers.length;
+        if (count === 0) return;
+        if (!confirm(`Viltu senda recovery tölvupóst á ALLA ${count} notendur sem vantar hús?`)) return;
+
+        setActionLoading('bulk-recovery');
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const user of stuckUsers) {
+            try {
+                await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`
+                    },
+                    body: JSON.stringify({
+                        templateId: 'finish_setup',
+                        to: user.email,
+                        variables: {
+                            name: user.name || 'Vinur',
+                        }
+                    })
+                });
+                successCount++;
+            } catch (error) {
+                console.error(`Failed to send to ${user.email}:`, error);
+                failCount++;
+            }
+        }
+
+        setActionLoading(null);
+        alert(`Lokið! Sendi á ${successCount} notendur. ${failCount > 0 ? `${failCount} mistókust.` : ''}`);
     };
 
     const handleToggleFeatured = async (feedback: Feedback) => {
@@ -1456,11 +1445,10 @@ export default function SuperAdminPage() {
                         <div className="flex gap-2 border-b border-stone-200">
                             <button
                                 onClick={() => setAnalyticsSubTab('bi')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                                    analyticsSubTab === 'bi'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors ${analyticsSubTab === 'bi'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <Zap className="w-4 h-4" />
@@ -1469,11 +1457,10 @@ export default function SuperAdminPage() {
                             </button>
                             <button
                                 onClick={() => setAnalyticsSubTab('analytics')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                                    analyticsSubTab === 'analytics'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors ${analyticsSubTab === 'analytics'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <BarChart2 className="w-4 h-4" />
@@ -1502,11 +1489,10 @@ export default function SuperAdminPage() {
                         <div className="flex gap-2 border-b border-stone-200 overflow-x-auto">
                             <button
                                 onClick={() => setDataSubTab('houses')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                                    dataSubTab === 'houses'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'houses'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <Home className="w-4 h-4" />
@@ -1515,11 +1501,10 @@ export default function SuperAdminPage() {
                             </button>
                             <button
                                 onClick={() => setDataSubTab('users')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                                    dataSubTab === 'users'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'users'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <Users className="w-4 h-4" />
@@ -1528,11 +1513,10 @@ export default function SuperAdminPage() {
                             </button>
                             <button
                                 onClick={() => setDataSubTab('organizations')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                                    dataSubTab === 'organizations'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'organizations'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <Building2 className="w-4 h-4" />
@@ -1541,11 +1525,10 @@ export default function SuperAdminPage() {
                             </button>
                             <button
                                 onClick={() => setDataSubTab('providers')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                                    dataSubTab === 'providers'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'providers'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <UserCog className="w-4 h-4" />
@@ -1565,11 +1548,10 @@ export default function SuperAdminPage() {
                         <div className="flex gap-2 border-b border-stone-200 overflow-x-auto">
                             <button
                                 onClick={() => setCommunicationsSubTab('contacts')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                                    communicationsSubTab === 'contacts'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'contacts'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <Mail className="w-4 h-4" />
@@ -1578,11 +1560,10 @@ export default function SuperAdminPage() {
                             </button>
                             <button
                                 onClick={() => setCommunicationsSubTab('emails')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                                    communicationsSubTab === 'emails'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'emails'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <Mail className="w-4 h-4" />
@@ -1591,11 +1572,10 @@ export default function SuperAdminPage() {
                             </button>
                             <button
                                 onClick={() => setCommunicationsSubTab('newsletter')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                                    communicationsSubTab === 'newsletter'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'newsletter'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <Send className="w-4 h-4" />
@@ -1604,11 +1584,10 @@ export default function SuperAdminPage() {
                             </button>
                             <button
                                 onClick={() => setCommunicationsSubTab('feedback')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                                    communicationsSubTab === 'feedback'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'feedback'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <Star className="w-4 h-4" />
@@ -1628,11 +1607,10 @@ export default function SuperAdminPage() {
                         <div className="flex gap-2 border-b border-stone-200 overflow-x-auto">
                             <button
                                 onClick={() => setSystemSubTab('audit')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                                    systemSubTab === 'audit'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${systemSubTab === 'audit'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <FileSearch className="w-4 h-4" />
@@ -1641,11 +1619,10 @@ export default function SuperAdminPage() {
                             </button>
                             <button
                                 onClick={() => setSystemSubTab('integrations')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                                    systemSubTab === 'integrations'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${systemSubTab === 'integrations'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <Settings className="w-4 h-4" />
@@ -1654,11 +1631,10 @@ export default function SuperAdminPage() {
                             </button>
                             <button
                                 onClick={() => setSystemSubTab('coupons')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                                    systemSubTab === 'coupons'
-                                        ? 'text-charcoal border-b-2 border-amber'
-                                        : 'text-stone-500 hover:text-stone-700'
-                                }`}
+                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${systemSubTab === 'coupons'
+                                    ? 'text-charcoal border-b-2 border-amber'
+                                    : 'text-stone-500 hover:text-stone-700'
+                                    }`}
                             >
                                 <div className="flex items-center gap-2">
                                     <Tag className="w-4 h-4" />
@@ -2098,14 +2074,13 @@ export default function SuperAdminPage() {
                                                                             : 'Óþekkt dagsetning'}
                                                                     </span>
                                                                     <span className="w-1 h-1 bg-stone-300 rounded-full"></span>
-                                                                    <span className={`font-medium ${
-                                                                        org.subscription_status === 'active' ? 'text-green-600' :
+                                                                    <span className={`font-medium ${org.subscription_status === 'active' ? 'text-green-600' :
                                                                         org.subscription_status === 'trial' ? 'text-amber' :
-                                                                        'text-stone-500'
-                                                                    }`}>
+                                                                            'text-stone-500'
+                                                                        }`}>
                                                                         {org.subscription_status === 'active' ? 'Virkt' :
-                                                                         org.subscription_status === 'trial' ? 'Prufa' :
-                                                                         'Óvirkt'}
+                                                                            org.subscription_status === 'trial' ? 'Prufa' :
+                                                                                'Óvirkt'}
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -2988,32 +2963,9 @@ export default function SuperAdminPage() {
                                                 )}
                                                 {actionLoading === 'invoice-test' ? 'Creating Invoice...' : 'Create Test Invoice'}
                                             </button>
-
-                                            {invoiceTestResult && (
-                                                <div className={`p-4 rounded text-sm border ${invoiceTestResult.success ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                                                    <div className="flex items-center gap-2 font-bold mb-2">
-                                                        {invoiceTestResult.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                                                        {invoiceTestResult.success ? 'Invoice Created!' : 'Failed'}
-                                                    </div>
-                                                    <p className="mb-2">{invoiceTestResult.message}</p>
-                                                    {invoiceTestResult.invoice && (
-                                                        <div className="mt-3 pt-3 border-t border-green-200 font-mono text-xs">
-                                                            <div className="grid grid-cols-2 gap-2">
-                                                                <span className="text-green-600">Invoice ID:</span>
-                                                                <span className="font-bold">{invoiceTestResult.invoice.id || 'N/A'}</span>
-                                                                <span className="text-green-600">Amount:</span>
-                                                                <span className="font-bold">{invoiceTestResult.invoice.total || invoiceTestResult.invoice.amount || '4,490'} kr</span>
-                                                                <span className="text-green-600">Status:</span>
-                                                                <span className="font-bold">{invoiceTestResult.invoice.status || 'Sent'}</span>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 )}
-
                             </div>
                         </div>
                     )
@@ -3511,14 +3463,28 @@ export default function SuperAdminPage() {
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <button
-                                                        onClick={() => handleRepairOrphan(o.uid)}
-                                                        disabled={actionLoading === `repair-${o.uid}`}
-                                                        className="px-3 py-1 text-xs bg-amber/10 text-amber-dark border border-amber/20 rounded hover:bg-amber/20 flex items-center gap-1"
-                                                    >
-                                                        {actionLoading === `repair-${o.uid}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                                                        Gera við
-                                                    </button>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleRepairOrphan(o.uid)}
+                                                            disabled={actionLoading === `repair-${o.uid}`}
+                                                            className="px-3 py-1 text-xs bg-amber/10 text-amber-dark border border-amber/20 rounded hover:bg-amber/20 flex items-center gap-1"
+                                                        >
+                                                            {actionLoading === `repair-${o.uid}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                                                            Gera við
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteUser({ uid: o.uid, email: o.email, name: o.displayName || 'Munaðarlaus' } as any)}
+                                                            disabled={actionLoading === `delete-user-${o.uid}`}
+                                                            className="p-1.5 hover:bg-red-50 text-stone-400 hover:text-red-500 rounded transition-colors"
+                                                            title="Eyða notanda"
+                                                        >
+                                                            {actionLoading === `delete-user-${o.uid}` ? (
+                                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                                            ) : (
+                                                                <Trash2 className="w-3 h-3" />
+                                                            )}
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
@@ -3539,6 +3505,88 @@ export default function SuperAdminPage() {
                                 </div>
                             </div>
                         )}
+
+                        <div className="pt-8 border-t border-stone-200">
+                            <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <h3 className="text-xl font-serif font-bold">Notendur án húss (Stuck)</h3>
+                                    <p className="text-stone-500 text-sm">Notendur sem hafa búið til prófíl en ekki klárað að búa til eða tengjast húsi.</p>
+                                </div>
+                                {stuckUsers.length > 0 && (
+                                    <button
+                                        onClick={handleBulkRecoveryEmails}
+                                        disabled={actionLoading === 'bulk-recovery'}
+                                        className="btn bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2"
+                                    >
+                                        {actionLoading === 'bulk-recovery' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                                        Senda á alla ({stuckUsers.length})
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                                <table className="w-full text-left">
+                                    <thead className="bg-stone-50 border-b border-stone-200">
+                                        <tr>
+                                            <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Stofnað</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Netfang</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Nafn</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Aðgerðir</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-stone-100">
+                                        {auditLoading ? (
+                                            <tr>
+                                                <td colSpan={4} className="px-6 py-12 text-center text-stone-400">
+                                                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+                                                    Sæki gögn...
+                                                </td>
+                                            </tr>
+                                        ) : stuckUsers.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} className="px-6 py-12 text-center text-green-600 font-medium">
+                                                    ✅ Engir notendur fastir í onboarding!
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            stuckUsers.map((u) => (
+                                                <tr key={u.uid} className="hover:bg-stone-50">
+                                                    <td className="px-6 py-4 text-sm text-stone-600">
+                                                        {new Date(u.created).toLocaleString('is-IS')}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm font-medium text-charcoal">{u.email}</td>
+                                                    <td className="px-6 py-4 text-sm text-stone-500">{u.name}</td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => handleSendRecoveryEmail(u)}
+                                                                disabled={actionLoading === `recovery-${u.uid}`}
+                                                                className="px-3 py-1 text-xs bg-indigo-50 text-indigo-700 border border-indigo-100 rounded hover:bg-indigo-100 flex items-center gap-1"
+                                                            >
+                                                                {actionLoading === `recovery-${u.uid}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <Mail className="w-3 h-3" />}
+                                                                Senda tölvupóst
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteUser({ uid: u.uid, email: u.email, name: u.name || 'Óþekktur' } as any)}
+                                                                disabled={actionLoading === `delete-user-${u.uid}`}
+                                                                className="p-1.5 hover:bg-red-50 text-stone-400 hover:text-red-500 rounded transition-colors"
+                                                                title="Eyða notanda"
+                                                            >
+                                                                {actionLoading === `delete-user-${u.uid}` ? (
+                                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                                ) : (
+                                                                    <Trash2 className="w-3 h-3" />
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 )}
 

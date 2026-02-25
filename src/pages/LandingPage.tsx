@@ -48,7 +48,7 @@ export default function LandingPage() {
         "operatingSystem": "Web",
         "offers": {
             "@type": "Offer",
-            "price": "4990",
+            "price": "3990",
             "priceCurrency": "ISK"
         },
         "aggregateRating": {
@@ -615,7 +615,7 @@ export default function LandingPage() {
                             <div className="text-center mb-8 pt-4">
                                 <h3 className="text-2xl font-serif mb-2">Ársáskrift</h3>
                                 <div className="flex flex-col items-center">
-                                    <div className="text-5xl font-bold font-serif mb-2 text-charcoal">4.990 kr <span className="text-base font-normal text-grey-mid">/ ári</span></div>
+                                    <div className="text-5xl font-bold font-serif mb-2 text-charcoal">3.990 kr <span className="text-base font-normal text-grey-mid">/ ári</span></div>
                                 </div>
                                 <p className="text-sm text-charcoal/80 bg-amber/10 inline-block px-3 py-1 rounded">
                                     Besti kosturinn

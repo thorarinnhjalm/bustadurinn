@@ -435,6 +435,14 @@ const UserDashboard = () => {
                                     <p className="text-indigo-100 text-xs md:text-sm">Þú átt {daysLeft} daga eftir af ókeypis aðgangi.</p>
                                 </div>
                             </div>
+                            <a
+                                href="https://askell.is/public/payments/170/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-white text-indigo-600 px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-stone-50 transition-all shadow-lg relative z-10"
+                            >
+                                Virkja áskrift
+                            </a>
                         </div>
                     );
                 })()}

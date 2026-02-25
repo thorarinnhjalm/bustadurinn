@@ -187,7 +187,7 @@ export default function FeaturesPage() {
                     "operatingSystem": "Web",
                     "offers": {
                         "@type": "Offer",
-                        "price": "4990",
+                        "price": "3990",
                         "priceCurrency": "ISK"
                     },
                     "featureList": [

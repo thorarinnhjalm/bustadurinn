@@ -9,7 +9,7 @@ export default function FAQPage() {
     const faqs = [
         {
             q: "Hvað kostar þjónustan?",
-            a: "4.990 kr. á ári (ein greiðsla). Innifalið eru allir eiginleikar, ótakmarkaður fjöldi notenda og gesta. 30 daga prufutími er í boði án skuldbindinga."
+            a: "3.990 kr. á ári (ein greiðsla). Innifalið eru allir eiginleikar, ótakmarkaður fjöldi notenda og gesta. 30 daga prufutími er í boði án skuldbindinga."
         },
         {
             q: "Hvað er Torgið?",
