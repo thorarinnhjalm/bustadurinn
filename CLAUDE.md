@@ -10,12 +10,15 @@ Bústaðurinn.is is a SaaS platform for managing shared Icelandic summer houses 
 
 ```bash
 npm run dev          # Vite dev server on port 5173
-npm run build        # TypeScript check + Vite production build → dist/
+npm run build        # Vite production build → dist/
 npm run lint         # ESLint
 npm run test         # Vitest (single run)
 npm run test:watch   # Vitest in watch mode
+npm run test:ui      # Vitest with browser UI
 npm run test:coverage # Vitest with V8 coverage
 ```
+
+To run a single test file: `npx vitest run src/utils/rbac.test.ts`
 
 ## Architecture
 
@@ -28,7 +31,10 @@ npm run test:coverage # Vitest with V8 coverage
 - **Services** (`src/services/`): Thin async functions wrapping direct Firestore SDK calls. No classes, no ORM.
 - **Store** (`src/store/appStore.ts`): Single Zustand store for global state (currentUser, currentHouse, auth state).
 - **Hooks** (`src/hooks/`): `useEffectiveUser` is the canonical hook for current user (handles impersonation). `useUserRole` and `usePermissions` for RBAC.
-- **API routes** (`api/`): Vercel serverless functions for operations requiring secrets (email via Resend, Firebase Admin SDK, rate limiting via Upstash Redis).
+- **Contexts** (`src/contexts/`): `ImpersonationContext` (god mode), `SandboxContext` (demo mode), `firebase.ts` (Firebase app init).
+- **Config** (`src/config/firebase.ts`): Firebase config from `VITE_FIREBASE_*` env vars.
+- **Lib** (`src/lib/`): Low-level shared utilities.
+- **API routes** (`api/`): Vercel serverless functions for operations requiring secrets (email via Resend, Firebase Admin SDK, rate limiting via Upstash Redis). Cron jobs in `api/cron/`.
 - **Types** (`src/types/models.ts`): All Firestore data model interfaces. RBAC types in `src/types/rbac.ts`.
 
 ### Routing
@@ -42,6 +48,10 @@ Firebase Auth (email/password, Google OAuth, Facebook OAuth). Auth listener in r
 ### Impersonation (God Mode)
 
 Super admin can impersonate users. State managed via `ImpersonationContext` (React Context), persisted to `localStorage`. Always use `useEffectiveUser()` to get current user — it transparently returns the impersonated user when active.
+
+### Sandbox / Demo Mode
+
+`SandboxContext` detects `/sandbox` URL prefix and provides a pre-seeded demo house (`demo-house-001`) and demo user without requiring authentication. Used for unauthenticated product previews.
 
 ### Organizations
 
@@ -71,9 +81,13 @@ Tailwind CSS 3.4 with a custom "Scandi-Minimalist" design system defined in `src
 
 Vitest + @testing-library/react with jsdom. Firebase is globally mocked in `src/test/setup.ts`. Test files are collocated next to source (e.g., `utils/rbac.test.ts`).
 
+## Error Monitoring
+
+Sentry (`@sentry/react`) is integrated for frontend error tracking. A `SentryTestPage` exists for verification.
+
 ## Deployment
 
-Vercel Pro, auto-deploys from `main` branch. SPA fallback configured — all non-`/api` routes rewrite to `index.html`. Security headers (HSTS, CSP, X-Frame-Options) set in `vercel.json`. Production build drops `console` and `debugger` statements.
+Vercel Pro, auto-deploys from `main` branch. SPA fallback configured — all non-`/api` routes rewrite to `index.html`. Security headers (HSTS, CSP, X-Frame-Options) set in `vercel.json`. Production build drops `console` and `debugger` statements (via esbuild `drop` option in `vite.config.ts`).
 
 ## Firestore Collections
 
