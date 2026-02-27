@@ -46,7 +46,7 @@ const UserDashboard = () => {
 
     // Real Data State
     const appLoading = useAppStore((state) => state.isLoading);
-    const [dashboardLoading, setDashboardLoading] = useState(true);
+    const [dashboardLoading, setDashboardLoading] = useState(false);
     const [nextBooking, setNextBooking] = useState<Booking | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isOccupied, setIsOccupied] = useState(false);
@@ -54,11 +54,6 @@ const UserDashboard = () => {
     const [weather, setWeather] = useState({ temp: "--" as string | number, wind: 0, condition: "—" });
     const [finances, setFinances] = useState({ balance: 0, lastAction: "—", totalBudget: 0, actualYTD: 0 });
     const [budgetPlan, setBudgetPlan] = useState<BudgetPlan | null>(null);
-    const [initialDataLoaded, setInitialDataLoaded] = useState({
-        house: false,
-        bookings: false,
-        finances: false
-    });
 
     // Checkout State
     const [showCheckoutModal, setShowCheckoutModal] = useState(false);
@@ -86,16 +81,6 @@ const UserDashboard = () => {
                 const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-                // Check if all critical data is loaded
-                const checkInitialLoad = (key: keyof typeof initialDataLoaded) => {
-                    setInitialDataLoaded(prev => {
-                        const next = { ...prev, [key]: true };
-                        if (next.house && next.bookings && next.finances) {
-                            setDashboardLoading(false);
-                        }
-                        return next;
-                    });
-                };
 
                 // 0. Listen to the House itself (for subscription updates)
                 const houseRef = doc(db, 'houses', currentHouse.id);
@@ -113,7 +98,6 @@ const UserDashboard = () => {
                             setJustActivated(true);
                         }
                     }
-                    checkInitialLoad('house');
                 }));
 
                 // 1. Bookings & Occupancy (Subcollection)
@@ -139,11 +123,7 @@ const UserDashboard = () => {
                     // Check Occupancy
                     const active = bookingsData.find(b => b.start <= new Date() && b.end >= new Date());
                     setIsOccupied(!!active);
-                    checkInitialLoad('bookings');
-                }, (error) => {
-                    console.error("Bookings listener error:", error);
-                    checkInitialLoad('bookings');
-                }));
+                }, (error) => console.error("Bookings listener error:", error)));
 
                 // 2. Tasks (Subcollection)
                 const qTasks = query(
@@ -263,11 +243,7 @@ const UserDashboard = () => {
                         lastAction: action,
                         actualYTD: expense
                     }));
-                    checkInitialLoad('finances');
-                }, (error) => {
-                    console.error("Finance listener error:", error);
-                    checkInitialLoad('finances');
-                }));
+                }, (error) => console.error("Finance listener error:", error)));
 
                 // 6. Weather (Async - One time)
                 if (currentHouse.location?.lat && currentHouse.location?.lng) {
@@ -291,7 +267,7 @@ const UserDashboard = () => {
         return () => {
             unsubscribes.forEach(u => u());
         };
-    }, [currentHouse, currentUser, navigate]);
+    }, [currentHouse?.id, currentUser?.uid, navigate]);
 
     if (appLoading) {
         return (
