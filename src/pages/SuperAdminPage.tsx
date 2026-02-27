@@ -675,17 +675,17 @@ export default function SuperAdminPage() {
             // Fetch the impersonated user's house DIRECTLY (not all houses)
             let userHouse = null;
             if (user.house_ids && user.house_ids.length > 0) {
-                const firstHouseId = user.house_ids[0];
+                const houseId = user.house_ids[0];
 
                 try {
-                    const houseDocRef = doc(db, 'houses', firstHouseId);
+                    const houseDocRef = doc(db, 'houses', houseId);
                     const houseSnap = await getDoc(houseDocRef);
 
                     if (houseSnap.exists()) {
                         userHouse = { id: houseSnap.id, ...houseSnap.data() } as House;
                         logger.debug('Loaded user house:', userHouse.name);
                     } else {
-                        console.warn('House not found:', firstHouseId);
+                        console.warn('House not found:', houseId);
                     }
                 } catch (fetchError) {
                     console.error('Error fetching user house:', fetchError);

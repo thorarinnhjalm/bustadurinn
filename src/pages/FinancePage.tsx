@@ -48,11 +48,15 @@ export default function FinancePage() {
     const { currentUser } = useAppStore();
     const [activeTab, setActiveTab] = useState<Tab>('budget');
     const [house, setHouse] = useState<House | null>(null);
-
-    const primaryHouseId = currentUser?.house_ids?.[0];
+    const currentHouse = useAppStore((state) => state.currentHouse);
+    const primaryHouseId = currentHouse?.id;
 
     useEffect(() => {
-        if (!primaryHouseId) return;
+        if (!primaryHouseId) {
+            // If no house is selected, but user has houses, this might be a race condition.
+            // But we prefer to wait for the global store to be populated by AuthHandler.
+            return;
+        }
 
         const fetchHouse = async () => {
             const houseDoc = await getDoc(doc(db, 'houses', primaryHouseId));

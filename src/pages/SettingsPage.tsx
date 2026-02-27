@@ -635,6 +635,8 @@ export default function SettingsPage() {
             try {
                 // Prioritize the globally selected house, otherwise default to first available
                 const houseId = currentStoredHouseId || userHouseIds[0];
+                if (!houseId) return;
+
                 const houseSnap = await getDoc(doc(db, 'houses', houseId));
 
                 if (houseSnap.exists()) {
