@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
 import { collection, query, where, orderBy, limit, addDoc, onSnapshot, serverTimestamp, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, House } from '@/types/models';
+import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, House, BudgetPlan } from '@/types/models';
 import { fetchWeather } from '@/utils/weather';
 import MyServiceWidget from '@/components/dashboard/MyServiceWidget';
 import SetupProgress from '@/components/SetupProgress';
@@ -52,7 +52,8 @@ const UserDashboard = () => {
     const [isOccupied, setIsOccupied] = useState(false);
     const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
     const [weather, setWeather] = useState({ temp: "--" as string | number, wind: 0, condition: "—" });
-    const [finances, setFinances] = useState({ balance: 0, lastAction: "—" });
+    const [finances, setFinances] = useState({ balance: 0, lastAction: "—", totalBudget: 0, actualYTD: 0 });
+    const [budgetPlan, setBudgetPlan] = useState<BudgetPlan | null>(null);
 
     // Checkout State
     const [showCheckoutModal, setShowCheckoutModal] = useState(false);
@@ -78,7 +79,8 @@ const UserDashboard = () => {
             try {
                 setDashboardLoading(true);
                 const now = new Date();
-                const todayStart = new Date(now.setHours(0, 0, 0, 0));
+                const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
 
                 // 0. Listen to the House itself (for subscription updates)
                 const houseRef = doc(db, 'houses', currentHouse.id);
@@ -192,10 +194,28 @@ const UserDashboard = () => {
                     }
                 }, (error) => console.error("Logs listener error:", error)));
 
-                // 5. Finances (Subcollection)
+                // 5. Finances (Subcollection - Optimized with Start of Year filter)
                 const qFinance = query(
-                    collection(db, 'houses', currentHouse.id, 'finance_entries')
+                    collection(db, 'houses', currentHouse.id, 'finance_entries'),
+                    where('date', '>=', startOfYear),
+                    orderBy('date', 'desc')
                 );
+
+                // Fetch Budget Plan for current year
+                const qBudget = query(
+                    collection(db, 'houses', currentHouse.id, 'budget_plans'),
+                    where('year', '==', now.getFullYear()),
+                    limit(1)
+                );
+
+                unsubscribes.push(onSnapshot(qBudget, (snapshot) => {
+                    if (!snapshot.empty) {
+                        setBudgetPlan({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as BudgetPlan);
+                    } else {
+                        setBudgetPlan(null);
+                    }
+                }));
+
                 unsubscribes.push(onSnapshot(qFinance, (snapshot) => {
                     const entries = snapshot.docs.map(doc => ({
                         id: doc.id,
@@ -210,14 +230,19 @@ const UserDashboard = () => {
 
                     let action = "Ekkert að frétta";
                     if (entries.length > 0) {
-                        entries.sort((a, b) => b.date.getTime() - a.date.getTime());
+                        // Entries are already sorted by DESC date in query
                         const last = entries[0];
                         const who = last.paid_by_name?.split(' ')[0] || 'Sjóðurinn';
                         const verb = last.type === 'expense' ? 'greiddi' : 'lagði inn';
                         action = `${who} ${verb} ${last.amount.toLocaleString('is-IS')} kr.`;
                     }
 
-                    setFinances({ balance: bal, lastAction: action });
+                    setFinances(prev => ({
+                        ...prev,
+                        balance: bal,
+                        lastAction: action,
+                        actualYTD: expense
+                    }));
                 }, (error) => console.error("Finance listener error:", error)));
 
                 // 6. Weather (Async - One time)
@@ -612,24 +637,55 @@ const UserDashboard = () => {
                                             {finances.balance.toLocaleString('is-IS')} <span className="text-xl text-stone-500 font-sans font-normal">kr.</span>
                                         </h4>
 
-                                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
-                                            <div className="flex items-center gap-3 text-sm">
-                                                <div className={`w-2 h-2 rounded-full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-stone-300 text-xs uppercase tracking-wide font-bold mb-0.5">Síðasta færsla</p>
-                                                    <p className="text-white font-medium truncate">{finances.lastAction}</p>
+                                        {budgetPlan ? (
+                                            <div className="space-y-3">
+                                                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
+                                                    <div className="flex justify-between items-end mb-2">
+                                                        <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest">Nýting áætlunar ({budgetPlan.year})</p>
+                                                        <p className="text-white text-xs font-bold">{Math.round((finances.actualYTD / (budgetPlan.items.filter(i => i.type !== 'income').reduce((sum, i) => sum + (i.frequency === 'monthly' ? i.estimated_amount * 12 : i.estimated_amount), 0) || 1)) * 100)}%</p>
+                                                    </div>
+                                                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full transition-all duration-1000 ${finances.actualYTD > budgetPlan.items.filter(i => i.type !== 'income').reduce((sum, i) => sum + (i.frequency === 'monthly' ? i.estimated_amount * 12 : i.estimated_amount), 0) ? 'bg-red-400' : 'bg-amber'}`}
+                                                            style={{ width: `${Math.min((finances.actualYTD / (budgetPlan.items.filter(i => i.type !== 'income').reduce((sum, i) => sum + (i.frequency === 'monthly' ? i.estimated_amount * 12 : i.estimated_amount), 0) || 1)) * 100, 100)}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-4">
+                                                    <div className="flex-1 bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
+                                                        <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mb-1">Áætlun ársins</p>
+                                                        <p className="text-white font-serif text-lg leading-none">
+                                                            {budgetPlan.items.filter(i => i.type !== 'income').reduce((sum, i) => sum + (i.frequency === 'monthly' ? i.estimated_amount * 12 : i.estimated_amount), 0).toLocaleString('is-IS')} <span className="text-[10px] font-sans font-normal text-stone-500">kr.</span>
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex-1 bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
+                                                        <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mb-1">Raun eyðsla</p>
+                                                        <p className="text-white font-serif text-lg leading-none">
+                                                            {finances.actualYTD.toLocaleString('is-IS')} <span className="text-[10px] font-sans font-normal text-stone-500">kr.</span>
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
+                                                <div className="flex items-center gap-3 text-sm">
+                                                    <div className={`w-2 h-2 rounded-full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-stone-300 text-xs uppercase tracking-wide font-bold mb-0.5">Síðasta færsla</p>
+                                                        <p className="text-white font-medium truncate">{finances.lastAction}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {/* Empty State Overlay */}
-                                    {finances.balance === 0 && finances.lastAction === "Ekkert að frétta" && (
+                                    {/* Empty State Overlay - Only if both balance and budget are zero/missing */}
+                                    {finances.balance === 0 && finances.lastAction === "Ekkert að frétta" && !budgetPlan && (
                                         <div className="absolute inset-0 bg-charcoal/95 backdrop-blur-sm flex items-center justify-center z-20 rounded-2xl">
                                             <div className="text-center p-6">
                                                 <Wallet size={32} className="mx-auto mb-3 text-amber" />
-                                                <p className="text-white font-bold mb-2">Sjóðurinn er tómur</p>
-                                                <p className="text-stone-400 text-sm mb-4">Byrjaðu með að bæta við fyrstu færslunni</p>
+                                                <p className="text-white font-bold mb-2">Engin gögn fundust</p>
+                                                <p className="text-stone-400 text-sm mb-4">Byrjaðu á að bæta við færslu eða gera áætlun</p>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); navigate('/finance'); }}
                                                     className="px-4 py-2 bg-amber text-charcoal rounded-lg font-bold text-sm hover:bg-amber/90 transition-colors"

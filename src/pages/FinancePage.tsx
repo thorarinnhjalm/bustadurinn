@@ -3,7 +3,7 @@
  * Tabs: Rekstraráætlun (Budget) & Bókhald (Ledger)
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     PiggyBank,
@@ -32,7 +32,8 @@ import {
     arrayUnion,
     serverTimestamp,
     arrayRemove,
-    getDocs
+    getDocs,
+    orderBy
 } from 'firebase/firestore';
 import type { BudgetPlan, BudgetItem, LedgerEntry, House } from '@/types/models';
 import BudgetForm from '@/components/finance/BudgetForm';
@@ -48,15 +49,13 @@ export default function FinancePage() {
     const { currentUser } = useAppStore();
     const [activeTab, setActiveTab] = useState<Tab>('budget');
     const [house, setHouse] = useState<House | null>(null);
+    const [entries, setEntries] = useState<LedgerEntry[]>([]);
+    const [loading, setLoading] = useState(true);
     const currentHouse = useAppStore((state) => state.currentHouse);
     const primaryHouseId = currentHouse?.id;
 
     useEffect(() => {
-        if (!primaryHouseId) {
-            // If no house is selected, but user has houses, this might be a race condition.
-            // But we prefer to wait for the global store to be populated by AuthHandler.
-            return;
-        }
+        if (!primaryHouseId) return;
 
         const fetchHouse = async () => {
             const houseDoc = await getDoc(doc(db, 'houses', primaryHouseId));
@@ -65,6 +64,36 @@ export default function FinancePage() {
             }
         };
         fetchHouse();
+    }, [primaryHouseId]);
+
+    // Lifted Finance Entries Listener (Optimized with date filter)
+    useEffect(() => {
+        if (!primaryHouseId) return;
+
+        setLoading(true);
+        const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+
+        const q = query(
+            collection(db, 'houses', primaryHouseId, 'finance_entries'),
+            where('date', '>=', startOfYear),
+            orderBy('date', 'desc')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                date: doc.data().date?.toDate() || new Date()
+            })) as LedgerEntry[];
+
+            setEntries(data);
+            setLoading(false);
+        }, (error) => {
+            console.error("Finance entries listener error:", error);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [primaryHouseId]);
 
     const isManager = house?.manager_id === currentUser?.uid;
@@ -159,13 +188,21 @@ export default function FinancePage() {
             {/* Content Area */}
             <div className="max-w-5xl mx-auto">
                 {activeTab === 'budget' ? (
-                    <BudgetView houseId={house?.id} currentUserId={currentUser?.uid} house={house} />
+                    <BudgetView
+                        houseId={house?.id}
+                        currentUserId={currentUser?.uid}
+                        house={house}
+                        entries={entries}
+                        loading={loading}
+                    />
                 ) : (
                     <LedgerView
                         houseId={house?.id}
                         currentUserId={currentUser?.uid}
                         isManager={isManager}
                         currentUserName={currentUser?.name}
+                        entries={entries}
+                        loading={loading}
                     />
                 )}
             </div>
@@ -177,11 +214,11 @@ export default function FinancePage() {
 // Budget View
 // ------------------------------------------------------------------
 
-function BudgetView({ houseId, currentUserId, house }: { houseId?: string, currentUserId?: string, house?: House | null }) {
+function BudgetView({ houseId, currentUserId, house, entries, loading }:
+    { houseId?: string, currentUserId?: string, house?: House | null, entries: LedgerEntry[], loading: boolean }) {
     const [plan, setPlan] = useState<BudgetPlan | null>(null);
-    const [entries, setEntries] = useState<LedgerEntry[]>([]);
     const [showForm, setShowForm] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [loadingPlan, setLoadingPlan] = useState(true);
 
     const currentYear = new Date().getFullYear();
 
@@ -201,31 +238,7 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
             } else {
                 setPlan(null);
             }
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, [houseId, currentYear]);
-
-    // Fetch Actual Expenses (for Variance)
-    useEffect(() => {
-        if (!houseId) return;
-
-        const q = query(
-            collection(db, 'houses', houseId, 'finance_entries')
-        );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                date: doc.data().date?.toDate() || new Date()
-            })) as LedgerEntry[];
-
-            // Filter entries for current year (or filter within widget)
-            // Filtering here is better for clean props
-            const thisYear = data.filter(e => e.date.getFullYear() === currentYear);
-            setEntries(thisYear);
+            setLoadingPlan(false);
         });
 
         return () => unsubscribe();
@@ -270,26 +283,30 @@ function BudgetView({ houseId, currentUserId, house }: { houseId?: string, curre
     };
 
     // Separate income and expenses (backwards compatible: items without type default to expense)
-    const totalExpenses = plan?.items
-        .filter(item => (item.type || 'expense') === 'expense')
-        .reduce((sum, item) => {
-            let annualAmount = item.estimated_amount;
-            if (item.frequency === 'monthly') annualAmount *= 12;
-            return sum + annualAmount;
-        }, 0) || 0;
+    const { totalExpenses, totalIncome, netPosition, monthlyContribution } = useMemo(() => {
+        const expenses = plan?.items
+            .filter(item => (item.type || 'expense') === 'expense')
+            .reduce((sum, item) => {
+                let annualAmount = item.estimated_amount;
+                if (item.frequency === 'monthly') annualAmount *= 12;
+                return sum + annualAmount;
+            }, 0) || 0;
 
-    const totalIncome = plan?.items
-        .filter(item => item.type === 'income')
-        .reduce((sum, item) => {
-            let annualAmount = item.estimated_amount;
-            if (item.frequency === 'monthly') annualAmount *= 12;
-            return sum + annualAmount;
-        }, 0) || 0;
+        const income = plan?.items
+            .filter(item => item.type === 'income')
+            .reduce((sum, item) => {
+                let annualAmount = item.estimated_amount;
+                if (item.frequency === 'monthly') annualAmount *= 12;
+                return sum + annualAmount;
+            }, 0) || 0;
 
-    const netPosition = totalIncome - totalExpenses;
-    const monthlyContribution = Math.ceil(Math.max(0, totalExpenses - totalIncome) / 12);
+        const pos = income - expenses;
+        const contribution = Math.ceil(Math.max(0, expenses - income) / 12);
 
-    if (loading) return <div className="p-8 text-center text-grey-mid">Hleð gögnum...</div>;
+        return { totalExpenses: expenses, totalIncome: income, netPosition: pos, monthlyContribution: contribution };
+    }, [plan]);
+
+    if (loading || loadingPlan) return <div className="p-8 text-center text-grey-mid">Hleð gögnum...</div>;
 
     return (
         <div className="space-y-6">
@@ -441,12 +458,12 @@ interface LedgerViewProps {
     currentUserId?: string;
     isManager: boolean;
     currentUserName?: string;
+    entries: LedgerEntry[];
+    loading: boolean;
 }
 
-function LedgerView({ houseId, currentUserId, isManager, currentUserName }: LedgerViewProps) {
-    const [entries, setEntries] = useState<LedgerEntry[]>([]);
+function LedgerView({ houseId, currentUserId, isManager, currentUserName, entries, loading }: LedgerViewProps) {
     const [showForm, setShowForm] = useState(false);
-    const [loading, setLoading] = useState(true);
     const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
     const [budgetCategories, setBudgetCategories] = useState<string[]>([]);
 
@@ -471,26 +488,6 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
     }, [houseId, currentYear]);
 
     const [members, setMembers] = useState<{ uid: string, name: string }[]>([]);
-
-    useEffect(() => {
-        if (!houseId) return;
-
-        const q = query(
-            collection(db, 'houses', houseId, 'finance_entries')
-        );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                date: doc.data().date?.toDate() || new Date()
-            })) as LedgerEntry[];
-            setEntries(data);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, [houseId]);
 
 
     useEffect(() => {
@@ -578,15 +575,17 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName }: Ledg
         setShowForm(true);
     };
 
-    const totalIncome = entries
-        .filter(e => e.type !== 'expense')
-        .reduce((sum, e) => sum + e.amount, 0);
+    const { totalIncome, totalExpense, balance } = useMemo(() => {
+        const income = entries
+            .filter(e => e.type !== 'expense')
+            .reduce((sum, e) => sum + e.amount, 0);
 
-    const totalExpense = entries
-        .filter(e => e.type === 'expense')
-        .reduce((sum, e) => sum + e.amount, 0);
+        const expense = entries
+            .filter(e => e.type === 'expense')
+            .reduce((sum, e) => sum + e.amount, 0);
 
-    const balance = totalIncome - totalExpense;
+        return { totalIncome: income, totalExpense: expense, balance: income - expense };
+    }, [entries]);
 
     if (loading) return <div className="p-8 text-center text-grey-mid">Hleð gögnum...</div>;
 

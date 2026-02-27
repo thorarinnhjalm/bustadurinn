@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, query, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader2, Home } from 'lucide-react';
 
@@ -96,8 +96,8 @@ export default function MarketingMap({
     useEffect(() => {
         const fetchHouses = async () => {
             try {
-                // Fetch all houses that have location data
-                const q = query(collection(db, 'houses'));
+                // Fetch houses that have location data (limit to 500 for performance)
+                const q = query(collection(db, 'houses'), limit(500));
                 const snapshot = await getDocs(q);
 
                 let validHouses: MapHouse[] = [];

@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { logger } from '@/utils/logger';
 import type { User } from '@/types/models';
 
@@ -47,8 +47,8 @@ export function useMembers(houseId: string | undefined, ownerIds: string[] | und
 
                 setMembers(users);
 
-                // Fetch pending invitations
-                const invQ = query(collection(db, 'invitations'), where('house_id', '==', houseId));
+                // Fetch pending invitations (limit to 50)
+                const invQ = query(collection(db, 'invitations'), where('house_id', '==', houseId), limit(50));
                 const invSnap = await getDocs(invQ);
                 const invs = invSnap.docs.map((d) => ({
                     id: d.id,

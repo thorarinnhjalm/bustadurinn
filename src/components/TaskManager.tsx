@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Task, TaskStatus, TaskPriority, TaskCategory, House, User } from '@/types/models';
 import { Plus, Calendar, DollarSign, Check, Trash2 } from 'lucide-react';
@@ -32,7 +32,8 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
 
         const q = query(
             collection(db, 'houses', house.id, 'tasks'),
-            orderBy('created_at', 'desc')
+            orderBy('created_at', 'desc'),
+            limit(100)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {

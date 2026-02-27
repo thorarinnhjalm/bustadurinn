@@ -9,7 +9,7 @@ import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css'; // Add base styles
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock, Trash2, Check } from 'lucide-react';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, deleteDoc, limit, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
@@ -344,7 +344,11 @@ export default function CalendarPage() {
         if (!houseId) return;
 
         try {
-            const q = query(collection(db, 'houses', houseId, 'bookings'));
+            const q = query(
+                collection(db, 'houses', houseId, 'bookings'),
+                orderBy('start', 'desc'),
+                limit(500)
+            );
             const snapshot = await getDocs(q);
 
             const bookingsData = snapshot.docs.map(doc => {
