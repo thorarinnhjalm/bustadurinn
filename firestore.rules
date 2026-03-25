@@ -68,16 +68,22 @@ service cloud.firestore {
 
     match /houses/{houseId} {
       // Members can read their houses
-      // (Simplified read for now to prevent blocking, but ideally scoped)
-      allow read: if isAuthenticated() && (isHouseMember(houseId) || isSuperAdmin());
+      // Using resource.data avoids the get() anti-pattern for queries on the house collection itself
+      allow read: if isAuthenticated() && (
+        (getUserId() in resource.data.owner_ids) || isSuperAdmin()
+      );
 
-      // FIX: Allow regular users to create a house where they are the manager
+      // Allow regular users to create a house where they are the manager
       allow create: if isAuthenticated() && 
                       request.resource.data.manager_id == getUserId() &&
                       getUserId() in request.resource.data.owner_ids;
 
-      allow update: if isHouseManager(houseId) || isSuperAdmin();
-      allow delete: if isHouseManager(houseId) || isSuperAdmin();
+      allow update: if isAuthenticated() && (
+        (resource.data.manager_id == getUserId()) || isSuperAdmin()
+      );
+      allow delete: if isAuthenticated() && (
+        (resource.data.manager_id == getUserId()) || isSuperAdmin()
+      );
 
       // --- House Subcollections ---
 
