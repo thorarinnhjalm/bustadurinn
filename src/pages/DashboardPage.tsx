@@ -6,7 +6,7 @@ import {
     ChevronRight, Loader2, Shield,
     Home, LogOut,
     Image as ImageIcon, MapPin, Camera,
-    ShoppingCart, CheckSquare, Sparkles
+    ShoppingCart, CheckSquare, Sparkles, Coffee
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
@@ -456,35 +456,44 @@ const UserDashboard = () => {
             {/* --- MAIN CONTENT --- */}
             <div className="max-w-5xl mx-auto px-4 relative z-10 space-y-8 -mt-8">
 
-                {/* TRIAL BANNER */}
+                {/* SUPPORT BANNER (replaces old trial banner) */}
                 {(() => {
-                    if (!currentUser?.trial_ends_at) return null;
-                    const trialEnds = currentUser.trial_ends_at as any;
-                    const date = trialEnds.toDate ? trialEnds.toDate() : new Date(trialEnds);
-                    const daysLeft = Math.ceil((date.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-
-                    if (daysLeft < 0) return null; // Expired (handle elsewhere or show specific expired state)
+                    // Don't show if user dismissed it
+                    const dismissed = localStorage.getItem('support_banner_dismissed');
+                    if (dismissed) return null;
 
                     return (
-                        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-4 rounded-2xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                        <div className="bg-gradient-to-r from-amber/10 to-amber/5 border border-amber/20 p-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
                             <div className="flex items-center gap-3 relative z-10">
-                                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                    <Sparkles className="w-5 h-5" />
+                                <div className="p-2 bg-amber/20 rounded-lg">
+                                    <Coffee className="w-5 h-5 text-amber" />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-sm md:text-base">Prufuáskrift í gangi</p>
-                                    <p className="text-indigo-100 text-xs md:text-sm">Þú átt {daysLeft} daga eftir af ókeypis aðgangi.</p>
+                                    <p className="font-bold text-sm md:text-base text-charcoal">Ef þér líkar við kerfið</p>
+                                    <p className="text-stone-500 text-xs md:text-sm">er velkomið að styrkja þróun þess með kaffibolla ☕</p>
                                 </div>
                             </div>
-                            <a
-                                href={`https://askell.is/public/payments/170/?subscription_reference=${currentHouse?.id || ''}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="bg-white text-indigo-600 px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-stone-50 transition-all shadow-lg relative z-10"
-                            >
-                                Virkja áskrift
-                            </a>
+                            <div className="flex items-center gap-2 relative z-10">
+                                <a
+                                    href={`https://askell.is/public/payments/170/`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-amber text-charcoal px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-amber/90 transition-all shadow-sm"
+                                >
+                                    Styrkja
+                                </a>
+                                <button
+                                    onClick={() => {
+                                        localStorage.setItem('support_banner_dismissed', 'true');
+                                        window.location.reload();
+                                    }}
+                                    className="text-stone-400 hover:text-stone-600 p-1.5 rounded-lg hover:bg-stone-100 transition-colors text-xs"
+                                    title="Loka"
+                                >
+                                    ✕
+                                </button>
+                            </div>
                         </div>
                     );
                 })()}
