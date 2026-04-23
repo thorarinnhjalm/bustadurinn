@@ -323,7 +323,7 @@ export default function HandbokPage() {
                     <Home className="w-16 h-16 text-amber mx-auto mb-6" />
                     <h2 className="text-4xl font-serif font-bold mb-6">Tilbúinn að prófa?</h2>
                     <p className="text-xl text-stone-300 mb-8 max-w-2xl mx-auto">
-                        Settu upp húsið þitt á 5 mínútum. 30 daga prufa án skuldbindinga.
+                        Settu upp húsið þitt á 5 mínútum. Ókeypis og opið öllum.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button

@@ -187,7 +187,7 @@ export default function FeaturesPage() {
                     "operatingSystem": "Web",
                     "offers": {
                         "@type": "Offer",
-                        "price": "3990",
+                        "price": "0",
                         "priceCurrency": "ISK"
                     },
                     "featureList": [
@@ -216,7 +216,7 @@ export default function FeaturesPage() {
                                     <ArrowRight className="w-4 h-4 ml-2" />
                                 </Link>
                                 <Link to="/" className="btn btn-secondary">
-                                    Byrja frítt</Link>
+                                    Byrja ókeypis</Link>
                             </div>
                         </div>
 
@@ -311,14 +311,14 @@ export default function FeaturesPage() {
                         <div className="mt-24 bg-gradient-to-br from-amber/10 to-amber/5 rounded-2xl p-12 text-center">
                             <h2 className="text-3xl font-serif mb-4">Tilbúinn að prófa?</h2>
                             <p className="text-xl text-grey-dark mb-8 max-w-2xl mx-auto">
-                                Sjáðu kerfið í vinnslu eða búðu til aðgang strax. Engin skuldbinding í prufutímanum.
+                                Sjáðu kerfið í vinnslu eða búðu til aðgang strax. Ókeypis og opið öllum.
                             </p>
                             <div className="flex gap-4 justify-center flex-wrap">
                                 <Link to="/prufa" className="btn btn-secondary">
                                     Skoða dæmi
                                 </Link>
                                 <Link to="/signup" className="btn btn-primary">
-                                    Byrja frítt í 30 daga
+                                    Stofna ókeypis aðgang
                                 </Link>
                             </div>
                         </div>

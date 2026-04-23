@@ -49,7 +49,7 @@ const organizationSchema = {
 
 export default function SEO({
     title = 'Bústaðurinn.is — Bókunarkerfi fyrir sumarhús í sameign',
-    description = 'Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti fyrir meðeigendur. Prófaðu frítt í 30 daga.',
+    description = 'Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti fyrir meðeigendur. Ókeypis og opið öllum.',
     keywords = 'bókunarkerfi sumarhús, sumarhús í sameign, bókunardagatal, utanumhald sumarhús, hússjóður, meðeigendur, sanngirnisregla, skipulag sumarhúss, orlofshús, íslenskt app',
     ogImage = 'https://www.bustadurinn.is/og-preview.png',
     canonical,

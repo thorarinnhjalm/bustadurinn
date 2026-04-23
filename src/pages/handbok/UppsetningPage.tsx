@@ -88,8 +88,7 @@ export default function UppsetningPage() {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                         </svg>
                                         Ábending:
-                                    </strong> Þú færð 30 daga frítt til að prófa kerfið.
-                                    Engin greiðslukort þarf fyrr en að þeim tíma liðnum.
+                                    </strong> Kerfið er algjörlega ókeypis. Enginn falinn kostnaður, engin áskrift.
                                 </p>
                             </div>
                         </div>
@@ -257,10 +256,10 @@ export default function UppsetningPage() {
                                     <svg className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                     </svg>
-                                    Þarf ég að skrá greiðslukort strax?
+                                    Kostar þetta eitthvað?
                                 </h4>
                                 <p className="text-grey-dark">
-                                    Nei! Þú færð 30 daga frí til að prófa kerfið. Þú þarft ekki að skrá greiðslukort fyrr en að þeim tíma liðnum.
+                                    Nei! Bústaðurinn.is er algjörlega ókeypis. Enginn falinn kostnaður og engin greiðslukort þarf.
                                 </p>
                             </div>
                             <div>

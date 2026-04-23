@@ -48,7 +48,7 @@ export default function LandingPage() {
         "operatingSystem": "Web",
         "offers": {
             "@type": "Offer",
-            "price": "3990",
+            "price": "0",
             "priceCurrency": "ISK"
         },
         "aggregateRating": {
@@ -90,10 +90,10 @@ export default function LandingPage() {
             },
             {
                 "@type": "Question",
-                "name": "Þurfa allir eigendur að borga?",
+                "name": "Hvað kostar kerfið?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Nei, áskriftin er greidd fyrir hvert hús, ekki hvern notanda. Þú getur boðið ótakmörkuðum fjölda meðeigenda og fjölskyldumeðlima í kerfið án aukakostnaðar."
+                    "text": "Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Þú getur boðið ótakmörkuðum fjölda meðeigenda og fjölskyldumeðlima í kerfið án nokkurs kostnaðar. Ef þér líkar við kerfið og vilt styrkja þróun þess er velkomið að kaupa handa okkur kaffibolla."
                 }
             }
         ]
@@ -128,7 +128,7 @@ export default function LandingPage() {
     return (
         <MarketingLayout
             title="Bókunarkerfi fyrir sumarhús í sameign — Bústaðurinn.is"
-            description="Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti fyrir meðeigendur. Prófaðu frítt í 30 daga."
+            description="Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti fyrir meðeigendur. Ókeypis og opið öllum."
             keywords="bókunarkerfi sumarhús, sumarhús í sameign, bókunardagatal, utanumhald sumarhús, hússjóður, sanngirnisregla, skipulag sumarhúss, meðeigendur, orlofshús"
             structuredData={combinedSchema}
         >
@@ -172,7 +172,7 @@ export default function LandingPage() {
                                     </div>
                                     <div className="text-left">
                                         <div className="text-xs text-white/60 font-medium uppercase tracking-wider">Byrjaðu strax</div>
-                                        <div className="font-bold">Prófa frítt í 30 daga</div>
+                                        <div className="font-bold">Stofna aðgang — ókeypis</div>
                                     </div>
                                 </button>
 
@@ -188,11 +188,11 @@ export default function LandingPage() {
                             <div className="flex items-center gap-8 text-sm text-stone-500 font-medium border-t border-stone-200/60 pt-8 max-w-md">
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-green-500" />
-                                    <span>Engin kreditkort</span>
+                                    <span>100% ókeypis</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-green-500" />
-                                    <span>30 dagar frítt</span>
+                                    <span>Engin binding</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-green-500" />
@@ -455,7 +455,7 @@ export default function LandingPage() {
                         <div className="text-center space-y-4">
                             <div className="w-16 h-16 bg-amber text-charcoal rounded-full flex items-center justify-center text-2xl font-bold mx-auto shadow-lg">1</div>
                             <h3 className="text-xl font-bold">Stofnaðu aðgang</h3>
-                            <p className="text-grey-dark">Þú skráir þig inn og gefur húsinu nafn. Við gefum þér 30 daga til að prófa allt.</p>
+                            <p className="text-grey-dark">Þú skráir þig inn og gefur húsinu nafn. Algjörlega ókeypis — enginn falinn kostnaður.</p>
                         </div>
 
                         <div className="text-center space-y-4">
@@ -613,85 +613,66 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Pricing Section */}
+            {/* Free Section */}
             <section className="py-24 bg-white">
                 <div className="container max-w-5xl mx-auto px-6">
-                    <h2 className="text-center text-4xl font-serif mb-4">Einföld verðskrá</h2>
-                    <p className="text-center text-grey-mid mb-16">Engin falin gjöld. Greitt fyrir hvert hús, óháð fjölda eigenda.</p>
+                    <h2 className="text-center text-4xl font-serif mb-4">Ókeypis — fyrir alla</h2>
+                    <p className="text-center text-grey-mid mb-16 max-w-2xl mx-auto">Bústaðurinn.is er ókeypis og opið öllum. Enginn falinn kostnaður, engin áskrift, engin binding.</p>
 
-                    <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                        {/* Free Trial Card */}
-                        <div className="card relative transition-transform hover:-translate-y-1 border-2 border-transparent hover:border-amber/20">
-                            <div className="text-center mb-8 pt-4">
-                                <h3 className="text-2xl font-serif mb-2 text-stone-600">Prufuáskrift</h3>
-                                <div className="text-4xl font-bold font-serif mb-2">0 kr <span className="text-base font-normal text-grey-mid">/ 30 daga</span></div>
-                                <p className="text-sm text-green-600 font-medium bg-green-50 inline-block px-3 py-1 rounded-full">
-                                    Engin skuldbinding
-                                </p>
-                            </div>
-
-                            <ul className="space-y-4 mb-8">
-                                <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                    <span>30 dagar frítt</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                    <span>Allir eiginleikar innifaldir</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                    <span>Engin skuldbinding</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                    <span>Skoðaðu í rólegheitum</span>
-                                </li>
-                            </ul>
-
-                            <button onClick={() => navigate('/signup')} className="btn btn-secondary w-full py-4 text-lg border-stone-200">
-                                Prófa frítt
-                            </button>
-                        </div>
-
-                        {/* Annual Plan Card */}
+                    <div className="max-w-2xl mx-auto">
                         <div className="card relative ring-4 ring-amber transform hover:-translate-y-1 transition-transform bg-white overflow-hidden">
                             <div className="text-center mb-8 pt-4">
-                                <h3 className="text-2xl font-serif mb-2">Ársáskrift</h3>
+                                <h3 className="text-2xl font-serif mb-2">Allir eiginleikar</h3>
                                 <div className="flex flex-col items-center">
-                                    <div className="text-5xl font-bold font-serif mb-2 text-charcoal">3.990 kr <span className="text-base font-normal text-grey-mid">/ ári</span></div>
+                                    <div className="text-5xl font-bold font-serif mb-2 text-charcoal">0 kr <span className="text-base font-normal text-grey-mid">/ alltaf</span></div>
                                 </div>
                                 <p className="text-sm text-charcoal/80 bg-amber/10 inline-block px-3 py-1 rounded">
-                                    Besti kosturinn
+                                    Ókeypis að eilífu
                                 </p>
                             </div>
 
                             <ul className="space-y-4 mb-8">
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                    <span className="font-bold">Einföldun á rekstri</span>
+                                    <span className="font-bold">Ótakmarkaður fjöldi notenda</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                    <span>Ótakmarkaður fjöldi notenda</span>
+                                    <span>Bókunardagatal og sanngirnisregla</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                    <span>Fullur aðgangur að öllu</span>
+                                    <span>Hússjóður og fjármálayfirlit</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
-                                    <span>Allar uppfærslur innifaldar</span>
+                                    <span>Verkefnastjórnun og tilkynningar</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <span>Veðurviðvaranir og gestaaðgangur</span>
                                 </li>
                             </ul>
 
                             <button onClick={() => navigate('/signup')} className="btn btn-primary bg-amber w-full py-4 text-lg shadow-lg shadow-amber/20 border-0">
-                                Velja Ársáskrift
+                                Stofna ókeypis aðgang
                             </button>
-                            <p className="text-[10px] text-center mt-4 text-stone-400">
-                                Endurnýjast sjálfkrafa. <br />
-                                Engin binding, hægt að segja upp hvenær sem er.
+                        </div>
+
+                        {/* Support message */}
+                        <div className="mt-8 text-center">
+                            <p className="text-sm text-stone-400 mb-3">
+                                Ef þér líkar við kerfið og vilt styrkja þróun þess er velkomið að kaupa handa okkur kaffibolla ☕
                             </p>
+                            <a
+                                href="https://askell.is/public/payments/170/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone-50 hover:bg-amber/10 text-stone-500 hover:text-amber border border-stone-200 hover:border-amber/30 rounded-full text-sm font-medium transition-all duration-300"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>
+                                Styrkja Bústaðinn
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -705,13 +686,13 @@ export default function LandingPage() {
                     <div className="text-center mb-12">
                         <h2 className="text-3xl md:text-4xl font-serif mb-4">Langar þig að byrja strax?</h2>
                         <p className="text-stone-500 max-w-xl mx-auto mb-8">
-                            Þú færð 30 daga frítt til að prófa kerfið og sjá hvernig það gagnast ykkur, algjörlega án bindindis.
+                            Stofnaðu ókeypis aðgang og sjáðu hvernig kerfið gagnast ykkur. Enginn falinn kostnaður.
                         </p>
                         <button
                             onClick={() => navigate('/signup')}
                             className="btn btn-primary mb-12 px-10 py-4 text-lg"
                         >
-                            Prófa kerfið ókeypis
+                            Stofna ókeypis aðgang
                         </button>
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
@@ -754,9 +735,10 @@ export default function LandingPage() {
                         </div>
 
                         <div>
-                            <h3 className="text-xl font-bold mb-3">Þurfa allir eigendur að borga?</h3>
+                            <h3 className="text-xl font-bold mb-3">Hvað kostar kerfið?</h3>
                             <p className="text-stone-600 leading-relaxed font-light">
-                                Nei, áskriftin er greidd fyrir hvert hús, ekki hvern notanda. Þú getur boðið ótakmörkuðum fjölda meðeigenda og fjölskyldumeðlima í kerfið án aukakostnaðar.
+                                Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Þú getur boðið ótakmörkuðum fjölda meðeigenda og fjölskyldumeðlima í kerfið án nokkurs kostnaðar.
+                                Ef þér líkar við kerfið og vilt styrkja þróun þess er velkomið að <a href="https://askell.is/public/payments/170/" target="_blank" rel="noopener noreferrer" className="text-amber hover:underline">kaupa handa okkur kaffibolla</a>.
                             </p>
                         </div>
                     </div>
@@ -768,14 +750,14 @@ export default function LandingPage() {
                 <div className="container mx-auto px-6">
                     <h2 className="text-3xl md:text-4xl font-serif mb-6">Tilbúinn að prófa?</h2>
                     <p className="text-xl text-grey-warm mb-8 max-w-2xl mx-auto">
-                        Engin skuldbinding. Prófaðu í heilan mánuð án kostnaðar.
+                        Ókeypis og opið öllum. Stofnaðu aðgang á undir mínútu.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button
                             onClick={() => navigate('/signup')}
                             className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-8 py-4 shadow-xl shadow-amber/20"
                         >
-                            Prófa kerfið frítt
+                            Stofna ókeypis aðgang
                         </button>
                         <button
                             onClick={() => navigate('/prufa')}

@@ -116,14 +116,12 @@ Innbyggt markaðstorg þar sem eigendur sumarhúsa finna verktaka og þjónustua
 
 ## Verðlag
 
-| Áætlun | Verð | Innifalið |
-|---|---|---|
-| **Prufuáskrift** | 0 kr. í 30 daga | Allir eiginleikar, engin skuldbinding, engin kreditkort |
-| **Ársáskrift** | 3.990 kr. á ári per hús | Ótakmarkaður fjöldi notenda, allar uppfærslur, öll eiginleikar |
+Bústaðurinn.is er ókeypis.
 
-- Verð er per hús, ekki per notanda
-- Enginn binding — hægt að segja upp hvenær sem er
-- Endurnýjast sjálfkrafa
+- **Verð:** 0 kr. — ókeypis að eilífu
+- Allir eiginleikar innifaldir
+- Ótakmarkaður fjöldi notenda
+- Enginn falinn kostnaður, engin áskrift, engin binding
 
 ---
 
@@ -143,7 +141,7 @@ Opinberar stofnanir sem reka sumarhús til útleigu fyrir starfsmenn eða almenn
 ## Algengar spurningar
 
 **Hvað kostar þjónustan?**
-3.990 kr. á ári (ein greiðsla). Innifalið eru allir eiginleikar, ótakmarkaður fjöldi notenda og gesta. 30 daga prufutími er í boði án skuldbindinga.
+Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Allir eiginleikar eru innifaldir og ótakmarkaður fjöldi notenda. Ef þér líkar við kerfið og vilt styrkja þróun þess er velkomið að kaupa handa okkur kaffibolla á askell.is.
 
 **Hvernig virkar sanngirnisreglan?**
 Kerfið heldur utan um hver fékk úthlutað vinsælum dögum (jól, páskar, verslunarmannahelgi) síðustu ár. Þegar sótt er um sömu helgi aftur, raðar kerfið umsóknum eftir sanngirni — sá sem fékk ekki í fyrra hefur forgang.
@@ -151,11 +149,11 @@ Kerfið heldur utan um hver fékk úthlutað vinsælum dögum (jól, páskar, ve
 **Er appið til fyrir iPhone og Android?**
 Bústaðurinn.is er vefapp (PWA) sem virkar í öllum símum og tölvum án þess að sækja þarf app í App Store. Þú getur sett það á heimaskjáinn þinn eins og venjulegt app.
 
-**Þurfa allir eigendur að borga?**
-Nei, áskriftin er greidd fyrir hvert hús, ekki hvern notanda. Þú getur boðið ótakmörkuðum fjölda meðeigenda og fjölskyldumeðlima í kerfið án aukakostnaðar.
+**Hvað kostar kerfið?**
+Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Allir eiginleikar eru innifaldir.
 
-**Get ég sagt upp áskriftinni?**
-Já, hvenær sem er. Enginn binding.
+**Get ég sagt upp?**
+Þú getur hætt hvenær sem er. Enginn binding.
 
 **Er erfitt að flytja gögn úr Excel?**
 Alls ekki. Þú byrjar á því að hlaða inn grunnupplýsingum og bjóða meðeigendum þínum. Það tekur innan við 5 mínútur að setja upp nýtt hús.

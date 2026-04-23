@@ -238,7 +238,7 @@ export default function SignupPage() {
         <div className="min-h-screen bg-bone flex items-center justify-center p-6">
             <SEO
                 title="Búa til aðgang - Bústaðurinn.is"
-                description="Búðu til aðgang að Bústaðurinn.is og byrjaðu að skipuleggja sumarhúsið betur. Frítt í 30 daga."
+                description="Búðu til ókeypis aðgang að Bústaðurinn.is og byrjaðu að skipuleggja sumarhúsið betur."
                 canonical="https://www.bustadurinn.is/signup"
             />
             <div className="w-full max-w-md">
@@ -297,7 +297,7 @@ export default function SignupPage() {
                             disabled={isLoading}
                         >
                             <UserPlus className="w-5 h-5" />
-                            {isLoading ? 'Býr til aðgang...' : 'Stofna aðgang (30 dagar frítt)'}
+                            {isLoading ? 'Býr til aðgang...' : 'Stofna ókeypis aðgang'}
                         </button>
 
                         <div className="text-center text-sm text-grey-mid">

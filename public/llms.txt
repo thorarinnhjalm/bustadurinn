@@ -38,9 +38,10 @@ Kerfið tengist Veðurstofunni og vaktar sjálfkrafa veðurspá og ófærð á n
 
 ## Verðlag
 
-- **Prufuáskrift:** 0 kr. í 30 daga, allir eiginleikar innifaldir, engin skuldbinding
-- **Ársáskrift:** 3.990 kr. á ári per hús, ótakmarkaður fjöldi notenda, allar uppfærslur innifaldar
-- Greitt fyrir hvert hús, ekki hvern notanda
+- **Verð:** Ókeypis — enginn falinn kostnaður, engin áskrift
+- Ótakmarkaður fjöldi notenda
+- Allir eiginleikar innifaldir
+- Enginn binding
 
 ## Fyrir hvern er kerfið?
 

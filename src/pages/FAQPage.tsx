@@ -9,7 +9,7 @@ export default function FAQPage() {
     const faqs = [
         {
             q: "Hvað kostar þjónustan?",
-            a: "3.990 kr. á ári (ein greiðsla). Innifalið eru allir eiginleikar, ótakmarkaður fjöldi notenda og gesta. 30 daga prufutími er í boði án skuldbindinga."
+            a: "Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Allir eiginleikar eru innifaldir og þú getur boðið ótakmörkuðum fjölda notenda og gesta. Ef þér líkar við kerfið og vilt styrkja þróun þess er velkomið að kaupa handa okkur kaffibolla."
         },
         {
             q: "Hvað er Torgið?",
@@ -20,8 +20,8 @@ export default function FAQPage() {
             a: "Smelltu á 'Torgið' í valmyndinni og veldu 'Ertu verktaki?' hnappinn efst. Það er frítt að skrá sig og þjónustan er sýnileg öllum notendum kerfisins."
         },
         {
-            q: "Get ég sagt upp áskriftinni?",
-            a: "Já, hvenær sem er. Enginn binding."
+            q: "Get ég sagt upp?",
+            a: "Þú getur hætt hvenær sem er. Enginn binding, engin skuldbinding."
         },
         {
             q: "Er appið til fyrir iPhone og Android?",
@@ -75,7 +75,7 @@ export default function FAQPage() {
     return (
         <MarketingLayout
             title="Algengar spurningar um bókunarkerfi fyrir sumarhús | Bústaðurinn.is"
-            description="Svör við algengum spurningum um Bústaðurinn.is — bókunarkerfi fyrir sumarhús í sameign. Verðskrá, sanngirnisregla, hússjóður, virkni og tæknilegar upplýsingar."
+            description="Svör við algengum spurningum um Bústaðurinn.is — ókeypis bókunarkerfi fyrir sumarhús í sameign. Sanngirnisregla, hússjóður, virkni og tæknilegar upplýsingar."
             keywords="algengar spurningar sumarhús, bókunarkerfi sumarhús FAQ, sumarhús í sameign, sanngirnisregla, hússjóður"
             structuredData={structuredData}
         >
