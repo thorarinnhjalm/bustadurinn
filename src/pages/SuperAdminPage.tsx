@@ -83,6 +83,7 @@ export default function SuperAdminPage() {
     const [replyText, setReplyText] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [fetchWarnings, setFetchWarnings] = useState<string[]>([]);
     const [seeding, setSeeding] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const { startImpersonation } = useImpersonation();
@@ -151,13 +152,17 @@ export default function SuperAdminPage() {
             try {
                 setLoading(true);
                 setError(null);
+                setFetchWarnings([]);
+                
+                const warnings: string[] = [];
 
                 const safeFetch = async (collName: string) => {
                     try {
                         const snap = await getDocs(collection(db, collName));
                         return snap;
-                    } catch (e) {
+                    } catch (e: any) {
                         console.error(`Error fetching ${collName}:`, e);
+                        warnings.push(`Gat ekki sótt gögn fyrir "${collName}": ${e.message || 'Óþekkt villa'}`);
                         return null;
                     }
                 };
@@ -172,9 +177,18 @@ export default function SuperAdminPage() {
                     safeFetch('newsletter_subscribers'),
                     safeFetch('feedback'),
                     safeFetch('service_providers'),
-                    getAllOrganizations().catch(() => []), // NEW
-                    getDoc(doc(db, 'system', 'promotions')),
-                    getDocs(query(collection(db, 'funnel_events'), where('event_name', '==', 'sandbox_visited')))
+                    getAllOrganizations().catch((e) => {
+                        warnings.push(`Gat ekki sótt gögn fyrir "organizations": ${e.message}`);
+                        return [];
+                    }), // NEW
+                    getDoc(doc(db, 'system', 'promotions')).catch((e) => {
+                        warnings.push(`Gat ekki sótt gögn fyrir "promotions": ${e.message}`);
+                        return null;
+                    }),
+                    getDocs(query(collection(db, 'funnel_events'), where('event_name', '==', 'sandbox_visited'))).catch((e) => {
+                        warnings.push(`Gat ekki sótt funnel_events: ${e.message}`);
+                        return null;
+                    })
                 ]);
                 const users = usersSnap?.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User)) || [];
                 const activeTasks = tasksSnap?.docs.filter(doc => doc.data().status !== 'completed').length || 0;
@@ -234,8 +248,12 @@ export default function SuperAdminPage() {
                     launchOfferCount: promoSnapResult && promoSnapResult.exists() ? promoSnapResult.data().launch_offer_count || 0 : 0
                 });
 
-                if (!housesSnap && !usersSnap) {
-                    setError("Sum gögn gáfu ekki aðgang. Vinsamlegast athugaðu Console.");
+                if (warnings.length > 0) {
+                    setFetchWarnings(warnings);
+                }
+                
+                if (!housesSnap && !usersSnap && warnings.length > 0) {
+                    console.warn("Critical core collections failed to load.");
                 }
             } catch (error: any) {
                 console.error('Global fetch stats error:', error);
@@ -1274,6 +1292,21 @@ export default function SuperAdminPage() {
             userHouses={userHouses}
             onHouseSelect={handleHouseSwitch}
         >
+            {fetchWarnings.length > 0 && (
+                <div className="bg-amber/10 border border-amber/30 text-amber-900 px-4 py-3 rounded-xl mb-6 relative shadow-sm" role="alert">
+                    <strong className="font-bold flex items-center gap-2"><AlertTriangle size={18} className="text-amber-600"/> Athugið: Sum gögn hlóðust ekki rétt</strong>
+                    <ul className="list-disc ml-8 mt-2 text-sm space-y-1 text-amber-800">
+                        {fetchWarnings.map((warning, idx) => (
+                            <li key={idx}>{warning}</li>
+                        ))}
+                    </ul>
+                    <p className="mt-3 text-xs text-amber-700 bg-amber/10 inline-block px-2 py-1 rounded-md">Aðgerðir eða greiningar gætu verið ófullkomnar. Athugaðu Firebase öryggisreglur (Firestore Rules).</p>
+                    <button onClick={() => setFetchWarnings([])} className="absolute top-2 right-2 p-1.5 hover:bg-amber/20 rounded-lg transition-colors">
+                        <XCircle size={20} className="text-amber-700"/>
+                    </button>
+                </div>
+            )}
+            
             {/* Recent Signups / Drop-off Monitor */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200 mb-8">
                 <h3 className="text-lg font-bold text-charcoal mb-4 flex items-center gap-2">
