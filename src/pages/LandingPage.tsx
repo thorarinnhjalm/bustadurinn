@@ -56,8 +56,51 @@ export default function LandingPage() {
             "ratingValue": avgRating.toString(),
             "ratingCount": Math.max(reviews.length, 1).toString()
         },
-        "description": "Bókunarkerfi og bókunardagatal fyrir sameiginleg sumarhús. Einfaldar bókanir, sanngjarna skiptingu og gagnsæ fjármál fyrir íslenskar fjölskyldur."
+        "description": "Bókunarkerfi og bókunardagatal fyrir sameiginleg sumarhús í sameign. Einfaldar bókanir, sanngjarna skiptingu helga og gagnsæ fjármál fyrir íslenskar fjölskyldur."
     };
+
+    // FAQ structured data for the landing page Q&A section
+    const faqSchema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "Hvernig virka veðurviðvaranirnar?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Við tengjumst beint við kerfi Veðurstofunnar og Vegagerðarinnar. Kerfið vakta sjálfkrafa GPS hnitin sem þú skráir á bústaðinn þinn og lætur þig vita með fyrirvara ef spáin sýnir óveður, mikinn kulda eða ófærð á nærliggjandi þjóðvegum."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Er erfitt að flytja gögn úr Excel?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Alls ekki. Þú byrjar á því að hlaða inn grunnupplýsingum og bjóða meðeigendum þínum. Það tekur innan við 5 mínútur að setja upp nýtt hús og flestar fjölskyldur eru komnar á fullt skrið strax fyrsta daginn."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Hvað ef ég hætti að nota kerfið?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Þú átt þín gögn. Ef þú ákveður að hætta getur þú hvenær sem er flutt út allar bókanir og söguleg gögn. Við trúum því að þú verðir áfram vegna gæðanna, ekki vegna þess að þú sért læst(ur) inni."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Þurfa allir eigendur að borga?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Nei, áskriftin er greidd fyrir hvert hús, ekki hvern notanda. Þú getur boðið ótakmörkuðum fjölda meðeigenda og fjölskyldumeðlima í kerfið án aukakostnaðar."
+                }
+            }
+        ]
+    };
+
+    // Combine schemas into an array for the page
+    const combinedSchema = [softwareAppSchema, faqSchema];
 
     const features = [
         {
@@ -84,9 +127,10 @@ export default function LandingPage() {
 
     return (
         <MarketingLayout
-            title="Bókunarkerfi fyrir sumarhús - Bústaðurinn.is"
-            description="Bókunarkerfi fyrir sumarhús. Einfaldar bókanir, sanngjarna skiptingu og fjármál. Nútímalegt bókunardagatal fyrir íslenskar fjölskyldur. Prófaðu frítt í 30 daga."
-            structuredData={softwareAppSchema}
+            title="Bókunarkerfi fyrir sumarhús í sameign — Bústaðurinn.is"
+            description="Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti fyrir meðeigendur. Prófaðu frítt í 30 daga."
+            keywords="bókunarkerfi sumarhús, sumarhús í sameign, bókunardagatal, utanumhald sumarhús, hússjóður, sanngirnisregla, skipulag sumarhúss, meðeigendur, orlofshús"
+            structuredData={combinedSchema}
         >
 
             {/* Hero Section */}

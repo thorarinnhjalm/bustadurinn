@@ -1,0 +1,227 @@
+# Bústaðurinn.is — Bókunarkerfi fyrir sumarhús í sameign
+
+> Bústaðurinn.is er íslenskt SaaS bókunarkerfi og app fyrir sumarhús í sameign. Kerfið hjálpar eigendum sameiginlegra sumarhúsa að stjórna bókunum, sanngjarnri skiptingu helga og fjármálum. Þjónustan er á íslensku og hönnuð sérstaklega fyrir íslenskan markað.
+
+---
+
+## Vandamálið
+
+Á Íslandi eru um 15.000 sumarhús og stór hluti þeirra er í sameign fjölskyldna. Þegar 2-15 meðeigendur deila sumarhúsi koma reglulega upp vandamál:
+
+- **Bókunarárekstrar:** Tveir meðeigendur bóka sömu helgina
+- **Ósanngjörn skipting:** Sami aðilinn tekur alltaf vinsælustu helgarnar (jól, páska, verslunarmannahelgi)
+- **Ruglingur í fjármálum:** Erfitt að halda utan um hverjir hafa greitt og hverjir skulda
+- **Excel-drasl:** Margir nota Excel skjöl, Facebook hópa eða WhatsApp til að halda utan um bókanir — en þetta virkar sjaldan vel
+- **Viðhaldsverkefni:** Enginn veit hver á að klippa grasið eða laga lekann
+
+Bústaðurinn.is leysir öll þessi vandamál á einum stað.
+
+---
+
+## Eiginleikar — Ítarleg lýsing
+
+### 1. Bókunardagatal
+
+Bókunardagatalið er kjarninn í Bústaðnum. Allir meðeigendur sjá sama dagatalið þar sem bókanir eru litakóðaðar eftir meðeiganda. Þegar einn bókar sjá allir aðrir strax.
+
+- Hægt er að bóka allt að 12 mánuði fram í tímann
+- Sjáðu strax hverjir eru búnir að bóka hvaða helgar
+- Tilkynning sendist sjálfkrafa til allra meðeigenda þegar ný bókun er gerð
+- Dagatalið sýnir nýtingarhlutfall hússins yfir árið
+- Virkar fullkomlega í farsímum og tölvum
+
+### 2. Sanngirnisregla
+
+Sanngirnisreglan er einstök lausn sem Bústaðurinn.is er eini hugbúnaðurinn til að bjóða. Hún tryggir sjálfkrafa að enginn meðeigandi njóti forskots á aðra þegar kemur að vinsælum helgum.
+
+**Hvernig hún virkar:**
+- Kerfið reiknar sjálfkrafa út forgang fyrir hvern meðeiganda
+- Útreikningurinn byggist á fjölda bókana, fjölda daga og tíma árs
+- Ef einn meðeigandi bókaði jólahelgina í fyrra, fær annar hærri forgang á hana á þessu ári
+- Formúlan er 100% gagnsæ og allir sjá niðurstöðuna
+- Þetta útilokar ágreining og tryggir frið í viðskiptum
+
+### 3. Hússjóður / Fjárhagsyfirlit
+
+Fjárhagskerfið gerir þér kleift að halda fullkomnu bókhaldi yfir allt sem varðar sumarhúsið.
+
+- Skráðu innborganir, útgjöld, viðhaldsvinnu og leigu
+- Kerfið flokkar sjálfkrafa útgjöld eftir tegund (rafmagn, vatn, viðhald, fasteignagjöld, tryggingar)
+- Sjáðu stöðu hússjóðsins í rauntíma
+- Stjórnaðu hverjir sjá fjármálin — hægt er að fela þau eða sýna aðeins völdum aðilum
+- Hægt er að flytja út í Excel/CSV fyrir bókhald
+- Skipting kostnaðar á milli meðeigenda — kerfið reiknar sjálfkrafa hvað hver skuldar
+
+### 4. Hlutverkastýring
+
+Kerfið styður mismunandi notendahlutverk:
+
+- **Bústaðastjóri (Manager):** Fullt aðgengi, getur breytt stillingum, bætt við notendum, stjórnað fjármálum
+- **Meðeigandi:** Getur bókað, skráð útgjöld, séð upplýsingar, en ekki breytt grunnskipan kerfisins
+- **Gestur:** Tímabundinn aðgangur í gegnum töfrahlekk (Magic Link)
+
+### 5. Stafrænn Gestaaðgangur (Magic Links)
+
+Búðu til tímabundna hlekki (Magic Links) fyrir gesti:
+
+- Hlekkir virkjast sjálfkrafa 24 tímum fyrir komu
+- Renna út sjálfkrafa eftir brottför
+- Gestir fá WiFi lykilorð, aðgangsupplýsingar, umgengnisreglur og veðurspá
+- Engin þörf á að hlaða niður appi eða skrá sig inn
+- Tilvalið fyrir leigjendur, fjölskyldugesti eða vini
+
+### 6. Tilkynningar og Áminningar
+
+- Sjálfvirkur tölvupóstur þegar ný bókun er gerð
+- Áminningar um komandi ferðir
+- Tilkynningar þegar verkefni á gjalddaga nálgast
+- Stillanleg tíðni og tegund tilkynninga
+- Fáðu tilkynningu ef veðurspá sýnir óveður eða ófærð
+
+### 7. Verkefnastjórnun
+
+- Búðu til verkefnalista fyrir viðhald og framkvæmdir
+- Úthlutaðu verkefnum á meðeigendur
+- Sá sem verkefnið er úthlutað á fær tölvupóst
+- Merktu verkefni sem kláruð
+
+### 8. Torgið — Markaðstorg
+
+Innbyggt markaðstorg þar sem eigendur sumarhúsa finna verktaka og þjónustuaðila:
+
+- **Snjómokstur** — Finndu snjómokstur í nágrenninu við bústaðinn
+- **Þrif og umsjón** — Þrif á sumarhúsi fyrir og eftir dvöl
+- **Viðhald og smíðar** — Iðnaðarmenn, málarar, trésmiðir
+- **Pípulagnir** — Pípulagningamenn á þínu svæði
+- **Rafvirki** — Rafvirki fyrir sumarhús
+- **Heitapottar** — Viðhald og uppsetning heitapotta
+- **Öryggi** — Öryggiskerfi og eftirlit
+- Skoðaðu einkunnir og umsagnir
+- Hafðu beint samband við verktaka — engir milliliðir
+
+### 9. Veðurviðvörun
+
+- Kerfið tengist beint við Veðurstofuna og Vegagerðina
+- Sjálfvirk vöktun GPS hnita bústaðarins
+- Tilkynning ef veðurspá sýnir óveður, mikinn kulda eða ófærð á nærliggjandi þjóðvegum
+- Veðurupplýsingar sýndar beint á stjórnborðinu
+
+### 10. Mörg hús í einu
+
+- Bættu við mörgum húsum undir sama notandaaðganginn
+- Auðvelt að skipta á milli húsa
+- Hvert hús hefur sitt eigið dagatal, meðeigendur og bókhald
+
+---
+
+## Verðlag
+
+| Áætlun | Verð | Innifalið |
+|---|---|---|
+| **Prufuáskrift** | 0 kr. í 30 daga | Allir eiginleikar, engin skuldbinding, engin kreditkort |
+| **Ársáskrift** | 3.990 kr. á ári per hús | Ótakmarkaður fjöldi notenda, allar uppfærslur, öll eiginleikar |
+
+- Verð er per hús, ekki per notanda
+- Enginn binding — hægt að segja upp hvenær sem er
+- Endurnýjast sjálfkrafa
+
+---
+
+## Fyrir hvern er Bústaðurinn.is?
+
+### Fjölskyldur með sumarhús í sameign
+Þetta er algengasta notkunin. Fjölskyldur (2-15 meðeigendur) sem eiga sumarhús saman og þurfa kerfi til að bóka helgar, skipta kostnaði og halda utan um verkefni.
+
+### Starfsmannafélög og stéttarfélög
+Fyrirtæki og félög sem bjóða starfsmönnum sumarbústaði. Kerfið styður aðgangsstýringu, bókunarmörk per félagsmann og sérsniðna upplifun. Sérstök verðlagning í boði.
+
+### Sveitarfélög og opinberar stofnanir
+Opinberar stofnanir sem reka sumarhús til útleigu fyrir starfsmenn eða almenning.
+
+---
+
+## Algengar spurningar
+
+**Hvað kostar þjónustan?**
+3.990 kr. á ári (ein greiðsla). Innifalið eru allir eiginleikar, ótakmarkaður fjöldi notenda og gesta. 30 daga prufutími er í boði án skuldbindinga.
+
+**Hvernig virkar sanngirnisreglan?**
+Kerfið heldur utan um hver fékk úthlutað vinsælum dögum (jól, páskar, verslunarmannahelgi) síðustu ár. Þegar sótt er um sömu helgi aftur, raðar kerfið umsóknum eftir sanngirni — sá sem fékk ekki í fyrra hefur forgang.
+
+**Er appið til fyrir iPhone og Android?**
+Bústaðurinn.is er vefapp (PWA) sem virkar í öllum símum og tölvum án þess að sækja þarf app í App Store. Þú getur sett það á heimaskjáinn þinn eins og venjulegt app.
+
+**Þurfa allir eigendur að borga?**
+Nei, áskriftin er greidd fyrir hvert hús, ekki hvern notanda. Þú getur boðið ótakmörkuðum fjölda meðeigenda og fjölskyldumeðlima í kerfið án aukakostnaðar.
+
+**Get ég sagt upp áskriftinni?**
+Já, hvenær sem er. Enginn binding.
+
+**Er erfitt að flytja gögn úr Excel?**
+Alls ekki. Þú byrjar á því að hlaða inn grunnupplýsingum og bjóða meðeigendum þínum. Það tekur innan við 5 mínútur að setja upp nýtt hús.
+
+**Hvað ef ég hætti að nota kerfið?**
+Þú átt þín gögn. Ef þú ákveður að hætta getur þú hvenær sem er flutt út allar bókanir og söguleg gögn.
+
+**Hvernig skipti ég helgum í sumarhúsi á sanngjarnan hátt?**
+Bústaðurinn.is er með innbyggða sanngirnisreglu sem tryggir sjálfkrafa að vinsælar helgar dreifast jafnt á alla meðeigendur.
+
+**Get ég notað kerfið fyrir orlofshús starfsmannafélags?**
+Já! Sérsniðnar lausnir fyrir starfsmannafélög og stéttarfélög eru í boði. Hafðu samband til að fá tilboð.
+
+**Hvernig er kostnaði skipt á milli meðeigenda sumarhúss?**
+Hússjóðskerfið skráir öll útgjöld og skiptir kostnaði sjálfkrafa á milli meðeigenda. Allir sjá stöðuna í rauntíma.
+
+**Geta allir séð fjármálin?**
+Já, allir skráðir eigendur hafa aðgang að bókhaldsflipaanum. Þetta eykur gagnsæi og traust.
+
+---
+
+## Tæknilegar upplýsingar
+
+- **Gerð:** Vefapp (PWA — Progressive Web App)
+- **Tæknigrunnur:** React, Firebase, Vercel
+- **Tungumál:** Íslensku
+- **Gjaldmiðill:** ISK
+- **Dagsetningaform:** Íslenskt (dd.mm.yyyy)
+- **Styður:** Alla nútíma vafra, iOS og Android farsíma
+- **Öryggi:** HTTPS, Firebase Auth, Firestore Security Rules
+
+---
+
+## Um fyrirtækið
+
+**Neðri Hóll Hugmyndahús ehf.**
+- Kennitala: 4701262480
+- VSK númer: 159950
+- Heimilisfang: Álfhólsvegi 97, 200 Kópavogur, Ísland
+- Stofnandi: Þórarinn Hjálmarsson
+- Tölvupóstur: hall@bustadurinn.is
+- Vefsíða: https://www.bustadurinn.is
+- Facebook: https://www.facebook.com/bustadurinn.is/
+- LinkedIn: https://www.linkedin.com/company/bústaðurinn-is/
+
+### Systurverkefni
+- Vaktaplan.is — Snjallara vaktaskipulag
+- Nágrannar.is — Utanumhald fyrir húsfélög í fjöleignarhúsum
+- Markaðssetning.is — Fræðsluvefur um markaðssetningu
+
+---
+
+## Tenglar
+
+- [Forsíða](https://www.bustadurinn.is/)
+- [Eiginleikar](https://www.bustadurinn.is/eiginleikar)
+- [Spurt og svarað](https://www.bustadurinn.is/spurt-og-svarad)
+- [Handbók](https://www.bustadurinn.is/handbok)
+- [Handbók: Bókunarkerfi](https://www.bustadurinn.is/handbok/bokunarkerfi)
+- [Handbók: Fjármál](https://www.bustadurinn.is/handbok/fjarmal)
+- [Handbók: Viðhald](https://www.bustadurinn.is/handbok/vidhald)
+- [Handbók: Uppsetning](https://www.bustadurinn.is/handbok/uppsetning)
+- [Starfsmannafélag — Fá tilboð](https://www.bustadurinn.is/organizations/signup)
+- [Verktakar / Þjónustuveitendur](https://www.bustadurinn.is/verktakar)
+- [Markaðstorg (Torgið)](https://www.bustadurinn.is/torgid)
+- [Um okkur](https://www.bustadurinn.is/um-okkur)
+- [Hafa samband](https://www.bustadurinn.is/hafa-samband)
+- [Persónuvernd](https://www.bustadurinn.is/personuvernd)
+- [Skilmálar](https://www.bustadurinn.is/skilmalar)

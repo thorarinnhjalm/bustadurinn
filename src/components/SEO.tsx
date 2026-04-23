@@ -1,5 +1,5 @@
 /**
- * SEO Component with Meta Tags and JSON-LD
+ * SEO Component with Meta Tags, JSON-LD, and Organization Schema
  */
 
 import { Helmet } from 'react-helmet-async';
@@ -15,11 +15,43 @@ interface SEOProps {
     noIndex?: boolean;
 }
 
+// Organization schema rendered on every page — critical for Knowledge Graph + LLM entity recognition
+const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Bústaðurinn.is",
+    "alternateName": "Neðri Hóll Hugmyndahús ehf.",
+    "url": "https://www.bustadurinn.is",
+    "logo": "https://www.bustadurinn.is/logo_high_res.png",
+    "description": "Íslenskt SaaS bókunarkerfi og app fyrir sumarhús í sameign. Bókunardagatal, sanngirnisregla, hússjóður og verkefnastjórnun.",
+    "founder": {
+        "@type": "Person",
+        "name": "Þórarinn Hjálmarsson"
+    },
+    "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Álfhólsvegi 97",
+        "addressLocality": "Kópavogur",
+        "postalCode": "200",
+        "addressCountry": "IS"
+    },
+    "sameAs": [
+        "https://www.facebook.com/bustadurinn.is/",
+        "https://www.linkedin.com/company/bústaðurinn-is/"
+    ],
+    "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "hall@bustadurinn.is",
+        "contactType": "customer support",
+        "availableLanguage": "Icelandic"
+    }
+};
+
 export default function SEO({
-    title = 'Bústaðurinn.is - Bókunarkerfi fyrir sumarhús',
-    description = 'Bókunarkerfi og app fyrir sameiginleg sumarhús. Betra skipulag, gagnsæ fjármál og stafræn lyklakippa fyrir orlofshúsið.',
-    keywords = 'sumarhús, bókunarkerfi, sameignarhús, orlofshús, íslenskt app, fjölskylduhús, veðurspá, bókunardagatal',
-    ogImage = 'https://www.bustadurinn.is/og-image.jpg',
+    title = 'Bústaðurinn.is — Bókunarkerfi fyrir sumarhús í sameign',
+    description = 'Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti fyrir meðeigendur. Prófaðu frítt í 30 daga.',
+    keywords = 'bókunarkerfi sumarhús, sumarhús í sameign, bókunardagatal, utanumhald sumarhús, hússjóður, meðeigendur, sanngirnisregla, skipulag sumarhúss, orlofshús, íslenskt app',
+    ogImage = 'https://www.bustadurinn.is/og-preview.png',
     canonical,
     structuredData,
     noIndex = false,
@@ -61,7 +93,12 @@ export default function SEO({
             <meta httpEquiv="content-language" content="is" />
             <html lang="is" />
 
-            {/* Structured Data (JSON-LD) */}
+            {/* Organization Schema — renders on every page */}
+            <script type="application/ld+json">
+                {JSON.stringify(organizationSchema)}
+            </script>
+
+            {/* Page-specific Structured Data (JSON-LD) */}
             {structuredData && (
                 <script type="application/ld+json">
                     {JSON.stringify(structuredData)}

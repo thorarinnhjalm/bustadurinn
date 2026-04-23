@@ -1,44 +1,77 @@
 # Bústaðurinn.is
 
-> Bústaðurinn.is er íslenskt SaaS bókunarkerfi og app fyrir sameiginleg sumarhús, starfsmannafélög og stéttarfélög.
+> Bústaðurinn.is er íslenskt SaaS bókunarkerfi og app fyrir sumarhús í sameign. Kerfið hjálpar eigendum sameiginlegra sumarhúsa að stjórna bókunum, sanngjarnri skiptingu helga og fjármálum á einum stað.
 
-## Um þjónustuna
+## Vandamálið sem við leysum
 
-Bústaðurinn.is hjálpar eigendum og stjórnendum sameiginlegra sumarhúsa að stjórna bókunum, fjármálum og aðgangi með einföldum hætti. Þjónustan er sérstaklega hönnuð fyrir:
+Þegar fleiri en ein fjölskylda eiga sumarhús saman koma oft upp vandamál: Hver fær jólahelgina? Hvernig er kostnaði skipt? Hver á að klippa grasið? Margir nota Excel skjöl, Facebook hópa eða jafnvel WhatsApp til að halda utan um bókanir — en þetta virkar sjaldan vel. Bústaðurinn.is leysir þetta allt á einum stað með nútímalegu bókunarkerfi sem allir í fjölskyldunni geta notað.
 
-- **Sameignarhús** - Hópar fjölskyldna eða vina sem deila sumarhúsi
-- **Starfsmannafélag** - Fyrirtæki og stéttarfélög sem bjóða starfsmönnum sumarbústaði
-- **Sveitarfélög** - Opinberar stofnanir með sumarhús til útleigu á íslenskt
+## Hvað er Bústaðurinn.is?
 
-## Aðaláhersla
+Bústaðurinn.is er hugbúnaður (SaaS) sem hjálpar eigendum sameiginlegra sumarhúsa á Íslandi að stjórna bókunum, fjármálum og daglegum rekstri. Kerfið er hannað sérstaklega fyrir íslenskan markað þar sem sumarhús í sameign eru algeng (ca. 15.000 sumarhús á Íslandi, stór hluti í sameign fjölskyldna).
 
-- Rafrænt bókunarkerfi með dagbók og samþykktarferli
-- Fjármálastjórnun með skiptingu kostnaðar á milli eigenda
-- Stafræn lyklakippa (fjarlæg opnun hurða)
-- Markaðstorg þar sem verktakar bjóða upp á þrif, viðhald og aðrar þjónustur
-- Sérstakar lausnir fyrir starfsmannafélög með aðgangsstjórnun og bókunarmörk
+## Aðaleiginleikar
+
+### Bókunardagatal
+Sjáðu við fyrstu sýn hverjir hafa bókað og hvenær. Dagatalið sýnir allar bókanir litakóðaðar eftir meðeiganda. Hægt er að bóka allt að 12 mánuði fram í tímann. Tilkynningar sendast sjálfkrafa þegar bókun er gerð.
+
+### Sanngirnisregla
+Einstök lausn sem tryggir að enginn meðeigandi njóti forskots. Kerfið reiknar sjálfkrafa út forgang byggt á fjölda bókana, fjölda daga og tíma árs. Ef einn bókar mörg sumarkvöld, fær annar hærri forgang næst. Formúlan er gagnsæ og allir sjá niðurstöðuna.
+
+### Hússjóður / Fjárhagsyfirlit
+Fullkomið bókhaldi yfir allt sem varðar sumarhúsið. Skráðu innborganir, útgjöld, viðhaldsvinnu og leigu. Kerfið flokkar sjálfkrafa eftir tegund og sýnir stöðu hússjóðsins. Hægt er að stjórna hverjir sjá hvað.
+
+### Hlutverkastýring
+Bústaðastjóri (Manager) hefur fullt aðgengi og getur breytt stillingum, bætt við notendum og stjórnað fjármálum. Almennir meðeigendur geta bókað, skráð útgjöld og séð upplýsingar.
+
+### Stafrænn Gestaaðgangur
+Búðu til tímabundna hlekki (Magic Links) fyrir gesti sem virkjast sjálfkrafa 24 tímum fyrir komu og renna út eftir brottför. Gestir fá WiFi lykilorð, reglur og aðgangsupplýsingar beint í símann.
+
+### Tilkynningar
+Sjálfvirkar tilkynningar um nýjar bókanir, breytingar og verkefni á gjalddaga. Hægt er að stilla hvaða tilkynningar þú vilt fá.
+
+### Torgið (Markaðstorg)
+Finndu verktaka og þjónustuaðila í nágrenninu við bústaðinn. Snjómokstur, þrif, pípulagnir, rafvirkja og fleira. Skoðaðu einkunnir og hafðu beint samband.
+
+### Veðurviðvörun
+Kerfið tengist Veðurstofunni og vaktar sjálfkrafa veðurspá og ófærð á nærliggjandi vegum.
+
+## Verðlag
+
+- **Prufuáskrift:** 0 kr. í 30 daga, allir eiginleikar innifaldir, engin skuldbinding
+- **Ársáskrift:** 3.990 kr. á ári per hús, ótakmarkaður fjöldi notenda, allar uppfærslur innifaldar
+- Greitt fyrir hvert hús, ekki hvern notanda
+
+## Fyrir hvern er kerfið?
+
+- **Fjölskyldur** sem eiga sumarhús saman (2-15 meðeigendur) — algengasta notkunin
+- **Starfsmannafélög og stéttarfélög** sem bjóða starfsmönnum sumarbústaði — sérsniðnar lausnir í boði
+- **Sveitarfélög** og opinberar stofnanir með sumarhús til útleigu
+
+## Tæknilegar upplýsingar
+
+- Vefapp (PWA) sem virkar í öllum símum og tölvum
+- Hægt að bæta á heimaskjá eins og venjulegt app
+- Byggt á React, Firebase, og hýst á Vercel
+- Íslenskt viðmót, íslenskt dagsetningaform, ISK gjaldmiðill
+
+## Um fyrirtækið
+
+- **Nafn:** Neðri Hóll Hugmyndahús ehf.
+- **Kennitala:** 4701262480
+- **VSK númer:** 159950
+- **Heimilisfang:** Álfhólsvegi 97, 200 Kópavogur, Ísland
+- **Stofnandi:** Þórarinn Hjálmarsson
+- **Tölvupóstur:** hall@bustadurinn.is
 
 ## Tenglar
 
 - [Forsíða](https://www.bustadurinn.is/)
 - [Eiginleikar](https://www.bustadurinn.is/eiginleikar)
-- [Starfsmannafélag - Fá tilboð](https://www.bustadurinn.is/organizations/signup)
-- [Verktakar / Þjónustuveitendur](https://www.bustadurinn.is/verktakar)
-- [Markaðstorg](https://www.bustadurinn.is/torgid)
+- [Spurt og svarað](https://www.bustadurinn.is/spurt-og-svarad)
 - [Handbók](https://www.bustadurinn.is/handbok)
-- [Spurt og Svarað](https://www.bustadurinn.is/spurt-og-svarad)
+- [Starfsmannafélag — Fá tilboð](https://www.bustadurinn.is/organizations/signup)
+- [Verktakar / Þjónustuveitendur](https://www.bustadurinn.is/verktakar)
+- [Markaðstorg (Torgið)](https://www.bustadurinn.is/torgid)
 - [Um okkur](https://www.bustadurinn.is/um-okkur)
 - [Hafa samband](https://www.bustadurinn.is/hafa-samband)
-
-## Verðlag
-
-Bústaðurinn.is er í boði með mismunandi áskriftarplönum fyrir einstaklinga og félög. Félög og stéttarfélög fá sérsniðið tilboð. Hafðu samband í gegnum [fyrirspurnarform](https://www.bustadurinn.is/organizations/signup).
-
-## Tungumál
-
-Þjónustan er á íslensku og er sérstaklega hugsuð fyrir íslenskan markað.
-
-## Samband
-
-- Vefur: https://www.bustadurinn.is
-- Samskipti: https://www.bustadurinn.is/hafa-samband

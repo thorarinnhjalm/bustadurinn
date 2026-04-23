@@ -34,6 +34,26 @@ export default function FAQPage() {
         {
             q: "Geta allir séð fjármálin?",
             a: "Já, allir skráðir eigendur hafa aðgang að 'Bókhald' flipanum þar sem hægt er að sjá stöðu hússjóðs, tekjur og gjöld. Þetta eykur gagnsæi og traust í húsfélaginu."
+        },
+        {
+            q: "Hvernig skipti ég helgum í sumarhúsi á sanngjarnan hátt?",
+            a: "Bústaðurinn.is er með innbyggða sanngirnisreglu sem tryggir sjálfkrafa að vinsælar helgar (jól, páskar, verslunarmannahelgi) dreifast jafnt á alla meðeigendur. Kerfið heldur utan um sögu bókana og gefur þeim sem fengu minna í fyrra hærri forgang. Enginn þarf að rökræða eða semja — kerfið gerir þetta allt sjálfkrafa."
+        },
+        {
+            q: "Hvað ef fjölskyldan á sumarhús saman og við erum ekki sammála um bókanir?",
+            a: "Það er einmitt ástæðan fyrir Bústaðnum. Kerfið kemur í veg fyrir árekstra og tryggir gagnsæi. Allir sjá sömu bókanirnar, sömu reglurnar og sömu fjármálin. Þegar allt er skýrt og sanngjarnt minnkar ágreiningur verulega."
+        },
+        {
+            q: "Get ég notað kerfið fyrir orlofshús starfsmannafélags?",
+            a: "Já! Bústaðurinn.is býður sérstaka lausn fyrir starfsmannafélög og stéttarfélög. Kerfið styður marga notendur, aðgangsstýringu og bókunarmörk per félagsmann. Hafðu samband við okkur eða skoðaðu 'Fyrir starfsmannafélög' síðuna til að fá sérsniðið tilboð."
+        },
+        {
+            q: "Hvernig er kostnaði skipt á milli meðeigenda sumarhúss?",
+            a: "Hússjóðskerfið gerir þér kleift að skrá öll útgjöld (rafmagn, fasteignagjöld, viðhald) og skipta kostnaði sjálfkrafa á milli meðeigenda. Allir sjá stöðuna í rauntíma og kerfið reiknar sjálfkrafa hvað hver skuldar."
+        },
+        {
+            q: "Er til app fyrir utanumhald á sumarhúsi?",
+            a: "Já, Bústaðurinn.is er fullkomið bókunarkerfi og app fyrir sumarhús. Það virkar eins og venjulegt app á símanum þínum (PWA) og þú getur bætt því á heimaskjáinn þinn. Kerfið er hannað sérstaklega fyrir íslensk sumarhús í sameign og býður upp á bókunardagatal, sanngirnisreglu, hússjóð og verkefnalista."
         }
     ];
 
@@ -54,8 +74,9 @@ export default function FAQPage() {
 
     return (
         <MarketingLayout
-            title="Spurt og Svarað"
-            description="Algengar spurningar um Bústaðurinn.is. Verðskrá, virkni og tæknilegar upplýsingar."
+            title="Algengar spurningar um bókunarkerfi fyrir sumarhús | Bústaðurinn.is"
+            description="Svör við algengum spurningum um Bústaðurinn.is — bókunarkerfi fyrir sumarhús í sameign. Verðskrá, sanngirnisregla, hússjóður, virkni og tæknilegar upplýsingar."
+            keywords="algengar spurningar sumarhús, bókunarkerfi sumarhús FAQ, sumarhús í sameign, sanngirnisregla, hússjóður"
             structuredData={structuredData}
         >
             <div className="bg-white py-24">

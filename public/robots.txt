@@ -3,3 +3,4 @@ Allow: /
 
 Sitemap: https://www.bustadurinn.is/sitemap.xml
 LLMs: https://www.bustadurinn.is/llms.txt
+LLMs-full: https://www.bustadurinn.is/llms-full.txt
