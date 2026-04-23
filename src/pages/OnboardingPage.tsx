@@ -523,9 +523,8 @@ export default function OnboardingPage() {
             const failures = results.filter(r => r.status === 'rejected');
             if (failures.length > 0) {
                 console.error('Some invites failed:', failures);
-                // We don't block the flow for partial failures in onboarding to keep it smooth,
-                // but we could show a toast or log it.
-                // For now, we proceed as the critical path is creating the house.
+                setError(`Villa: Gat ekki sent boð á ${failures.length} af ${emailList.length} netföngum. Þú getur reynt aftur, eða smellt á 'Sleppa þessu' til að halda áfram og bæta þeim við síðar.`);
+                return; // Block flow so user can see error and retry or skip
             }
 
             nextStep();

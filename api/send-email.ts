@@ -87,6 +87,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Missing templateId or recipient' });
         }
 
+        // Get dynamic base URL for links
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
+        const host = req.headers['x-forwarded-host'] || req.headers.host || 'bustadurinn.is';
+        const baseUrl = req.headers.origin || `${protocol}://${host}`;
+
         // Fetch template from Firestore
         const templateDoc = await db.collection('email_templates').doc(templateId).get();
         let template: EmailTemplate;
@@ -146,7 +151,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             <div class="feature"><strong>✅ Bættu við verkefnum</strong><br>Haltu utan um viðhald og verkefni á einfaldan hátt.</div>
             <div class="feature"><strong>💰 Skráðu útgjöld</strong><br>Haltu utan um kostnað og skiptu honum sanngjarnt á milli eigenda.</div>
             <p style="margin-top: 30px;">Þú hefur <strong>1 ár ókeypis aðgang</strong> til að prófa alla eiginleika kerfisins sem hluti af opnunartilboðinu okkar! 🎉</p>
-            <a href="https://bustadurinn.is/dashboard" class="button">Fara á stjórnborð</a>
+            <a href="${baseUrl}/dashboard" class="button">Fara á stjórnborð</a>
             <p style="margin-top: 40px; font-size: 14px; color: #4a4642;">Ef þú hefur spurningar, ekki hika við að hafa samband við okkur á <a href="mailto:hjalp@bustadurinn.is" style="color: #e8b058;">hjalp@bustadurinn.is</a></p>
         </div>
         <div class="footer">
@@ -196,7 +201,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             <div class="feature-box"><h3>💰 Fjármál</h3><p>Haltu utan um útgjöld, gerðu rekstraráætlun og fylgstu með stöðu hússjóðsins. Allir meðeigendur geta skráð útgjöld.</p></div>
             <div class="feature-box"><h3>✅ Verkefni</h3><p>Haltu utan um viðhaldsverkefni. Deildu verkefnum með meðeigendum og fylgstu með framvindunni.</p></div>
             <div class="feature-box"><h3>👥 Gestir</h3><p>Búðu til gestahlekk með WiFi kóða og helstu upplýsingum. Svo enginn þurfi að hringja og spyrja!</p></div>
-            <div style="text-align: center; margin: 40px 0;"><a href="https://bustadurinn.is/dashboard" class="button">Opna stjórnborð →</a></div>
+            <div style="text-align: center; margin: 40px 0;"><a href="${baseUrl}/dashboard" class="button">Opna stjórnborð →</a></div>
             <div class="divider"></div>
             <h3 style="color: #1a1a1a;">💡 Ábendingar:</h3>
             <ul style="color: #666; line-height: 1.8;">
@@ -243,7 +248,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             <p class="greeting">Hæ {name},</p>
             <p>Við tókum eftir því að þú byrjaðir að skrá þig en kláraðir ekki að stofna húsið þitt.</p>
             <p>Engar áhyggjur, aðgangurinn þinn er tilbúinn. Þú þarft bara að skrá inn upplýsingar um bústaðinn til að byrja.</p>
-            <a href="https://bustadurinn.is/onboarding" class="button">Klára uppsetningu</a>
+            <a href="${baseUrl}/onboarding" class="button">Klára uppsetningu</a>
             <p style="margin-top: 20px; font-size: 14px; color: #666;">Ef þú lendir í vandræðum, svaraðu þessum pósti og við hjálpum þér.</p>
         </div>
         <div class="footer"><p><strong>Bústaðurinn.is</strong></p></div>

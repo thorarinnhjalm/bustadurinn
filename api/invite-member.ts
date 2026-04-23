@@ -79,6 +79,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { email, houseId, houseName, senderName, senderUid } = req.body;
         console.log('🔍 Request body:', { email, houseId, houseName, senderName, senderUid });
 
+        // Get dynamic base URL for links
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
+        const host = req.headers['x-forwarded-host'] || req.headers.host || 'bustadurinn.is';
+        const baseUrl = req.headers.origin || `${protocol}://${host}`;
+
         if (!email || !houseId || !senderUid) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
@@ -145,7 +150,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         <strong>${sanitizedSenderName}</strong> hefur bætt þér við sem meðeiganda í <strong>${sanitizedHouseName}</strong> á Bústaðurinn.is.
                     </p>
                     <div style="margin: 30px 0;">
-                        <a href="https://bustadurinn.is/dashboard" style="background-color: #e8b058; color: #1a1a1a; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                        <a href="${baseUrl}/dashboard" style="background-color: #e8b058; color: #1a1a1a; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                             Fara í Bústaðurinn.is
                         </a>
                     </div>
@@ -194,7 +199,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const sanitizedSenderNameInvite = DOMPurify.sanitize(senderName || 'Eigandi', { ALLOWED_TAGS: [] });
             const sanitizedHouseNameInvite = DOMPurify.sanitize(houseName, { ALLOWED_TAGS: [] });
 
-            const inviteUrl = `https://bustadurinn.is/join?token=${token}`;
+            const inviteUrl = `${baseUrl}/join?token=${token}`;
             const subject = `Boð frá ${sanitizedSenderNameInvite}`;
 
             // New HTML Template based on user request
