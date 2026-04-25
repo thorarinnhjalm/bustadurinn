@@ -454,7 +454,7 @@ const UserDashboard = () => {
             </div>
 
             {/* --- MAIN CONTENT --- */}
-            <div className="max-w-5xl mx-auto px-4 relative z-10 space-y-8 -mt-8">
+            <div className="max-w-5xl mx-auto px-4 relative z-10 space-y-8 -mt-8 pt-10">
 
                 {/* SUPPORT BANNER (replaces old trial banner) */}
                 {(() => {
