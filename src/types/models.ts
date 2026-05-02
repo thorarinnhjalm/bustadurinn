@@ -98,7 +98,6 @@ export interface User {
     utm_params?: UTMParams; // Marketing attribution data
     created_at: Date;
     last_login?: Date;
-    trial_ends_at?: Date;
 }
 
 export type BookingType = 'personal' | 'guest' | 'rental' | 'maintenance';

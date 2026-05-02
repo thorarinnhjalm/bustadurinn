@@ -127,9 +127,9 @@ export default function LandingPage() {
 
     return (
         <MarketingLayout
-            title="Bókunarkerfi fyrir sumarhús í sameign — Bústaðurinn.is"
-            description="Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti fyrir meðeigendur. Ókeypis og opið öllum."
-            keywords="bókunarkerfi sumarhús, sumarhús í sameign, bókunardagatal, utanumhald sumarhús, hússjóður, sanngirnisregla, skipulag sumarhúss, meðeigendur, orlofshús"
+            title="Bústaðurinn.is | Ókeypis app og bókunarkerfi fyrir sumarhús"
+            description="Ókeypis app fyrir sumarhúsið þitt. Bókunardagatal, hússjóður, verkefnalisti og sanngirnisregla — allt á einum stað, beint í símanum. Engin binding."
+            keywords="sumarhúsaforrit, sumarhús app, bókunarkerfi sumarhús, ókeypis sumarhús kerfi, hússjóður, sumarhús dagatal, skipulag sumarhúss, sumarhús í sameign, bókunardagatal"
             structuredData={combinedSchema}
         >
 
@@ -159,7 +159,7 @@ export default function LandingPage() {
                             </h1>
 
                             <p className="text-xl md:text-2xl mb-10 text-stone-600 leading-relaxed font-light max-w-xl">
-                                Eitt app fyrir alla fjölskylduna. Einfaldaðu bókanir, skiptu verkefnum og búðu til minningar — beint í símanum.
+                                Ókeypis app fyrir sumarhúsið þitt. Bókaðu daga, haltu utan um fjármál og skipulagðu viðhald — allt á einum stað, beint í símanum.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -741,6 +741,12 @@ export default function LandingPage() {
                                 Ef þér líkar við kerfið og vilt styrkja þróun þess er velkomið að <a href="https://askell.is/public/payments/170/" target="_blank" rel="noopener noreferrer" className="text-amber hover:underline">kaupa handa okkur kaffibolla</a>.
                             </p>
                         </div>
+                    </div>
+
+                    <div className="text-center mt-12">
+                        <a href="/spurt-og-svarad" className="text-amber hover:underline font-medium">
+                            Sjá allar spurningar og svör →
+                        </a>
                     </div>
                 </div>
             </section>

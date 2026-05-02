@@ -87,16 +87,7 @@ const UserDashboard = () => {
                 unsubscribes.push(onSnapshot(houseRef, (snap) => {
                     if (snap.exists()) {
                         const newData = { id: snap.id, ...snap.data() } as House;
-                        const oldStatus = currentHouse.subscription_status;
-                        const newStatus = newData.subscription_status;
-
-                        // Local state update via store
                         useAppStore.getState().setCurrentHouse(newData);
-
-                        // Success Feedback
-                        if (oldStatus === 'trial' && newStatus === 'active') {
-                            setJustActivated(true);
-                        }
                     }
                 }));
 

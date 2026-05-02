@@ -24,7 +24,6 @@ const routes = [
     { path: '/spurt-og-svarad', priority: '0.8', changefreq: 'monthly' },
     { path: '/um-okkur', priority: '0.7', changefreq: 'monthly' },
     { path: '/hafa-samband', priority: '0.7', changefreq: 'yearly' },
-    { path: '/marketing-map', priority: '0.6', changefreq: 'monthly' },
 
     // Handbook (SEO Goldmine!)
     { path: '/handbok', priority: '0.9', changefreq: 'monthly' },
@@ -37,31 +36,10 @@ const routes = [
     { path: '/personuvernd', priority: '0.5', changefreq: 'yearly' },
     { path: '/skilmalar', priority: '0.5', changefreq: 'yearly' },
 
-    // Auth & App (Lower priority for searching, but good for indexing)
-    { path: '/login', priority: '0.5', changefreq: 'yearly' },
+    // Auth
     { path: '/signup', priority: '0.8', changefreq: 'monthly' },
-    { path: '/join', priority: '0.6', changefreq: 'yearly' },
+    { path: '/organizations/signup', priority: '0.8', changefreq: 'monthly' },
 ];
-
-// Marketplace Categories (Boost SEO for specific searches)
-const categories = [
-    'mokstur',           // snjomokstur -> mokstur ? No, let's use the IDs: snow_removal
-    'snow_removal',
-    'cleaning',
-    'maintenance',
-    'hot_tub',
-    'security',
-    'other'
-];
-
-// Add category pages
-categories.forEach(cat => {
-    routes.push({
-        path: `/torgid?category=${cat}`,
-        priority: '0.8',
-        changefreq: 'weekly'
-    });
-});
 
 const generateSitemap = () => {
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

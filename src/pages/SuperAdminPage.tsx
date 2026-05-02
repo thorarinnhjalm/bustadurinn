@@ -3,7 +3,7 @@
  * Desktop-first, high-density data tables, real impersonation
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Home, Users, BarChart2, Mail, Tag, FileSearch, Settings, Send,
@@ -12,7 +12,7 @@ import {
     Edit, MapPin, UserCog, Zap, Building2, Eye
 } from 'lucide-react';
 import { db, auth } from '@/lib/firebase';
-import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where, limit } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
@@ -65,6 +65,9 @@ interface Stats {
     launchOfferCount: number;
     sandboxVisits: number; // Track /prufa engagement
 }
+
+const CACHE_TTL = 5 * 60 * 1000;
+let statsCache: { data: Stats; timestamp: number } | null = null;
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
@@ -147,125 +150,126 @@ export default function SuperAdminPage() {
         }
     };
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                setFetchWarnings([]);
-                
-                const warnings: string[] = [];
+    const fetchStats = useCallback(async (forceRefresh = false) => {
+        if (!forceRefresh && statsCache && Date.now() - statsCache.timestamp < CACHE_TTL) {
+            setStats(statsCache.data);
+            setLoading(false);
+            return;
+        }
 
-                const safeFetch = async (collName: string) => {
-                    try {
-                        const snap = await getDocs(collection(db, collName));
-                        return snap;
-                    } catch (e: any) {
-                        console.error(`Error fetching ${collName}:`, e);
-                        warnings.push(`Gat ekki sótt gögn fyrir "${collName}": ${e.message || 'Óþekkt villa'}`);
-                        return null;
-                    }
-                };
+        try {
+            setLoading(true);
+            setError(null);
+            setFetchWarnings([]);
 
-                const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, providersSnap, organizationsData, promoSnapResult, sandboxVisitsSnap] = await Promise.all([
-                    safeFetch('houses'),
-                    safeFetch('users'),
-                    safeFetch('bookings'),
-                    safeFetch('tasks'),
-                    safeFetch('contact_submissions'),
-                    safeFetch('coupons'),
-                    safeFetch('newsletter_subscribers'),
-                    safeFetch('feedback'),
-                    safeFetch('service_providers'),
-                    getAllOrganizations().catch((e) => {
-                        warnings.push(`Gat ekki sótt gögn fyrir "organizations": ${e.message}`);
-                        return [];
-                    }), // NEW
-                    getDoc(doc(db, 'system', 'promotions')).catch((e) => {
-                        warnings.push(`Gat ekki sótt gögn fyrir "promotions": ${e.message}`);
-                        return null;
-                    }),
-                    getDocs(query(collection(db, 'funnel_events'), where('event_name', '==', 'sandbox_visited'))).catch((e) => {
-                        warnings.push(`Gat ekki sótt funnel_events: ${e.message}`);
-                        return null;
-                    })
-                ]);
-                const users = usersSnap?.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User)) || [];
-                const activeTasks = tasksSnap?.docs.filter(doc => doc.data().status !== 'completed').length || 0;
+            const warnings: string[] = [];
 
-                const houses = housesSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as House)) || [];
-                const contacts = contactsSnap?.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    created_at: doc.data().created_at?.toDate() || new Date()
-                } as ContactSubmission)) || [];
-
-                const coupons = couponsSnap?.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    created_at: (doc.data().created_at as any)?.toDate() || new Date(),
-                    valid_until: (doc.data().valid_until as any)?.toDate() || undefined
-                } as Coupon)) || [];
-
-                const subscribers = subSnap?.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    created_at: (doc.data().created_at as any)?.toDate() || new Date()
-                } as NewsletterSubscriber)) || [];
-
-                const feedback = feedbackSnap?.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    createdAt: (doc.data().createdAt as any)?.toDate() || new Date()
-                } as Feedback)) || [];
-
-                const bookings = bookingsSnap?.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    start: doc.data().start?.toDate(),
-                    end: doc.data().end?.toDate(),
-                    created_at: doc.data().created_at?.toDate()
-                })) || [];
-
-                setStats({
-                    totalHouses: houses.length,
-                    totalUsers: users.length,
-                    totalBookings: bookingsSnap?.size || 0,
-                    totalSubscribers: subSnap?.size || 0,
-                    totalProviders: providersSnap?.size || 0,
-                    totalOrganizations: organizationsData.length || 0, // NEW
-                    sandboxVisits: sandboxVisitsSnap?.size || 0,
-                    activeTasks,
-                    allHouses: houses,
-                    allUsers: users,
-                    allBookings: bookings,
-                    allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
-                    allCoupons: coupons,
-                    allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
-                    allFeedback: feedback.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
-                    allProviders: providersSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceProvider)) || [],
-                    allOrganizations: organizationsData || [], // NEW
-                    launchOfferCount: promoSnapResult && promoSnapResult.exists() ? promoSnapResult.data().launch_offer_count || 0 : 0
-                });
-
-                if (warnings.length > 0) {
-                    setFetchWarnings(warnings);
+            const safeFetch = async (collName: string, maxDocs = 2000) => {
+                try {
+                    const snap = await getDocs(query(collection(db, collName), limit(maxDocs)));
+                    return snap;
+                } catch (e: any) {
+                    console.error(`Error fetching ${collName}:`, e);
+                    warnings.push(`Gat ekki sótt gögn fyrir "${collName}": ${e.message || 'Óþekkt villa'}`);
+                    return null;
                 }
-                
-                if (!housesSnap && !usersSnap && warnings.length > 0) {
-                    console.warn("Critical core collections failed to load.");
-                }
-            } catch (error: any) {
-                console.error('Global fetch stats error:', error);
-                setError(error.message || 'Failed to load data');
-            } finally {
-                setLoading(false);
+            };
+
+            const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, providersSnap, organizationsData, promoSnapResult, sandboxVisitsSnap] = await Promise.all([
+                safeFetch('houses'),
+                safeFetch('users'),
+                safeFetch('bookings', 500),
+                safeFetch('tasks', 500),
+                safeFetch('contact_submissions', 500),
+                safeFetch('coupons', 200),
+                safeFetch('newsletter_subscribers', 2000),
+                safeFetch('feedback', 500),
+                safeFetch('service_providers', 500),
+                getAllOrganizations().catch((e) => {
+                    warnings.push(`Gat ekki sótt gögn fyrir "organizations": ${e.message}`);
+                    return [];
+                }),
+                getDoc(doc(db, 'system', 'promotions')).catch((e) => {
+                    warnings.push(`Gat ekki sótt gögn fyrir "promotions": ${e.message}`);
+                    return null;
+                }),
+                getDocs(query(collection(db, 'funnel_events'), where('event_name', '==', 'sandbox_visited'), limit(1000))).catch((e) => {
+                    warnings.push(`Gat ekki sótt funnel_events: ${e.message}`);
+                    return null;
+                })
+            ]);
+
+            const users = usersSnap?.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User)) || [];
+            const activeTasks = tasksSnap?.docs.filter(doc => doc.data().status !== 'completed').length || 0;
+            const houses = housesSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as House)) || [];
+            const contacts = contactsSnap?.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                created_at: doc.data().created_at?.toDate() || new Date()
+            } as ContactSubmission)) || [];
+            const coupons = couponsSnap?.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                created_at: (doc.data().created_at as any)?.toDate() || new Date(),
+                valid_until: (doc.data().valid_until as any)?.toDate() || undefined
+            } as Coupon)) || [];
+            const subscribers = subSnap?.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                created_at: (doc.data().created_at as any)?.toDate() || new Date()
+            } as NewsletterSubscriber)) || [];
+            const feedback = feedbackSnap?.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: (doc.data().createdAt as any)?.toDate() || new Date()
+            } as Feedback)) || [];
+            const bookings = bookingsSnap?.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                start: doc.data().start?.toDate(),
+                end: doc.data().end?.toDate(),
+                created_at: doc.data().created_at?.toDate()
+            })) || [];
+
+            const newStats: Stats = {
+                totalHouses: houses.length,
+                totalUsers: users.length,
+                totalBookings: bookingsSnap?.size || 0,
+                totalSubscribers: subSnap?.size || 0,
+                totalProviders: providersSnap?.size || 0,
+                totalOrganizations: organizationsData.length || 0,
+                sandboxVisits: sandboxVisitsSnap?.size || 0,
+                activeTasks,
+                allHouses: houses,
+                allUsers: users,
+                allBookings: bookings,
+                allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
+                allCoupons: coupons,
+                allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
+                allFeedback: feedback.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+                allProviders: providersSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceProvider)) || [],
+                allOrganizations: organizationsData || [],
+                launchOfferCount: promoSnapResult && promoSnapResult.exists() ? promoSnapResult.data().launch_offer_count || 0 : 0
+            };
+            statsCache = { data: newStats, timestamp: Date.now() };
+            setStats(newStats);
+
+            if (warnings.length > 0) setFetchWarnings(warnings);
+            if (!housesSnap && !usersSnap && warnings.length > 0) {
+                console.warn("Critical core collections failed to load.");
             }
-        };
+        } catch (error: any) {
+            console.error('Global fetch stats error:', error);
+            setError(error.message || 'Failed to load data');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
+    useEffect(() => {
         logger.info('SuperAdmin Version: 1.2.0 - Email Service Active');
         fetchStats();
-    }, []);
+    }, [fetchStats]);
 
     // Fetch email templates when emails tab is active
     useEffect(() => {
@@ -1272,7 +1276,7 @@ export default function SuperAdminPage() {
                                 {seeding ? 'Seeding...' : 'Seed Demo Data'}
                             </button>
                             <button
-                                onClick={() => window.location.reload()}
+                                onClick={() => fetchStats(true)}
                                 className="px-4 py-2 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors font-medium text-stone-600"
                             >
                                 Refresh Page

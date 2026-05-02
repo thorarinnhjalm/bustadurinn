@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '@/components/SEO';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addDays } from 'date-fns';
 import { is } from 'date-fns/locale';
@@ -338,6 +339,7 @@ export default function SandboxPage() {
 
     return (
         <div className="flex h-screen bg-bone font-sans overflow-hidden">
+            <SEO title="Prufa Bústaðurinn.is — Gagnvirkt dæmi" noIndex={true} />
             {/* Sidebar (Mocking the real one) */}
             <aside className={`
                 fixed inset-y-0 left-0 z-40 w-64 bg-charcoal text-white transform transition-transform duration-300 ease-in-out

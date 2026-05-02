@@ -305,10 +305,6 @@ export default function OnboardingPage() {
                 const houseRef = doc(collection(db, 'houses')); // Generate ID first
                 houseId = houseRef.id;
 
-                const startDate = new Date();
-                const endDate = new Date(startDate);
-                endDate.setDate(endDate.getDate() + 30); // 30 Day Trial (Standard)
-
                 const newHouseData = {
                     name: houseData.name,
                     address: houseData.address || '',
@@ -318,8 +314,7 @@ export default function OnboardingPage() {
                     invite_code: inviteCode,
                     holiday_mode: 'fairness',
                     seo_slug: houseData.name.toLowerCase().replace(/\s+/g, '-'),
-                    subscription_status: 'trial',
-                    subscription_end: endDate,
+                    subscription_status: 'free',
                     created_at: new Date(),
                     updated_at: new Date()
                 };
@@ -343,8 +338,7 @@ export default function OnboardingPage() {
                 manager_id: currentUser.uid,
                 owner_ids: [currentUser.uid],
                 invite_code: inviteCode!,
-                subscription_status: 'trial',
-                subscription_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                subscription_status: 'free'
             };
 
             // Initialize Subcollections (Post-Transaction, non-critical)
@@ -389,9 +383,7 @@ export default function OnboardingPage() {
 
             console.log("House transaction complete. ID:", houseId!);
 
-            // Track key conversion events
             analytics.onboardingCompleted();
-            analytics.trialStarted();
 
             // 4. Send Welcome Email
             (async () => {

@@ -59,13 +59,9 @@ export const analytics = {
 
     // Onboarding Funnel
     onboardingStep: (step: string) => trackEvent('onboarding_step', { step_name: step }),
-    onboardingCompleted: () => {
-        trackEvent('onboarding_completed');
-        trackEvent('trial_started'); // High-level conversion
-    },
+    onboardingCompleted: () => trackEvent('onboarding_completed'),
 
     // Conversion
-    trialStarted: () => trackEvent('trial_started'),
     subscribed: (plan: 'monthly' | 'annual') => trackEvent('subscribe', { plan }),
 
     // Funnel & Errors

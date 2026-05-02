@@ -6,11 +6,11 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import DOMPurify from 'isomorphic-dompurify';
-import { initializeFirebaseAdmin, db as firebaseDb } from './utils/firebaseAdmin.js';
+import { initializeFirebaseAdmin, getDb } from './utils/firebaseAdmin.js';
 
 // Initialize Firebase Admin
 initializeFirebaseAdmin();
-const db = firebaseDb;
+const db = getDb();
 
 // Lazy init Resend
 let resend: Resend | null = null;
@@ -150,7 +150,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             <div class="feature"><strong>📅 Bókaðu fyrstu dvölina</strong><br>Farðu í dagatalið og veldu dagsetningar fyrir næstu helgi.</div>
             <div class="feature"><strong>✅ Bættu við verkefnum</strong><br>Haltu utan um viðhald og verkefni á einfaldan hátt.</div>
             <div class="feature"><strong>💰 Skráðu útgjöld</strong><br>Haltu utan um kostnað og skiptu honum sanngjarnt á milli eigenda.</div>
-            <p style="margin-top: 30px;">Þú hefur <strong>1 ár ókeypis aðgang</strong> til að prófa alla eiginleika kerfisins sem hluti af opnunartilboðinu okkar! 🎉</p>
+            <p style="margin-top: 30px;">Kerfið er <strong>ókeypis og opið öllum</strong> — engin binding, enginn falinn kostnaður. Velkomin um borð! 🎉</p>
             <a href="${baseUrl}/dashboard" class="button">Fara á stjórnborð</a>
             <p style="margin-top: 40px; font-size: 14px; color: #4a4642;">Ef þú hefur spurningar, ekki hika við að hafa samband við okkur á <a href="mailto:hjalp@bustadurinn.is" style="color: #e8b058;">hjalp@bustadurinn.is</a></p>
         </div>
@@ -299,10 +299,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
         console.error('❌ Server Error sending email:', error);
 
-        // Don't expose stack traces in production
-        // TEMPORARY DEBUG: Expose error details
-        const errorResponse = { error: error.message, code: error.code || 'internal_server_error', stack: error.stack };
-
-        return res.status(500).json(errorResponse);
+        return res.status(500).json({ error: error.message, code: error.code || 'internal_server_error' });
     }
 }

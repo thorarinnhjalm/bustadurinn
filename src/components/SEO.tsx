@@ -23,7 +23,7 @@ const organizationSchema = {
     "alternateName": "Neðri Hóll Hugmyndahús ehf.",
     "url": "https://www.bustadurinn.is",
     "logo": "https://www.bustadurinn.is/logo_high_res.png",
-    "description": "Íslenskt SaaS bókunarkerfi og app fyrir sumarhús í sameign. Bókunardagatal, sanngirnisregla, hússjóður og verkefnastjórnun.",
+    "description": "Ókeypis íslenskt app og bókunarkerfi fyrir sumarhús. Bókunardagatal, sanngirnisregla, hússjóður og verkefnastjórnun — ókeypis og opið öllum.",
     "founder": {
         "@type": "Person",
         "name": "Þórarinn Hjálmarsson"
@@ -48,16 +48,16 @@ const organizationSchema = {
 };
 
 export default function SEO({
-    title = 'Bústaðurinn.is — Bókunarkerfi fyrir sumarhús í sameign',
-    description = 'Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti fyrir meðeigendur. Ókeypis og opið öllum.',
-    keywords = 'bókunarkerfi sumarhús, sumarhús í sameign, bókunardagatal, utanumhald sumarhús, hússjóður, meðeigendur, sanngirnisregla, skipulag sumarhúss, orlofshús, íslenskt app',
+    title = 'Bústaðurinn.is | Ókeypis app og bókunarkerfi fyrir sumarhús',
+    description = 'Ókeypis app fyrir sumarhúsið þitt. Bókunardagatal, hússjóður, verkefnalisti og sanngirnisregla — allt á einum stað, beint í símanum. Engin binding.',
+    keywords = 'sumarhúsaforrit, sumarhús app, bókunarkerfi sumarhús, ókeypis sumarhús kerfi, hússjóður, sumarhús dagatal, skipulag sumarhúss, sumarhús í sameign, bókunardagatal',
     ogImage = 'https://www.bustadurinn.is/og-preview.png',
     canonical,
     structuredData,
     noIndex = false,
 }: SEOProps) {
     const location = useLocation();
-    const fullTitle = title.includes('|') ? title : `${title} | Bústaðurinn.is`;
+    const fullTitle = title.includes('|') || title.includes('—') || title.includes('–') ? title : `${title} | Bústaðurinn.is`;
 
     // Construct canonical URL
     // If explicit canonical provided, use it.

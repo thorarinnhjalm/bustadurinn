@@ -137,5 +137,24 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // Onboarding funnel analytics — written by OnboardingPage
+    match /funnel_events/{eventId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if isSuperAdmin();
+    }
+
+    // Check-in/check-out log — written by DashboardPage
+    match /guestbook/{entryId} {
+      allow create: if isAuthenticated();
+      allow read: if isAuthenticated() && resource.data.user_id == getUserId() || isSuperAdmin();
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Top-level activity log — written by DashboardPage checkout flow
+    match /internal_logs/{logId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if isSuperAdmin();
+    }
+
   }
 }

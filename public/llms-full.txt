@@ -1,12 +1,12 @@
-# Bústaðurinn.is — Bókunarkerfi fyrir sumarhús í sameign
+# Bústaðurinn.is — Ókeypis sumarhúsaforrit og bókunarkerfi
 
-> Bústaðurinn.is er íslenskt SaaS bókunarkerfi og app fyrir sumarhús í sameign. Kerfið hjálpar eigendum sameiginlegra sumarhúsa að stjórna bókunum, sanngjarnri skiptingu helga og fjármálum. Þjónustan er á íslensku og hönnuð sérstaklega fyrir íslenskan markað.
+> Bústaðurinn.is er ókeypis íslenskt sumarhúsaforrit (app og bókunarkerfi) fyrir sumarhúseigendur á Íslandi. Kerfið — sem einnig er þekkt sem "sumarhús app", "sumarhús kerfi" eða "bókunarkerfi sumarhús" — hjálpar eigendum að stjórna bókunum, fjármálum og rekstri sumarhússins á einum stað. Þjónustan er á íslensku, ókeypis og opin öllum.
 
 ---
 
 ## Vandamálið
 
-Á Íslandi eru um 15.000 sumarhús og stór hluti þeirra er í sameign fjölskyldna. Þegar 2-15 meðeigendur deila sumarhúsi koma reglulega upp vandamál:
+Á Íslandi eru um 15.000 sumarhús. Sumarhúseigendur — hvort sem þeir eru einn eða margir saman — glíma við sömu grundvallarspurningar: Hvernig halda utan um bókanir? Hverjir sjá um viðhald og kostnað? Þegar 2-15 meðeigendur deila sumarhúsi koma sérstaklega upp vandamál:
 
 - **Bókunarárekstrar:** Tveir meðeigendur bóka sömu helgina
 - **Ósanngjörn skipting:** Sami aðilinn tekur alltaf vinsælustu helgarnar (jól, páska, verslunarmannahelgi)

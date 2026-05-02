@@ -26,6 +26,7 @@ export default function SignupPage() {
         password: ''
     });
     const [error, setError] = useState('');
+    const [showLoginLink, setShowLoginLink] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const createProfileWithRetry = async (uid: string, data: any) => {
@@ -85,7 +86,7 @@ export default function SignupPage() {
                 name: formData.name || '',
                 house_ids: [],
                 utm_params: utmParams || null,
-                trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
+
                 created_at: serverTimestamp(),
                 last_login: serverTimestamp()
             });
@@ -121,7 +122,7 @@ export default function SignupPage() {
                             name: formData.name || '', // Use the name they just typed
                             house_ids: [],
                             utm_params: utmParams || null,
-                            trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
+            
                             created_at: serverTimestamp(),
                             last_login: serverTimestamp()
                         });
@@ -138,7 +139,8 @@ export default function SignupPage() {
                 } catch (recoveryErr) {
                     // Password didn't match or other error
                     logger.warn('SignupPage: Recovery failed', recoveryErr);
-                    setError('Þetta netfang er þegar í notkun. Prófaðu að skrá þig inn.');
+                    setError('Þetta netfang er þegar í notkun.');
+                    setShowLoginLink(true);
                 }
             } else {
                 logger.error('SignupPage: Signup error:', err);
@@ -169,7 +171,7 @@ export default function SignupPage() {
                     avatar: user.photoURL || '',
                     house_ids: [],
                     utm_params: utmParams || null,
-                    trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
+    
                     created_at: serverTimestamp(),
                     last_login: serverTimestamp()
                 });
@@ -211,7 +213,7 @@ export default function SignupPage() {
                     avatar: user.photoURL || '',
                     house_ids: [],
                     utm_params: utmParams || null,
-                    trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
+    
                     created_at: serverTimestamp(),
                     last_login: serverTimestamp()
                 });
@@ -252,6 +254,15 @@ export default function SignupPage() {
                         {error && (
                             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                                 {error}
+                                {showLoginLink && (
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate(returnUrl ? `/login?returnUrl=${encodeURIComponent(returnUrl)}` : '/login')}
+                                        className="ml-1 underline font-medium"
+                                    >
+                                        Skrá inn
+                                    </button>
+                                )}
                             </div>
                         )}
 

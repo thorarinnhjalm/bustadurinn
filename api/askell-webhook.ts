@@ -1,5 +1,23 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { getDb } from './utils/firebaseAdmin';
+
+function verifyAskellSignature(hmacHeader: string | string[] | undefined, body: any): boolean {
+    const secret = process.env.ASKELL_WEBHOOK_SECRET;
+    if (!secret) {
+        console.warn('⚠️ ASKELL_WEBHOOK_SECRET not set — skipping signature verification');
+        return true;
+    }
+    if (!hmacHeader || Array.isArray(hmacHeader)) return false;
+    const expected = createHmac('sha256', secret)
+        .update(JSON.stringify(body))
+        .digest('hex');
+    try {
+        return timingSafeEqual(Buffer.from(hmacHeader), Buffer.from(expected));
+    } catch {
+        return false;
+    }
+}
 
 /**
  * Áskell Webhook Handler
@@ -18,10 +36,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         console.log(`Áskell Webhook received: ${eventType}`, JSON.stringify(body, null, 2));
 
-        // 1. Verification (Optional but recommended)
-        // Note: For now we focus on functionality. In a strictly secure production, 
-        // we would verify the HMAC signature with a secret from environment variables.
-        // if (!verifyAskellSignature(hmac, body)) { return res.status(401).send('Unauthorized'); }
+        // 1. Verify HMAC signature — enforced when ASKELL_WEBHOOK_SECRET is set
+        if (!verifyAskellSignature(hmac, body)) {
+            console.warn('Áskell Webhook: invalid HMAC signature');
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
 
         // 2. Handle Events
         // We look for payment success or subscription creation

@@ -1,14 +1,14 @@
 # Bústaðurinn.is
 
-> Bústaðurinn.is er íslenskt SaaS bókunarkerfi og app fyrir sumarhús í sameign. Kerfið hjálpar eigendum sameiginlegra sumarhúsa að stjórna bókunum, sanngjarnri skiptingu helga og fjármálum á einum stað.
+> Bústaðurinn.is er ókeypis íslenskt sumarhúsaforrit (app og bókunarkerfi) fyrir sumarhúseigendur. Kerfið hjálpar þér að stjórna bókunum, fjármálum og rekstri sumarhússins á einum stað — hvort sem þú ert einn eigandi eða margir saman.
 
 ## Vandamálið sem við leysum
 
-Þegar fleiri en ein fjölskylda eiga sumarhús saman koma oft upp vandamál: Hver fær jólahelgina? Hvernig er kostnaði skipt? Hver á að klippa grasið? Margir nota Excel skjöl, Facebook hópa eða jafnvel WhatsApp til að halda utan um bókanir — en þetta virkar sjaldan vel. Bústaðurinn.is leysir þetta allt á einum stað með nútímalegu bókunarkerfi sem allir í fjölskyldunni geta notað.
+Sumarhúseigendur glíma við sömu vandamálin hvort sem þeir eru einn eða margir: Hvernig halda utan um bókanir? Hvernig er kostnaði skipt? Hverjir sjá um viðhald? Margir nota Excel skjöl, Facebook hópa eða jafnvel WhatsApp — en þetta virkar sjaldan vel. Bústaðurinn.is leysir þetta allt á einum stað með nútímalegu sumarhúsaforrit sem virkar beint í símanum.
 
 ## Hvað er Bústaðurinn.is?
 
-Bústaðurinn.is er hugbúnaður (SaaS) sem hjálpar eigendum sameiginlegra sumarhúsa á Íslandi að stjórna bókunum, fjármálum og daglegum rekstri. Kerfið er hannað sérstaklega fyrir íslenskan markað þar sem sumarhús í sameign eru algeng (ca. 15.000 sumarhús á Íslandi, stór hluti í sameign fjölskyldna).
+Bústaðurinn.is er ókeypis sumarhúsaforrit (PWA/vefapp) hannað fyrir íslenskan markað. Það er stundum kallað "sumarhús app", "sumarhús kerfi" eða "bókunarkerfi sumarhús" — allt er þetta sama kerfið. Á Íslandi eru um 15.000 sumarhús og kerfið hentar öllum eigendum sem vilja yfirsýn yfir reksturinn, hvort sem húsið er í sameign margra eða í eigu einnar fjölskyldu.
 
 ## Aðaleiginleikar
 
@@ -45,7 +45,8 @@ Kerfið tengist Veðurstofunni og vaktar sjálfkrafa veðurspá og ófærð á n
 
 ## Fyrir hvern er kerfið?
 
-- **Fjölskyldur** sem eiga sumarhús saman (2-15 meðeigendur) — algengasta notkunin
+- **Allir sumarhúseigendur** sem vilja yfirsýn yfir reksturinn — bókanir, fjármál, viðhald
+- **Fjölskyldur í sameign** (2-15 meðeigendur) — algengasta notkunin, með sanngirnisreglu fyrir helgaskiptingu
 - **Starfsmannafélög og stéttarfélög** sem bjóða starfsmönnum sumarbústaði — sérsniðnar lausnir í boði
 - **Sveitarfélög** og opinberar stofnanir með sumarhús til útleigu
 

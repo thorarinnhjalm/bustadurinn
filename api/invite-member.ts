@@ -2,10 +2,12 @@ import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
 import DOMPurify from 'isomorphic-dompurify';
-import { initializeFirebaseAdmin, admin, db } from './utils/firebaseAdmin';
+import { initializeFirebaseAdmin, getDb } from './utils/firebaseAdmin';
+import * as admin from 'firebase-admin';
 
 // Initialize Firebase Admin
 initializeFirebaseAdmin();
+const db = getDb()!;
 
 // Inline auth functions to avoid module resolution issues
 async function requireAuth(req: VercelRequest) {

@@ -74,15 +74,15 @@ export default function FAQPage() {
 
     return (
         <MarketingLayout
-            title="Algengar spurningar um bókunarkerfi fyrir sumarhús | Bústaðurinn.is"
-            description="Svör við algengum spurningum um Bústaðurinn.is — ókeypis bókunarkerfi fyrir sumarhús í sameign. Sanngirnisregla, hússjóður, virkni og tæknilegar upplýsingar."
-            keywords="algengar spurningar sumarhús, bókunarkerfi sumarhús FAQ, sumarhús í sameign, sanngirnisregla, hússjóður"
+            title="Algengar spurningar um sumarhús | Bústaðurinn.is — Ókeypis app"
+            description="Svör við algengum spurningum um Bústaðurinn.is — ókeypis app og bókunarkerfi fyrir sumarhús. Hvernig virkar kerfið, sanngirnisreglan, hússjóður og fleira."
+            keywords="algengar spurningar sumarhús, sumarhúsaforrit spurningar, ókeypis sumarhús app, bókunarkerfi sumarhús, sanngirnisregla, hússjóður"
             structuredData={structuredData}
         >
             <div className="bg-white py-24">
                 <div className="container max-w-3xl mx-auto px-6">
-                    <h1 className="text-4xl font-serif mb-4 text-center">Spurt og Svarað</h1>
-                    <p className="text-grey-dark text-center mb-16">Hér eru svör við algengustu spurningunum.</p>
+                    <h1 className="text-4xl font-serif mb-4 text-center">Algengar spurningar um sumarhúsið</h1>
+                    <p className="text-grey-dark text-center mb-16">Hér eru svör við algengustu spurningunum um Bústaðurinn.is.</p>
 
                     <div className="space-y-4">
                         {faqs.map((faq, index) => (
