@@ -48,7 +48,7 @@ async function analyzeTestUsers() {
                 name.includes('demo');
 
             // Don't flag real admins
-            const isRealAdmin = email.includes('thorarinnhjalmarsson') || email.includes('bustadurinn.is');
+            const isRealAdmin = (email.includes('thorarinnhjalmarsson') || email.includes('bustadurinn.is')) && !email.includes('test-playwright');
 
             if (isTest && !isRealAdmin) {
                 const houseIds = userData.house_ids || [];
@@ -78,22 +78,32 @@ async function analyzeTestUsers() {
             }
         }
 
-        console.log('\n--- GREINING Á PRUFUAÐGÖNGUM ---');
+        console.log('\n--- EYÐING Á PRUFUAÐGÖNGUM ---');
         console.log(`Fjöldi prufuaðganga fundnir: ${testUsers.length}\n`);
 
-        testUsers.forEach((u, i) => {
-            console.log(`${i+1}. [${u.uid}] ${u.name} (${u.email})`);
-            console.log(`   Stofnaður: ${u.created}`);
-            if (u.houses_managed.length > 0) {
-                console.log(`   🚨 Á ${u.houses_managed.length} hús sem verður eytt:`);
-                u.houses_managed.forEach(h => console.log(`      - ${h.name} (${h.id})`));
-            } else {
-                console.log(`   ✓ Á engin hús.`);
+        for (const u of testUsers) {
+            console.log(`Eyði notanda: [${u.uid}] ${u.name} (${u.email})`);
+            
+            // Delete houses
+            for (const h of u.houses_managed) {
+                await db.collection('houses').doc(h.id).delete();
+                console.log(`   - Eyddi húsi: ${h.name} (${h.id})`);
             }
-            console.log('');
-        });
+            
+            // Delete user doc
+            await db.collection('users').doc(u.uid).delete();
+            console.log(`   - Eyddi Firestore user doc`);
+            
+            // Delete auth user
+            try {
+                await auth.deleteUser(u.uid);
+                console.log(`   - Eyddi úr Firebase Auth`);
+            } catch(e) {
+                console.log(`   - Gat ekki eytt úr Auth (kannski þegar farinn): ${e.message}`);
+            }
+        }
 
-        console.log(`Samtals: ${testUsers.length} aðgangar sem verður eytt.`);
+        console.log(`\nSamtals: ${testUsers.length} aðgöngum eytt.`);
         process.exit(0);
 
     } catch (error) {
