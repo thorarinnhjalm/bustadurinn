@@ -49,8 +49,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 3. Analyze
         const orphans = [];
         const stuckUsers = [];
+        const testUsers = []; // New array for test accounts
 
         for (const user of authUsers) {
+            const email = (user.email || '').toLowerCase();
+            const name = (user.displayName || '').toLowerCase();
+            const data = firestoreUsers.has(user.uid) ? firestoreUsers.get(user.uid) : null;
+            const firestoreName = data ? (data.name || '').toLowerCase() : '';
+
+            // Check if it's a test user
+            const isTest = 
+                email.includes('test') || 
+                email.includes('prufa') || 
+                email.includes('demo') || 
+                email.endsWith('@example.com') ||
+                name.includes('test') ||
+                name.includes('prufa') ||
+                name.includes('demo') ||
+                firestoreName.includes('test') ||
+                firestoreName.includes('prufa') ||
+                firestoreName.includes('demo');
+
+            const isRealAdmin = email.includes('thorarinnhjalmarsson') || email.includes('bustadurinn.is');
+
+            if (isTest && !isRealAdmin) {
+                testUsers.push({
+                    uid: user.uid,
+                    email: user.email,
+                    name: data?.name || user.displayName || 'Unknown',
+                    created: user.metadata.creationTime,
+                    lastSignIn: user.metadata.lastSignInTime,
+                    houseIds: data?.house_ids || []
+                });
+            }
+
             if (!firestoreUsers.has(user.uid)) {
                 orphans.push({
                     uid: user.uid,
@@ -60,7 +92,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     lastSignIn: user.metadata.lastSignInTime
                 });
             } else {
-                const data = firestoreUsers.get(user.uid);
                 if (!data.house_ids || data.house_ids.length === 0) {
                     stuckUsers.push({
                         uid: user.uid,
@@ -81,15 +112,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
         orphans.sort(sortByDate);
         stuckUsers.sort(sortByDate);
+        testUsers.sort(sortByDate);
 
         return res.status(200).json({
             orphans,
             stuckUsers,
+            testUsers,
             stats: {
                 totalAuth: authUsers.length,
                 totalFirestore: firestoreUsers.size,
                 orphanCount: orphans.length,
-                stuckCount: stuckUsers.length
+                stuckCount: stuckUsers.length,
+                testCount: testUsers.length
             }
         });
 

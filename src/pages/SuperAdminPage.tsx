@@ -115,6 +115,7 @@ export default function SuperAdminPage() {
     // Audit State
     const [orphans, setOrphans] = useState<any[]>([]);
     const [stuckUsers, setStuckUsers] = useState<any[]>([]);
+    const [testUsers, setTestUsers] = useState<any[]>([]);
     const [auditLoading, setAuditLoading] = useState(false);
 
 
@@ -1054,6 +1055,7 @@ export default function SuperAdminPage() {
             if (res.ok) {
                 setOrphans(data.orphans || []);
                 setStuckUsers(data.stuckUsers || []);
+                setTestUsers(data.testUsers || []);
             } else {
                 throw new Error(data.error || 'Failed to fetch orphans');
             }
@@ -1783,6 +1785,65 @@ export default function SuperAdminPage() {
                                                                 <td className="p-2">
                                                                     <div className="font-bold">{u.name}</div>
                                                                     <div className="text-[10px] font-mono text-stone-500">{u.email}</div>
+                                                                </td>
+                                                                <td className="p-2 text-stone-500">{new Date(u.created).toLocaleDateString()}</td>
+                                                                <td className="p-2">
+                                                                    <div className="flex gap-2">
+                                                                        <button
+                                                                            onClick={() => handleDeleteUser({ uid: u.uid, email: u.email, name: u.name || 'Prufuaðgangur' } as any)}
+                                                                            className="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded"
+                                                                            title="Delete user profile"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* TEST USERS (PRUFUAÐGANGAR) */}
+                                    <div className="bg-purple-50 rounded-lg p-6 border border-purple-200">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="font-bold flex items-center gap-2 text-purple-900 m-0">
+                                                <AlertTriangle className="w-4 h-4" />
+                                                Prufuaðgangar (Test Users) ({testUsers.length})
+                                            </h4>
+                                        </div>
+                                        <p className="text-sm text-purple-700 mb-4">
+                                            Notendur sem hafa 'test', 'prufa', 'demo' eða '@example.com' í nafninu eða netfanginu. 
+                                            Þessu ætti að eyða til að halda kerfinu hreinu.
+                                        </p>
+                                        <div className="max-h-60 overflow-y-auto bg-white rounded border border-purple-100">
+                                            {testUsers.length === 0 ? (
+                                                <div className="p-4 text-center text-purple-400 text-sm">Engir prufuaðgangar fundust. ✅</div>
+                                            ) : (
+                                                <table className="w-full text-left text-xs">
+                                                    <thead className="bg-purple-50 sticky top-0">
+                                                        <tr>
+                                                            <th className="p-2">Name / Email</th>
+                                                            <th className="p-2">Hús</th>
+                                                            <th className="p-2">Created</th>
+                                                            <th className="p-2">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {testUsers.map(u => (
+                                                            <tr key={u.uid} className="border-b border-purple-100">
+                                                                <td className="p-2">
+                                                                    <div className="font-bold">{u.name}</div>
+                                                                    <div className="text-[10px] font-mono text-purple-500">{u.email}</div>
+                                                                </td>
+                                                                <td className="p-2 text-stone-500">
+                                                                    {u.houseIds && u.houseIds.length > 0 ? (
+                                                                        <span className="text-red-500 font-bold">{u.houseIds.length} hús</span>
+                                                                    ) : (
+                                                                        "0"
+                                                                    )}
                                                                 </td>
                                                                 <td className="p-2 text-stone-500">{new Date(u.created).toLocaleDateString()}</td>
                                                                 <td className="p-2">

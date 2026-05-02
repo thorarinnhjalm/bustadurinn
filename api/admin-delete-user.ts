@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { db, auth, admin, initializeFirebaseAdmin } from './utils/firebaseAdmin';
+import { getDb, getAuth, initializeFirebaseAdmin } from './utils/firebaseAdmin';
+import * as admin from 'firebase-admin';
 import { verifyAdminToken } from './utils/admin-auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -9,6 +10,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         initializeFirebaseAdmin();
+        const db = getDb();
+        const auth = getAuth();
 
         if (!db || !auth) {
             throw new Error('Internal services failed to initialize');
@@ -43,26 +46,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             console.log(`ℹ️ No user_roles document for ${uid}`);
         }
 
-        // 4. Optional: Cleanup memberships
-        // For now, we leave house memberships as 'ghost' strings in arrays or rely on client-side filtering.
-        // A robust solution would remove the UID from 'owner_ids' in all houses.
-        // Let's attempt a best-effort cleanup of houses where they are an owner.
+        // 4. Cleanup memberships and orphan houses
         const housesSnap = await db.collection('houses').where('owner_ids', 'array-contains', uid).get();
 
         const batch = db.batch();
-        housesSnap.docs.forEach(doc => {
+        let deletedHousesCount = 0;
+
+        housesSnap.docs.forEach((doc: any) => {
+            const houseData = doc.data();
             const houseRef = db!.collection('houses').doc(doc.id);
-            // Remove from owner_ids
-            batch.update(houseRef, {
-                owner_ids: admin.firestore.FieldValue.arrayRemove(uid)
-            });
-            // If they are the manager, we should probably warn or handle it, but for a "Force Delete", leaving it or setting to null/first owner is an option.
-            // For now, let's just remove them from the list. The frontend logic usually handles missing managers gracefully or shows an error.
+            
+            // If the user is the ONLY owner (and manager), delete the house entirely
+            if (houseData.owner_ids.length === 1 && houseData.owner_ids[0] === uid) {
+                batch.delete(houseRef);
+                deletedHousesCount++;
+            } else {
+                // Otherwise, just remove them from the owner list
+                batch.update(houseRef, {
+                    owner_ids: admin.firestore.FieldValue.arrayRemove(uid)
+                });
+                
+                // If they were the manager, we should ideally reassign, but setting to null is acceptable for a force delete
+                if (houseData.manager_id === uid) {
+                    batch.update(houseRef, {
+                        manager_id: null
+                    });
+                }
+            }
         });
 
         if (!housesSnap.empty) {
             await batch.commit();
-            console.log(`✅ Removed user ${uid} from ${housesSnap.size} houses`);
+            console.log(`✅ Removed user ${uid} from ${housesSnap.size - deletedHousesCount} houses and deleted ${deletedHousesCount} orphan houses`);
         }
 
         return res.status(200).json({ success: true, message: `User ${uid} deleted completely` });
