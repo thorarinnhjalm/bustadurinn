@@ -1,7 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getDb, initializeFirebaseAdmin } from './utils/firebaseAdmin.js';
+import { getDb, getAuth, initializeFirebaseAdmin } from './utils/firebaseAdmin.js';
 import { verifyAdminToken } from './utils/admin-auth.js';
-import * as admin from 'firebase-admin';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'GET') {
@@ -11,7 +10,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         initializeFirebaseAdmin();
         const db = getDb();
-        const auth = admin.auth();
+        const auth = getAuth();
 
         if (!db || !auth) throw new Error('Services failed to init');
 

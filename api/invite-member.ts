@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
 import { initializeFirebaseAdmin, getDb } from './utils/firebaseAdmin.js';
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 
 // Initialize Firebase Admin
 initializeFirebaseAdmin();
