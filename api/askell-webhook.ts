@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { getDb } from './utils/firebaseAdmin';
+import { getDb } from './utils/firebaseAdmin.js';
 
 function verifyAskellSignature(hmacHeader: string | string[] | undefined, body: any): boolean {
     const secret = process.env.ASKELL_WEBHOOK_SECRET;

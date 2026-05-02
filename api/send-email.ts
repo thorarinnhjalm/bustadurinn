@@ -1,12 +1,19 @@
-/**
- * Unified Email Service
- * Fetches templates from Firestore and sends via Resend
- */
-
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import DOMPurify from 'isomorphic-dompurify';
 import { initializeFirebaseAdmin, getDb } from './utils/firebaseAdmin.js';
+
+/**
+ * 🔒 SECURITY: Escape HTML entities to prevent XSS injection in template variables.
+ * Replaces isomorphic-dompurify which caused ESM/CJS conflicts on Vercel runtime.
+ */
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 // Initialize Firebase Admin
 initializeFirebaseAdmin();
@@ -40,11 +47,8 @@ interface EmailTemplate {
 function replaceVariables(content: string, variables: Record<string, string>): string {
     let result = content;
     for (const [key, value] of Object.entries(variables)) {
-        // 🔒 SECURITY: Sanitize HTML to prevent XSS injection
-        const sanitized = DOMPurify.sanitize(value, {
-            ALLOWED_TAGS: [],  // Strip all HTML tags
-            ALLOWED_ATTR: []   // Strip all attributes
-        });
+        // 🔒 SECURITY: Escape HTML to prevent XSS injection
+        const sanitized = escapeHtml(value);
         const regex = new RegExp(`{${key}}`, 'g');
         result = result.replace(regex, sanitized);
     }

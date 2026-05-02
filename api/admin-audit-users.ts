@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getDb, initializeFirebaseAdmin } from './utils/firebaseAdmin';
-import { verifyAdminToken } from './utils/admin-auth';
+import { getDb, initializeFirebaseAdmin } from './utils/firebaseAdmin.js';
+import { verifyAdminToken } from './utils/admin-auth.js';
 import * as admin from 'firebase-admin';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

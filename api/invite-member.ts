@@ -1,8 +1,7 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as crypto from 'crypto';
-import DOMPurify from 'isomorphic-dompurify';
-import { initializeFirebaseAdmin, getDb } from './utils/firebaseAdmin';
+import { initializeFirebaseAdmin, getDb } from './utils/firebaseAdmin.js';
 import * as admin from 'firebase-admin';
 
 // Initialize Firebase Admin
@@ -46,6 +45,18 @@ function initResend() {
         resend = new Resend(process.env.RESEND_API_KEY);
     }
     return resend;
+}
+
+/**
+ * 🔒 SECURITY: Escape HTML entities to prevent XSS injection.
+ */
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -140,9 +151,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
 
             // Send "Added" Email - Sanitize all user-controlled data
-            const sanitizedHouseName = DOMPurify.sanitize(houseName || 'sumarbústað', { ALLOWED_TAGS: [] });
-            const sanitizedUserName = DOMPurify.sanitize(userData.name || 'vinur', { ALLOWED_TAGS: [] });
-            const sanitizedSenderName = DOMPurify.sanitize(senderName || 'Eigandi', { ALLOWED_TAGS: [] });
+            const sanitizedHouseName = escapeHtml(houseName || 'sumarbústað');
+            const sanitizedUserName = escapeHtml(userData.name || 'vinur');
+            const sanitizedSenderName = escapeHtml(senderName || 'Eigandi');
 
             const subject = `Þér hefur verið bætt við ${sanitizedHouseName}`;
             const html = `
@@ -198,8 +209,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
 
             // Sanitize user-controlled data for email
-            const sanitizedSenderNameInvite = DOMPurify.sanitize(senderName || 'Eigandi', { ALLOWED_TAGS: [] });
-            const sanitizedHouseNameInvite = DOMPurify.sanitize(houseName, { ALLOWED_TAGS: [] });
+            const sanitizedSenderNameInvite = escapeHtml(senderName || 'Eigandi');
+            const sanitizedHouseNameInvite = escapeHtml(houseName);
 
             const inviteUrl = `${baseUrl}/join?token=${token}`;
             const subject = `Boð frá ${sanitizedSenderNameInvite}`;

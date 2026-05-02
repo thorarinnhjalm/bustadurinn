@@ -1,6 +1,17 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import DOMPurify from 'isomorphic-dompurify';
+
+/**
+ * 🔒 SECURITY: Escape HTML entities to prevent XSS injection.
+ */
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -40,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         // 🔒 RATE LIMITING: Prevent spam/abuse (5 requests per hour)
-        const { checkRateLimit, getContactRateLimit, getIdentifier } = await import('./utils/ratelimit');
+        const { checkRateLimit, getContactRateLimit, getIdentifier } = await import('./utils/ratelimit.js');
         const identifier = getIdentifier(req);
         const rateLimitResult = await checkRateLimit(getContactRateLimit(), identifier);
 
@@ -59,8 +70,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         saveToFirestore({ name, email, message }).catch(console.error);
 
         // 🔒 SECURITY: Sanitize message to prevent XSS in admin emails
-        const sanitizedName = DOMPurify.sanitize(name);
-        const sanitizedMessage = DOMPurify.sanitize(message);
+        const sanitizedName = escapeHtml(name);
+        const sanitizedMessage = escapeHtml(message);
 
         // Send email via Resend
         const data = await resend.emails.send({

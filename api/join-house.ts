@@ -1,9 +1,10 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { initializeFirebaseAdmin, admin, db } from './utils/firebaseAdmin';
+import { initializeFirebaseAdmin, admin, getDb } from './utils/firebaseAdmin.js';
 
 // Initialize Firebase Admin
 initializeFirebaseAdmin();
+const db = getDb()!;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'OPTIONS') {
@@ -59,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // Now run transaction with document references only
-        await db.runTransaction(async (t) => {
+        await db.runTransaction(async (t: FirebaseFirestore.Transaction) => {
             const houseRef = db!.collection('houses').doc(houseId);
             const userRef = db!.collection('users').doc(userId);
 

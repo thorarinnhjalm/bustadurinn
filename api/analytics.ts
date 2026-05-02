@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import admin from 'firebase-admin';
-import { verifyAdminToken } from './utils/admin-auth';
+import { verifyAdminToken } from './utils/admin-auth.js';
 
 import fs from 'fs';
 import path from 'path';

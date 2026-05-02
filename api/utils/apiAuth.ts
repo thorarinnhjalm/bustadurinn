@@ -4,7 +4,7 @@
  */
 
 import type { VercelRequest } from '@vercel/node';
-import { admin } from './firebaseAdmin';
+import { admin } from './firebaseAdmin.js';
 
 /**
  * Verify Firebase ID token and check if user is a super admin via RBAC

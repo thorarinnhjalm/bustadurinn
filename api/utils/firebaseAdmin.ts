@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+export { admin };
 
 let isInitialized = false;
 let lastError: string | null = null;
