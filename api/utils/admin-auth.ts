@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as admin from 'firebase-admin';
-import { getAuth, getDb, initializeFirebaseAdmin } from './firebaseAdmin';
+import { getDb, initializeFirebaseAdmin } from './firebaseAdmin';
 
 const ADMIN_EMAILS = [
     'thorarinnhjalmarsson@gmail.com',
@@ -24,7 +24,7 @@ export async function verifyAdminToken(req: VercelRequest, res: VercelResponse):
     const token = authHeader.split('Bearer ')[1];
 
     try {
-        const auth = getAuth();
+        const auth = admin.auth();
         if (!auth) throw new Error('Auth service not initialized');
         const decodedToken = await auth.verifyIdToken(token);
 
