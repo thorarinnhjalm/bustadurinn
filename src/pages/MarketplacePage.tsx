@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import MarketingLayout from '@/components/MarketingLayout';
 import DashboardLayout from '@/components/DashboardLayout';
 import { db } from '@/lib/firebase';
@@ -9,8 +9,8 @@ import { Search, MapPin, Star, Hammer, Shovel, Droplets, Zap, Home, ArrowLeft } 
 import { Helmet } from 'react-helmet-async';
 import ReviewModal from '@/components/marketplace/ReviewModal';
 import { useAppStore } from '@/store/appStore';
-import { useNavigate } from 'react-router-dom';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { logger } from '@/utils/logger';
 
 const CATEGORIES = [
     { id: 'all', label: 'Allt', icon: Home },
@@ -51,7 +51,7 @@ export default function MarketplacePage() {
                 const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ServiceProvider[];
                 setProviders(data);
             } catch (error) {
-                console.error('Error fetching providers:', error);
+                logger.error('Error fetching providers:', error);
             } finally {
                 setLoading(false);
             }

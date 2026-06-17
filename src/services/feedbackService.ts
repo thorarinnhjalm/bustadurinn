@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Feedback } from '@/types/models';
+import { logger } from '@/utils/logger';
 
 const COLLECTION_NAME = 'feedback';
 
@@ -42,7 +43,7 @@ export const feedbackService = {
             const docRef = await addDoc(collection(db, COLLECTION_NAME), feedbackData);
             return docRef.id;
         } catch (error) {
-            console.error('Error submitting feedback:', error);
+            logger.error('Error submitting feedback:', error);
             throw new Error('Could not submit feedback');
         }
     },
@@ -64,7 +65,7 @@ export const feedbackService = {
                 createdAt: doc.data().createdAt?.toDate() || new Date()
             } as Feedback));
         } catch (error) {
-            console.error('Error fetching feedback:', error);
+            logger.error('Error fetching feedback:', error);
             throw error;
         }
     },
@@ -88,7 +89,7 @@ export const feedbackService = {
                 createdAt: doc.data().createdAt?.toDate() || new Date()
             } as Feedback));
         } catch (error) {
-            console.error('Error fetching featured feedback:', error);
+            logger.error('Error fetching featured feedback:', error);
             return [];
         }
     },
@@ -100,7 +101,7 @@ export const feedbackService = {
         try {
             await updateDoc(doc(db, COLLECTION_NAME, id), { featured });
         } catch (error) {
-            console.error('Error toggling featured status:', error);
+            logger.error('Error toggling featured status:', error);
             throw error;
         }
     },
@@ -112,7 +113,7 @@ export const feedbackService = {
         try {
             await deleteDoc(doc(db, COLLECTION_NAME, id));
         } catch (error) {
-            console.error('Error deleting feedback:', error);
+            logger.error('Error deleting feedback:', error);
             throw error;
         }
     }
