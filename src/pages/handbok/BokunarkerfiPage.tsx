@@ -250,6 +250,34 @@ export default function BokunarkerfiPage() {
                         </div>
                     </div>
 
+                    {/* Utanumhald bókana */}
+                    <div>
+                        <h2 className="text-3xl font-serif font-bold mb-6">Hvernig á að halda utan um bókanir í bústað í sameign?</h2>
+                        <div className="bg-white rounded-xl p-8 shadow-sm space-y-4">
+                            <p className="text-lg text-grey-dark leading-relaxed">
+                                Að skipta helgum og sumarvikum í sameiginlegum bústað getur fljótt orðið flókið. Margir nota útdrátt eða skiptast á að velja árlega, sem krefst funda og oft ágreinings. 
+                                Stafrænt <strong>bókunarkerfi fyrir sumarhús</strong> eins og Bústaðurinn.is einfaldar þetta ferli til muna.
+                            </p>
+                            <p className="text-grey-dark leading-relaxed">
+                                Besta leiðin til að halda utan um bókanir án árekstra er að setja skýrar húsreglur og skrá þær í <strong>handbók hússins</strong> í kerfinu:
+                            </p>
+                            <ul className="space-y-3 pt-2">
+                                <li className="flex items-start gap-3">
+                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <span><strong>Sameiginlegar reglur:</strong> Skráið reglur um lágmarksdvöl (t.d. að minnsta kosti 2 nætur yfir helgi).</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <span><strong>Sanngjörn skipting:</strong> Notaðu forgangs- og sanngirnisreglurnar okkar fyrir stórhátíðir til að sjá til þess að allir fái réttláta úthlutun.</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <span><strong>Sveigjanleiki:</strong> Ef einhver þarf að afbóka er það gert með einum smelli og allir meðeigendur fá strax tilkynningu um að helgin sé laus.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
                     {/* Section 5: Tips */}
                     <div className="bg-blue-50 rounded-xl p-8 border-2 border-blue-200">
                         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">

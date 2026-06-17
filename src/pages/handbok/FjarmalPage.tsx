@@ -191,6 +191,71 @@ export default function FjarmalPage() {
                         </div>
                     </div>
 
+                    {/* Sameiginlegur reikningur */}
+                    <div>
+                        <h2 className="text-3xl font-serif font-bold mb-6">Sameiginlegur bankareikningur eða hússjóður?</h2>
+                        <div className="bg-white rounded-xl p-8 shadow-sm space-y-4">
+                            <p className="text-lg text-grey-dark leading-relaxed">
+                                Þegar mörg húsfélög eða meðeigendur sumarhúsa ákveða að halda utan um fjármálin, er fyrsta skrefið oft að stofna <strong>sameiginlegan bankareikning</strong>. 
+                                Þessi reikningur er notaður til að greiða fyrir rekstur, rafmagn, hita og viðhald.
+                            </p>
+                            <p className="text-lg text-grey-dark leading-relaxed">
+                                Hins vegar getur verið flókið að fylgjast með hver greiddi hvað inn á reikninginn og hver á eftir að borga. 
+                                Þar kemur <strong>hússjóðskerfi Bústaðarins</strong> til sögunnar. Í stað þess að einn aðili þurfi að vera með Excel-skjal og fara yfir heimabankann mánaðarlega:
+                            </p>
+                            <ul className="space-y-3 pt-2">
+                                <li className="flex items-start gap-3">
+                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <span><strong>Sjálfvirk skráning:</strong> Eigendur skrá innborganir og útgjöld beint í kerfið.</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <span><strong>Myndir af kvittunum:</strong> Engar týndar pappírskvittanir. Hlaðið upp mynd af reikningnum strax.</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <span><strong>Rauntíma yfirlit:</strong> Allir meðeigendur sjá nákvæmlega hver staða sameiginlega reikningsins er.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* Hár rafmagnsreikningur */}
+                    <div>
+                        <h2 className="text-3xl font-serif font-bold mb-6">Hár rafmagnsreikningur í sumarhúsi — Hvað er meðalkostnaðurinn?</h2>
+                        <div className="bg-white rounded-xl p-8 shadow-sm space-y-4">
+                            <p className="text-lg text-grey-dark leading-relaxed">
+                                Margir rekast á það að <strong>rafmagnsreikningurinn í bústaðnum er óvenju hár</strong>, sérstaklega yfir vetrarmánuðina. 
+                                Sumarhús á Íslandi eru oft kynt með rafmagni (ýmist með ofnum eða gólfhita) og ef heitur pottur er kyntur allan ársins hring getur það kostað sitt.
+                            </p>
+                            <div className="bg-stone-50 border border-stone-200 rounded-lg p-5 my-4">
+                                <h4 className="font-bold text-charcoal mb-2">Hvað er meðal rafmagnsreikningur í sumarhúsi?</h4>
+                                <ul className="space-y-2 text-sm text-grey-dark">
+                                    <li>• <strong>Sumar:</strong> 4.000 – 8.000 kr. á mánuði (lágmarks kynding, enginn heitur pottur).</li>
+                                    <li>• <strong>Vetur (meðal kynding):</strong> 12.000 – 20.000 kr. á mánuði.</li>
+                                    <li>• <strong>Vetur (mikil kynding + heitur pottur):</strong> 25.000 – 45.000+ kr. á mánuði.</li>
+                                </ul>
+                            </div>
+                            <p className="text-lg text-grey-dark leading-relaxed">
+                                <strong>Hvernig er best að skipta rafmagnsreikningi í sameign?</strong>
+                            </p>
+                            <p className="text-grey-dark leading-relaxed">
+                                Ein algengasta deilan í sameign er þegar einn aðili notar bústaðinn mikið yfir kaldasta tímabilið en annar notar hann aðeins yfir sumarið, en báðir borga sama hlutfall í rafmagn. 
+                                Með Bústaðnum getið þið:
+                            </p>
+                            <ul className="space-y-3 pt-2">
+                                <li className="flex items-start gap-3">
+                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <span><strong>Greiða eftir notkun:</strong> Skipta mánaðarlegum rafmagnsreikningi hlutfallslega miðað við næturfjölda sem hver dvaldi í mánuðinum.</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <span><strong>Sjóðskipting:</strong> Halda úti hússjóði þar sem föst mánaðarleg upphæð dugar fyrir meðaltali ársins.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
                     {/* Gagnsæi og traust */}
                     <div className="bg-gradient-to-br from-blue-50 to-white rounded-xl p-8 border-2 border-blue-200">
                         <div className="flex items-center gap-3 mb-6">

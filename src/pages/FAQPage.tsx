@@ -54,6 +54,18 @@ export default function FAQPage() {
         {
             q: "Er til app fyrir utanumhald á sumarhúsi?",
             a: "Já, Bústaðurinn.is er fullkomið bókunarkerfi og app fyrir sumarhús. Það virkar eins og venjulegt app á símanum þínum (PWA) og þú getur bætt því á heimaskjáinn þinn. Kerfið er hannað sérstaklega fyrir íslensk sumarhús í sameign og býður upp á bókunardagatal, sanngirnisreglu, hússjóð og verkefnalista."
+        },
+        {
+            q: "Hvernig virkar sameiginlegur bankareikningur (hússjóður) fyrir sumarhús?",
+            a: "Þegar mörg húsfélög eða meðeigendur sumarhúsa ákveða að halda utan um fjármálin er oft stofnaður sameiginlegur bankareikningur (hússjóður). Með Bústaðurinn.is getið þið haldið utan um allar innborganir og útgjöld á einum stað. Kerfið reiknar sjálfkrafa út hlut hvers og eins miðað við eignarhlutfall eða næturfjölda, sem auðveldar uppgjör og eykur gagnsæi."
+        },
+        {
+            q: "Af hverju er rafmagnsreikningurinn í bústaðnum stundum hár og hver er meðalkostnaðurinn?",
+            a: "Hár rafmagnsreikningur í sumarhúsi stafar oftast af kyndingu (ofnum eða gólfhita) yfir vetrarmánuðina eða heitum potti sem er í stöðugri notkun. Meðalkostnaður á sumrin er yfirleitt 4.000 – 8.000 kr. á mánuði en getur farið í 12.000 – 20.000 kr. á veturna, og allt upp í 45.000 kr. eða meira ef heitur pottur er kyntur í miklum frostum. Í kerfinu getið þið skipt þessum kostnaði á sanngjarnan og einfaldan hátt."
+        },
+        {
+            q: "Hvar finn ég handbók hússins eða reglur fyrir bústaðinn?",
+            a: "Bústaðurinn.is býður upp á sérstakan hluta þar sem hægt er að skrifa og vista handbók hússins. Þar er tilvalið að skrá mikilvægar upplýsingar svo sem hvernig eigi að ganga frá bústaðnum, hvar lyklar eru geymdir, hvar eigi að skrúfa fyrir vatn, og hvernig eigi að þrífa heita pottinn. Allir meðeigendur og gestir hafa þannig greiðan aðgang að reglum bústaðarins á einum stað."
         }
     ];
 
