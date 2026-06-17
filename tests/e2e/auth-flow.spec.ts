@@ -7,14 +7,19 @@ import * as fs from 'fs';
 // We do this outside the test so it only happens once
 test.beforeAll(() => {
   if (admin.apps.length === 0) {
+    const serviceAccountPath = path.resolve(process.cwd(), 'serviceAccountKey.json');
     try {
-      const serviceAccountPath = path.resolve(process.cwd(), 'serviceAccountKey.json');
-      const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+      const rawContent = fs.readFileSync(serviceAccountPath, 'utf8');
+      const serviceAccount = JSON.parse(rawContent); // throws on malformed JSON — don't swallow
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
       });
-    } catch (e) {
-      console.warn('Could not initialize Firebase Admin. Cleanup might fail if serviceAccountKey.json is missing:', e.message);
+    } catch (e: any) {
+      if (e.code === 'ENOENT') {
+        console.warn('serviceAccountKey.json not found — test cleanup will be skipped');
+      } else {
+        throw e; // malformed JSON or init error: fail loudly to prevent orphaned test users
+      }
     }
   }
 });

@@ -10,12 +10,16 @@ Bústaðurinn.is is a SaaS platform for managing shared Icelandic summer houses 
 
 ```bash
 npm run dev          # Vite dev server on port 5173
-npm run build        # TypeScript check + Vite production build → dist/
+npm run build        # Production build via SWC → dist/ (drops console.* and debugger)
+npm run preview      # Preview production build locally
 npm run lint         # ESLint (flat config format)
 npm run test         # Vitest (single run)
+npm run test:ui      # Vitest with browser UI
 npm run test:watch   # Vitest in watch mode
 npm run test:coverage # Vitest with V8 coverage
 npx vitest run src/utils/rbac.test.ts  # Run a single test file
+npm run test:e2e     # Playwright E2E tests (requires dev server running)
+npm run test:e2e:ui  # Playwright with interactive UI
 ```
 
 Utility scripts in `scripts/`:
@@ -53,15 +57,23 @@ Firebase Auth (email/password, Google OAuth, Facebook OAuth). Auth listener in r
 
 ### Impersonation (God Mode)
 
-Super admin can impersonate users. State managed via `ImpersonationContext` (React Context), persisted to `localStorage`. Always use `useEffectiveUser()` to get current user — it transparently returns the impersonated user when active.
+Super admin can impersonate users. State managed via `ImpersonationContext` (`src/contexts/ImpersonationContext.tsx`), persisted to `localStorage`. Always use `useEffectiveUser()` to get current user — it transparently returns the impersonated user when active.
 
 ### Sandbox / Demo Mode
 
-`SandboxContext` provides a demo mode with mock data from `src/utils/sandboxMockData.ts` and `sandboxStorage.ts`.
+`SandboxContext` (`src/contexts/SandboxContext.tsx`) provides a demo mode with mock data from `src/utils/sandboxMockData.ts` and `sandboxStorage.ts`.
 
 ### Organizations
 
 B2B feature for companies/unions, with its own Firestore subcollection hierarchy under `organizations/{orgId}/` (members, access_requests, booking_requests, admin_actions). Dedicated service: `organizationService.ts`.
+
+### External Integrations
+
+- **Askell** — Icelandic subscription billing. Webhook at `/api/askell-webhook.ts` verifies HMAC signatures and updates house subscription status. Env: `ASKELL_WEBHOOK_SECRET`.
+- **Payday.is** — Icelandic invoicing service. `/api/payday-create-invoice.ts` is admin-only and uses OAuth2 client credentials. Env: `VITE_PAYDAY_CLIENT_ID`, `PAYDAY_SECRET_KEY`, `PAYDAY_TOKEN_URL`.
+- **FCM Push Notifications** — Firebase Cloud Messaging via `/api/push-notification.ts`. Client-side token registration in `src/utils/pushNotifications.ts`.
+- **Open-Meteo** — Weather data, no auth required. Service: `src/services/weatherService.ts`.
+- **Road conditions** — Via apis.is, no auth. Service: `src/services/roadService.ts`.
 
 ### Error Tracking
 
@@ -79,6 +91,7 @@ Sentry is configured for error tracking and performance monitoring (`@sentry/rea
 - **Firestore timestamps**: Use `serverTimestamp()` for writes, convert Firestore Timestamps to JS `Date` on reads
 - **Language**: All user-facing strings in Icelandic, Icelandic date locale (`is-IS`), ISK currency
 - **Firebase client**: `experimentalForceLongPolling: true` and `ignoreUndefinedProperties: true` are set in `src/lib/firebase.ts` (Safari compatibility)
+- **Logging**: Use `logger` from `src/utils/logger.ts` — never `console.log` directly. `logger.debug` is dev-only; `logger.warn`/`error` fire everywhere. The production build drops all `console.*` calls anyway.
 
 ## Styling
 
@@ -93,13 +106,28 @@ Tailwind CSS 3.4 with a custom "Scandi-Minimalist" design system defined in `src
 
 Vitest + @testing-library/react with jsdom. Globals enabled (`describe`, `it`, `expect` don't need imports). Firebase is globally mocked in `src/test/setup.ts`. Test files are collocated next to source (e.g., `utils/rbac.test.ts`).
 
+E2E tests use Playwright (Chromium only). Tests live in `tests/e2e/`. The dev server must be running on `http://127.0.0.1:5173` before running E2E tests.
+
 ## Deployment
 
 Vercel Pro, auto-deploys from `main` branch. SPA fallback configured — all non-`/api` routes rewrite to `index.html`. Security headers (HSTS, CSP, X-Frame-Options) set in `vercel.json`. Production build drops `console` and `debugger` statements. Manual code splitting: React vendor, Firebase, and UI vendor chunks.
 
 Cron jobs (configured in `vercel.json`):
-- `/api/cron/trial-reminders` — daily at 10:00
-- `/api/cron/recover-orphans` — daily at 12:00
+- `/api/cron/recover-orphans` — daily at 12:00 (repairs houses with missing owner records)
+
+## Environment Variables
+
+Client-side vars (prefixed `VITE_`) are documented in `.env.example`. Server-side vars used by API routes (set in Vercel dashboard, not in `.env.example`):
+
+| Var | Used by |
+|-----|---------|
+| `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Firebase Admin SDK (most API routes) |
+| `RESEND_API_KEY` | `/api/send-email.ts`, `/api/invite-member.ts` |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Rate limiting (`api/utils/ratelimit.ts`) |
+| `ASKELL_WEBHOOK_SECRET` | Subscription webhook HMAC verification |
+| `PAYDAY_SECRET_KEY`, `VITE_PAYDAY_CLIENT_ID` | Payday.is invoicing OAuth2 |
+| `CRON_SECRET` | Cron job authentication |
+| `FACEBOOK_APP_SECRET` | Facebook OAuth data-deletion callback |
 
 ## Firestore Collections
 

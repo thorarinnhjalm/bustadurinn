@@ -33,14 +33,18 @@ export default function MarketplacePage() {
     const [reviewingProvider, setReviewingProvider] = useState<ServiceProvider | null>(null);
 
     useEffect(() => {
+        if (!isAuthenticated) {
+            setLoading(false);
+            return;
+        }
+
         const fetchProviders = async () => {
             setLoading(true);
             try {
-                // Base query: only active providers
                 const q = query(
                     collection(db, 'service_providers'),
                     where('status', '==', 'active'),
-                    orderBy('rating_avg', 'desc') // Show highest rated first
+                    orderBy('rating_avg', 'desc')
                 );
 
                 const snapshot = await getDocs(q);
@@ -54,7 +58,7 @@ export default function MarketplacePage() {
         };
 
         fetchProviders();
-    }, []);
+    }, [isAuthenticated]);
 
     // Auto-fill area from currentHouse
     useEffect(() => {

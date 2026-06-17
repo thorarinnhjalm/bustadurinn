@@ -17,22 +17,22 @@ import type { Feedback } from '@/types/models';
 
 export default function LandingPage() {
     const navigate = useNavigate();
+    const { isAuthenticated, currentUser, isLoading } = useAppStore();
     const [reviews, setReviews] = useState<Feedback[]>([]);
     const [avgRating, setAvgRating] = useState<number>(5);
 
     useEffect(() => {
-        // Fetch reviews
+        if (!isAuthenticated) return;
         feedbackService.getFeaturedFeedback().then(data => {
             setReviews(data);
             if (data.length > 0) {
                 const total = data.reduce((acc, r) => acc + r.rating, 0);
                 setAvgRating(Number((total / data.length).toFixed(1)));
             }
-        }).catch(console.error);
-    }, []);
+        }).catch(() => {});
+    }, [isAuthenticated]);
 
     // Redirect if already logged in and has a house
-    const { isAuthenticated, currentUser, isLoading } = useAppStore();
     useEffect(() => {
         if (!isLoading && isAuthenticated && (currentUser?.house_ids?.length ?? 0) > 0) {
             navigate('/dashboard');

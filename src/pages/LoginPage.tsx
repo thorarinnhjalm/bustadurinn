@@ -2,25 +2,31 @@
  * Login Page
  */
 
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { 
-    signInWithEmailAndPassword, 
-    signInWithPopup, 
-    sendSignInLinkToEmail, 
-    isSignInWithEmailLink, 
-    signInWithEmailLink 
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import {
+    signInWithEmailAndPassword,
+    signInWithPopup,
+    sendSignInLinkToEmail,
+    isSignInWithEmailLink,
+    signInWithEmailLink
 } from 'firebase/auth';
 import { auth, googleProvider, facebookProvider, db } from '@/lib/firebase';
 import { LogIn } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import SEO from '@/components/SEO';
 import { analytics } from '@/utils/analytics';
+import { logger } from '@/utils/logger';
 
-import { useSearchParams } from 'react-router-dom';
+// Only allows relative paths — rejects absolute and protocol-relative URLs
+function safeRedirect(url: string | null): string | null {
+    if (!url) return null;
+    if (url.startsWith('/') && !url.startsWith('//')) return url;
+    return null;
+}
 
-// Helper function to check if user is super admin via RBAC
-async function isSuperAdmin(uid: string): Promise<boolean> {
+// Checks super_admin role in Firestore by UID (distinct from rbac.ts isSuperAdmin which takes a role string)
+async function checkIsSuperAdmin(uid: string): Promise<boolean> {
     try {
         const roleDoc = await getDoc(doc(db, 'user_roles', uid));
         if (roleDoc.exists()) {
@@ -29,7 +35,7 @@ async function isSuperAdmin(uid: string): Promise<boolean> {
         }
         return false;
     } catch (error) {
-        console.error('Error checking admin role:', error);
+        logger.error('Error checking admin role:', error);
         return false;
     }
 }
@@ -45,73 +51,88 @@ export default function LoginPage() {
     const [isMagicLinkMode, setIsMagicLinkMode] = useState(false);
     const [magicLinkSent, setMagicLinkSent] = useState(false);
     const [statusMessage, setStatusMessage] = useState('');
+    const [crossDeviceEmail, setCrossDeviceEmail] = useState('');
+    const [pendingSignInUrl, setPendingSignInUrl] = useState<string | null>(null);
+    const signingInRef = useRef(false);
 
-    // Handle incoming Email Link Sign-In
-    useEffect(() => {
-        const handleEmailLinkSignIn = async () => {
-            if (isSignInWithEmailLink(auth, window.location.href)) {
-                setIsLoading(true);
-                setError('');
-                setStatusMessage('Skrái inn með tölvupóst-hlekk...');
+    const doEmailLinkSignIn = async (emailToUse: string, signInUrl: string) => {
+        if (signingInRef.current) return;
+        signingInRef.current = true;
 
-                try {
-                    let emailForSignIn = window.localStorage.getItem('emailForSignIn');
-                    if (!emailForSignIn) {
-                        // Prompt the user for email if missing (e.g. opened on different device/browser)
-                        emailForSignIn = window.prompt('Vinsamlegast staðfestu netfangið þitt fyrir innskráningu:');
-                    }
+        setIsLoading(true);
+        setError('');
+        setStatusMessage('Skrái inn með tölvupóst-hlekk...');
 
-                    if (!emailForSignIn) {
-                        throw new Error('Netfang vantar til að staðfesta innskráningu');
-                    }
+        try {
+            const result = await signInWithEmailLink(auth, emailToUse, signInUrl);
+            const isAdmin = await checkIsSuperAdmin(result.user.uid);
 
-                    const result = await signInWithEmailLink(auth, emailForSignIn, window.location.href);
-                    window.localStorage.removeItem('emailForSignIn');
+            const userDocRef = doc(db, 'users', result.user.uid);
+            const userDoc = await getDoc(userDocRef);
+            const isNewUser = !userDoc.exists();
 
-                    analytics.loginCompleted('email_link');
-
-                    // Check if user has super_admin role via RBAC
-                    const isAdmin = await isSuperAdmin(result.user.uid);
-                    if (isAdmin) {
-                        navigate('/super-admin');
-                    } else if (returnUrl) {
-                        navigate(returnUrl);
-                    } else {
-                        // Check if they exist in Firestore, otherwise they need onboarding
-                        const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-                        if (!userDoc.exists()) {
-                            // Create minimal user profile
-                            await setDoc(doc(db, 'users', result.user.uid), {
-                                uid: result.user.uid,
-                                email: result.user.email,
-                                name: result.user.displayName || result.user.email?.split('@')[0] || '',
-                                house_ids: [],
-                                created_at: serverTimestamp(),
-                                last_login: serverTimestamp()
-                            });
-                            navigate('/onboarding');
-                        } else {
-                            await setDoc(doc(db, 'users', result.user.uid), {
-                                last_login: serverTimestamp()
-                            }, { merge: true });
-                            navigate('/dashboard');
-                        }
-                    }
-                } catch (err: any) {
-                    console.error('Email link sign in error:', err);
-                    setError('Villa við að skrá inn með hlekk: ' + (err.message || 'Ógildur eða útrunninn hlekkur'));
-                    analytics.error('login_email_link', err.message, err.code);
-                } finally {
-                    setIsLoading(false);
-                    setStatusMessage('');
-                }
+            if (isNewUser) {
+                await setDoc(userDocRef, {
+                    uid: result.user.uid,
+                    email: result.user.email,
+                    name: result.user.displayName || result.user.email?.split('@')[0] || '',
+                    avatar: result.user.photoURL || '',
+                    house_ids: [],
+                    created_at: serverTimestamp(),
+                    last_login: serverTimestamp()
+                });
+            } else {
+                await setDoc(userDocRef, { last_login: serverTimestamp() }, { merge: true });
             }
-        };
 
-        handleEmailLinkSignIn();
-    }, [navigate, returnUrl]);
+            // Clear stored email and fire analytics only after all async ops succeed
+            window.localStorage.removeItem('emailForSignIn');
+            analytics.loginCompleted('email_link');
 
-    const handleSendMagicLink = async (e: React.FormEvent) => {
+            const safe = safeRedirect(returnUrl);
+            if (isAdmin) {
+                navigate('/super-admin');
+            } else if (safe) {
+                navigate(safe);
+            } else if (isNewUser) {
+                navigate('/onboarding');
+            } else {
+                navigate('/dashboard');
+            }
+        } catch (err: any) {
+            logger.error('Email link sign in error:', err);
+            setError('Villa við að skrá inn með hlekk: ' + (err.message || 'Ógildur eða útrunninn hlekkur'));
+            analytics.error('login_email_link', err.message, err.code);
+            signingInRef.current = false;
+        } finally {
+            setIsLoading(false);
+            setStatusMessage('');
+        }
+    };
+
+    // Handle incoming Email Link Sign-In — runs once on mount only
+    useEffect(() => {
+        if (!isSignInWithEmailLink(auth, window.location.href)) return;
+
+        const stored = window.localStorage.getItem('emailForSignIn');
+        if (!stored) {
+            // Cross-device: show inline form to collect email
+            setPendingSignInUrl(window.location.href);
+            return;
+        }
+
+        void doEmailLinkSignIn(stored, window.location.href);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleCrossDeviceSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!pendingSignInUrl) return;
+        const url = pendingSignInUrl;
+        setPendingSignInUrl(null);
+        await doEmailLinkSignIn(crossDeviceEmail, url);
+    };
+
+    const handleSendMagicLink = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
         setMagicLinkSent(false);
@@ -119,8 +140,9 @@ export default function LoginPage() {
         setStatusMessage('Sendi innskráningarhlekk...');
 
         try {
+            const safe = safeRedirect(returnUrl);
             const actionCodeSettings = {
-                url: window.location.origin + '/login' + (returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ''),
+                url: window.location.origin + '/login' + (safe ? `?returnUrl=${encodeURIComponent(safe)}` : ''),
                 handleCodeInApp: true,
             };
 
@@ -129,7 +151,7 @@ export default function LoginPage() {
             setMagicLinkSent(true);
             setStatusMessage('');
         } catch (err: any) {
-            console.error('Error sending magic link:', err);
+            logger.error('Error sending magic link:', err);
             setError('Villa við að senda hlekk: ' + (err.message || 'Prófaðu aftur síðar'));
             analytics.error('send_magic_link_error', err.message, err.code);
         } finally {
@@ -137,7 +159,7 @@ export default function LoginPage() {
         }
     };
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
@@ -149,18 +171,18 @@ export default function LoginPage() {
 
             analytics.loginCompleted('email');
 
-            // Check if user has super_admin role via RBAC
-            const isAdmin = await isSuperAdmin(user.uid);
+            const isAdmin = await checkIsSuperAdmin(user.uid);
+            const safe = safeRedirect(returnUrl);
             if (isAdmin) {
                 navigate('/super-admin');
-            } else if (returnUrl) {
-                navigate(returnUrl);
+            } else if (safe) {
+                navigate(safe);
             } else {
                 navigate('/dashboard');
             }
         } catch (err: any) {
             setError('Rangt netfang eða lykilorð');
-            console.error('Login error:', err);
+            logger.error('Login error:', err);
             analytics.error('login_email', err.message, err.code);
         } finally {
             setIsLoading(false);
@@ -175,16 +197,13 @@ export default function LoginPage() {
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
 
-            // Check if user exists in Firestore
             const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const safe = safeRedirect(returnUrl);
 
             if (!userDoc.exists()) {
-                // Determine if this is a signup via login page - allow it?
-                // Yes, Google Login acts as signup if needed.
                 analytics.signupCompleted('google');
                 await setDoc(doc(db, 'users', user.uid), {
                     uid: user.uid,
-
                     email: user.email,
                     name: user.displayName || '',
                     avatar: user.photoURL || '',
@@ -193,35 +212,32 @@ export default function LoginPage() {
                     last_login: serverTimestamp()
                 });
 
-                // Check if user has super_admin role via RBAC
-                const isAdmin = await isSuperAdmin(user.uid);
+                const isAdmin = await checkIsSuperAdmin(user.uid);
                 if (isAdmin) {
                     navigate('/super-admin');
-                } else if (returnUrl) {
-                    navigate(returnUrl);
+                } else if (safe) {
+                    navigate(safe);
                 } else {
                     navigate('/onboarding');
                 }
             } else {
                 analytics.loginCompleted('google');
-                // Update last login
                 await setDoc(doc(db, 'users', user.uid), {
                     last_login: serverTimestamp()
                 }, { merge: true });
 
-                // Check if user has super_admin role via RBAC
-                const isAdmin = await isSuperAdmin(user.uid);
+                const isAdmin = await checkIsSuperAdmin(user.uid);
                 if (isAdmin) {
                     navigate('/super-admin');
-                } else if (returnUrl) {
-                    navigate(returnUrl);
+                } else if (safe) {
+                    navigate(safe);
                 } else {
                     navigate('/dashboard');
                 }
             }
         } catch (err: any) {
             setError('Villa við innskráningu með Google');
-            console.error('Google login error:', err);
+            logger.error('Google login error:', err);
             analytics.error('login_google', err.message, err.code);
         } finally {
             setIsLoading(false);
@@ -236,15 +252,13 @@ export default function LoginPage() {
             const result = await signInWithPopup(auth, facebookProvider);
             const user = result.user;
 
-            // Check if user exists in Firestore
             const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const safe = safeRedirect(returnUrl);
 
             if (!userDoc.exists()) {
-                // Create new user profile
                 analytics.signupCompleted('facebook');
                 await setDoc(doc(db, 'users', user.uid), {
                     uid: user.uid,
-
                     email: user.email,
                     name: user.displayName || '',
                     avatar: user.photoURL || '',
@@ -253,35 +267,32 @@ export default function LoginPage() {
                     last_login: serverTimestamp()
                 });
 
-                // Check if user has super_admin role via RBAC
-                const isAdmin = await isSuperAdmin(user.uid);
+                const isAdmin = await checkIsSuperAdmin(user.uid);
                 if (isAdmin) {
                     navigate('/super-admin');
-                } else if (returnUrl) {
-                    navigate(returnUrl);
+                } else if (safe) {
+                    navigate(safe);
                 } else {
                     navigate('/onboarding');
                 }
             } else {
                 analytics.loginCompleted('facebook');
-                // Update last login
                 await setDoc(doc(db, 'users', user.uid), {
                     last_login: serverTimestamp()
                 }, { merge: true });
 
-                // Check if user has super_admin role via RBAC
-                const isAdmin = await isSuperAdmin(user.uid);
+                const isAdmin = await checkIsSuperAdmin(user.uid);
                 if (isAdmin) {
                     navigate('/super-admin');
-                } else if (returnUrl) {
-                    navigate(returnUrl);
+                } else if (safe) {
+                    navigate(safe);
                 } else {
                     navigate('/dashboard');
                 }
             }
         } catch (err: any) {
             setError('Villa við innskráningu með Facebook');
-            console.error('Facebook login error:', err);
+            logger.error('Facebook login error:', err);
             analytics.error('login_facebook', err.message, err.code);
         } finally {
             setIsLoading(false);
@@ -309,14 +320,48 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    {magicLinkSent ? (
+                    {pendingSignInUrl ? (
+                        <div className="text-center py-6 space-y-4">
+                            <div className="w-12 h-12 bg-amber/10 rounded-full flex items-center justify-center mx-auto text-amber text-2xl">
+                                ✉️
+                            </div>
+                            <h3 className="text-lg font-serif font-bold text-charcoal">Staðfestu netfangið þitt</h3>
+                            <p className="text-sm text-grey-dark max-w-sm mx-auto">
+                                Þú opnaðir innskráningarhlekk í öðrum vafra eða tæki. Sláðu inn netfangið þitt til að halda áfram.
+                            </p>
+                            {error && (
+                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+                                    {error}
+                                </div>
+                            )}
+                            <form onSubmit={handleCrossDeviceSignIn} className="space-y-4">
+                                <input
+                                    type="email"
+                                    className="input"
+                                    value={crossDeviceEmail}
+                                    onChange={(e) => setCrossDeviceEmail(e.target.value)}
+                                    placeholder="nafn@netfang.is"
+                                    required
+                                    autoFocus
+                                />
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary w-full"
+                                    disabled={isLoading}
+                                >
+                                    <LogIn className="w-5 h-5" />
+                                    {isLoading ? 'Skrái inn...' : 'Staðfesta og skrá inn'}
+                                </button>
+                            </form>
+                        </div>
+                    ) : magicLinkSent ? (
                         <div className="text-center py-6 space-y-4">
                             <div className="w-12 h-12 bg-amber/10 rounded-full flex items-center justify-center mx-auto text-amber text-2xl">
                                 ✉️
                             </div>
                             <h3 className="text-lg font-serif font-bold text-charcoal">Innskráningarhlekkur sendur!</h3>
                             <p className="text-sm text-grey-dark max-w-sm mx-auto">
-                                Við höfum sent innskráningarhlekk á <strong>{email}</strong>. 
+                                Við höfum sent innskráningarhlekk á <strong>{email}</strong>.
                                 Smelltu á hlekkinn í póstinum til að skrá þig inn án lykilorðs.
                             </p>
                             <button
@@ -367,8 +412,8 @@ export default function LoginPage() {
                                 disabled={isLoading}
                             >
                                 <LogIn className="w-5 h-5" />
-                                {isLoading 
-                                    ? (isMagicLinkMode ? 'Sendi hlekk...' : 'Skrái inn...') 
+                                {isLoading
+                                    ? (isMagicLinkMode ? 'Sendi hlekk...' : 'Skrái inn...')
                                     : (isMagicLinkMode ? 'Senda innskráningarhlekk' : 'Skrá inn')}
                             </button>
 
@@ -390,8 +435,9 @@ export default function LoginPage() {
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        if (returnUrl) {
-                                            navigate(`/signup?returnUrl=${encodeURIComponent(returnUrl)}`);
+                                        const safe = safeRedirect(returnUrl);
+                                        if (safe) {
+                                            navigate(`/signup?returnUrl=${encodeURIComponent(safe)}`);
                                         } else {
                                             navigate('/signup');
                                         }
