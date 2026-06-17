@@ -1,13 +1,15 @@
 import { test, expect } from '@playwright/test';
 import admin from 'firebase-admin';
 import * as path from 'path';
+import * as fs from 'fs';
 
 // Initialize Firebase Admin for cleanup
 // We do this outside the test so it only happens once
 test.beforeAll(() => {
   if (admin.apps.length === 0) {
     try {
-      const serviceAccount = require(path.resolve(process.cwd(), 'serviceAccountKey.json'));
+      const serviceAccountPath = path.resolve(process.cwd(), 'serviceAccountKey.json');
+      const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
       });
