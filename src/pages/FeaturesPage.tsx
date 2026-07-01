@@ -307,6 +307,37 @@ export default function FeaturesPage() {
                             </div>
                         </div>
 
+                        {/* Handbook cross-links — internal linking to funnel authority to the SEO-focused handbook pages */}
+                        <div className="mt-32">
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl md:text-4xl font-serif mb-4">Læra meira í handbókinni</h2>
+                                <p className="text-xl text-grey-dark max-w-2xl mx-auto">
+                                    Ítarlegar leiðbeiningar um hvernig þú stjórnar sumarhúsi í sameign
+                                </p>
+                            </div>
+                            <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-4">
+                                <Link to="/handbok/bokunarkerfi" className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber transition-colors">Bókunarkerfi fyrir sameignarhús</h3>
+                                    <p className="text-grey-dark text-sm">Hvernig sanngirnisreglan og árekstrarvörnin virka fyrir sumarhús í meðeign.</p>
+                                </Link>
+                                <Link to="/handbok/fjarmal" className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber transition-colors">Hússjóður og fjármál</h3>
+                                    <p className="text-grey-dark text-sm">Sameiginlegur reikningur, skipting kostnaðar og utanumhald á hússjóði.</p>
+                                </Link>
+                                <Link to="/handbok/vidhald" className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber transition-colors">Viðhald og verkefnalisti</h3>
+                                    <p className="text-grey-dark text-sm">Hvernig meðeigendur halda utan um viðhald og sameiginleg verkefni.</p>
+                                </Link>
+                                <Link to="/handbok/uppsetning" className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber transition-colors">Uppsetning á kerfinu</h3>
+                                    <p className="text-grey-dark text-sm">Skref-fyrir-skref leiðbeiningar til að koma sumarhúsinu í kerfið.</p>
+                                </Link>
+                            </div>
+                            <div className="text-center mt-8">
+                                <Link to="/handbok" className="text-amber font-medium hover:underline">Skoða alla handbókina →</Link>
+                            </div>
+                        </div>
+
                         {/* CTA Section */}
                         <div className="mt-24 bg-gradient-to-br from-amber/10 to-amber/5 rounded-2xl p-12 text-center">
                             <h2 className="text-3xl font-serif mb-4">Tilbúinn að prófa?</h2>
