@@ -24,7 +24,8 @@ import {
     Bike,
     Dices,
     Tv,
-    Flame
+    Flame,
+    ListChecks
 } from 'lucide-react';
 import type { House, User } from '@/types/models';
 import Toggle from './Toggle';
@@ -79,12 +80,14 @@ export default function HouseSettings({
         guest_instructions_en: house.guest_instructions_en || '',
         amenities: house.amenities || [],
         privacy_hide_finances: house.privacy_hide_finances || false,
-        finance_viewer_ids: house.finance_viewer_ids || []
+        finance_viewer_ids: house.finance_viewer_ids || [],
+        checkout_checklist: house.checkout_checklist || []
     });
 
     const [isEditingLocation, setIsEditingLocation] = useState(false);
     const [editLang, setEditLang] = useState<'is' | 'en'>('is');
     const [, setCropMode] = useState<'main' | 'gallery'>('main');
+    const [newChecklistItem, setNewChecklistItem] = useState('');
 
     // Sync form with house prop
     useEffect(() => {
@@ -111,9 +114,36 @@ export default function HouseSettings({
             guest_instructions_en: house.guest_instructions_en || '',
             amenities: house.amenities || [],
             privacy_hide_finances: house.privacy_hide_finances || false,
-            finance_viewer_ids: house.finance_viewer_ids || []
+            finance_viewer_ids: house.finance_viewer_ids || [],
+            checkout_checklist: house.checkout_checklist || []
         });
     }, [house]);
+
+    const DEFAULT_CHECKOUT_CHECKLIST = [
+        'Læsa öllum hurðum',
+        'Loka öllum gluggum',
+        'Taka ruslið',
+        'Slökkva á rafmagnstækjum',
+        'Skrúfa fyrir vatn'
+    ];
+
+    const handleAddChecklistItem = () => {
+        const label = newChecklistItem.trim();
+        if (!label) return;
+        setHouseForm({ ...houseForm, checkout_checklist: [...houseForm.checkout_checklist, label] });
+        setNewChecklistItem('');
+    };
+
+    const handleRemoveChecklistItem = (index: number) => {
+        setHouseForm({
+            ...houseForm,
+            checkout_checklist: houseForm.checkout_checklist.filter((_, i) => i !== index)
+        });
+    };
+
+    const handleInsertDefaultChecklist = () => {
+        setHouseForm({ ...houseForm, checkout_checklist: [...DEFAULT_CHECKOUT_CHECKLIST] });
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -637,6 +667,78 @@ export default function HouseSettings({
                                 </label>
                             ))}
                         </div>
+                    </div>
+
+                    {/* CHECKOUT CHECKLIST */}
+                    <div className="bg-white p-6 rounded-lg shadow-sm">
+                        <div className="flex items-center gap-2 mb-6">
+                            <ListChecks className="w-6 h-6 text-amber" />
+                            <h2 className="text-xl font-serif">Gátlisti fyrir brottför</h2>
+                        </div>
+                        <p className="text-sm text-stone-500 mb-6">
+                            Þessi listi birtist gestum þegar þeir skrá brottför. Hakað er við hvert atriði en það er ekki skylda.
+                        </p>
+
+                        {houseForm.checkout_checklist.length === 0 ? (
+                            <div className="text-center py-6 bg-stone-50 rounded-xl border border-dashed border-stone-200">
+                                <p className="text-sm text-stone-500 mb-3">Enginn gátlisti hefur verið settur upp.</p>
+                                {isManager && (
+                                    <button
+                                        type="button"
+                                        onClick={handleInsertDefaultChecklist}
+                                        className="text-xs font-bold text-amber hover:underline"
+                                    >
+                                        Setja inn sjálfgefinn lista
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <ul className="space-y-2 mb-4">
+                                {houseForm.checkout_checklist.map((item, idx) => (
+                                    <li
+                                        key={`${item}-${idx}`}
+                                        className="flex items-center justify-between gap-3 p-3 rounded-xl bg-stone-50 border border-stone-100"
+                                    >
+                                        <span className="text-sm text-stone-700">{item}</span>
+                                        {isManager && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveChecklistItem(idx)}
+                                                className="text-stone-400 hover:text-red-500 transition-colors"
+                                                aria-label={`Eyða ${item}`}
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        {isManager && (
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    className="input flex-1"
+                                    value={newChecklistItem}
+                                    onChange={(e) => setNewChecklistItem(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddChecklistItem();
+                                        }
+                                    }}
+                                    placeholder="T.d. Setja rusl í tunnu"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddChecklistItem}
+                                    className="btn btn-secondary flex items-center gap-2 px-4"
+                                >
+                                    <Plus className="w-4 h-4" /> Bæta við
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex justify-end pt-6">

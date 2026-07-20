@@ -53,6 +53,10 @@ export interface House {
     access_instructions?: string;
     access_instructions_en?: string;
     emergency_contact?: string;
+    /** Ordered list of checklist item labels shown to guests during checkout
+     * (CheckoutModal). Absent/empty means the feature is not configured for
+     * this house and the modal falls back to a static reminder line. */
+    checkout_checklist?: string[];
 
     manager_id: string; // The designated administrator (Bústaðastjóri)
     owner_ids: string[]; // All members

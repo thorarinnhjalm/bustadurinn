@@ -31,7 +31,14 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 // InternalLog does not (yet) declare a structured `kind` field in src/types/models.ts.
 // We add it locally here rather than editing the shared model file (owned by another
 // concurrent change). Older logs in production predate this field, hence optional.
-type CheckInOutLog = InternalLog & { kind?: 'check_in' | 'check_out' };
+// `checklist` is populated on check_out logs when the house has a configured
+// checkout checklist (House.checkout_checklist) — keyed by item label.
+type CheckInOutLog = InternalLog & { kind?: 'check_in' | 'check_out'; checklist?: Record<string, boolean> };
+
+interface LastCheckoutChecklist {
+    allChecked: boolean;
+    uncheckedItems: string[];
+}
 
 const UserDashboard = () => {
     const navigate = useNavigate();
@@ -67,6 +74,7 @@ const UserDashboard = () => {
     const [checkoutMessage, setCheckoutMessage] = useState('');
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [isCheckedIn, setIsCheckedIn] = useState(false);
+    const [lastCheckoutChecklist, setLastCheckoutChecklist] = useState<LastCheckoutChecklist | null>(null);
     const [_selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
     const [showBookingDetailModal, setShowBookingDetailModal] = useState(false);
 
@@ -192,6 +200,19 @@ const UserDashboard = () => {
                             else if (last.text.includes('skráði komu')) setIsCheckedIn(true);
                             else if (last.text.includes('skráði brottför')) setIsCheckedIn(false);
                         }
+                    }
+
+                    // Last checkout checklist state (any user, not just the current
+                    // user) — shown to whoever arrives next. `logsData` is already
+                    // ordered desc by created_at, so the first check_out log found
+                    // is the most recent one overall.
+                    const lastCheckoutLog = logsData.find(log => log.kind === 'check_out');
+                    if (lastCheckoutLog?.checklist && Object.keys(lastCheckoutLog.checklist).length > 0) {
+                        const entries = Object.entries(lastCheckoutLog.checklist);
+                        const uncheckedItems = entries.filter(([, checked]) => !checked).map(([item]) => item);
+                        setLastCheckoutChecklist({ allChecked: uncheckedItems.length === 0, uncheckedItems });
+                    } else {
+                        setLastCheckoutChecklist(null);
                     }
                 }, (error) => console.error("Logs listener error:", error)));
 
@@ -328,7 +349,7 @@ const UserDashboard = () => {
         return `Eftir ${diff} daga`;
     };
 
-    const handleCheckout = async () => {
+    const handleCheckout = async (checklist: Record<string, boolean>) => {
         if (!currentHouse || !currentUser) return;
         setCheckoutLoading(true);
         try {
@@ -343,7 +364,8 @@ const UserDashboard = () => {
             }
             // 2. Log Internal Check-out
             const text = `${currentUser.name} skráði brottför.`;
-            const newLog = {
+            const hasChecklist = !!currentHouse.checkout_checklist && currentHouse.checkout_checklist.length > 0;
+            const newLog: Record<string, unknown> = {
                 house_id: currentHouse.id,
                 user_id: currentUser.uid,
                 user_name: currentUser.name,
@@ -351,6 +373,9 @@ const UserDashboard = () => {
                 kind: 'check_out' as const,
                 created_at: serverTimestamp()
             };
+            if (hasChecklist) {
+                newLog.checklist = checklist;
+            }
             await addDoc(collection(db, 'houses', currentHouse.id, 'internal_logs'), newLog);
 
             setShowCheckoutModal(false);
@@ -566,6 +591,19 @@ const UserDashboard = () => {
                         <span>{isCheckedIn ? 'Skrá brottför' : 'Skrá komu'}</span>
                     </button>
                 </div>
+
+                {/* Last Checkout Checklist Strip */}
+                {lastCheckoutChecklist && (
+                    lastCheckoutChecklist.allChecked ? (
+                        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2.5 rounded-xl text-xs font-medium">
+                            Síðasta brottför: allt staðfest ✓
+                        </div>
+                    ) : (
+                        <div className="bg-amber/10 border border-amber/20 text-amber-900 px-4 py-2.5 rounded-xl text-xs font-medium">
+                            Ekki staðfest við síðustu brottför: {lastCheckoutChecklist.uncheckedItems.join(', ')}
+                        </div>
+                    )
+                )}
 
                 {/* Missing Address Warning */}
                 {(!currentHouse.address || currentHouse.address.trim() === '') && currentUser?.uid && (currentUser.uid === currentHouse.manager_id || currentHouse.owner_ids?.includes(currentUser.uid)) && (
@@ -906,6 +944,7 @@ const UserDashboard = () => {
                         onCheckout={handleCheckout}
                         message={checkoutMessage}
                         onMessageChange={setCheckoutMessage}
+                        checklist={currentHouse?.checkout_checklist}
                     />
                 </ErrorBoundary>
             )}
