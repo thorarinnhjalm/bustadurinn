@@ -25,6 +25,8 @@ import TaskForm from '@/components/tasks/TaskForm';
 import TaskList from '@/components/tasks/TaskList';
 import TaskBoard from '@/components/tasks/TaskBoard';
 import MobileNav from '@/components/MobileNav';
+import { notifyTaskAssignment } from '@/services/inAppNotifications';
+import { logger } from '@/utils/logger';
 
 export default function TasksPage() {
     const navigate = useNavigate();
@@ -64,13 +66,27 @@ export default function TasksPage() {
         if (!currentHouse?.id || !currentUser) return;
 
         try {
-            await addDoc(collection(db, 'houses', currentHouse.id, 'tasks'), {
+            const taskRef = await addDoc(collection(db, 'houses', currentHouse.id, 'tasks'), {
                 ...taskData,
                 house_id: currentHouse.id,
                 created_by: currentUser.uid,
                 created_at: serverTimestamp(),
                 status: 'pending'
             });
+
+            // Fire-and-forget: notify assignees (in-app only). Never blocks the
+            // task creation itself — failures are logged inside the service.
+            if (taskData.assigned_to && taskData.assigned_to.length > 0) {
+                notifyTaskAssignment({
+                    houseId: currentHouse.id,
+                    taskId: taskRef.id,
+                    taskTitle: taskData.title || '',
+                    assigneeUids: taskData.assigned_to,
+                    actorUid: currentUser.uid,
+                    actorName: currentUser.name,
+                }).catch((error) => logger.error('Failed to notify task assignees:', error));
+            }
+
             setShowForm(false);
         } catch (error) {
             console.error('Error creating task:', error);

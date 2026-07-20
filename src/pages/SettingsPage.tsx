@@ -66,6 +66,7 @@ import HouseSettings from '@/components/settings/HouseSettings';
 import GuestPreviewModal from '@/components/GuestPreviewModal';
 import { updateUserNameInAllCollections } from '@/services/userService';
 import FeedbackModal from '@/components/feedback/FeedbackModal';
+import { notifyShoppingListAdded } from '@/services/inAppNotifications';
 
 export default function SettingsPage() {
     const navigate = useNavigate();
@@ -175,6 +176,18 @@ export default function SettingsPage() {
             added_by: currentUser.uid,
             added_by_name: currentUser.name
         });
+
+        // Fire-and-forget: notify other house members (in-app only). Never
+        // blocks the shopping list update — failures are logged inside the service.
+        if (house.owner_ids && house.owner_ids.length > 0) {
+            notifyShoppingListAdded({
+                houseId: house.id,
+                itemName: text,
+                ownerIds: house.owner_ids,
+                actorUid: currentUser.uid,
+                actorName: currentUser.name,
+            }).catch((error) => logger.error('Failed to notify house members of shopping list update:', error));
+        }
     };
 
 

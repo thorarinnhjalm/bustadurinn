@@ -109,6 +109,10 @@
         {
             "path": "/api/cron/recover-orphans",
             "schedule": "0 12 * * *"
+        },
+        {
+            "path": "/api/cron/weather-alerts",
+            "schedule": "0 7 * * *"
         }
     ]
 }

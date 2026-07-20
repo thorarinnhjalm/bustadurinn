@@ -19,6 +19,7 @@ import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, House, Budg
 import { fetchWeather } from '@/utils/weather';
 import { shouldShowWeather } from '@/services/weatherService';
 import MyServiceWidget from '@/components/dashboard/MyServiceWidget';
+import PushOptInPrompt from '@/components/dashboard/PushOptInPrompt';
 import BookingWeatherCard from '@/components/BookingWeatherCard';
 import SetupProgress from '@/components/SetupProgress';
 import WhatsNext from '@/components/WhatsNext';
@@ -524,6 +525,9 @@ const UserDashboard = () => {
                         </div>
                     );
                 })()}
+
+                {/* Push notification opt-in nudge (booking + weather alerts) */}
+                <PushOptInPrompt currentUser={currentUser} />
 
                 {/* Service Provider Widget (Only visible for providers) */}
                 <MyServiceWidget />

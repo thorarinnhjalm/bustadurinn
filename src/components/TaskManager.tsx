@@ -3,6 +3,8 @@ import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Times
 import { db } from '@/lib/firebase';
 import type { Task, TaskStatus, TaskPriority, TaskCategory, House, User } from '@/types/models';
 import { Plus, Calendar, DollarSign, Check, Trash2 } from 'lucide-react';
+import { notifyTaskAssignment } from '@/services/inAppNotifications';
+import { logger } from '@/utils/logger';
 
 interface TaskManagerProps {
     house: House;
@@ -76,7 +78,20 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
                 updated_at: Timestamp.now() as any,
             };
 
-            await addDoc(collection(db, 'houses', house.id, 'tasks'), newTask);
+            const taskRef = await addDoc(collection(db, 'houses', house.id, 'tasks'), newTask);
+
+            // Fire-and-forget: notify assignees (in-app only). Never blocks the
+            // task creation itself — failures are logged inside the service.
+            if (formData.assigned_to.length > 0) {
+                notifyTaskAssignment({
+                    houseId: house.id,
+                    taskId: taskRef.id,
+                    taskTitle: formData.title,
+                    assigneeUids: formData.assigned_to,
+                    actorUid: currentUser.uid,
+                    actorName: currentUser.name,
+                }).catch((error) => logger.error('Failed to notify task assignees:', error));
+            }
 
             // Reset form
             setFormData({
