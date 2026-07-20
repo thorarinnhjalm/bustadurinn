@@ -1,4 +1,4 @@
-import { getToken, onMessage } from 'firebase/messaging';
+import { getToken, onMessage, type MessagePayload } from 'firebase/messaging';
 import { logger } from './logger';
 import { messaging, db } from "@/lib/firebase";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
@@ -42,6 +42,38 @@ export const onForegroundMessage = () => {
 
     onMessage(messaging, (payload) => {
         logger.debug("Foreground message received:", payload);
-        // You could show a custom toast here if you want
+        showForegroundToast(payload);
     });
+};
+
+// Minimal DOM toast for push messages that arrive while the app is in the
+// foreground (Firebase does not surface these as OS notifications itself).
+const showForegroundToast = (payload: MessagePayload) => {
+    if (typeof document === 'undefined') return;
+
+    const title = payload.notification?.title || 'Ný tilkynning';
+    const body = payload.notification?.body || '';
+
+    const toastEl = document.createElement('div');
+    toastEl.className = 'toast';
+    toastEl.setAttribute('role', 'status');
+    toastEl.setAttribute('aria-live', 'polite');
+
+    const titleEl = document.createElement('p');
+    titleEl.className = 'font-serif font-semibold text-charcoal';
+    titleEl.textContent = title;
+    toastEl.appendChild(titleEl);
+
+    if (body) {
+        const bodyEl = document.createElement('p');
+        bodyEl.className = 'text-sm text-grey-mid mt-1';
+        bodyEl.textContent = body;
+        toastEl.appendChild(bodyEl);
+    }
+
+    document.body.appendChild(toastEl);
+
+    window.setTimeout(() => {
+        toastEl.remove();
+    }, 6000);
 };

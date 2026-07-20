@@ -5,12 +5,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Home, MapPin, Users, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, doc, arrayUnion, getDoc, runTransaction } from 'firebase/firestore';
+import type { FieldValue } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { analytics } from '@/utils/analytics';
 import { logger } from '@/utils/logger';
 import AddToHomeScreenPrompt from '@/components/AddToHomeScreenPrompt';
+import type { AppNotification } from '@/types/models';
 
 type OnboardingStep = 'welcome' | 'house' | 'invite' | 'finish';
 
@@ -241,19 +243,20 @@ export default function OnboardingPage() {
             });
 
             // 3. Create a notification in DB
-            await addDoc(collection(db, 'notifications'), {
+            const joinRequestNotification: Omit<AppNotification, 'id' | 'created_at'> & { created_at: FieldValue } = {
                 user_id: duplicateHouse.manager_id,
+                house_id: duplicateHouse.id,
                 type: 'join_request',
                 title: 'Beiðni um aðgang',
                 message: `${currentUser.name || currentUser.email} vill ganga í húsfélagið fyrir ${duplicateHouse.name}`,
                 data: {
                     requester_id: currentUser.uid,
-                    requester_email: currentUser.email,
-                    house_id: duplicateHouse.id
+                    requester_email: currentUser.email || undefined,
                 },
                 read: false,
                 created_at: serverTimestamp()
-            });
+            };
+            await addDoc(collection(db, 'notifications'), joinRequestNotification);
 
             setJoinRequestSent(true);
         } catch (err: any) {

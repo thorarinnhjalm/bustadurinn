@@ -270,12 +270,14 @@ export interface AppNotification {
     house_id: string;
     title: string;
     message: string;
-    type: 'booking' | 'task' | 'guestbook' | 'shopping' | 'system';
+    type: 'booking' | 'task' | 'guestbook' | 'shopping' | 'system' | 'join_request';
     read: boolean;
     data?: {
         booking_id?: string;
         task_id?: string;
         guest_access_id?: string;
+        requester_id?: string;
+        requester_email?: string;
     };
     created_at: Date;
 }

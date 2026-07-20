@@ -4,7 +4,7 @@ import {
     Calendar, CheckSquare,
     Plus, Bell, Shield,
     ChevronDown, Home,
-    HelpCircle, Coffee
+    HelpCircle, Coffee, UserPlus
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import { useAppStore } from '@/store/appStore';
@@ -189,17 +189,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                                                     if (notif.type === 'booking') handleNavigate('/calendar');
                                                     if (notif.type === 'task') handleNavigate('/tasks');
                                                     if (notif.type === 'guestbook') handleNavigate('/settings?tab=guestbook');
+                                                    if (notif.type === 'join_request') handleNavigate('/settings?tab=members');
                                                 }}
                                                 className={`p-4 hover:bg-stone-50 cursor-pointer transition-colors relative flex gap-3 ${!notif.read ? 'bg-amber/5' : ''}`}
                                             >
                                                 {!notif.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber"></div>}
                                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.type === 'booking' ? 'bg-green-100 text-green-600' :
                                                     notif.type === 'task' ? 'bg-blue-100 text-blue-600' :
-                                                        'bg-amber-100 text-amber'
+                                                        notif.type === 'join_request' ? 'bg-purple-100 text-purple-600' :
+                                                            'bg-amber-100 text-amber'
                                                     }`}>
                                                     {notif.type === 'booking' ? <Calendar size={14} /> :
                                                         notif.type === 'task' ? <CheckSquare size={14} /> :
-                                                            <Bell size={14} />}
+                                                            notif.type === 'join_request' ? <UserPlus size={14} /> :
+                                                                <Bell size={14} />}
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-bold text-charcoal leading-tight mb-0.5">{notif.title}</p>

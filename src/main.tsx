@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import * as Sentry from '@sentry/react';
 import { logger } from './utils/logger';
 import { initPerformanceMonitoring, markPerformance } from './utils/performance';
+import { onForegroundMessage } from './utils/pushNotifications';
 import './index.css'
 import App from './App.tsx'
 
@@ -103,6 +104,11 @@ if ('serviceWorker' in navigator) {
       .catch(err => logger.warn('SW registration failed:', err));
   });
 }
+
+// Listen for FCM messages that arrive while the app is in the foreground —
+// otherwise these are silently dropped since the service worker only
+// handles background messages.
+onForegroundMessage();
 
 // Mark when React starts rendering
 markPerformance('react-render-start');
