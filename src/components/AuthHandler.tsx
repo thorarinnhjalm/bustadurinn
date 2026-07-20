@@ -13,6 +13,7 @@ export default function AuthHandler() {
     const setLoading = useAppStore((state) => state.setLoading);
     const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
     const setUserHouses = useAppStore((state) => state.setUserHouses);
+    const setCachedRole = useAppStore((state) => state.setCachedRole);
 
     const { impersonatedUser, isImpersonating } = useImpersonation();
 
@@ -23,6 +24,11 @@ export default function AuthHandler() {
     // 1. Listen to Firebase Auth (Runs once on mount)
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            // Auth identity changed (sign-in, sign-out, or user switch) -
+            // any cached RBAC role belongs to the previous auth state and
+            // must not be served to whatever user is now current.
+            setCachedRole(null);
+
             if (firebaseUser) {
                 // Construct base user
                 let baseUser: User = {
@@ -97,7 +103,7 @@ export default function AuthHandler() {
         });
 
         return () => unsubscribe();
-    }, [setAuthenticated, setCurrentUser, setCurrentHouse, setUserHouses]); // Zustand setters are stable
+    }, [setAuthenticated, setCurrentUser, setCurrentHouse, setUserHouses, setCachedRole]); // Zustand setters are stable
 
     // 2. Handle Effective User Logic (Runs when realUser OR impersonatedUser changes)
     useEffect(() => {
