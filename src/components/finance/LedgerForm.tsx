@@ -6,7 +6,10 @@ interface LedgerFormProps {
     onSave: (entry: Partial<LedgerEntry>) => void;
     onCancel: () => void;
     budgetCategories?: string[];
-    initialValues?: LedgerEntry | null;
+    // A full LedgerEntry (with `id`) edits that entry; a partial without
+    // `id` is used to prefill a NEW entry (e.g. from a recurring cost
+    // reminder — see RecurringCostReminders / FinancePage).
+    initialValues?: Partial<LedgerEntry> | null;
     houseMembers?: { uid: string, name: string }[];
 }
 

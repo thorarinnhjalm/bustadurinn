@@ -75,6 +75,30 @@ export interface House {
     privacy_hide_finances?: boolean;
     finance_viewer_ids?: string[]; // Specific members allowed to view finances even if hidden
 
+    // Finance Settings
+    finance_settings?: {
+        /**
+         * Per-owner ownership weight, keyed by uid, used to split shared
+         * costs (see src/utils/financeShares.ts). Weights are relative to
+         * each other — they do not need to sum to 1 or 100 (e.g. {a: 2, b: 1}
+         * means owner `a` covers twice the share of owner `b`).
+         *
+         * Absence of this whole object, or of an individual owner's entry
+         * within it, means that owner is treated as weight 1 — i.e. an
+         * EQUAL split among all of `house.owner_ids` is always the default.
+         * Costs are never split by usage/nights — ownership share only.
+         */
+        member_shares?: { [uid: string]: number };
+    };
+
+    /**
+     * Recurring costs the manager expects to recur every year or month
+     * (e.g. insurance, electricity). Drives the "upcoming cost" reminders
+     * on FinancePage and is mirrored into the current year's BudgetPlan
+     * (see BudgetItem.recurring_cost_id) so the budget view stays in sync.
+     */
+    recurring_costs?: RecurringCost[];
+
     // Subscription
     subscription_status?: 'free';
 
@@ -192,6 +216,27 @@ export interface BudgetItem {
     assigned_owner_id?: string; // For income: which co-owner contributes this (optional)
     assigned_owner_name?: string; // For display purposes
     month?: number; // Optional: 1-12. If set, the expense is allocated to this specific month.
+    /**
+     * Set when this item was generated (or last synced) from a
+     * House.recurring_costs entry. Used to upsert-without-duplicating on
+     * repeated saves of that recurring cost — see FinancePage/RecurringCosts.
+     */
+    recurring_cost_id?: string;
+}
+
+/**
+ * A cost the manager expects to recur every year or every month
+ * (e.g. insurance, electricity, property tax). Powers the "upcoming cost"
+ * reminder surfaced on FinancePage, and is mirrored into the current
+ * year's BudgetPlan.items (see BudgetItem.recurring_cost_id).
+ */
+export interface RecurringCost {
+    id: string;
+    name: string; // Display label, e.g. "Húsatrygging - VÍS"
+    category: string; // Shared taxonomy with BudgetItem.category / LedgerEntry.category
+    estimated_amount: number;
+    due_month: number; // 1-12. For frequency 'monthly' this is only used as the first reminder month.
+    frequency: 'yearly' | 'monthly';
 }
 
 export interface BudgetPlan {

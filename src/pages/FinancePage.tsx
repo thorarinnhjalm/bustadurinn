@@ -14,7 +14,8 @@ import {
     ArrowLeft,
     Wallet,
     Shield,
-    Eye
+    Eye,
+    ClipboardList
 } from 'lucide-react';
 import EmptyState from '@/components/EmptyState';
 import { useAppStore } from '@/store/appStore';
@@ -35,14 +36,19 @@ import {
     getDocs,
     orderBy
 } from 'firebase/firestore';
-import type { BudgetPlan, BudgetItem, LedgerEntry, House } from '@/types/models';
+import type { BudgetPlan, BudgetItem, LedgerEntry, House, RecurringCost } from '@/types/models';
 import BudgetForm from '@/components/finance/BudgetForm';
 import LedgerForm from '@/components/finance/LedgerForm';
 import TransactionList from '@/components/finance/TransactionList';
 import VarianceWidget from '@/components/finance/VarianceWidget';
 import MonthlyBreakdown from '@/components/finance/MonthlyBreakdown';
+import OwnershipShares from '@/components/finance/OwnershipShares';
+import RecurringCosts from '@/components/finance/RecurringCosts';
+import RecurringCostReminders from '@/components/finance/RecurringCostReminders';
+import YearEndSummary from '@/components/finance/YearEndSummary';
+import { logger } from '@/utils/logger';
 
-type Tab = 'budget' | 'ledger';
+type Tab = 'budget' | 'ledger' | 'summary';
 
 export default function FinancePage() {
     const navigate = useNavigate();
@@ -51,6 +57,8 @@ export default function FinancePage() {
     const [house, setHouse] = useState<House | null>(null);
     const [entries, setEntries] = useState<LedgerEntry[]>([]);
     const [loading, setLoading] = useState(true);
+    const [members, setMembers] = useState<{ uid: string, name: string }[]>([]);
+    const [prefillEntry, setPrefillEntry] = useState<Partial<LedgerEntry> | null>(null);
     const currentHouse = useAppStore((state) => state.currentHouse);
     const primaryHouseId = currentHouse?.id;
 
@@ -65,6 +73,53 @@ export default function FinancePage() {
         };
         fetchHouse();
     }, [primaryHouseId]);
+
+    // Members (owners) — fetched once per house, shared by ownership shares,
+    // the year-end summary, and the ledger's split-payer picker.
+    useEffect(() => {
+        if (!house?.id) return;
+        const ownerIds = house.owner_ids || [];
+        if (ownerIds.length === 0) return;
+
+        const fetchMembers = async () => {
+            try {
+                const chunks: string[][] = [];
+                for (let i = 0; i < ownerIds.length; i += 10) {
+                    chunks.push(ownerIds.slice(i, i + 10));
+                }
+
+                const memberList: { uid: string, name: string }[] = [];
+                for (const chunk of chunks) {
+                    const q = query(collection(db, 'users'), where('uid', 'in', chunk));
+                    const snap = await getDocs(q);
+                    snap.docs.forEach((d) => memberList.push({ uid: d.id, name: d.data().name }));
+                }
+                setMembers(memberList);
+            } catch (err) {
+                logger.error('Error fetching members:', err);
+            }
+        };
+        fetchMembers();
+    }, [house?.id, house?.owner_ids]);
+
+    // Applies a partial update to the locally-held house doc after a
+    // finance_settings/recurring_costs write (avoids a second getDoc round-trip).
+    const handleHouseChange = (updates: Partial<House>) => {
+        setHouse((prev) => (prev ? { ...prev, ...updates } : prev));
+    };
+
+    // Opens the ledger tab with a new entry pre-filled from a recurring cost
+    // reminder — the user just needs to confirm/adjust the actual amount.
+    const handleFillReminder = (cost: RecurringCost) => {
+        setActiveTab('ledger');
+        setPrefillEntry({
+            type: 'expense',
+            category: cost.category,
+            amount: cost.estimated_amount,
+            description: cost.name,
+            date: new Date()
+        });
+    };
 
     // Lifted Finance Entries Listener (Optimized with date filter)
     useEffect(() => {
@@ -182,11 +237,33 @@ export default function FinancePage() {
                             <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber" />
                         )}
                     </button>
+
+                    <button
+                        onClick={() => setActiveTab('summary')}
+                        className={`pb-4 px-2 font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'summary'
+                            ? 'text-charcoal'
+                            : 'text-grey-mid hover:text-charcoal'
+                            }`}
+                    >
+                        <ClipboardList className="w-5 h-5" />
+                        Ársyfirlit
+                        {activeTab === 'summary' && (
+                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber" />
+                        )}
+                    </button>
                 </div>
             </div>
 
             {/* Content Area */}
             <div className="max-w-5xl mx-auto">
+                {house && (
+                    <RecurringCostReminders
+                        recurringCosts={house.recurring_costs || []}
+                        entries={entries}
+                        onFill={handleFillReminder}
+                    />
+                )}
+
                 {activeTab === 'budget' ? (
                     <BudgetView
                         houseId={house?.id}
@@ -194,8 +271,11 @@ export default function FinancePage() {
                         house={house}
                         entries={entries}
                         loading={loading}
+                        isManager={isManager}
+                        members={members}
+                        onHouseChange={handleHouseChange}
                     />
-                ) : (
+                ) : activeTab === 'ledger' ? (
                     <LedgerView
                         houseId={house?.id}
                         currentUserId={currentUser?.uid}
@@ -203,6 +283,17 @@ export default function FinancePage() {
                         currentUserName={currentUser?.name}
                         entries={entries}
                         loading={loading}
+                        members={members}
+                        prefillEntry={prefillEntry}
+                        onPrefillConsumed={() => setPrefillEntry(null)}
+                    />
+                ) : (
+                    <YearEndSummary
+                        year={new Date().getFullYear()}
+                        entries={entries}
+                        ownerIds={house?.owner_ids || []}
+                        members={members}
+                        memberShares={house?.finance_settings?.member_shares}
                     />
                 )}
             </div>
@@ -214,8 +305,18 @@ export default function FinancePage() {
 // Budget View
 // ------------------------------------------------------------------
 
-function BudgetView({ houseId, currentUserId, house, entries, loading }:
-    { houseId?: string, currentUserId?: string, house?: House | null, entries: LedgerEntry[], loading: boolean }) {
+interface BudgetViewProps {
+    houseId?: string;
+    currentUserId?: string;
+    house?: House | null;
+    entries: LedgerEntry[];
+    loading: boolean;
+    isManager: boolean;
+    members: { uid: string, name: string }[];
+    onHouseChange: (updates: Partial<House>) => void;
+}
+
+function BudgetView({ houseId, currentUserId, house, entries, loading, isManager, members, onHouseChange }: BudgetViewProps) {
     const [plan, setPlan] = useState<BudgetPlan | null>(null);
     const [showForm, setShowForm] = useState(false);
     const [loadingPlan, setLoadingPlan] = useState(true);
@@ -304,6 +405,13 @@ function BudgetView({ houseId, currentUserId, house, entries, loading }:
         const contribution = Math.ceil(Math.max(0, expenses - income) / 12);
 
         return { totalExpenses: expenses, totalIncome: income, netPosition: pos, monthlyContribution: contribution };
+    }, [plan]);
+
+    // Shared category taxonomy (also used by the ledger's category datalist)
+    // for the recurring-cost form's own datalist.
+    const budgetCategories = useMemo(() => {
+        const cats = plan?.items?.map(i => i.category).filter(Boolean) || [];
+        return Array.from(new Set(cats)).sort();
     }, [plan]);
 
     if (loading || loadingPlan) return <div className="p-8 text-center text-grey-mid">Hleð gögnum...</div>;
@@ -441,6 +549,27 @@ function BudgetView({ houseId, currentUserId, house, entries, loading }:
                 </div>
             </div>
 
+            {/* Manager-only: ownership shares + recurring cost reminders */}
+            {isManager && houseId && currentUserId && (
+                <div className="space-y-6">
+                    <OwnershipShares
+                        houseId={houseId}
+                        ownerIds={house?.owner_ids || []}
+                        members={members}
+                        memberShares={house?.finance_settings?.member_shares}
+                        onSaved={(memberShares) => onHouseChange({ finance_settings: { ...house?.finance_settings, member_shares: memberShares } })}
+                    />
+
+                    <RecurringCosts
+                        houseId={houseId}
+                        currentUserId={currentUserId}
+                        recurringCosts={house?.recurring_costs || []}
+                        budgetCategories={budgetCategories}
+                        onChanged={(recurringCosts) => onHouseChange({ recurring_costs: recurringCosts })}
+                    />
+                </div>
+            )}
+
             {/* Monthly Breakdown - Full Width */}
             <div className="w-full">
                 <MonthlyBreakdown budgetItems={plan?.items || []} />
@@ -460,11 +589,16 @@ interface LedgerViewProps {
     currentUserName?: string;
     entries: LedgerEntry[];
     loading: boolean;
+    members: { uid: string, name: string }[];
+    // A pending prefill (e.g. from a recurring cost reminder) opens the form
+    // pre-populated with these values for a NEW entry; consumed once applied.
+    prefillEntry?: Partial<LedgerEntry> | null;
+    onPrefillConsumed?: () => void;
 }
 
-function LedgerView({ houseId, currentUserId, isManager, currentUserName, entries, loading }: LedgerViewProps) {
+function LedgerView({ houseId, currentUserId, isManager, currentUserName, entries, loading, members, prefillEntry, onPrefillConsumed }: LedgerViewProps) {
     const [showForm, setShowForm] = useState(false);
-    const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
+    const [editingEntry, setEditingEntry] = useState<Partial<LedgerEntry> | null>(null);
     const [budgetCategories, setBudgetCategories] = useState<string[]>([]);
 
     const currentYear = new Date().getFullYear();
@@ -487,41 +621,14 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, entrie
         return () => unsubscribe();
     }, [houseId, currentYear]);
 
-    const [members, setMembers] = useState<{ uid: string, name: string }[]>([]);
-
-
+    // Open the form pre-filled when a recurring cost reminder is clicked.
     useEffect(() => {
-        if (!houseId) return;
-        const fetchMembers = async () => {
-            try {
-                // Fetch the house document to get owner_ids
-                const houseDoc = await getDoc(doc(db, 'houses', houseId));
-                if (!houseDoc.exists()) return;
-                const houseData = houseDoc.data();
-                const ownerIds = houseData.owner_ids || [];
-
-                if (ownerIds.length === 0) return;
-
-                // Fetch users
-                const chunks = [];
-                for (let i = 0; i < ownerIds.length; i += 10) {
-                    chunks.push(ownerIds.slice(i, i + 10));
-                }
-
-                const memberList: { uid: string, name: string }[] = [];
-                for (const chunk of chunks) {
-                    const q = query(collection(db, 'users'), where('uid', 'in', chunk));
-                    const snap = await getDocs(q);
-                    snap.docs.forEach((d: any) => memberList.push({ uid: d.id, name: d.data().name }));
-                }
-                setMembers(memberList);
-
-            } catch (err) {
-                console.error('Error fetching members:', err);
-            }
-        };
-        fetchMembers();
-    }, [houseId]);
+        if (!prefillEntry) return;
+        setEditingEntry(prefillEntry);
+        setShowForm(true);
+        onPrefillConsumed?.();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [prefillEntry]);
 
     const handleSaveEntry = async (entryData: Partial<LedgerEntry>) => {
         if (!houseId || !currentUserId) return;
