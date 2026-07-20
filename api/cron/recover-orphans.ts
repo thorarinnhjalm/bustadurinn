@@ -1,7 +1,9 @@
 import { Resend } from 'resend';
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { db } from '../utils/firebaseAdmin.js'; // Ensure .js extension for compiled output
-import { admin } from '../utils/firebaseAdmin.js';
+import { initializeFirebaseAdmin, getDb, admin } from '../utils/firebaseAdmin.js';
+
+initializeFirebaseAdmin();
+const db = getDb()!;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 1. Validate Cron Secret (Optional but recommended if provided by env)
