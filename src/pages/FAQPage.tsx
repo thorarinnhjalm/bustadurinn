@@ -20,8 +20,8 @@ export default function FAQPage() {
             a: "Smelltu á 'Torgið' í valmyndinni og veldu 'Ertu verktaki?' hnappinn efst. Það er frítt að skrá sig og þjónustan er sýnileg öllum notendum kerfisins."
         },
         {
-            q: "Get ég sagt upp?",
-            a: "Þú getur hætt hvenær sem er. Enginn binding, engin skuldbinding."
+            q: "Get ég hætt að nota kerfið?",
+            a: "Já, hvenær sem er. Bústaðurinn.is er ókeypis og engin binding fylgir — það er engin áskrift til að segja upp. Ef þú vilt hætta alveg getur þú eytt aðgangnum þínum úr stillingum, eða haft samband við okkur og við eyðum gögnunum þínum."
         },
         {
             q: "Er appið til fyrir iPhone og Android?",
@@ -29,7 +29,7 @@ export default function FAQPage() {
         },
         {
             q: "Hvernig virkar sanngirnisreglan?",
-            a: "Kerfið heldur utan um hver fékk úthlutað vinsælum dögum (jól, páskar, verslunarmannahelgi) síðustu ár. Þegar sótt er um sömu helgi aftur, raðar kerfið umsóknum eftir sanngirni – sá sem fékk ekki í fyrra hefur forgang."
+            a: "Sanngirnisreglan er röðunarkerfi fyrir fjórar stórhelgar: páska, verslunarmannahelgina, jólin og áramótin. Kerfið heldur utan um sögu hvers meðeiganda og raðar þeim sem sjaldnast — eða lengst síðan — hafa fengið helgina fremst í röðina. „Stórhelgar\"-spjaldið á dagatalinu sýnir hvers réttur er hverju sinni og sögu síðustu ára. Þremur mánuðum fyrir hverja helgi opnast bókunin öllum meðeigendum, óháð röð."
         },
         {
             q: "Geta allir séð fjármálin?",
@@ -37,7 +37,7 @@ export default function FAQPage() {
         },
         {
             q: "Hvernig skipti ég helgum í sumarhúsi á sanngjarnan hátt?",
-            a: "Bústaðurinn.is er með innbyggða sanngirnisreglu sem tryggir sjálfkrafa að vinsælar helgar (jól, páskar, verslunarmannahelgi) dreifast jafnt á alla meðeigendur. Kerfið heldur utan um sögu bókana og gefur þeim sem fengu minna í fyrra hærri forgang. Enginn þarf að rökræða eða semja — kerfið gerir þetta allt sjálfkrafa."
+            a: "Bústaðurinn.is er með innbyggða sanngirnisreglu sem raðar meðeigendum fyrir fjórar stórhelgar — páska, verslunarmannahelgina, jólin og áramótin. Sá sem sjaldnast eða lengst síðan hefur fengið helgina er efstur í röðinni, og „Stórhelgar\"-spjaldið á dagatalinu sýnir hvers réttur er hverju sinni. Enginn þarf að rökræða eða semja — kerfið gerir þetta allt sjálfkrafa, og röðin opnast öllum þremur mánuðum fyrir hverja helgi."
         },
         {
             q: "Hvað ef fjölskyldan á sumarhús saman og við erum ekki sammála um bókanir?",
@@ -57,7 +57,7 @@ export default function FAQPage() {
         },
         {
             q: "Hvernig virkar sameiginlegur bankareikningur (hússjóður) fyrir sumarhús?",
-            a: "Þegar mörg húsfélög eða meðeigendur sumarhúsa ákveða að halda utan um fjármálin er oft stofnaður sameiginlegur bankareikningur (hússjóður). Með Bústaðurinn.is getið þið haldið utan um allar innborganir og útgjöld á einum stað. Kerfið reiknar sjálfkrafa út hlut hvers og eins miðað við eignarhlutfall eða næturfjölda, sem auðveldar uppgjör og eykur gagnsæi."
+            a: "Þegar mörg húsfélög eða meðeigendur sumarhúsa ákveða að halda utan um fjármálin er oft stofnaður sameiginlegur bankareikningur (hússjóður). Með Bústaðurinn.is getið þið haldið utan um allar innborganir og útgjöld á einum stað. Kerfið reiknar sjálfkrafa út hlut hvers og eins jafnt á milli allra, eða samkvæmt eignarhlutfalli ef stjórnandi hússins stillir það þannig — sem auðveldar uppgjör og eykur gagnsæi."
         },
         {
             q: "Af hverju er rafmagnsreikningurinn í bústaðnum stundum hár og hver er meðalkostnaðurinn?",
@@ -66,6 +66,18 @@ export default function FAQPage() {
         {
             q: "Hvar finn ég handbók hússins eða reglur fyrir bústaðinn?",
             a: "Bústaðurinn.is býður upp á sérstakan hluta þar sem hægt er að skrifa og vista handbók hússins. Þar er tilvalið að skrá mikilvægar upplýsingar svo sem hvernig eigi að ganga frá bústaðnum, hvar lyklar eru geymdir, hvar eigi að skrúfa fyrir vatn, og hvernig eigi að þrífa heita pottinn. Allir meðeigendur og gestir hafa þannig greiðan aðgang að reglum bústaðarins á einum stað."
+        },
+        {
+            q: "Hver á rétt á jólunum eða páskunum í ár?",
+            a: "„Stórhelgar\"-spjaldið á dagatalinu sýnir þetta sjálfkrafa fyrir allar fjórar stórhelgarnar — páska, verslunarmannahelgina, jólin og áramótin. Sá meðeigandi sem hefur sjaldnast eða lengst síðan fengið helgina er efstur í röðinni, og þú sérð sögu síðustu ára með einum smelli. Þegar röðin er komin að þér getur þú tekið helgina beint úr spjaldinu. Þremur mánuðum fyrir hverja helgi opnast bókunin öllum, óháð röð."
+        },
+        {
+            q: "Virkar kerfið ef það er ekkert netsamband í bústaðnum?",
+            a: "Já. Bústaðurinn.is er byggður sem vefapp (PWA) með ofangeymslu, svo dagatalið, verkefnalistinn og innkaupalistinn eru læsileg þó ekkert samband sé í bústaðnum. Breytingar sem þú gerir ótengd(ur) samstillast sjálfkrafa um leið og síminn nær sambandi á ný."
+        },
+        {
+            q: "Hvað eru gátlistar og árbók?",
+            a: "Kerfið er með komu- og brottfarargátlista með íslenskum sjálfgefnum atriðum sem hægt er að sérsníða. Þegar farið er í gegnum brottfarargátlistann er hægt að merkja hluti sem eru á þrotum — þeir bætast sjálfkrafa á innkaupalistann. Árstíðabundnir listar fyrir vor-opnun og vetrarfrágang birtast sem áminningar á yfirlitssíðunni. Í lok hvers árs útbýr kerfið sjálfkrafa prentanlega árbók á /arbok með tölfræði, lengstu dvölinni, hver vann hverja stórhelgi og völdum tilvitnunum úr gestabókinni."
         }
     ];
 

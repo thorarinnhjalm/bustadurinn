@@ -1,5 +1,5 @@
 import MarketingLayout from '@/components/MarketingLayout';
-import { Calendar, User, Wallet, Wifi, Bell, Shield, CheckCircle2, ArrowRight, Home } from 'lucide-react';
+import { Calendar, User, Wallet, Wifi, Bell, Shield, CheckCircle2, ArrowRight, Home, ClipboardCheck, BookOpen, WifiOff, CloudRain, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { CalendarMockup, FairnessMockup, FinanceMockup, RolesMockup, GuestLinkMockup, NotificationsMockup, MultiHouseMockup } from '@/components/FeatureMockups';
@@ -10,17 +10,17 @@ export default function FeaturesPage() {
             icon: Calendar,
             title: "Bókunardagatal",
             shortDesc: "Einfalt og skýrt dagatal sem sýnir hver á hvaða helgi.",
-            description: "Bókunardagatalið okkar er hannað til að gera stjórnun sumarhússins einfalda og skjóta. Sjáðu við fyrstu sýn hver hefur bókað og hvenær. Dagatalið sýnir alla meðeigendur með mismunandi litum, svo að allir sjá strax hverjir eru búnir að taka hvaða helgar. Kerfið leyfir bókanir allt að 12 mánuði fram í tímann, sem er tilvalið fyrir langtímaáætlanir og hátíðarhelgar eins og jól og páska.",
+            description: "Bókunardagatalið okkar er hannað til að gera stjórnun sumarhússins einfalda og skjóta. Sjáðu við fyrstu sýn hver hefur bókað og hvenær. Dagatalið sýnir alla meðeigendur með mismunandi litum, svo að allir sjá strax hverjir eru búnir að taka hvaða helgar. Ef bókun skarast við aðra færðu viðvörun um árekstur — kerfið sýnir hver á hina bókunina og hvenær — og getur valið að bóka samt ef um sameiginlega dvöl er að ræða.",
             benefits: [
                 "Sjáðu allar bókanir í einu yfirliti",
                 "Litakóðaðar bókanir eftir meðeiganda",
-                "Bókaðu allt að 12 mánuði fram í tímann",
+                "Viðvörun um árekstur — þú ræður hvort þú bókar samt",
                 "Tilkynningar þegar bókun er gerð"
             ],
             useCases: [
                 "Skipuleggðu fjölskylduverur fram í tímann",
-                "Forðastu árekstra við bókanir annarra",
-                "Sjáðu nýtingarhlutfall hússins yfir árið"
+                "Sjáðu strax hver á skarandi bókun áður en þú staðfestir þína",
+                "Deildu bústaðnum með fjölskyldunni sömu helgi ef þið viljið"
             ],
             imageUrl: "/screenshots/calendar.png",
             MockupComponent: CalendarMockup
@@ -28,18 +28,18 @@ export default function FeaturesPage() {
         {
             icon: Shield,
             title: "Sanngirnisregla",
-            shortDesc: "Tryggir að allir fái sanngjarnan aðgang að vinsælum helgum.",
-            description: "Sanngirnisreglan er einstök lausn sem tryggir að enginn meðeigandi njóti forskots á aðra. Kerfið reiknar sjálfkrafa út forgang byggt á því hversu oft hver hefur bókað áður, hversu marga daga, og hvaða tíma árs. Þetta þýðir að ef einn meðeigandi bókar mörg sumarkvöld, þá fær annar meðeigandi hærri forgang næst. Formúlan er gagnsæ og allir sjá niðurstöðuna, sem útilokar ágreining og tryggir frið í viðskiptum.",
+            shortDesc: "Röðunarkerfi sem tryggir að allir fái sanngjarnan aðgang að stórhelgunum fjórum.",
+            description: "Sanngirnisreglan er innbyggt röðunarkerfi fyrir fjórar stórhelgar: páska, verslunarmannahelgina, jólin og áramótin. Kerfið heldur utan um sögu hvers meðeiganda og raðar þeim sem sjaldnast — eða lengst síðan — hafa fengið helgina fremst í röðina. „Stórhelgar\"-spjaldið á dagatalinu sýnir hvers réttur er hverju sinni, sögu síðustu ára og býður upp á að taka helgina með einum smelli. Þremur mánuðum fyrir hverja helgi opnast bókunin öllum meðeigendum, óháð röð. Í stillingum húss velur stjórnandi á milli sanngirnisreglu og „hver kemur fyrst\".",
             benefits: [
-                "Enginn njóti forskots á aðra",
-                "Sjálfvirk útreikningur á forgangi",
-                "Gagnsæ formúla sem allir sjá",
-                "Dregur úr átökum í meðeigendahópnum"
+                "Sjálfvirk röðun fyrir páska, verslunarmannahelgi, jól og áramót",
+                "„Stórhelgar\"-spjaldið sýnir hvers réttur er og sögu síðustu ára",
+                "Taktu helgina með einum smelli þegar röðin er komin að þér",
+                "Forgangur opnast öllum 3 mánuðum fyrir hverja helgi"
             ],
             useCases: [
-                "Koma í veg fyrir að einn taki allar góðu helgarnar",
-                "Tryggja sanngjarna skiptingu yfir árið",
-                "Sýna fram á gagnsæi í meðeigendahópi"
+                "Sjáðu strax hver á rétt á næstu jólum eða páskum",
+                "Leystu ágreining með gagnsærri sögu síðustu ára",
+                "Veldu sanngirnisreglu eða „hver kemur fyrst\" í stillingum hússins"
             ],
             imageUrl: "/screenshots/calendar.png",
             MockupComponent: FairnessMockup
@@ -72,7 +72,7 @@ export default function FeaturesPage() {
                 "Sjáðu stöðu hússjóðs í rauntíma",
                 "Stjórnaðu hverjir sjá fjármálin",
                 "Flokka útgjöld eftir tegund",
-                "Útflutningur í Excel fyrir bókhald"
+                "Rekstraráætlun (budget) fyrir hússjóðinn"
             ],
             useCases: [
                 "Halda utan um rafmagnsreikninga og fasteignagjöld",
@@ -104,18 +104,18 @@ export default function FeaturesPage() {
         {
             icon: Bell,
             title: "Tilkynningar og Áminningar",
-            shortDesc: "Fáðu tölvupóst þegar eitthvað mikilvægt gerist.",
-            description: "Kerfið sendir sjálfkrafa tölvupóst þegar mikilvægir atburðir gerast: nýjar bókanir, breyting á fyrirliggjandi bókun, eða þegar verkefni á gjalddaga nálgast. Þú getur stillt hvaða tilkynningar þú vilt fá, svo þú gleymir aldrei að mæta á réttum tíma eða að greiða fasteignagjöld á réttum tíma. Allar tilkynningar eru sendar á netfang þitt og þú getur líka séð þær inni í kerfinu.",
+            shortDesc: "Ýtitilkynningar, bjalla í appinu og tölvupóstur — þú missir aldrei af neinu.",
+            description: "Kerfið sendir tilkynningar á þremur leiðum: ýtitilkynningar (push) beint í símann, bjölluna inni í appinu og tölvupóst þegar bókun er gerð. Þú færð vitneskju um nýjar bókanir, úthlutuð verkefni, hluti sem bætt er á innkaupalistann, aðildarbeiðnir og veðurviðvaranir fyrir komandi ferðir. Ýtitilkynningar eru valkvæðar — þér er boðið að virkja þær á yfirlitssíðunni.",
             benefits: [
-                "Fáðu póst þegar ný bókun er gerð",
-                "Áminningar um verkefni á gjalddaga",
-                "Tilkynningar um breytingar á bókunum",
-                "Stillanleg tíðni og tegund tilkynninga"
+                "Ýtitilkynningar (push) beint í símann",
+                "Bjalla með tilkynningum inni í appinu",
+                "Tölvupóstur þegar bókun er gerð",
+                "Nær yfir bókanir, verkefni, innkaupalista, aðildarbeiðnir og veður"
             ],
             useCases: [
-                "Fáðu áminningar um komandi ferð í sumarhúsið",
-                "Vertu upplýstur um nýjar bókanir annarra",
-                "Fáðu áminningu þegar gjalddagi nálgast"
+                "Fáðu ýtitilkynningu um leið og einhver bókar næstu helgi",
+                "Vertu látinn vita samstundis þegar verkefni er úthlutað á þig",
+                "Fáðu viðvörun ef óveður er í kortunum fyrir næstu ferð"
             ],
             imageUrl: "/screenshots/dashboard.png",
             MockupComponent: NotificationsMockup
@@ -138,13 +138,103 @@ export default function FeaturesPage() {
             ],
             imageUrl: "/screenshots/dashboard.png",
             MockupComponent: MultiHouseMockup
+        },
+        {
+            icon: ClipboardCheck,
+            title: "Gátlistar og birgðastaða",
+            shortDesc: "Komu- og brottfarargátlistar sem uppfæra innkaupalistann sjálfkrafa.",
+            description: "Bústaðurinn.is kemur með komugátlista og brottfarargátlista með íslenskum sjálfgefnum atriðum, fullkomlega sérsniðanlegum að ykkar húsi. Þegar farið er í gegnum brottfarargátlistann er hægt að merkja hluti sem eru búnir eða á þrotum — þeir bætast sjálfkrafa á sameiginlega innkaupalistann fyrir næstu ferð. Árstíðabundnir listar fyrir vor-opnun og vetrarfrágang birtast sem áminningar á yfirlitssíðunni í apríl–maí og september–október.",
+            benefits: [
+                "Komugátlisti og brottfarargátlisti með íslenskum sjálfgefnum atriðum",
+                "Birgðastaða við brottför bætist sjálfkrafa á innkaupalistann",
+                "Árstíðabundnir listar fyrir vor-opnun og vetrarfrágang",
+                "Allt fullkomlega sérsniðanlegt að ykkar húsi"
+            ],
+            useCases: [
+                "Gleymdu aldrei að skrúfa fyrir vatn eða læsa á brottfarardegi",
+                "Láttu birgðastöðuna sjálfkrafa fylla á innkaupalistann",
+                "Fáðu áminningu um voropnun og vetrarfrágang á réttum tíma"
+            ],
+            imageUrl: "/screenshots/tasks.png"
+        },
+        {
+            icon: BookOpen,
+            title: "Árbók",
+            shortDesc: "Sjálfvirk, prentanleg árbók með tölfræði og hátíðarsigurvegurum ársins.",
+            description: "Í lok hvers árs útbýr kerfið sjálfkrafa árbók fyrir húsið á /arbok — fjölda nátta, tölfræði fyrir hverja fjölskyldu, lengstu dvölina, hver vann hverja stórhelgi og valdar tilvitnanir úr gestabókinni. Árbókin er prentanleg og tilvalin til að rifja upp árið á aðalfundi eða senda á alla meðeigendur.",
+            benefits: [
+                "Sjálfvirkt tekin saman í lok hvers árs",
+                "Nætur og tölfræði fyrir hverja fjölskyldu",
+                "Sýnir hver vann hverja stórhelgi",
+                "Prentanleg — tilvalin fyrir aðalfundinn"
+            ],
+            useCases: [
+                "Rifjaðu upp árið á aðalfundi meðeigenda",
+                "Sjáðu lengstu dvölina og skemmtilegustu gestabókarfærslurnar",
+                "Prentaðu árbókina og geymdu sem minjagrip"
+            ],
+            imageUrl: "/screenshots/dashboard.png"
+        },
+        {
+            icon: WifiOff,
+            title: "Virkar ótengt",
+            shortDesc: "Dagatal, verkefni og innkaupalisti eru læsileg þó sambandslaust sé í bústaðnum.",
+            description: "Mörg sumarhús eru með lélegt eða ekkert netsamband. Bústaðurinn.is er byggður sem PWA með ofangeymslu (offline cache) svo dagatalið, verkefnalistinn og innkaupalistinn eru læsileg jafnvel þegar ekkert samband er. Breytingar sem þú gerir ótengd(ur) samstillast sjálfkrafa um leið og síminn nær sambandi aftur.",
+            benefits: [
+                "Dagatal, verkefni og innkaupalisti læsileg án nettengingar",
+                "Breytingar samstillast sjálfkrafa þegar samband næst á ný",
+                "Ekkert app að sækja — virkar beint í vafranum sem PWA",
+                "Tilvalið fyrir bústaði með lélegt netsamband"
+            ],
+            useCases: [
+                "Skoðaðu verkefnalistann þó enginn sími-sambandsstyrkur sé í bústaðnum",
+                "Merktu verkefni kláruð og láttu þau samstillast síðar",
+                "Skráðu útgjöld á staðnum án þess að bíða eftir netsambandi"
+            ],
+            imageUrl: "/screenshots/dashboard.png"
+        },
+        {
+            icon: CloudRain,
+            title: "Veðurviðvaranir",
+            shortDesc: "Sjálfvirk dagleg athugun varar við óveðri áður en þið leggjið af stað.",
+            description: "Þegar bókun er innan við viku í burtu birtist veðurspákort fyrir bústaðinn á yfirlitssíðunni. Kerfið framkvæmir daglega sjálfvirka athugun og sendir ýtitilkynningu og tilkynningu í appinu ef spáð er stormi, snjókomu, frosti, mikilli úrkomu eða hvassviðri fyrir bókanir sem hefjast innan þriggja daga.",
+            benefits: [
+                "Veðurspákort á yfirlitssíðunni fyrir bókanir innan viku",
+                "Dagleg sjálfvirk athugun á veðurspá",
+                "Ýtitilkynning og tilkynning í appinu fyrir alvarleg veður",
+                "Nær yfir storm, snjókomu, frost, úrkomu og hvassviðri"
+            ],
+            useCases: [
+                "Vittu fyrirfram hvort þörf sé á að skrúfa niður hitann",
+                "Fáðu viðvörun um hálku eða snjókomu áður en lagt er af stað",
+                "Skipuleggðu ferðina betur með veðurspá beint á yfirlitssíðunni"
+            ],
+            imageUrl: "/screenshots/dashboard.png"
+        },
+        {
+            icon: RefreshCw,
+            title: "Ársyfirlit og áminningar",
+            shortDesc: "Árlegt uppgjör fyrir hverja fjölskyldu og áminningar áður en reikningar gjaldfalla.",
+            description: "Fjárhagskerfið heldur utan um rekstraráætlun (budget) fyrir hússjóðinn og sendir áminningar um endurtekna reikninga áður en þeir gjaldfalla — til dæmis að rafmagnsreikningur sé væntanlegur. Í lok árs fá allir aðgang að Ársyfirliti sem sýnir framlög og útgjöld hverrar fjölskyldu.",
+            benefits: [
+                "Rekstraráætlun (budget) fyrir hússjóðinn",
+                "Áminningar um endurtekna reikninga fyrir gjalddaga",
+                "Ársyfirlit í lok árs fyrir hverja fjölskyldu",
+                "Allt sjálfvirkt og gagnsætt fyrir alla meðeigendur"
+            ],
+            useCases: [
+                "Fáðu áminningu áður en rafmagnsreikningurinn gjaldfellur",
+                "Berðu saman rekstraráætlun við raunveruleg útgjöld",
+                "Skoðaðu Ársyfirlitið þitt í lok árs fyrir skattframtal eða uppgjör"
+            ],
+            imageUrl: "/screenshots/finance.png"
         }
     ];
 
     const faqs = [
         {
             question: "Hvernig virkar sanngirnisreglan nákvæmlega?",
-            answer: "Sanngirnisreglan reiknar út forgang fyrir hvern meðeiganda byggt á fjölda bókana, fjölda daga og tíma árs. Ef þú bókar mörg sumarkvöld eða helgar, þá lækkar forgangur þinn og aðrir fá hærri forgang. Formúlan er gagnsæ og allir sjá niðurstöðuna."
+            answer: "Sanngirnisreglan er röðunarkerfi fyrir fjórar stórhelgar — páska, verslunarmannahelgina, jólin og áramótin. Sá meðeigandi sem hefur sjaldnast eða lengst síðan fengið helgina er efstur í röðinni. „Stórhelgar\"-spjaldið á dagatalinu sýnir hvers réttur er og sögu síðustu ára, og hægt er að taka helgina með einum smelli. Þremur mánuðum fyrir hverja helgi opnast bókunin öllum meðeigendum, óháð röð."
         },
         {
             question: "Get ég notað kerfið fyrir fleiri en eitt sumarhús?",
@@ -191,12 +281,18 @@ export default function FeaturesPage() {
                         "priceCurrency": "ISK"
                     },
                     "featureList": [
-                        "Bókunardagatal með sanngirnisreglu",
-                        "Fjárhagsyfirlit fyrir hússjóð",
+                        "Bókunardagatal með árekstrarviðvörun",
+                        "Sanngirnisregla — röðun fyrir stórhelgar",
+                        "Fjárhagsyfirlit og rekstraráætlun fyrir hússjóð",
                         "Verkefnastjórnun",
                         "Hlutverkastýring fyrir meðeigendur",
                         "Stafrænn gestaaðgangur",
-                        "Tilkynningar og áminningar"
+                        "Tilkynningar (push, í appinu og tölvupóstur)",
+                        "Gátlistar og sjálfvirk birgðastaða",
+                        "Árbók",
+                        "Virkar ótengt (offline)",
+                        "Veðurviðvaranir",
+                        "Ársyfirlit og áminningar um endurtekna reikninga"
                     ],
                     "description": "Stjórnunarkerfi fyrir íslensk sumarhús í meðeign"
                 }}

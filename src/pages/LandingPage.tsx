@@ -69,7 +69,7 @@ export default function LandingPage() {
                 "name": "Hvernig virka veðurviðvaranirnar?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Við tengjumst beint við kerfi Veðurstofunnar og Vegagerðarinnar. Kerfið vakta sjálfkrafa GPS hnitin sem þú skráir á bústaðinn þinn og lætur þig vita með fyrirvara ef spáin sýnir óveður, mikinn kulda eða ófærð á nærliggjandi þjóðvegum."
+                    "text": "Við notum veðurgögn frá Veðurstofunni. Ef þú átt bókun innan viku birtist veðurspá á yfirlitssíðunni, og þar sést líka staða helstu vega í nágrenninu (gögn frá Vegagerðinni). Kerfið framkvæmir líka daglega sjálfvirka athugun og sendir ýtitilkynningu og tilkynningu í appinu ef spáð er stormi, snjókomu, frosti, mikilli úrkomu eða hvassviðri fyrir bókanir sem hefjast innan þriggja daga."
                 }
             },
             {
@@ -111,17 +111,17 @@ export default function LandingPage() {
         {
             icon: Shield,
             title: "Sanngjörn skipting",
-            description: "Innbyggð sanngirnisregla tryggir að allir fái sinn tíma og að enginn sitji einn að vinsælustu helgunum. Kerfið sér um að deila gæðunum."
+            description: "Innbyggð sanngirnisregla raðar meðeigendum fyrir stórhelgarnar fjórar — páska, verslunarmannahelgi, jól og áramót — svo enginn sitji einn að þeim ár eftir ár. „Stórhelgar\"-spjaldið á dagatalinu sýnir hvers réttur er hverju sinni."
         },
         {
             icon: Bell,
             title: "Tilkynningar",
-            description: "Fáðu boð í tölvupósti þegar ný bókun dettur inn. Allir vita alltaf hvað er í gangi, án þess að þurfa að hringjast á."
+            description: "Ýtitilkynningar í símann, bjalla í appinu og tölvupóstur þegar ný bókun dettur inn. Allir vita alltaf hvað er í gangi, án þess að þurfa að hringjast á."
         },
         {
             icon: TrendingUp,
-            title: "Hússjóður (Valfrjálst)",
-            description: "Ef þið viljið - gagnsæ fjármál. Kerfið heldur sjálfkrafa utan um hússjóð og gerir allt skýrt og sanngjarnt."
+            title: "Hússjóður",
+            description: "Gagnsæ fjármál. Kerfið heldur sjálfkrafa utan um hússjóð og gerir allt skýrt og sanngjarnt. Þú ræður hverjir sjá fjármálin."
         }
     ];
 
@@ -343,7 +343,7 @@ export default function LandingPage() {
                         </div>
                         <h2 className="text-4xl md:text-5xl font-serif mb-6">Hvernig virkar "Sanngirni"?</h2>
                         <p className="text-xl text-stone-500 max-w-2xl mx-auto">
-                            Kerfið fylgist með því hverjir nýta helgidagana. Prófaðu að sjá hvernig reglan virkar hér að neðan.
+                            Kerfið heldur utan um röðina fyrir stórhelgarnar fjórar — páska, verslunarmannahelgi, jól og áramót — og sýnir hvers réttur er hverju sinni í „Stórhelgar\"-spjaldinu á dagatalinu. Prófaðu að sjá hvernig röðin virkar hér að neðan.
                         </p>
                     </div>
 
@@ -597,6 +597,15 @@ export default function LandingPage() {
                                         <p className="text-stone-500">Skráðu komu, athugaðu veðurspána eða finndu WiFi lykilorðið með einum smelli þegar þú mætir í bústaðinn.</p>
                                     </div>
                                 </li>
+                                <li className="flex items-start gap-4 group">
+                                    <div className="mt-1 w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center shrink-0 group-hover:bg-amber group-hover:text-charcoal transition-colors">
+                                        <CheckCircle className="w-5 h-5 text-amber group-hover:text-inherit" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-bold mb-1">Virkar líka ótengt</h4>
+                                        <p className="text-stone-500">Dagatal, verkefni og innkaupalisti eru læsileg þó ekkert netsamband sé í bústaðnum — breytingar samstillast sjálfkrafa þegar samband næst á ný.</p>
+                                    </div>
+                                </li>
                             </ul>
 
                             <div className="pt-4">
@@ -651,6 +660,10 @@ export default function LandingPage() {
                                 <li className="flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
                                     <span>Veðurviðvaranir og gestaaðgangur</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <span>Gátlistar, árbók og virkar ótengt (offline)</span>
                                 </li>
                             </ul>
 
@@ -716,7 +729,7 @@ export default function LandingPage() {
                         <div>
                             <h3 className="text-xl font-bold mb-3">Hvernig virka veðurviðvaranirnar?</h3>
                             <p className="text-stone-600 leading-relaxed font-light">
-                                Við tengjumst beint við kerfi Veðurstofunnar og Vegagerðarinnar. Kerfið vakta sjálfkrafa GPS hnitin sem þú skráir á bústaðinn þinn og lætur þig vita með fyrirvara ef spáin sýnir óveður, mikinn kulda eða ófærð á nærliggjandi þjóðvegum.
+                                Við notum veðurgögn frá Veðurstofunni. Ef þú átt bókun innan viku birtist veðurspá á yfirlitssíðunni, og þar sést líka staða helstu vega í nágrenninu (gögn frá Vegagerðinni). Kerfið framkvæmir líka daglega sjálfvirka athugun og sendir ýtitilkynningu og tilkynningu í appinu ef spáð er stormi, snjókomu, frosti, mikilli úrkomu eða hvassviðri fyrir bókanir sem hefjast innan þriggja daga.
                             </p>
                         </div>
 

@@ -9,7 +9,7 @@
 Á Íslandi eru um 15.000 sumarhús. Sumarhúseigendur — hvort sem þeir eru einn eða margir saman — glíma við sömu grundvallarspurningar: Hvernig halda utan um bókanir? Hverjir sjá um viðhald og kostnað? Þegar 2-15 meðeigendur deila sumarhúsi koma sérstaklega upp vandamál:
 
 - **Bókunarárekstrar:** Tveir meðeigendur bóka sömu helgina
-- **Ósanngjörn skipting:** Sami aðilinn tekur alltaf vinsælustu helgarnar (jól, páska, verslunarmannahelgi)
+- **Ósanngjörn skipting:** Sami aðilinn tekur alltaf vinsælustu helgarnar (jól, páska, verslunarmannahelgi, áramót)
 - **Ruglingur í fjármálum:** Erfitt að halda utan um hverjir hafa greitt og hverjir skulda
 - **Excel-drasl:** Margir nota Excel skjöl, Facebook hópa eða WhatsApp til að halda utan um bókanir — en þetta virkar sjaldan vel
 - **Viðhaldsverkefni:** Enginn veit hver á að klippa grasið eða laga lekann
@@ -24,22 +24,22 @@ Bústaðurinn.is leysir öll þessi vandamál á einum stað.
 
 Bókunardagatalið er kjarninn í Bústaðnum. Allir meðeigendur sjá sama dagatalið þar sem bókanir eru litakóðaðar eftir meðeiganda. Þegar einn bókar sjá allir aðrir strax.
 
-- Hægt er að bóka allt að 12 mánuði fram í tímann
 - Sjáðu strax hverjir eru búnir að bóka hvaða helgar
+- Ef bókun skarast við aðra fær sá sem bókar viðvörun um árekstur (hver á hina bókunina og hvenær) og getur valið að bóka samt — kerfið hindrar ekki tvíbókanir, það varar við þeim
 - Tilkynning sendist sjálfkrafa til allra meðeigenda þegar ný bókun er gerð
-- Dagatalið sýnir nýtingarhlutfall hússins yfir árið
 - Virkar fullkomlega í farsímum og tölvum
 
-### 2. Sanngirnisregla
+### 2. Sanngirnisregla (Stórhelgar-röðun)
 
-Sanngirnisreglan er einstök lausn sem Bústaðurinn.is er eini hugbúnaðurinn til að bjóða. Hún tryggir sjálfkrafa að enginn meðeigandi njóti forskots á aðra þegar kemur að vinsælum helgum.
+Sanngirnisreglan er röðunarkerfi fyrir fjórar stórhelgar — páska, verslunarmannahelgina, jólin og áramótin — sem Bústaðurinn.is er eini hugbúnaðurinn til að bjóða. Hún tryggir sjálfkrafa að enginn meðeigandi njóti forskots á aðra þegar kemur að þessum helgum, yfir mörg ár.
 
 **Hvernig hún virkar:**
-- Kerfið reiknar sjálfkrafa út forgang fyrir hvern meðeiganda
-- Útreikningurinn byggist á fjölda bókana, fjölda daga og tíma árs
-- Ef einn meðeigandi bókaði jólahelgina í fyrra, fær annar hærri forgang á hana á þessu ári
-- Formúlan er 100% gagnsæ og allir sjá niðurstöðuna
-- Þetta útilokar ágreining og tryggir frið í viðskiptum
+- Kerfið heldur utan um sögu hvers meðeiganda fyrir hverja stórhelgi
+- Sá sem sjaldnast — eða lengst síðan — hefur fengið helgina er efstur í röðinni
+- „Stórhelgar"-spjaldið á dagatalinu sýnir hvers réttur er hverju sinni, sögu síðustu ára, og býður upp á að taka helgina með einum smelli
+- Þremur mánuðum fyrir hverja helgi opnast bókunin öllum meðeigendum, óháð röð
+- Hús geta valið milli „Sanngirnisreglu" og „Hver kemur fyrst" í stillingum
+- Það er engin formúla byggð á fjölda bókana, næturfjölda eða tíma árs — eingöngu röð eftir sögu hverrar stórhelgar
 
 ### 3. Hússjóður / Fjárhagsyfirlit
 
@@ -49,10 +49,25 @@ Fjárhagskerfið gerir þér kleift að halda fullkomnu bókhaldi yfir allt sem 
 - Kerfið flokkar sjálfkrafa útgjöld eftir tegund (rafmagn, vatn, viðhald, fasteignagjöld, tryggingar)
 - Sjáðu stöðu hússjóðsins í rauntíma
 - Stjórnaðu hverjir sjá fjármálin — hægt er að fela þau eða sýna aðeins völdum aðilum
-- Hægt er að flytja út í Excel/CSV fyrir bókhald
-- Skipting kostnaðar á milli meðeigenda — kerfið reiknar sjálfkrafa hvað hver skuldar
+- Rekstraráætlun (budget) fyrir hússjóðinn, og áminningar um endurtekna reikninga áður en þeir gjaldfalla (t.d. að rafmagnsreikningur sé væntanlegur)
+- Skipting kostnaðar á milli meðeigenda — jafnt sjálfgefið, eða eftir eignarhlutföllum sem stjórnandi hússins stillir. Aldrei eftir næturfjölda eða notkun
+- Ársyfirlit í lok árs sem sýnir framlög og útgjöld hverrar fjölskyldu
 
-### 4. Hlutverkastýring
+### 4. Gátlistar og birgðastaða
+
+- Komugátlisti og brottfarargátlisti með íslenskum sjálfgefnum atriðum, fullkomlega sérsniðanlegir
+- Birgðastaða sem merkt er á þrotum við brottför bætist sjálfkrafa á sameiginlega innkaupalistann
+- Árstíðabundnir listar fyrir vor-opnun og vetrarfrágang, með áminningum á yfirlitssíðunni (apríl–maí og september–október)
+
+### 5. Árbók
+
+Í lok hvers árs útbýr kerfið sjálfkrafa prentanlega árbók fyrir húsið á /arbok — fjöldi nátta, tölfræði fyrir hverja fjölskyldu, lengsta dvölin, hver vann hverja stórhelgi og valdar tilvitnanir úr gestabókinni.
+
+### 6. Virkar ótengt (Offline)
+
+Byggt sem PWA með ofangeymslu (offline cache). Dagatal, verkefni og innkaupalisti eru læsileg þó ekkert netsamband sé í bústaðnum. Breytingar samstillast sjálfkrafa þegar samband næst á ný.
+
+### 7. Hlutverkastýring
 
 Kerfið styður mismunandi notendahlutverk:
 
@@ -60,7 +75,7 @@ Kerfið styður mismunandi notendahlutverk:
 - **Meðeigandi:** Getur bókað, skráð útgjöld, séð upplýsingar, en ekki breytt grunnskipan kerfisins
 - **Gestur:** Tímabundinn aðgangur í gegnum töfrahlekk (Magic Link)
 
-### 5. Stafrænn Gestaaðgangur (Magic Links)
+### 8. Stafrænn Gestaaðgangur (Magic Links)
 
 Búðu til tímabundna hlekki (Magic Links) fyrir gesti:
 
@@ -70,22 +85,21 @@ Búðu til tímabundna hlekki (Magic Links) fyrir gesti:
 - Engin þörf á að hlaða niður appi eða skrá sig inn
 - Tilvalið fyrir leigjendur, fjölskyldugesti eða vini
 
-### 6. Tilkynningar og Áminningar
+### 9. Tilkynningar og Áminningar
 
-- Sjálfvirkur tölvupóstur þegar ný bókun er gerð
-- Áminningar um komandi ferðir
-- Tilkynningar þegar verkefni á gjalddaga nálgast
-- Stillanleg tíðni og tegund tilkynninga
-- Fáðu tilkynningu ef veðurspá sýnir óveður eða ófærð
+- Ýtitilkynningar (push) beint í símann — valkvæðar, virkjaðar á yfirlitssíðunni
+- Bjalla með tilkynningum inni í appinu
+- Tölvupóstur þegar ný bókun er gerð
+- Nær yfir nýjar bókanir, úthlutuð verkefni, hluti sem bætt er á innkaupalistann, aðildarbeiðnir og veðurviðvaranir
 
-### 7. Verkefnastjórnun
+### 10. Verkefnastjórnun
 
 - Búðu til verkefnalista fyrir viðhald og framkvæmdir
 - Úthlutaðu verkefnum á meðeigendur
 - Sá sem verkefnið er úthlutað á fær tölvupóst
 - Merktu verkefni sem kláruð
 
-### 8. Torgið — Markaðstorg
+### 11. Torgið — Markaðstorg
 
 Innbyggt markaðstorg þar sem eigendur sumarhúsa finna verktaka og þjónustuaðila:
 
@@ -99,14 +113,13 @@ Innbyggt markaðstorg þar sem eigendur sumarhúsa finna verktaka og þjónustua
 - Skoðaðu einkunnir og umsagnir
 - Hafðu beint samband við verktaka — engir milliliðir
 
-### 9. Veðurviðvörun
+### 12. Veðurviðvörun
 
-- Kerfið tengist beint við Veðurstofuna og Vegagerðina
-- Sjálfvirk vöktun GPS hnita bústaðarins
-- Tilkynning ef veðurspá sýnir óveður, mikinn kulda eða ófærð á nærliggjandi þjóðvegum
-- Veðurupplýsingar sýndar beint á stjórnborðinu
+- Veðurspá fyrir bústaðinn (gögn frá Veðurstofunni) birtist á yfirlitssíðunni þegar bókun er innan við viku í burtu
+- Staða helstu vega í nágrenninu (gögn frá Vegagerðinni) sýnd á sama korti
+- Dagleg sjálfvirk athugun sendir ýtitilkynningu og tilkynningu í appinu ef spáð er stormi, snjókomu, frosti, mikilli úrkomu eða hvassviðri fyrir bókanir sem hefjast innan þriggja daga
 
-### 10. Mörg hús í einu
+### 13. Mörg hús í einu
 
 - Bættu við mörgum húsum undir sama notandaaðganginn
 - Auðvelt að skipta á milli húsa
@@ -144,7 +157,7 @@ Opinberar stofnanir sem reka sumarhús til útleigu fyrir starfsmenn eða almenn
 Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Allir eiginleikar eru innifaldir og ótakmarkaður fjöldi notenda. Ef þér líkar við kerfið og vilt styrkja þróun þess er velkomið að kaupa handa okkur kaffibolla á askell.is.
 
 **Hvernig virkar sanngirnisreglan?**
-Kerfið heldur utan um hver fékk úthlutað vinsælum dögum (jól, páskar, verslunarmannahelgi) síðustu ár. Þegar sótt er um sömu helgi aftur, raðar kerfið umsóknum eftir sanngirni — sá sem fékk ekki í fyrra hefur forgang.
+Sanngirnisreglan er röðunarkerfi fyrir fjórar stórhelgar — páska, verslunarmannahelgina, jólin og áramótin. Sá meðeigandi sem hefur sjaldnast eða lengst síðan fengið helgina er efstur í röðinni. „Stórhelgar"-spjaldið á dagatalinu sýnir hvers réttur er og sögu síðustu ára. Þremur mánuðum fyrir hverja helgi opnast bókunin öllum meðeigendum, óháð röð.
 
 **Er appið til fyrir iPhone og Android?**
 Bústaðurinn.is er vefapp (PWA) sem virkar í öllum símum og tölvum án þess að sækja þarf app í App Store. Þú getur sett það á heimaskjáinn þinn eins og venjulegt app.
@@ -152,26 +165,32 @@ Bústaðurinn.is er vefapp (PWA) sem virkar í öllum símum og tölvum án þes
 **Hvað kostar kerfið?**
 Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Allir eiginleikar eru innifaldir.
 
-**Get ég sagt upp?**
-Þú getur hætt hvenær sem er. Enginn binding.
+**Get ég hætt að nota kerfið?**
+Já, hvenær sem er. Bústaðurinn.is er ókeypis og engin binding fylgir — það er engin áskrift til að segja upp. Hægt er að eyða aðgangnum úr stillingum eða hafa samband til að fá gögnum eytt.
 
 **Er erfitt að flytja gögn úr Excel?**
 Alls ekki. Þú byrjar á því að hlaða inn grunnupplýsingum og bjóða meðeigendum þínum. Það tekur innan við 5 mínútur að setja upp nýtt hús.
 
-**Hvað ef ég hætti að nota kerfið?**
-Þú átt þín gögn. Ef þú ákveður að hætta getur þú hvenær sem er flutt út allar bókanir og söguleg gögn.
-
 **Hvernig skipti ég helgum í sumarhúsi á sanngjarnan hátt?**
-Bústaðurinn.is er með innbyggða sanngirnisreglu sem tryggir sjálfkrafa að vinsælar helgar dreifast jafnt á alla meðeigendur.
+Bústaðurinn.is er með innbyggða sanngirnisreglu sem raðar meðeigendum fyrir fjórar stórhelgar — páska, verslunarmannahelgina, jólin og áramótin. Sá sem sjaldnast eða lengst síðan hefur fengið helgina er efstur í röðinni, og röðin opnast öllum þremur mánuðum fyrir hverja helgi.
 
 **Get ég notað kerfið fyrir orlofshús starfsmannafélags?**
 Já! Sérsniðnar lausnir fyrir starfsmannafélög og stéttarfélög eru í boði. Hafðu samband til að fá tilboð.
 
 **Hvernig er kostnaði skipt á milli meðeigenda sumarhúss?**
-Hússjóðskerfið skráir öll útgjöld og skiptir kostnaði sjálfkrafa á milli meðeigenda. Allir sjá stöðuna í rauntíma.
+Hússjóðskerfið skráir öll útgjöld og skiptir kostnaði sjálfkrafa á milli meðeigenda — jafnt sjálfgefið, eða eftir eignarhlutföllum sem stjórnandi hússins stillir. Aldrei eftir næturfjölda eða notkun. Allir sjá stöðuna í rauntíma.
 
 **Geta allir séð fjármálin?**
 Já, allir skráðir eigendur hafa aðgang að bókhaldsflipaanum. Þetta eykur gagnsæi og traust.
+
+**Virkar kerfið ef það er ekkert netsamband í bústaðnum?**
+Já. Bústaðurinn.is er byggður sem vefapp (PWA) með ofangeymslu, svo dagatalið, verkefnalistinn og innkaupalistinn eru læsileg þó ekkert samband sé í bústaðnum. Breytingar sem gerðar eru ótengt samstillast sjálfkrafa þegar samband næst á ný.
+
+**Hvað eru gátlistar og árbók?**
+Kerfið er með komu- og brottfarargátlista með íslenskum sjálfgefnum atriðum sem hægt er að sérsníða. Hlutir sem merktir eru á þrotum við brottför bætast sjálfkrafa á innkaupalistann. Árstíðabundnir listar fyrir vor-opnun og vetrarfrágang birtast sem áminningar á yfirlitssíðunni. Í lok hvers árs útbýr kerfið sjálfkrafa prentanlega árbók á /arbok með tölfræði, lengstu dvölinni, hver vann hverja stórhelgi og völdum tilvitnunum úr gestabókinni.
+
+**Hver á rétt á jólunum eða páskunum í ár?**
+„Stórhelgar"-spjaldið á dagatalinu sýnir þetta sjálfkrafa fyrir allar fjórar stórhelgarnar — páska, verslunarmannahelgina, jólin og áramótin — með sögu síðustu ára og einum-smells bókun þegar röðin er komin að þér.
 
 ---
 

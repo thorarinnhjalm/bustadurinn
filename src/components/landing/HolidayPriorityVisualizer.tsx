@@ -1,25 +1,36 @@
 import { useState } from 'react';
-import { Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Trophy, Unlock } from 'lucide-react';
+
+const HOLIDAYS = ['Jól', 'Páskar', 'Verslunarmannahelgin', 'Áramót'];
+
+type LastTurn = 'never' | 'long-ago' | 'last-year';
+
+const LAST_TURN_OPTIONS: { id: LastTurn; label: string }[] = [
+    { id: 'never', label: 'Aldrei fengið hana' },
+    { id: 'long-ago', label: 'Fyrir 2+ árum' },
+    { id: 'last-year', label: 'Á síðasta ári' },
+];
 
 export default function HolidayPriorityVisualizer() {
     const [selectedHoliday, setSelectedHoliday] = useState<string>('Jól');
-    const [hadLastYear, setHadLastYear] = useState<boolean | null>(null);
+    const [lastTurn, setLastTurn] = useState<LastTurn | null>(null);
 
     const checkResult = () => {
-        if (hadLastYear === null) return null;
-        if (hadLastYear) {
+        if (lastTurn === null) return null;
+
+        if (lastTurn === 'last-year') {
             return {
-                allowed: false,
-                message: `Því miður, þú varst með ${selectedHoliday} í fyrra.`,
-                description: "Sanngirnisreglan tryggir að aðrir fái tækifæri í ár. Kerfið hvetur til dreifingar á vinsælustu dögunum."
-            };
-        } else {
-            return {
-                allowed: true,
-                message: "Glæsilegt! Þú hefur forgang.",
-                description: `Þar sem þú varst ekki með ${selectedHoliday} í fyrra, þá átt þú rétt á að bóka í ár á undan þeim sem nýttu daginn síðast.`
+                topOfQueue: false,
+                message: `Aðrir eru framar í röðinni núna`,
+                description: `Þar sem þú varst með ${selectedHoliday} síðast, eru þeir sem hafa beðið lengur framar í röðinni í ár. Röðin opnast samt öllum meðeigendum þremur mánuðum fyrir helgina, óháð röð.`
             };
         }
+
+        return {
+            topOfQueue: true,
+            message: 'Röðin er komin að þér!',
+            description: `Þar sem þú hefur ekki fengið ${selectedHoliday} í bili, ertu efst(ur) í röðinni og hefur forgang til að bóka á undan öðrum — þangað til þrír mánuðir eru í helgina, en þá opnast bókunin öllum.`
+        };
     };
 
     const result = checkResult();
@@ -30,18 +41,18 @@ export default function HolidayPriorityVisualizer() {
                 <div className="w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center text-amber">
                     <Calendar className="w-5 h-5" />
                 </div>
-                <h3 className="text-xl font-serif font-bold text-charcoal">Prófaðu Sanngirnisregluna</h3>
+                <h3 className="text-xl font-serif font-bold text-charcoal">Prófaðu Stórhelgar-röðina</h3>
             </div>
 
             <div className="space-y-6">
                 {/* Step 1: Select Holiday */}
                 <div>
-                    <label className="block text-sm font-medium text-stone-500 mb-2 uppercase tracking-wide">1. Veldu hátíð</label>
-                    <div className="grid grid-cols-3 gap-2">
-                        {['Jól', 'Páskar', 'Áramót'].map(holiday => (
+                    <label className="block text-sm font-medium text-stone-500 mb-2 uppercase tracking-wide">1. Veldu stórhelgi</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {HOLIDAYS.map(holiday => (
                             <button
                                 key={holiday}
-                                onClick={() => { setSelectedHoliday(holiday); setHadLastYear(null); }}
+                                onClick={() => { setSelectedHoliday(holiday); setLastTurn(null); }}
                                 className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${selectedHoliday === holiday
                                     ? 'bg-charcoal text-white shadow-md'
                                     : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -53,47 +64,41 @@ export default function HolidayPriorityVisualizer() {
                     </div>
                 </div>
 
-                {/* Step 2: Last Year Question */}
+                {/* Step 2: Last Turn Question */}
                 <div className={`transition-opacity duration-300 ${selectedHoliday ? 'opacity-100' : 'opacity-50'}`}>
                     <label className="block text-sm font-medium text-stone-500 mb-2 uppercase tracking-wide">
-                        2. Varst þú með {selectedHoliday} í fyrra?
+                        2. Hvenær fékkst þú {selectedHoliday} síðast?
                     </label>
-                    <div className="flex gap-4">
-                        <button
-                            onClick={() => setHadLastYear(true)}
-                            className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${hadLastYear === true
-                                ? 'border-amber bg-amber/5 text-charcoal font-bold'
-                                : 'border-stone-200 hover:border-amber/50 text-stone-600'
-                                }`}
-                        >
-                            Já, ég nýtti hann
-                        </button>
-                        <button
-                            onClick={() => setHadLastYear(false)}
-                            className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${hadLastYear === false
-                                ? 'border-amber bg-amber/5 text-charcoal font-bold'
-                                : 'border-stone-200 hover:border-amber/50 text-stone-600'
-                                }`}
-                        >
-                            Nei, alls ekki
-                        </button>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        {LAST_TURN_OPTIONS.map(option => (
+                            <button
+                                key={option.id}
+                                onClick={() => setLastTurn(option.id)}
+                                className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all flex items-center justify-center gap-2 text-sm ${lastTurn === option.id
+                                    ? 'border-amber bg-amber/5 text-charcoal font-bold'
+                                    : 'border-stone-200 hover:border-amber/50 text-stone-600'
+                                    }`}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
                 {/* Result Display */}
                 <div className={`mt-6 rounded-xl p-5 transition-all duration-500 overflow-hidden ${result ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 h-0 p-0'
-                    } ${result?.allowed ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'
+                    } ${result?.topOfQueue ? 'bg-green-50 border border-green-100' : 'bg-amber/5 border border-amber/20'
                     }`}>
                     {result && (
                         <div className="flex items-start gap-4">
-                            <div className={`mt-1 p-1 rounded-full ${result.allowed ? 'bg-green-200 text-green-700' : 'bg-red-200 text-red-700'}`}>
-                                {result.allowed ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                            <div className={`mt-1 p-1 rounded-full ${result.topOfQueue ? 'bg-green-200 text-green-700' : 'bg-amber/20 text-amber-800'}`}>
+                                {result.topOfQueue ? <Trophy className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
                             </div>
                             <div>
-                                <h4 className={`text-lg font-bold mb-1 ${result.allowed ? 'text-green-800' : 'text-red-800'}`}>
+                                <h4 className={`text-lg font-bold mb-1 ${result.topOfQueue ? 'text-green-800' : 'text-amber-900'}`}>
                                     {result.message}
                                 </h4>
-                                <p className={`text-sm leading-relaxed ${result.allowed ? 'text-green-700' : 'text-red-700'}`}>
+                                <p className={`text-sm leading-relaxed ${result.topOfQueue ? 'text-green-700' : 'text-amber-900/80'}`}>
                                     {result.description}
                                 </p>
                             </div>

@@ -13,13 +13,28 @@ Bústaðurinn.is er ókeypis sumarhúsaforrit (PWA/vefapp) hannað fyrir íslens
 ## Aðaleiginleikar
 
 ### Bókunardagatal
-Sjáðu við fyrstu sýn hverjir hafa bókað og hvenær. Dagatalið sýnir allar bókanir litakóðaðar eftir meðeiganda. Hægt er að bóka allt að 12 mánuði fram í tímann. Tilkynningar sendast sjálfkrafa þegar bókun er gerð.
+Sjáðu við fyrstu sýn hverjir hafa bókað og hvenær. Dagatalið sýnir allar bókanir litakóðaðar eftir meðeiganda. Ef bókun skarast við aðra fær sá sem bókar viðvörun um árekstur (hver á hina bókunina og hvenær) og getur valið að bóka samt — kerfið hindrar ekki tvíbókanir, það varar við þeim. Tilkynningar sendast sjálfkrafa þegar bókun er gerð.
 
-### Sanngirnisregla
-Einstök lausn sem tryggir að enginn meðeigandi njóti forskots. Kerfið reiknar sjálfkrafa út forgang byggt á fjölda bókana, fjölda daga og tíma árs. Ef einn bókar mörg sumarkvöld, fær annar hærri forgang næst. Formúlan er gagnsæ og allir sjá niðurstöðuna.
+### Sanngirnisregla (Stórhelgar-röðun)
+Röðunarkerfi fyrir fjórar stórhelgar: páska, verslunarmannahelgina, jólin og áramótin, yfir mörg ár. Kerfið heldur utan um sögu hvers meðeiganda og raðar þeim sem sjaldnast — eða lengst síðan — hafa fengið helgina fremst í röðina. „Stórhelgar"-spjaldið á dagatalinu sýnir hvers réttur er hverju sinni, sögu síðustu ára og býður upp á að taka helgina með einum smelli. Þremur mánuðum fyrir hverja helgi opnast bókunin öllum meðeigendum, óháð röð. Hús geta valið milli „Sanngirnisreglu" og „Hver kemur fyrst" í stillingum. Það er engin formúla byggð á fjölda bókana eða næturfjölda — eingöngu röð eftir sögu hverrar stórhelgar.
 
 ### Hússjóður / Fjárhagsyfirlit
-Fullkomið bókhaldi yfir allt sem varðar sumarhúsið. Skráðu innborganir, útgjöld, viðhaldsvinnu og leigu. Kerfið flokkar sjálfkrafa eftir tegund og sýnir stöðu hússjóðsins. Hægt er að stjórna hverjir sjá hvað.
+Fullkomið bókhald yfir allt sem varðar sumarhúsið. Skráðu innborganir, útgjöld, viðhaldsvinnu og leigu. Kerfið flokkar sjálfkrafa eftir tegund og sýnir stöðu hússjóðsins. Kostnaði er skipt jafnt á milli meðeigenda sjálfgefið, eða eftir eignarhlutföllum sem stjórnandi hússins stillir — aldrei eftir næturfjölda eða notkun. Rekstraráætlun (budget) og áminningar um endurtekna reikninga (t.d. að rafmagnsreikningur sé væntanlegur) eru innifaldar. Hægt er að stjórna hverjir sjá hvað.
+
+### Gátlistar og birgðastaða
+Komu- og brottfarargátlistar með íslenskum sjálfgefnum atriðum, fullkomlega sérsniðanlegir. Birgðastaða sem merkt er á þrotum við brottför bætist sjálfkrafa á sameiginlega innkaupalistann. Árstíðabundnir listar fyrir vor-opnun og vetrarfrágang birtast sem áminningar á yfirlitssíðunni (apríl–maí og september–október).
+
+### Árbók
+Í lok hvers árs útbýr kerfið sjálfkrafa prentanlega árbók fyrir húsið á /arbok — fjöldi nátta, tölfræði fyrir hverja fjölskyldu, lengsta dvölin, hver vann hverja stórhelgi og valdar tilvitnanir úr gestabókinni.
+
+### Virkar ótengt (Offline)
+Byggt sem PWA með ofangeymslu. Dagatal, verkefni og innkaupalisti eru læsileg þó ekkert netsamband sé í bústaðnum. Breytingar samstillast sjálfkrafa þegar samband næst á ný.
+
+### Innkaupalisti og gestabók
+Sameiginlegur innkaupalisti sem allir meðeigendur og gestir geta bætt við, og stafræn gestabók fyrir minningar úr hverri dvöl.
+
+### Ársyfirlit
+Í lok árs fá allir aðgang að Ársyfirliti sem sýnir framlög og útgjöld hverrar fjölskyldu.
 
 ### Hlutverkastýring
 Bústaðastjóri (Manager) hefur fullt aðgengi og getur breytt stillingum, bætt við notendum og stjórnað fjármálum. Almennir meðeigendur geta bókað, skráð útgjöld og séð upplýsingar.
@@ -28,13 +43,13 @@ Bústaðastjóri (Manager) hefur fullt aðgengi og getur breytt stillingum, bæt
 Búðu til tímabundna hlekki (Magic Links) fyrir gesti sem virkjast sjálfkrafa 24 tímum fyrir komu og renna út eftir brottför. Gestir fá WiFi lykilorð, reglur og aðgangsupplýsingar beint í símann.
 
 ### Tilkynningar
-Sjálfvirkar tilkynningar um nýjar bókanir, breytingar og verkefni á gjalddaga. Hægt er að stilla hvaða tilkynningar þú vilt fá.
+Ýtitilkynningar (push) beint í símann, bjalla í appinu og tölvupóstur þegar bókun er gerð. Nær yfir nýjar bókanir, úthlutuð verkefni, hluti sem bætt er á innkaupalistann, aðildarbeiðnir og veðurviðvaranir. Ýtitilkynningar eru valkvæðar — þér er boðið að virkja þær á yfirlitssíðunni.
 
 ### Torgið (Markaðstorg)
 Finndu verktaka og þjónustuaðila í nágrenninu við bústaðinn. Snjómokstur, þrif, pípulagnir, rafvirkja og fleira. Skoðaðu einkunnir og hafðu beint samband.
 
 ### Veðurviðvörun
-Kerfið tengist Veðurstofunni og vaktar sjálfkrafa veðurspá og ófærð á nærliggjandi vegum.
+Þegar bókun er innan við viku í burtu birtist veðurspá fyrir bústaðinn á yfirlitssíðunni (gögn frá Veðurstofunni), ásamt stöðu helstu vega í nágrenninu (gögn frá Vegagerðinni). Kerfið framkvæmir daglega sjálfvirka athugun og sendir ýtitilkynningu og tilkynningu í appinu ef spáð er stormi, snjókomu, frosti, mikilli úrkomu eða hvassviðri fyrir bókanir sem hefjast innan þriggja daga.
 
 ## Verðlag
 
