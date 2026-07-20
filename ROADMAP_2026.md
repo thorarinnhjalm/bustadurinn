@@ -1,5 +1,9 @@
 # Bústaðurinn.is — Feature Roadmap (July 2026)
 
+**STATUS: All phases (0–6) shipped 2026-07-20.** Kept for reference — the
+audit corrections below remain useful context, and "Known gaps / future
+work" at the bottom lists what was deliberately deferred.
+
 Grounded in a code audit of the current main branch. Ordered by phase; each
 phase is independently shippable. File references point at the code as of
 commit `609f771`.
@@ -192,3 +196,22 @@ Phase 0 now (hours, mostly deletion-of-doubt), then 1 → 2 (2 depends on 1.3).
 Phase 3 after 0.1. Phases 4–6 are independent of each other and can be
 scheduled by appetite; 4 is the biggest single feature, 2 is the most
 differentiating.
+
+## Known gaps / future work (post-ship notes, 2026-07-20)
+
+- **api/ is not type-checked**: neither tsconfig project includes `api/**`,
+  and several pre-existing api files have type errors. Worth adding a
+  tsconfig.api.json and fixing the fallout.
+- **Booking conflict check is race-window-narrowing, not atomic** (documented
+  in bookingService.ts) — true atomicity needs an Admin SDK route or a
+  bookings-index doc.
+- **Fairness rotation computes live from bookings** — the caching subcollection
+  from the original 2.2 design was descoped; add if the Stórhelgar panel
+  ever feels slow on booking-heavy houses.
+- **Old bookings' fairness history starts from existing data** — history
+  before the app was adopted is invisible; houses may want a way to seed
+  who-had-which-holiday manually.
+- **Weather cron re-fetches forecasts daily for opted-out users' bookings**
+  (correct but slightly wasteful); fine at current scale.
+- ~100 stale status/summary .md files in the repo root still awaiting a
+  cleanup sweep.
