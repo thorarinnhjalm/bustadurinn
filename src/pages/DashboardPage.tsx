@@ -17,7 +17,9 @@ import { collection, query, where, orderBy, limit, addDoc, onSnapshot, serverTim
 import { db } from '@/lib/firebase';
 import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, House, BudgetPlan } from '@/types/models';
 import { fetchWeather } from '@/utils/weather';
+import { shouldShowWeather } from '@/services/weatherService';
 import MyServiceWidget from '@/components/dashboard/MyServiceWidget';
+import BookingWeatherCard from '@/components/BookingWeatherCard';
 import SetupProgress from '@/components/SetupProgress';
 import WhatsNext from '@/components/WhatsNext';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -25,6 +27,11 @@ import BookingDetailModal from '@/components/calendar/BookingDetailModal';
 import CheckoutModal from '@/components/dashboard/CheckoutModal';
 import Walkthrough from '@/components/Walkthrough';
 import ErrorBoundary from '@/components/ErrorBoundary';
+
+// InternalLog does not (yet) declare a structured `kind` field in src/types/models.ts.
+// We add it locally here rather than editing the shared model file (owned by another
+// concurrent change). Older logs in production predate this field, hence optional.
+type CheckInOutLog = InternalLog & { kind?: 'check_in' | 'check_out' };
 
 const UserDashboard = () => {
     const navigate = useNavigate();
@@ -171,14 +178,18 @@ const UserDashboard = () => {
                         id: doc.id,
                         ...doc.data(),
                         created_at: doc.data().created_at?.toDate()
-                    })) as InternalLog[];
+                    })) as CheckInOutLog[];
 
                     // Check check-in status
                     if (currentUser?.uid) {
                         const userLogs = logsData.filter(log => log.user_id === currentUser.uid);
                         if (userLogs.length > 0) {
                             const last = userLogs[0];
-                            if (last.text.includes('skráði komu')) setIsCheckedIn(true);
+                            // Prefer the structured field; fall back to string-matching
+                            // Icelandic log text for older logs written before `kind` existed.
+                            if (last.kind === 'check_in') setIsCheckedIn(true);
+                            else if (last.kind === 'check_out') setIsCheckedIn(false);
+                            else if (last.text.includes('skráði komu')) setIsCheckedIn(true);
                             else if (last.text.includes('skráði brottför')) setIsCheckedIn(false);
                         }
                     }
@@ -337,9 +348,10 @@ const UserDashboard = () => {
                 user_id: currentUser.uid,
                 user_name: currentUser.name,
                 text,
+                kind: 'check_out' as const,
                 created_at: serverTimestamp()
             };
-            await addDoc(collection(db, 'internal_logs'), newLog);
+            await addDoc(collection(db, 'houses', currentHouse.id, 'internal_logs'), newLog);
 
             setShowCheckoutModal(false);
             setCheckoutMessage('');
@@ -533,9 +545,10 @@ const UserDashboard = () => {
                                         user_id: currentUser.uid,
                                         user_name: currentUser.name,
                                         text,
+                                        kind: 'check_in' as const,
                                         created_at: serverTimestamp()
                                     };
-                                    await addDoc(collection(db, 'internal_logs'), newLog);
+                                    await addDoc(collection(db, 'houses', currentHouse.id, 'internal_logs'), newLog);
                                     setIsCheckedIn(true);
                                 } catch (error) {
                                     console.error('Error logging check-in:', error);
@@ -822,6 +835,20 @@ const UserDashboard = () => {
                         </div>
                     </section>
                 </div>
+
+                {/* WEATHER FORECAST (only when a booking is coming up within the next 7 days) */}
+                {nextBooking && currentHouse?.location?.lat && currentHouse?.location?.lng && shouldShowWeather(nextBooking.start) && (
+                    <ErrorBoundary fallback={<></>}>
+                        <BookingWeatherCard
+                            bookingId={nextBooking.id}
+                            startDate={nextBooking.start}
+                            endDate={nextBooking.end}
+                            houseLatitude={currentHouse.location.lat}
+                            houseLongitude={currentHouse.location.lng}
+                            houseName={currentHouse.name}
+                        />
+                    </ErrorBoundary>
+                )}
             </div>
 
             {nextBooking && (
