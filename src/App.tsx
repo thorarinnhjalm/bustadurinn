@@ -26,6 +26,7 @@ const FinancePage = lazy(() => import('@/pages/FinancePage'));
 const TasksPage = lazy(() => import('@/pages/TasksPage'));
 const SuperAdminPage = lazy(() => import('@/pages/SuperAdminPage'));
 const ArbokPage = lazy(() => import('@/pages/ArbokPage'));
+const VibersPage = lazy(() => import('@/pages/VibersPage'));
 const JoinPage = lazy(() => import('@/pages/JoinPage'));
 const GuestPage = lazy(() => import('@/pages/GuestPage'));
 const FeaturesPage = lazy(() => import('@/pages/FeaturesPage'));
@@ -161,6 +162,8 @@ function App() {
                 <Route path="/join/:houseId/:code" element={<JoinPage />} />
                 <Route path="/guest/:token" element={<GuestPage />} />
                 <Route path="/eiginleikar" element={<FeaturesPage />} />
+                {/* Hidden, no-index page for Árni & Villi — intentionally not in nav or sitemap */}
+                <Route path="/vibers" element={<VibersPage />} />
                 <Route path="/spurt-og-svarad" element={<FAQPage />} />
                 <Route path="/um-okkur" element={<AboutPage />} />
                 <Route path="/hafa-samband" element={<ContactPage />} />
