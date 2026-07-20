@@ -96,8 +96,12 @@ if (dsn) {
 initPerformanceMonitoring();
 
 // Force deploy check
-// Register Service Worker for Push Notifications
-if ('serviceWorker' in navigator) {
+// Register the merged Service Worker (Workbox app-shell precache + FCM
+// background messages — see src/firebase-messaging-sw.js). Only registered in production
+// builds: vite-plugin-pwa's injectManifest strategy runs at build time, so
+// there is no generated worker to register during `vite dev`
+// (devOptions.enabled: false in vite.config.ts).
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/firebase-messaging-sw.js')
       .then(reg => logger.debug('SW registered:', reg))
