@@ -8,16 +8,19 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css'; // Add base styles
 import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { is } from 'date-fns/locale';
 import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock, Trash2, Check } from 'lucide-react';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, deleteDoc, limit, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
-import type { Booking, BookingType, User } from '@/types/models';
+import type { Booking, BookingType } from '@/types/models';
 import { dateLocales, calendarMessages, bookingTypeLabels, type SupportedLanguage } from '@/utils/i18n';
 import { getIcelandicHolidays, isHoliday, includesMajorHoliday } from '@/utils/icelandicHolidays';
 import { analytics } from '@/utils/analytics';
+import { rangesOverlap, createBooking, deleteBooking, BookingConflictError } from '@/services/bookingService';
+import { logger } from '@/utils/logger';
 import MobileNav from '@/components/MobileNav';
 import EmptyState from '@/components/EmptyState';
 import confetti from 'canvas-confetti';
@@ -260,6 +263,8 @@ export default function CalendarPage() {
     const [error, setError] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
     const [successBooking, setSuccessBooking] = useState<{ user_name: string, start: Date, end: Date } | null>(null);
+    // Conflicting bookings surfaced to the user as a warning-with-override, not a hard block
+    const [conflictWarning, setConflictWarning] = useState<Booking[] | null>(null);
 
     // Language preference (default to Icelandic, but can be changed)
     const [language] = useState<SupportedLanguage>('is');
@@ -392,12 +397,11 @@ export default function CalendarPage() {
         }
     }, [houseId, getBookingTypeLabel]);
 
-    // Check conflicts helper
-    const checkConflicts = useCallback((start: Date, end: Date): boolean => {
-        return bookings.some(booking => {
-            // Check if dates overlap
-            return (start < booking.end && end > booking.start);
-        });
+    // Fast client-side conflict pre-check against already-loaded bookings (instant UX).
+    // This is NOT authoritative — createBooking() re-checks against a fresh Firestore
+    // read right before writing, since this component's `bookings` state can be stale.
+    const findLocalConflicts = useCallback((start: Date, end: Date): Booking[] => {
+        return bookings.filter(booking => rangesOverlap(start, end, booking.start, booking.end));
     }, [bookings]);
 
     // Check fairness helper
@@ -467,7 +471,7 @@ export default function CalendarPage() {
         return getIcelandicHolidays(currentYear);
     }, []);
 
-    const handleCreateBooking = async () => {
+    const handleCreateBooking = async (overrideConflicts: boolean = false) => {
         if (!currentUser) {
             setError('Engin notandi skráður inn');
             return;
@@ -478,22 +482,26 @@ export default function CalendarPage() {
             return;
         }
 
-        // Check for conflicts
-        if (checkConflicts(newBooking.start, newBooking.end)) {
-            setError('Það er þegar bókun á þessum dagsetningum. Vinsamlegast veldu aðrar dagsetningar.');
-            return;
-        }
-
         // Validate dates
         if (newBooking.end < newBooking.start) {
             setError('Lokadagur getur ekki verið á undan upphafsdegi.');
             return;
         }
 
+        // Fast client-side pre-check for instant UX. Not authoritative — skipped
+        // entirely when the user has already chosen to override (Bóka samt).
+        if (!overrideConflicts) {
+            const localConflicts = findLocalConflicts(newBooking.start, newBooking.end);
+            if (localConflicts.length > 0) {
+                setConflictWarning(localConflicts);
+                return;
+            }
+        }
+
         setLoading(true);
         setError('');
 
-        // Check Fairness (Sanngirnisregla)
+        // Check Fairness (Sanngirnisregla) - this remains a hard block
         const fairness = await checkFairness(newBooking.start, newBooking.end, currentUser.uid);
         if (!fairness.allowed) {
             setError(fairness.reason || 'Bókun ekki leyfileg.');
@@ -502,107 +510,16 @@ export default function CalendarPage() {
         }
 
         try {
-            const docRef = await addDoc(collection(db, 'houses', houseId, 'bookings'), {
-                house_id: houseId,
-                user_id: currentUser.uid,
-                user_name: currentUser.name || currentUser.email,
+            await createBooking({
+                houseId,
+                userId: currentUser.uid,
+                userName: currentUser.name || currentUser.email || '',
                 start: newBooking.start,
                 end: newBooking.end,
                 type: newBooking.type,
                 notes: newBooking.notes,
-                created_at: serverTimestamp()
+                allowConflicts: overrideConflicts
             });
-
-            const bookingId = docRef.id;
-
-            // Send notifications (don't block on this)
-            try {
-                // Fetch house to get owner IDs
-                const houseDoc = await getDoc(doc(db, 'houses', houseId));
-                const house = houseDoc.data();
-
-                if (house && house.owner_ids) {
-                    const ownerEmails: string[] = [];
-                    const allTokens: string[] = [];
-                    const houseName = house.name || 'Sumarhús';
-
-                    for (const ownerId of house.owner_ids) {
-                        // Don't notify the person who made the booking
-                        if (ownerId === currentUser.uid) continue;
-
-                        const userDoc = await getDoc(doc(db, 'users', ownerId));
-                        const userData = userDoc.data() as User;
-                        if (!userData) continue;
-
-                        // Check Notification Settings
-                        const settings = userData.notification_settings;
-
-                        // 1. In-App Notification (Respecting Settings)
-                        const inAppEnabled = settings?.in_app?.new_bookings ?? true; // Default to true if not set
-                        if (inAppEnabled) {
-                            await addDoc(collection(db, 'notifications'), {
-                                user_id: ownerId,
-                                house_id: houseId,
-                                title: 'Ný bókun',
-                                message: `${currentUser.name} bókaði ${houseName}`,
-                                type: 'booking',
-                                read: false,
-                                data: {
-                                    booking_id: bookingId
-                                },
-                                created_at: serverTimestamp()
-                            });
-
-                            // Collect tokens for push if in-app is enabled
-                            if (userData.fcm_tokens && userData.fcm_tokens.length > 0) {
-                                allTokens.push(...userData.fcm_tokens);
-                            }
-                        }
-
-                        // 2. Email Notification (Respecting Settings)
-                        const emailEnabled = settings?.emails?.new_bookings ?? true;
-                        if (emailEnabled && userData.email) {
-                            ownerEmails.push(userData.email);
-                        }
-                    }
-
-                    // Send gathered emails via API
-                    if (ownerEmails.length > 0) {
-                        await fetch('/api/booking-notification', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                houseName,
-                                userName: currentUser.name || currentUser.email,
-                                startDate: newBooking.start.toISOString(),
-                                endDate: newBooking.end.toISOString(),
-                                bookingType: newBooking.type,
-                                ownerEmails,
-                                language: 'is' // Logic for individual languages could be added here
-                            })
-                        });
-                    }
-
-                    // Send Push Notifications via API
-                    if (allTokens.length > 0) {
-                        await fetch('/api/push-notification', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                tokens: allTokens,
-                                title: 'Ný bókun 🏠',
-                                body: `${currentUser.name} bókaði ${houseName} (${newBooking.start.toLocaleDateString('is-IS')} - ${newBooking.end.toLocaleDateString('is-IS')})`,
-                                data: {
-                                    link: 'https://www.bustadurinn.is/calendar',
-                                    booking_id: bookingId
-                                }
-                            })
-                        });
-                    }
-                }
-            } catch (notifyError) {
-                console.error('Failed to send booking notifications:', notifyError);
-            }
 
             // Reload bookings
             await loadBookings();
@@ -618,6 +535,7 @@ export default function CalendarPage() {
             });
 
             // Close booking modal and show success
+            setConflictWarning(null);
             setShowModal(false);
             setShowSuccess(true);
 
@@ -635,11 +553,22 @@ export default function CalendarPage() {
                 notes: ''
             });
         } catch (err: any) {
-            console.error('Error creating booking:', err);
-            setError('Villa kom upp við að búa til bókun: ' + err.message);
+            if (err instanceof BookingConflictError) {
+                // Fresh conflicts appeared between page load and submit (or the
+                // client-side pre-check missed them) - surface the same warning dialog.
+                setConflictWarning(err.conflicts);
+            } else {
+                logger.error('Error creating booking:', err);
+                setError('Villa kom upp við að búa til bókun: ' + err.message);
+            }
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleConfirmConflictingBooking = () => {
+        setConflictWarning(null);
+        handleCreateBooking(true);
     };
 
     const handleSelectSlot = useCallback((slotInfo: any) => {
@@ -676,7 +605,7 @@ export default function CalendarPage() {
                 isManager: currentHouse?.manager_id === currentUser?.uid
             });
 
-            await deleteDoc(doc(db, 'houses', houseId, 'bookings', selectedBooking.id));
+            await deleteBooking(houseId, selectedBooking.id);
 
             console.log('✅ Booking deleted successfully');
 
@@ -920,7 +849,7 @@ export default function CalendarPage() {
                         <div className="bg-white rounded-lg max-w-md w-full p-6">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-serif">Ný bókun</h2>
-                                <button onClick={() => setShowModal(false)} className="text-grey-mid hover:text-charcoal">
+                                <button onClick={() => { setShowModal(false); setConflictWarning(null); }} className="text-grey-mid hover:text-charcoal">
                                     <X className="w-6 h-6" />
                                 </button>
                             </div>
@@ -993,7 +922,7 @@ export default function CalendarPage() {
                                 <div className="flex gap-3 pt-4">
                                     <button
                                         type="button"
-                                        onClick={() => setShowModal(false)}
+                                        onClick={() => { setShowModal(false); setConflictWarning(null); }}
                                         className="btn btn-ghost flex-1"
                                         disabled={loading}
                                     >
@@ -1012,6 +941,59 @@ export default function CalendarPage() {
                     </div>
                 )
             }
+
+            {/* Conflict Warning Modal - warn instead of hard-block, offer override */}
+            {conflictWarning && conflictWarning.length > 0 && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-[60]">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-serif">Skörun bókana</h2>
+                            <button onClick={() => setConflictWarning(null)} className="text-grey-mid hover:text-charcoal">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="bg-amber/10 border border-amber text-amber-800 rounded p-4 mb-4 flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm">Þessi bókun skarast á við:</span>
+                        </div>
+
+                        <div className="space-y-2 mb-6">
+                            {conflictWarning.map((conflict) => (
+                                <div key={conflict.id} className="bg-stone-50 rounded p-3 border border-stone-200">
+                                    <p className="font-medium text-charcoal">{conflict.user_name}</p>
+                                    <p className="text-sm text-stone-500">
+                                        {format(conflict.start, 'd. MMMM yyyy', { locale: is })} - {format(conflict.end, 'd. MMMM yyyy', { locale: is })}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <p className="text-sm text-stone-500 mb-4">
+                            Þú getur samt bókað ef þið eruð sammála um að deila húsinu þessa daga.
+                        </p>
+
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setConflictWarning(null)}
+                                className="btn btn-ghost flex-1"
+                                disabled={loading}
+                            >
+                                Hætta við
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmConflictingBooking}
+                                className="btn btn-primary flex-1"
+                                disabled={loading}
+                            >
+                                {loading ? 'Bý til...' : 'Bóka samt'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* View/Delete Booking Modal */}
             {selectedBooking && (
