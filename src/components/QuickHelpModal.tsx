@@ -13,11 +13,19 @@ const FAQ_ITEMS = [
     },
     {
         q: "Hvað er sanngirnisreglan?",
-        a: "Kerfið fylgist með hverjir fengu vinsælar helgar (jól, páskar) síðustu ár. Þeir sem fengu ekki í fyrra fá forgang næst. Þetta tryggir jafna skiptingu."
+        a: "Fyrir stórhelgarnar (páska, verslunarmannahelgi, jól, áramót) reiknar kerfið hver á forgang: sá sem aldrei hefur haldið helgina — eða lengst er síðan — fær hann. Forgangurinn er ekki bann, heldur röð; hann fellur niður 3 mánuðum fyrir helgina og þá má hver sem er bóka hana. 'Stórhelgar' spjaldið á dagatalinu sýnir röðina og söguna."
+    },
+    {
+        q: "Hvað gerist ef tveir bóka sömu helgina?",
+        a: "Kerfið kemur ekki sjálfkrafa í veg fyrir skörun — það varar þig við, sýnir hver er þegar með bókun og hvenær, og þú velur 'Bóka samt' ef um vísvitandi samveru er að ræða."
     },
     {
         q: "Hvernig virkar hússjóðurinn?",
-        a: "Skráðu sameiginlegan kostnað (rafmagn, tryggingar, viðhald). Kerfið reiknar sjálfkrafa hvað hver á að borga og hver á inni."
+        a: "Skráðu sameiginlegan kostnað (rafmagn, tryggingar, viðhald). Kerfið reiknar sjálfkrafa hvað hver á að borga, ýmist jafnt skipt eða eftir eignarhlutföllum sem stjórnandi stillir, og hver á inni. Ársyfirlit í lok árs tekur saman hlutdeild og greiðslur hvers eiganda."
+    },
+    {
+        q: "Hvað eru gátlistar og hvar stilli ég þá?",
+        a: "Í Stillingar → Gátlistar má setja upp komu- og brottfarargátlista, birgðastöðu (hlutir sem eru 'Á þrotum' fara sjálfkrafa á innkaupalistann) og árstíðalista fyrir vor-opnun og vetrarfrágang — allt með tilbúnum sjálfgefnum atriðum."
     },
     {
         q: "Get ég séð hverjir bókuðu hvað?",

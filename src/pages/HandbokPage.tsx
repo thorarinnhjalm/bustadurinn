@@ -2,6 +2,17 @@ import MarketingLayout from '@/components/MarketingLayout';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Calendar, TrendingUp, CheckSquare, Home, ArrowRight, ChevronRight } from 'lucide-react';
 
+// Tailwind's JIT compiler only picks up class names it can find literally in
+// source — `bg-${section.color}/10` is invisible to it and gets purged from
+// the production build, silently dropping the icon background/text colors.
+// A static map keeps every class name spelled out so it survives the build.
+const SECTION_COLOR_CLASSES: Record<string, { bg: string; text: string }> = {
+    amber: { bg: 'bg-amber/10', text: 'text-amber' },
+    emerald: { bg: 'bg-emerald-600/10', text: 'text-emerald-600' },
+    blue: { bg: 'bg-blue-600/10', text: 'text-blue-600' },
+    purple: { bg: 'bg-purple-600/10', text: 'text-purple-600' },
+};
+
 export default function HandbokPage() {
     const navigate = useNavigate();
 
@@ -11,7 +22,7 @@ export default function HandbokPage() {
             icon: Calendar,
             title: 'Bókunarkerfi fyrir sameignarhús',
             color: 'amber',
-            description: 'Lærðu hvernig þú getur skipulagt bókanir sanngjarnt og forðast tvöfaldar bókanir. Við förum yfir sanngirnisreglur og góðar venjur.',
+            description: 'Lærðu hvernig þú getur skipulagt bókanir sanngjarnt og fengið viðvörun ef bókanir skarast. Við förum yfir sanngirnisreglur og góðar venjur.',
             path: '/handbok/bokunarkerfi'
         },
         {
@@ -90,14 +101,15 @@ export default function HandbokPage() {
                     <div className="grid md:grid-cols-2 gap-6">
                         {sections.map((section) => {
                             const Icon = section.icon;
+                            const colorClasses = SECTION_COLOR_CLASSES[section.color] ?? SECTION_COLOR_CLASSES.amber;
                             return (
                                 <button
                                     key={section.id}
                                     onClick={() => navigate(section.path)}
                                     className="group bg-white border-2 border-stone-200 hover:border-amber hover:shadow-lg rounded-xl p-8 text-left transition-all duration-300"
                                 >
-                                    <div className={`w-14 h-14 rounded-full bg-${section.color}/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                                        <Icon className={`w-7 h-7 text-${section.color}`} />
+                                    <div className={`w-14 h-14 rounded-full ${colorClasses.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                                        <Icon className={`w-7 h-7 ${colorClasses.text}`} />
                                     </div>
                                     <h3 className="text-xl font-serif font-bold mb-3 group-hover:text-amber transition-colors">
                                         {section.title}

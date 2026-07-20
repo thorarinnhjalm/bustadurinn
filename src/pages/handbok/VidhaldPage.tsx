@@ -73,13 +73,13 @@ export default function VidhaldPage() {
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
-                                        <strong>Merkja sem lokið:</strong> Þegar verkefni er klárað, merkir þú það og það fer í "completed"
+                                        <strong>Fylgjast með stöðu:</strong> Hvert verkefni fer í gegnum stöðurnar í bið, í vinnslu og lokið — og hægt er að merkja verkefni sem hætt við
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
-                                        <strong>Sjá stöðu:</strong> Listasýn eða Töflusýn til að sjá öll verkefni í einu
+                                        <strong>Kostnaðarskráning:</strong> Hægt er að skrá kostnað við verkefni og bæta honum sjálfkrafa við hússjóðsbókhaldið
                                     </div>
                                 </li>
                             </ul>
@@ -88,19 +88,27 @@ export default function VidhaldPage() {
 
                     {/* Seasonal Checklist */}
                     <div>
-                        <h2 className="text-3xl font-serif font-bold mb-6">Tímasettar verkefni eftir árstíma</h2>
+                        <h2 className="text-3xl font-serif font-bold mb-6">Árstíðalistar: vor-opnun og vetrarfrágangur</h2>
+                        <p className="text-lg text-grey-dark leading-relaxed mb-4">
+                            Fyrir utan almenna verkefnalistann er í Bústaðnum sérstakur eiginleiki fyrir árstíðabundin verk: í
+                            <strong> Stillingar → Gátlistar → Árstíðalistar</strong> getur stjórnandi hússins búið til tvo lista —
+                            einn fyrir <strong>vor-opnun</strong> og annan fyrir <strong>vetrarfrágang</strong> — og valið úr tilbúnum,
+                            íslenskum sjálfgefnum atriðum með einum smelli í stað þess að skrifa allt frá grunni.
+                        </p>
                         <p className="text-lg text-grey-dark leading-relaxed mb-8">
-                            Sumarhús þarf mismunandi viðhald eftir árstíma. Hér er checklist sem þú getur notað sem innblástur:
+                            Þegar listi er stilltur birtist hann sjálfkrafa sem áminningarspjald á yfirlitstöflunni á réttum tíma árs —
+                            vor-opnunin í apríl og maí, vetrarfrágangurinn í september og október — og er sýnilegt þar til einhver hakar
+                            í hann. Hér eru hugmyndir að atriðum fyrir hvorn lista:
                         </p>
 
                         <div className="grid md:grid-cols-2 gap-6">
-                            {/* Vor */}
+                            {/* Vor-opnun */}
                             <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-200 rounded-xl p-6">
                                 <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
                                     <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                     </svg>
-                                    Vor (mars-maí)
+                                    Vor-opnun (apríl-maí)
                                 </h3>
                                 <ul className="space-y-2 text-grey-dark">
                                     <li className="flex items-start gap-2">
@@ -126,101 +134,55 @@ export default function VidhaldPage() {
                                 </ul>
                             </div>
 
-                            {/* Sumar */}
-                            <div className="bg-gradient-to-br from-yellow-50 to-white border-2 border-yellow-200 rounded-xl p-6">
-                                <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                                    <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                                    </svg>
-                                    Sumar (júní-ágúst)
-                                </h3>
-                                <ul className="space-y-2 text-grey-dark">
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-yellow-600 mt-1">•</span>
-                                        Viðhalda grasflötum reglulega
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-yellow-600 mt-1">•</span>
-                                        Hreinsa heitan pott
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-yellow-600 mt-1">•</span>
-                                        Þrífa grill eftir notkun
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-yellow-600 mt-1">•</span>
-                                        Athuga glugga og hurðir
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-yellow-600 mt-1">•</span>
-                                        Skoða þakviðgerðir ef þörf
-                                    </li>
-                                </ul>
-                            </div>
-
-                            {/* Haust */}
-                            <div className="bg-gradient-to-br from-orange-50 to-white border-2 border-orange-200 rounded-xl p-6">
-                                <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                                    <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                    Haust (september-nóvember)
-                                </h3>
-                                <ul className="space-y-2 text-grey-dark">
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-orange-600 mt-1">•</span>
-                                        Taka inn garðhúsgögn
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-orange-600 mt-1">•</span>
-                                        Loka vatni fyrir veturinn
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-orange-600 mt-1">•</span>
-                                        Hreinsa niðurföll og þakrenni
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-orange-600 mt-1">•</span>
-                                        Athuga einangrun og glugga
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="text-orange-600 mt-1">•</span>
-                                        Taka inn/geyma grill og útibúnað
-                                    </li>
-                                </ul>
-                            </div>
-
-                            {/* Vetur */}
+                            {/* Vetrarfrágangur */}
                             <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-6">
                                 <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
                                     <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07" />
                                     </svg>
-                                    Vetur (desember-febrúar)
+                                    Vetrarfrágangur (september-október)
                                 </h3>
                                 <ul className="space-y-2 text-grey-dark">
                                     <li className="flex items-start gap-2">
                                         <span className="text-blue-600 mt-1">•</span>
-                                        Snjómokstur ef þörf
+                                        Taka inn garðhúsgögn
                                     </li>
                                     <li className="flex items-start gap-2">
                                         <span className="text-blue-600 mt-1">•</span>
-                                        Athuga að hitakerfið virki
+                                        Loka vatni fyrir veturinn
                                     </li>
                                     <li className="flex items-start gap-2">
                                         <span className="text-blue-600 mt-1">•</span>
-                                        Kíkja reglulega eftir húsinu
+                                        Hreinsa niðurföll og þakrenni
                                     </li>
                                     <li className="flex items-start gap-2">
                                         <span className="text-blue-600 mt-1">•</span>
-                                        Athuga þakálag eftir rok
+                                        Athuga einangrun og glugga
                                     </li>
                                     <li className="flex items-start gap-2">
                                         <span className="text-blue-600 mt-1">•</span>
-                                        Fylla á olíu/eldsneyti ef þörf
+                                        Taka inn/geyma grill og útibúnað
                                     </li>
                                 </ul>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Komu- og brottfarargátlistar */}
+                    <div>
+                        <h2 className="text-3xl font-serif font-bold mb-6">Komu- og brottfarargátlistar</h2>
+                        <div className="bg-white rounded-xl p-8 shadow-sm space-y-4">
+                            <p className="text-lg text-grey-dark leading-relaxed">
+                                Fyrir utan árstíðalistana er líka hægt að stilla venjulegan <strong>komugátlista</strong> (birtist þegar
+                                einhver skráir sig inn í húsið) og <strong>brottfarargátlista</strong> (birtist við skráningu brottfarar) —
+                                líka undir Stillingar → Gátlistar, með tilbúnum sjálfgefnum atriðum sem má breyta að vild.
+                            </p>
+                            <p className="text-grey-dark leading-relaxed">
+                                Við brottför er líka hægt að merkja <strong>birgðastöðu</strong> — hvort hver hlutur á lista (klósettpappír,
+                                uppþvottalögur, kveikjarar o.s.frv.) er „Til" eða „Á þrotum". Allt sem er merkt á þrotum fer sjálfkrafa á
+                                sameiginlega innkaupalistann, án þess að tvítaka atriði sem eru þegar þar. Á yfirlitstöflunni sér næsti
+                                gestur líka stöðu síðustu brottfarar — hvað var hakað við þegar seinasti hópur fór.
+                            </p>
                         </div>
                     </div>
 
@@ -229,7 +191,7 @@ export default function VidhaldPage() {
                         <h2 className="text-3xl font-serif font-bold mb-6">Stöður verkefna</h2>
                         <div className="bg-white rounded-xl p-8 shadow-sm">
                             <p className="text-lg text-grey-dark leading-relaxed mb-6">
-                                Í Bústaðnum eru verkefni með þrjár stöður sem hjálpa ykkur að halda utan um hvað er á döfinni:
+                                Í Bústaðnum eru verkefni með fjórar stöður sem hjálpa ykkur að halda utan um hvað er á döfinni:
                             </p>
 
                             <div className="space-y-4">
@@ -254,6 +216,14 @@ export default function VidhaldPage() {
                                     <div>
                                         <h4 className="font-bold mb-1">Lokið (Completed)</h4>
                                         <p className="text-sm text-grey-dark">Verkefni sem eru kláruð og þarfnast ekki frekari athygli</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-4 p-5 bg-stone-100 rounded-lg">
+                                    <div className="w-3 h-3 rounded-full bg-stone-400 mt-2"></div>
+                                    <div>
+                                        <h4 className="font-bold mb-1">Hætt við (Cancelled)</h4>
+                                        <p className="text-sm text-grey-dark">Verkefni sem hætt var við og þarf ekki að klára</p>
                                     </div>
                                 </div>
                             </div>

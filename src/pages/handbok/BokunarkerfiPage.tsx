@@ -9,7 +9,7 @@ export default function BokunarkerfiPage() {
         "@context": "https://schema.org",
         "@type": "HowTo",
         "name": "Bókunarkerfi fyrir sameignarhús",
-        "description": "Lærðu hvernig bókunarkerfi virkar fyrir sameignarhús og sumarhús, með sanngirnisreglu og árekstrarvörn.",
+        "description": "Lærðu hvernig bókunarkerfi virkar fyrir sameignarhús og sumarhús, með sanngirnisröðun stórhelga og árekstraviðvörun.",
         "step": [
             {
                 "@type": "HowToStep",
@@ -24,7 +24,7 @@ export default function BokunarkerfiPage() {
             {
                 "@type": "HowToStep",
                 "name": "Staðfestu bókun",
-                "text": "Kerfið athugar sjálfkrafa hvort dagsetningar eru lausar og sendir tilkynningar á alla"
+                "text": "Kerfið varar við ef dagsetningar skarast við aðra bókun og sendir tilkynningar á alla þegar bókun er staðfest"
             }
         ]
     };
@@ -32,8 +32,8 @@ export default function BokunarkerfiPage() {
     return (
         <MarketingLayout
             title="Bókunarkerfi fyrir sameignarhús - Bústaðurinn.is"
-            description="Hvernig bókunarkerfi fyrir sameignarhús virkar. Sanngirnisregla, árekstrarvörn og sjálfvirkar tilkynningar. Aldrei tvöfaldar bókanir aftur."
-            keywords="bókunarkerfi sameignarhús, bókun sumarhús, sanngirnisregla, dagatal sameign, árekstrarvörn"
+            description="Hvernig bókunarkerfi fyrir sameignarhús virkar. Sanngirnisregla með snúningi milli eigenda á stórhelgum, árekstraviðvaranir og sjálfvirkar tilkynningar."
+            keywords="bókunarkerfi sameignarhús, bókun sumarhús, sanngirnisregla, dagatal sameign, árekstraviðvörun"
             structuredData={structuredData}
             canonical="https://www.bustadurinn.is/handbok/bokunarkerfi"
         >
@@ -63,7 +63,7 @@ export default function BokunarkerfiPage() {
                     </div>
                     <p className="text-xl text-grey-dark leading-relaxed">
                         Þegar margar fjölskyldur eiga sumarhús saman er mikilvægt að hafa skýrt kerfi fyrir bókanir.
-                        Bústaðurinn.is kemur með innbyggt bókunarkerfi sem fyrirbyggir árekstra og tryggir sanngjarna skiptingu.
+                        Bústaðurinn.is kemur með innbyggt bókunarkerfi sem varar við árekstrum og tryggir sanngjarna skiptingu stórhelga.
                     </p>
                 </div>
             </section>
@@ -117,7 +117,8 @@ export default function BokunarkerfiPage() {
                         <div className="bg-white rounded-xl p-8 shadow-sm">
                             <p className="text-lg text-grey-dark leading-relaxed mb-6">
                                 Bústaðurinn.is býður upp á bókunardagatal sem er aðgengilegt öllum eigendum í síma og tölvu.
-                                Allir sjá strax hvenær aðrir hafa bókað og kerfið kemur í veg fyrir tvöfaldar bókanir sjálfkrafa.
+                                Allir sjá strax hvenær aðrir hafa bókað, og ef þú reynir að bóka ofan í aðra bókun varar kerfið þig við —
+                                sýnir hver er þegar með húsið og hvenær — og þú getur valið „Bóka samt" ef um vísvitandi samveru er að ræða.
                             </p>
 
                             <h3 className="text-xl font-bold mb-4">Helstu eiginleikar:</h3>
@@ -128,7 +129,7 @@ export default function BokunarkerfiPage() {
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
-                                    <span><strong>Árekstrarvörn:</strong> Kerfið kemur sjálfkrafa í veg fyrir tvöfaldar bókanir</span>
+                                    <span><strong>Árekstraviðvörun:</strong> Kerfið varar þig við ef bókunin skarast við aðra og sýnir hver á hana — kerfið hindrar ekki sjálfvirkt, heldur lætur þig taka upplýsta ákvörðun</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
@@ -136,7 +137,7 @@ export default function BokunarkerfiPage() {
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
-                                    <span><strong>Mismunandi bókunartegundir:</strong> Einkanot, Útleiga, Viðhald eða Gestir</span>
+                                    <span><strong>Mismunandi bókunartegundir:</strong> Persónuleg, Gestur, Útleiga eða Viðhald</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
@@ -155,7 +156,9 @@ export default function BokunarkerfiPage() {
                             </div>
 
                             <p className="text-lg text-grey-dark leading-relaxed mb-6">
-                                Ein stærsta nýjung Bústaðarins er innbyggða sanngirnisreglan sem tryggir að enginn sitji einn að vinsælustu helgunum.
+                                Ein stærsta nýjung Bústaðarins er innbyggða sanngirnisreglan: sjálfvirk skiptiröð (rotation) sem tryggir að
+                                stórhelgarnar — <strong>páskar, verslunarmannahelgin, jólin og áramótin</strong> — dreifist á milli eigenda yfir árin,
+                                í stað þess að sami eigandi sitji alltaf að þeim.
                             </p>
 
                             <h3 className="text-xl font-bold mb-3">Hvernig það virkar:</h3>
@@ -166,27 +169,36 @@ export default function BokunarkerfiPage() {
                                 </div>
 
                                 <div className="bg-white rounded-lg p-5">
-                                    <div className="font-bold text-amber mb-2">2. Kerfið fylgist með</div>
+                                    <div className="font-bold text-amber mb-2">2. Kerfið reiknar forgangsröð</div>
                                     <p className="text-sm text-grey-dark">
-                                        Þegar einhver bókar helstu hátíðisdaga (jól, páska, verslunarmannahelgi), þá skráir kerfið það
+                                        Fyrir hverja stórhelgi reiknar kerfið hver á forgang: sá sem aldrei hefur haldið helgina fær forgang fram yfir
+                                        þá sem hafa haldið hana, og af þeim sem hafa haldið hana fær sá forgang sem lengst er síðan hélt hana.
                                     </p>
                                 </div>
 
                                 <div className="bg-white rounded-lg p-5">
-                                    <div className="font-bold text-amber mb-2">3. Forgangur næsta ár</div>
+                                    <div className="font-bold text-amber mb-2">3. Forgangur, ekki bann</div>
                                     <p className="text-sm text-grey-dark">
-                                        Ef þú varst með jól síðasta ár, þá kemur kerfið í veg fyrir að þú bókir jól á ný næsta ár.
-                                        Aðrir eigendur fá þá tækifæri.
+                                        Ef þú reynir að bóka stórhelgi sem einhver annar á forgang á, útskýrir kerfið hver á röðina og hvenær helgin
+                                        opnast öllum. Forgangurinn fellur sjálfkrafa niður <strong>3 mánuðum fyrir</strong> helgina — eftir það getur
+                                        hver sem er bókað hana, óháð röðinni.
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="bg-amber/10 border-l-4 border-amber p-5 rounded-r-lg">
+                            <div className="bg-amber/10 border-l-4 border-amber p-5 rounded-r-lg mb-6">
                                 <p className="text-sm text-charcoal">
-                                    <strong>Dæmi:</strong> Ef Anna var með jól 2024, þá getur hún <strong>ekki</strong> bókað jól 2025.
-                                    Þess í stað fá Jón, Sigrún eða aðrir eigendur sem voru ekki með jól 2024 forgang.
+                                    <strong>Dæmi:</strong> Ef Anna hélt jólin 2024 og Jón og Sigrún gerðu það ekki, fá Jón og Sigrún forgang á jólin 2025.
+                                    Ef enginn þeirra hefur bókað þegar 3 mánuðir eru til jóla, opnast helgin öllum eigendum — líka Önnu.
                                 </p>
                             </div>
+
+                            <h3 className="text-xl font-bold mb-3">Stórhelgar-spjaldið</h3>
+                            <p className="text-sm text-grey-dark leading-relaxed">
+                                Á dagatalssíðunni er sérstakt „Stórhelgar" spjald sem sýnir allar fjórar stórhelgarnar fram í tímann — hver á
+                                forgang á hverja þeirra núna, sögu um hver hélt hana undanfarin ár, og hvenær forgangurinn opnast öllum. Þar getur
+                                sá sem á forgang smellt beint á „Bóka þessa helgi" til að nýta hann.
+                            </p>
                         </div>
                     </div>
 
@@ -213,7 +225,7 @@ export default function BokunarkerfiPage() {
                                 <div>
                                     <h3 className="font-bold text-lg mb-2">Bættu við upplýsingum</h3>
                                     <p className="text-grey-dark leading-relaxed">
-                                        Veldu tegund bókunar (persónuleg, útleiga, viðhald), skráðu hverjir koma og bættu við athugasemdum ef þú vilt.
+                                        Veldu tegund bókunar (persónuleg, gestur, útleiga eða viðhald), skráðu hverjir koma og bættu við athugasemdum ef þú vilt.
                                     </p>
                                 </div>
                             </div>
@@ -230,7 +242,7 @@ export default function BokunarkerfiPage() {
                                     <ul className="space-y-2 text-sm text-grey-dark">
                                         <li className="flex items-start gap-2">
                                             <span className="text-green-600 mt-0.5">✓</span>
-                                            <span>Athugar kerfið hvort dagsetningar eru lausar</span>
+                                            <span>Varar við ef dagsetningar skarast við aðra bókun (þú getur samt bókað ef það er vísvitandi)</span>
                                         </li>
                                         <li className="flex items-start gap-2">
                                             <span className="text-green-600 mt-0.5">✓</span>

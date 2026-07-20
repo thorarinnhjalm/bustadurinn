@@ -172,7 +172,7 @@ export default function FjarmalPage() {
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
-                                        <strong>Útgjöld með kvittunum:</strong> Hlaða upp mynd af kvittun og flokka eftir tegund
+                                        <strong>Útgjöld:</strong> Skráðu upphæð, dagsetningu og flokk (t.d. rafmagn, viðhald, tryggingar)
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
@@ -184,7 +184,7 @@ export default function FjarmalPage() {
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
-                                        <strong>Skipta kostnaði:</strong> Ef margir eigendur greiða saman fyrir eitthvað
+                                        <strong>Skipta kostnaði:</strong> Ef margir eigendur greiða saman fyrir eitthvað, skráðu hverjir tóku þátt og upphæðin skiptist jafnt milli þeirra
                                     </div>
                                 </li>
                             </ul>
@@ -210,7 +210,7 @@ export default function FjarmalPage() {
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
-                                    <span><strong>Myndir af kvittunum:</strong> Engar týndar pappírskvittanir. Hlaðið upp mynd af reikningnum strax.</span>
+                                    <span><strong>Áminningar um fasta kostnaðarliði:</strong> Kerfið minnir ykkur á þegar reglulegir liðir eins og rafmagnsreikningurinn eru væntanlegir, og forfyllir skráninguna svo hún taki eina mínútu.</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
@@ -240,19 +240,49 @@ export default function FjarmalPage() {
                                 <strong>Hvernig er best að skipta rafmagnsreikningi í sameign?</strong>
                             </p>
                             <p className="text-grey-dark leading-relaxed">
-                                Ein algengasta deilan í sameign er þegar einn aðili notar bústaðinn mikið yfir kaldasta tímabilið en annar notar hann aðeins yfir sumarið, en báðir borga sama hlutfall í rafmagn. 
-                                Með Bústaðnum getið þið:
+                                Í Bústaðnum skiptist sameiginlegur kostnaður — þar á meðal rafmagn — annað hvort <strong>jafnt</strong> á milli eigenda,
+                                eða eftir <strong>eignarhlutföllum</strong> sem stjórnandi hússins stillir (sjá „Eignarhlutir" hér fyrir neðan). Kerfið
+                                skiptir ekki kostnaði eftir næturfjölda eða notkun — sé misjöfn notkun ástæða ágreinings er eignarhlutfallaskiptingin
+                                leiðin til að endurspegla það, t.d. með því að vega upp á móti henni í ársuppgjöri fjölskyldna.
                             </p>
                             <ul className="space-y-3 pt-2">
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
-                                    <span><strong>Greiða eftir notkun:</strong> Skipta mánaðarlegum rafmagnsreikningi hlutfallslega miðað við næturfjölda sem hver dvaldi í mánuðinum.</span>
+                                    <span><strong>Jöfn skipting (sjálfgefið):</strong> Allir eigendur bera jafnan hlut af sameiginlegum kostnaði.</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
-                                    <span><strong>Sjóðskipting:</strong> Halda úti hússjóði þar sem föst mánaðarleg upphæð dugar fyrir meðaltali ársins.</span>
+                                    <span><strong>Eignarhlutfallsskipting:</strong> Stjórnandi getur stillt vægi hvers eiganda svo skiptingin endurspegli eignarhlutföll.</span>
                                 </li>
                             </ul>
+                        </div>
+                    </div>
+
+                    {/* Eignarhlutir */}
+                    <div>
+                        <h2 className="text-3xl font-serif font-bold mb-6">Eignarhlutir</h2>
+                        <div className="bg-white rounded-xl p-8 shadow-sm space-y-4">
+                            <p className="text-lg text-grey-dark leading-relaxed">
+                                Á rekstraráætlunarsíðunni getur stjórnandi hússins opnað „Eignarhlutir" og stillt vægi hvers eiganda í skiptingu
+                                sameiginlegs kostnaðar. Sjálfgefið hafa allir sama vægi (jöfn skipting), en ef eignarhlutföllin í húsinu eru
+                                ójöfn er hægt að slá inn viðeigandi hlutfallstölur — kerfið sýnir jafnóðum hversu mörg prósent hver eigandi ber.
+                            </p>
+                            <p className="text-grey-dark leading-relaxed">
+                                Þessi eignarhlutföll eru síðan notuð sjálfkrafa bæði í daglegri kostnaðarskiptingu og í ársyfirlitinu.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Ársyfirlit */}
+                    <div>
+                        <h2 className="text-3xl font-serif font-bold mb-6">Ársyfirlit</h2>
+                        <div className="bg-white rounded-xl p-8 shadow-sm space-y-4">
+                            <p className="text-lg text-grey-dark leading-relaxed">
+                                Fjármálasíðan er með þriðja flipa, „Ársyfirlit", sem tekur saman árið fyrir alla eigendur: heildartekjur, heildargjöld
+                                og nettóstöðu, og fyrir hvern eiganda — hlutdeild þeirra í gjöldum miðað við eignarhlutföll, hvað þeir hafa raunverulega
+                                greitt, og mismuninn þar á milli. Þetta gerir uppgjör í lok árs einfalt og gagnsætt: allir sjá svart á hvítu hvort þeir
+                                skulda eða eiga inni miðað við sinn eignarhlut.
+                            </p>
                         </div>
                     </div>
 
@@ -275,7 +305,7 @@ export default function FjarmalPage() {
                             </div>
                             <div className="bg-white rounded-lg p-4 flex items-start gap-3">
                                 <CheckSquare className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
-                                <span>Öll útgjöld með kvittunum og skýringum</span>
+                                <span>Öll útgjöld með flokkun og skýringum</span>
                             </div>
                             <div className="bg-white rounded-lg p-4 flex items-start gap-3">
                                 <CheckSquare className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />

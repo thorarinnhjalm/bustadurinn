@@ -20,28 +20,28 @@ const STEPS = [
     {
         id: 'bookings',
         title: 'Bókanir & Dagatal',
-        description: 'Hér sérðu hvenær bústaðurinn er laus. Þú getur bókað með einum smelli og séð hverjir aðrir eru á leiðinni.',
+        description: 'Hér sérðu hvenær bústaðurinn er laus. Þú getur bókað með einum smelli og séð hverjir aðrir eru á leiðinni. Stórhelgar spjaldið sýnir hver á forgang á jólum, páskum og öðrum stórhelgum.',
         icon: Calendar,
         color: 'bg-blue-100 text-blue-600'
     },
     {
         id: 'tasks',
         title: 'Verkefni & Viðhald',
-        description: 'Henda ruslinu? Klippa grasið? Skráðu öll verkefni hér svo ekkert gleymist. Þú getur líka úthlutað verkum á aðra.',
+        description: 'Henda ruslinu? Klippa grasið? Skráðu öll verkefni hér svo ekkert gleymist. Þú getur líka úthlutað verkum og stillt gátlista fyrir komu, brottför og árstíðir í Stillingum.',
         icon: CheckSquare,
         color: 'bg-emerald-100 text-emerald-600'
     },
     {
         id: 'finance',
         title: 'Hússjóðurinn',
-        description: 'Haltu utan um sameiginlegan kostnað. Hver borgaði rafmagnið? Hver á inni? Allt svart á hvítu.',
+        description: 'Haltu utan um sameiginlegan kostnað. Hver borgaði rafmagnið? Hver á inni? Allt svart á hvítu, með ársyfirliti í lok árs.',
         icon: Wallet,
         color: 'bg-purple-100 text-purple-600'
     },
     {
         id: 'ready',
         title: 'Allt klárt!',
-        description: 'Þú ert tilbúin(n). Ef þú þarft að breyta stillingum eða bjóða fleirum, kíktu þá í Stillingar.',
+        description: 'Þú ert tilbúin(n). Skoðaðu Árbókina í lok árs fyrir yfirlit yfir dvöl og minningar. Ef þú þarft að breyta stillingum eða bjóða fleirum, kíktu þá í Stillingar.',
         icon: CheckCircle,
         color: 'bg-green-100 text-green-600'
     }

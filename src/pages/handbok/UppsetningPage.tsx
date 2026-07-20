@@ -204,8 +204,10 @@ export default function UppsetningPage() {
                                     <div className="border-l-4 border-amber pl-4">
                                         <h5 className="font-bold text-amber-900">Sanngirnisregla</h5>
                                         <p className="text-sm text-grey-dark mt-1">
-                                            Kerfið fylgist með hver fékk helstu hátíðisdaga í fyrra og kemur í veg fyrir
-                                            að sami eigandi bóki sömu helgi aftur næsta ár.
+                                            Fyrir hverja af fjórum stórhelgum (páska, verslunarmannahelgina, jólin, áramótin) reiknar kerfið
+                                            forgangsröð: sá sem aldrei hefur haldið helgina — eða hélt hana lengst síðan — fær forgang. Forgangurinn
+                                            fellur sjálfkrafa niður 3 mánuðum fyrir helgina, og eftir það getur hver sem er bókað hana. Á
+                                            dagatalinu er „Stórhelgar" spjald sem sýnir röðina og söguna fyrir hverja helgi.
                                         </p>
                                     </div>
                                 </div>
