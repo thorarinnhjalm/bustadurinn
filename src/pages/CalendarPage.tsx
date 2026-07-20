@@ -10,19 +10,22 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'; // Add base styles
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { is } from 'date-fns/locale';
 import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock, Trash2, Check } from 'lucide-react';
-import { collection, query, where, getDocs, doc, getDoc, limit, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, doc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
-import type { Booking, BookingType } from '@/types/models';
+import type { Booking, BookingType, House } from '@/types/models';
 import { dateLocales, calendarMessages, bookingTypeLabels, type SupportedLanguage } from '@/utils/i18n';
-import { getIcelandicHolidays, isHoliday, includesMajorHoliday } from '@/utils/icelandicHolidays';
+import { getIcelandicHolidays, isHoliday } from '@/utils/icelandicHolidays';
+import type { ContestedHolidayWindow } from '@/utils/icelandicHolidays';
 import { analytics } from '@/utils/analytics';
 import { rangesOverlap, createBooking, deleteBooking, BookingConflictError } from '@/services/bookingService';
+import { checkFairnessForBooking } from '@/services/fairnessService';
 import { logger } from '@/utils/logger';
 import MobileNav from '@/components/MobileNav';
 import EmptyState from '@/components/EmptyState';
+import HolidayFairnessPanel from '@/components/calendar/HolidayFairnessPanel';
 import confetti from 'canvas-confetti';
 
 // View type derived from string as generic View type import is tricky
@@ -404,62 +407,6 @@ export default function CalendarPage() {
         return bookings.filter(booking => rangesOverlap(start, end, booking.start, booking.end));
     }, [bookings]);
 
-    // Check fairness helper
-    const checkFairness = useCallback(async (start: Date, end: Date, userId: string): Promise<{ allowed: boolean; reason?: string }> => {
-        if (!houseId) return { allowed: true };
-
-        // Only apply if house is in 'fairness' mode
-        if (houseSettings?.holiday_mode !== 'fairness') {
-            return { allowed: true };
-        }
-
-        // Check if booking overlaps a major holiday
-        const holiday = includesMajorHoliday(start, end);
-        if (!holiday) {
-            return { allowed: true };
-        }
-
-        // Check if user had this holiday LAST year
-        const lastYear = start.getFullYear() - 1;
-
-        try {
-            const startOfLastYear = new Date(lastYear, 0, 1);
-            const endOfLastYear = new Date(lastYear, 11, 31, 23, 59, 59);
-
-            const q = query(
-                collection(db, 'houses', houseId, 'bookings'),
-                where('user_id', '==', userId),
-                where('start', '>=', startOfLastYear),
-                where('start', '<=', endOfLastYear)
-            );
-
-            const snapshot = await getDocs(q);
-            const lastYearBookings = snapshot.docs.map(doc => ({
-                ...doc.data(),
-                start: doc.data().start.toDate(),
-                end: doc.data().end.toDate()
-            })) as Booking[];
-
-            const hadHoliday = lastYearBookings.some(booking => {
-                const bookingHoliday = includesMajorHoliday(booking.start, booking.end);
-                return bookingHoliday?.name === holiday.name;
-            });
-
-            if (hadHoliday) {
-                return {
-                    allowed: false,
-                    reason: `Sanngirnisregla: Þú varst með ${holiday.name} í fyrra (${lastYear}). Aðrir eiga forgang í ár.`
-                };
-            }
-
-        } catch (err) {
-            console.error('Error checking fairness:', err);
-        }
-
-        return { allowed: true };
-    }, [houseSettings, houseId]);
-
-
     // Load bookings from Firestore
     useEffect(() => {
         loadBookings();
@@ -501,12 +448,26 @@ export default function CalendarPage() {
         setLoading(true);
         setError('');
 
-        // Check Fairness (Sanngirnisregla) - this remains a hard block
-        const fairness = await checkFairness(newBooking.start, newBooking.end, currentUser.uid);
-        if (!fairness.allowed) {
-            setError(fairness.reason || 'Bókun ekki leyfileg.');
-            setLoading(false);
-            return;
+        // Check Fairness (Sanngirnisregla) - this remains a hard block, even on the
+        // conflict-override path (overrideConflicts only skips the local conflict
+        // pre-check above, not this). Self-guards internally: zero reads unless the
+        // house is in 'fairness' mode, has 2+ owners, and the dates hit a contested
+        // window that hasn't opened to everyone yet.
+        const fairnessHouse = currentHouse ?? (houseSettings as House | null);
+        if (fairnessHouse) {
+            const fairness = await checkFairnessForBooking(
+                houseId,
+                currentUser.uid,
+                newBooking.start,
+                newBooking.end,
+                fairnessHouse.owner_ids || [],
+                fairnessHouse
+            );
+            if (!fairness.allowed) {
+                setError(fairness.reason);
+                setLoading(false);
+                return;
+            }
         }
 
         try {
@@ -585,6 +546,20 @@ export default function CalendarPage() {
 
     const handleSelectEvent = useCallback((event: BookingEvent) => {
         setSelectedBooking(event.booking);
+    }, []);
+
+    // Pre-fills the new-booking form with a contested-holiday window's dates
+    // (same exclusive-end semantics as newBooking.end already uses) and opens
+    // the booking modal, mirroring handleSelectSlot above.
+    const handleClaimWindow = useCallback((window: ContestedHolidayWindow) => {
+        setNewBooking(prev => ({
+            ...prev,
+            start: window.start,
+            end: window.end
+        }));
+        setError('');
+        setConflictWarning(null);
+        setShowModal(true);
     }, []);
 
     const handleDeleteBooking = async () => {
@@ -819,6 +794,15 @@ export default function CalendarPage() {
                         <span className="text-sm text-grey-dark">🇮🇸 Frídagur</span>
                     </div>
                 </div>
+
+                {/* Holiday Fairness (Stórhelgar) — only relevant for multi-owner houses using the rotation */}
+                {houseId && currentHouse?.holiday_mode === 'fairness' && (currentHouse.owner_ids?.length ?? 0) >= 2 && (
+                    <HolidayFairnessPanel
+                        houseId={houseId}
+                        ownerIds={currentHouse.owner_ids}
+                        onClaimWindow={handleClaimWindow}
+                    />
+                )}
 
                 {/* Holiday Info */}
                 {holidays.length > 0 && (
