@@ -108,6 +108,9 @@ export interface User {
     language?: 'is' | 'en' | 'de' | 'fr' | 'es'; // Preferred language
     notification_settings?: NotificationSettings;
     fcm_tokens?: string[];
+    /** User dismissed the dashboard push-notification opt-in prompt (stored on
+     * the user doc, not localStorage, so it doesn't reappear per device). */
+    push_prompt_dismissed?: boolean;
     utm_params?: UTMParams; // Marketing attribution data
     created_at: Date;
     last_login?: Date;
