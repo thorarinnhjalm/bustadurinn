@@ -20,6 +20,7 @@ npm run test:ui      # Vitest with browser UI
 npm run test:watch   # Vitest in watch mode
 npm run test:coverage # Vitest with V8 coverage
 npx vitest run src/utils/rbac.test.ts  # Run a single test file
+npx tsc -p tsconfig.app.json --noEmit  # Type check (plain `npx tsc --noEmit` is a silent NO-OP — root tsconfig has files:[] with project references)
 npm run test:e2e     # Playwright E2E tests (requires dev server running)
 npm run test:e2e:ui  # Playwright with interactive UI
 ```
