@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Bústaðurinn.is is a SaaS platform for managing shared Icelandic summer houses (sumarhús). All user-facing text is in Icelandic. Private, proprietary product owned by Neðri Hóll Hugmyndahús ehf.
+Bústaðurinn.is is a free platform for managing shared Icelandic summer houses (sumarhús). All user-facing text is in Icelandic. Private, proprietary product owned by Neðri Hóll Hugmyndahús ehf.
+
+**The platform is fully free** — there are no subscriptions, trials, or payment gates. All houses have `subscription_status: 'free'`. Do not introduce subscription/payment logic. The Áskell integration (payment processor) is decommissioned; any remaining references are legacy code to be removed.
 
 ## Commands
 
