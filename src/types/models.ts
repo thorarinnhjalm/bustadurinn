@@ -3,6 +3,13 @@
  * Based on Firestore Schema with Manager/Member Role Logic
  */
 
+// `import type` is erased at compile time (verbatimModuleSyntax), so this
+// pulls in zero runtime code from icelandicHolidays.ts and cannot create a
+// runtime import cycle even though that module doesn't import from here
+// today. Kept as the single source of truth for the key union instead of
+// duplicating the literal here.
+import type { ContestedHolidayKey } from '@/utils/icelandicHolidays';
+
 // UTM Tracking
 export interface UTMParams {
     utm_source?: string;
@@ -55,6 +62,10 @@ export interface House {
     holiday_mode: 'fairness' | 'first_come';
     invite_code?: string;
     guest_token?: string;
+    /** Per-house override of which contested-holiday windows the fairness
+     * rotation applies to (see fairnessService.ts). Absent/undefined means
+     * all four defaults (paskar, verslunarmannahelgi, jol, aramot) apply. */
+    contested_holidays?: ContestedHolidayKey[];
 
     // Privacy
     privacy_hide_finances?: boolean;

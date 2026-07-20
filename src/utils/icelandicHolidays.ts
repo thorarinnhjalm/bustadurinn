@@ -3,7 +3,7 @@
  * Includes both fixed and movable holidays
  */
 
-import { addDays, getYear } from 'date-fns';
+import { addDays, addMonths, getYear } from 'date-fns';
 
 export interface Holiday {
     name: string;
@@ -247,6 +247,115 @@ export const getHolidaysInRange = (start: Date, end: Date): Holiday[] => {
     return allHolidays.filter(holiday =>
         holiday.date >= start && holiday.date <= end
     );
+};
+
+/**
+ * Contested-holiday fairness rotation (Phase 2 / ROADMAP_2026 2.1-2.3).
+ *
+ * These are the four Icelandic long-weekend/holiday windows that houses
+ * rotate fairly among members, distinct from `getIcelandicHolidays` (which
+ * lists every single-day public holiday). Each window's `end` is EXCLUSIVE
+ * (midnight of the day after the window's last inclusive day) to match the
+ * booking `end` convention used throughout the app — see `rangesOverlap` in
+ * `src/services/bookingService.ts`.
+ */
+export type ContestedHolidayKey = 'paskar' | 'verslunarmannahelgi' | 'jol' | 'aramot';
+
+export interface ContestedHolidayWindow {
+    key: ContestedHolidayKey;
+    /** Icelandic display name, e.g. "Páskar". */
+    name: string;
+    /** Inclusive start of the window. */
+    start: Date;
+    /** EXCLUSIVE end of the window (see rangesOverlap semantics). */
+    end: Date;
+}
+
+const CONTESTED_HOLIDAY_NAMES: Record<ContestedHolidayKey, string> = {
+    paskar: 'Páskar',
+    verslunarmannahelgi: 'Verslunarmannahelgin',
+    jol: 'Jólin',
+    aramot: 'Áramótin',
+};
+
+export const CONTESTED_HOLIDAY_KEYS: ContestedHolidayKey[] = [
+    'paskar',
+    'verslunarmannahelgi',
+    'jol',
+    'aramot',
+];
+
+/**
+ * The four contested-holiday windows for a given year.
+ *
+ * - `paskar`: Skírdagur (Easter − 3 days) through Annar í páskum (Easter + 1
+ *   day) inclusive.
+ * - `verslunarmannahelgi`: the Friday before the first Monday of August
+ *   through that Monday (Frídagur verslunarmanna) inclusive.
+ * - `jol`: Þorláksmessa (Dec 23) through Annar í jólum (Dec 26) inclusive.
+ * - `aramot`: Gamlársdagur (Dec 31) through Nýársdagur (Jan 1 of the
+ *   FOLLOWING year) inclusive. This window is keyed to `year` = the year of
+ *   Dec 31 — i.e. `getContestedHolidayWindows(2026)` returns an `aramot`
+ *   window starting 2026-12-31 and ending (exclusive) 2027-01-02, NOT a
+ *   window for the year containing Jan 1st.
+ */
+export const getContestedHolidayWindows = (year: number): ContestedHolidayWindow[] => {
+    const easter = calculateEaster(year);
+    const commerceDay = calculateCommerceDay(year);
+
+    return [
+        {
+            key: 'paskar',
+            name: CONTESTED_HOLIDAY_NAMES.paskar,
+            start: addDays(easter, -3), // Skírdagur
+            end: addDays(easter, 2), // exclusive: day after Annar í páskum (easter + 1)
+        },
+        {
+            key: 'verslunarmannahelgi',
+            name: CONTESTED_HOLIDAY_NAMES.verslunarmannahelgi,
+            start: addDays(commerceDay, -3), // Friday before commerce day
+            end: addDays(commerceDay, 1), // exclusive: day after commerce Monday
+        },
+        {
+            key: 'jol',
+            name: CONTESTED_HOLIDAY_NAMES.jol,
+            start: new Date(year, 11, 23), // Þorláksmessa
+            end: new Date(year, 11, 27), // exclusive: day after Annar í jólum
+        },
+        {
+            key: 'aramot',
+            name: CONTESTED_HOLIDAY_NAMES.aramot,
+            start: new Date(year, 11, 31), // Gamlársdagur
+            end: new Date(year + 1, 0, 2), // exclusive: day after Nýársdagur (next year)
+        },
+    ];
+};
+
+/**
+ * Contested-holiday windows starting within `monthsAhead` months of `from`,
+ * sorted ascending by start date. May span two (or, near a year boundary,
+ * three) calendar years internally — callers don't need to worry about the
+ * `aramot` year-crossing convention documented on `getContestedHolidayWindows`.
+ */
+export const getUpcomingContestedWindows = (
+    from: Date,
+    monthsAhead: number
+): ContestedHolidayWindow[] => {
+    const rangeEnd = addMonths(from, monthsAhead);
+    const startYear = getYear(from);
+    const endYear = getYear(rangeEnd);
+
+    const windows: ContestedHolidayWindow[] = [];
+    // Generate one extra year on each side: an `aramot` window generated
+    // from `startYear - 1` starts on Dec 31 of the previous year, which is
+    // filtered out below unless it actually falls in range.
+    for (let year = startYear - 1; year <= endYear + 1; year++) {
+        windows.push(...getContestedHolidayWindows(year));
+    }
+
+    return windows
+        .filter((w) => w.start >= from && w.start <= rangeEnd)
+        .sort((a, b) => a.start.getTime() - b.start.getTime());
 };
 
 /**
