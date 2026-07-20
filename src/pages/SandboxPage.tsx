@@ -64,11 +64,11 @@ const INITIAL_TASKS = [
 // --- Sub-Components ---
 
 const SandboxCalendar = ({ onUnlockRequest }: { onUnlockRequest: (feature: string) => void }) => {
-    const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
+    const [bookings] = useState(INITIAL_BOOKINGS);
     const [view, setView] = useState<any>('month');
     const [date, setDate] = useState(new Date());
 
-    const handleSelectSlot = ({ start, end }: any) => {
+    const handleSelectSlot = () => {
         onUnlockRequest('Bókanir í dagatal');
     };
 
@@ -124,7 +124,7 @@ const SandboxCalendar = ({ onUnlockRequest }: { onUnlockRequest: (feature: strin
 };
 
 const SandboxFinance = ({ onUnlockRequest }: { onUnlockRequest: (feature: string) => void }) => {
-    const [entries, setEntries] = useState(INITIAL_FINANCE);
+    const [entries] = useState(INITIAL_FINANCE);
 
     const balance = entries.reduce((acc, curr) => acc + curr.amount, 0);
 
@@ -244,7 +244,6 @@ const SandboxTasks = ({ onUnlockRequest }: { onUnlockRequest: (feature: string) 
     );
 };
 const SandboxUsers = ({ onUnlockRequest }: { onUnlockRequest: (feature: string) => void }) => {
-    const navigate = useNavigate();
     return (
         <div className="max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-8">

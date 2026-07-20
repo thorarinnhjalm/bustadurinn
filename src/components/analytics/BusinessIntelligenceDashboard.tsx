@@ -41,7 +41,6 @@ interface BIMetrics {
     churnedHouses: number; // Inactive 90+ days
 
     // Conversion Metrics
-    trialToActive: number;
     landingPageVisits: number;
     signupRate: number;
 }
@@ -162,10 +161,6 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
         }).length;
 
         // === CONVERSION METRICS ===
-        const trialHouses = realHouses.filter(h => h.subscription_status === 'trial').length;
-        const activeSubscriptions = paidHouses.length;
-        const trialToActive = trialHouses > 0 ? (activeSubscriptions / (activeSubscriptions + trialHouses)) * 100 : 0;
-
         const signupRate = sandboxVisits > 0 ? (allUsers.length / sandboxVisits) * 100 : 0;
 
         return {
@@ -188,7 +183,6 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
             healthyHouses,
             atRiskHouses,
             churnedHouses,
-            trialToActive,
             landingPageVisits: sandboxVisits,
             signupRate
         };

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp, orderBy, limit, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Task, TaskStatus, TaskPriority, TaskCategory, House, User } from '@/types/models';
 import { Plus, Calendar, DollarSign, Check, Trash2 } from 'lucide-react';

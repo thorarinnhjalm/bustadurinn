@@ -286,7 +286,7 @@ export default function OnboardingPage() {
             // (Permission denied errors were causing issues here)
 
 
-            // 1. Create House with Standard Trial (30 Days)
+            // 1. Create House (free)
             let houseId: string;
             let inviteCode: string;
 

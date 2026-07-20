@@ -117,14 +117,9 @@ async function main() {
             const houseRef = doc(collection(db, 'houses'));
             const houseId = houseRef.id;
 
-            const startDate = new Date();
-            const endDate = new Date(startDate);
             if (isFree) {
-                endDate.setFullYear(endDate.getFullYear() + 1);
                 // Increment counter
                 transaction.set(promoRef, { launch_offer_count: currentCount + 1 }, { merge: true });
-            } else {
-                endDate.setDate(endDate.getDate() + 30);
             }
 
             const newHouseData = {
@@ -138,8 +133,7 @@ async function main() {
                 invite_code: inviteCode,
                 holiday_mode: 'fairness',
                 seo_slug: houseData.name.toLowerCase().replace(/\s+/g, '-'),
-                subscription_status: isFree ? 'active' : 'trial',
-                subscription_end: endDate,
+                subscription_status: 'free',
                 created_at: new Date(),
                 updated_at: new Date()
             };

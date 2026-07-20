@@ -52,7 +52,7 @@ async function restoreHouse() {
             },
             owner_ids: ownerIds,
             manager_id: managerId,
-            subscription_status: 'active', // Granting active status
+            subscription_status: 'free',
             holiday_mode: 'fairness',
             created_at: restorationDate,
             updated_at: new Date(), // Now

@@ -61,9 +61,7 @@ export interface House {
     finance_viewer_ids?: string[]; // Specific members allowed to view finances even if hidden
 
     // Subscription
-    subscription_status?: 'trial' | 'active' | 'free' | 'expired';
-    plan_id?: 'monthly' | 'annual';
-    subscription_end?: Date;
+    subscription_status?: 'free';
 
     created_at: Date;
     updated_at: Date;
@@ -226,18 +224,6 @@ export interface GuestAccess {
     used?: boolean;
     created_by: string;
     created_at: Date;
-}
-
-// Pricing Plans
-export type PlanType = 'monthly' | 'annual';
-
-export interface PricingPlan {
-    id: PlanType;
-    name: string;
-    price: number;
-    interval: 'month' | 'year';
-    features: string[];
-    recommended?: boolean;
 }
 
 export interface Coupon {

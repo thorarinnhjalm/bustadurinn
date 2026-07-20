@@ -14,7 +14,6 @@ import {
     Users,
     Save,
     Loader2,
-    Heart,
     ClipboardList,
     Smartphone,
     Globe,
@@ -85,7 +84,7 @@ export default function HouseSettings({
 
     const [isEditingLocation, setIsEditingLocation] = useState(false);
     const [editLang, setEditLang] = useState<'is' | 'en'>('is');
-    const [cropMode, setCropMode] = useState<'main' | 'gallery'>('main');
+    const [, setCropMode] = useState<'main' | 'gallery'>('main');
 
     // Sync form with house prop
     useEffect(() => {
