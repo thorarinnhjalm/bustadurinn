@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Home, Users, BarChart2, Mail, Tag, FileSearch, Settings, Send,
     Database, LogOut, Trash2, CheckCircle, AlertTriangle,
-    XCircle, RefreshCw, Loader2, Shield, Activity, TrendingUp, Reply, Star,
+    XCircle, RefreshCw, Loader2, Shield, Activity, Reply, Star,
     Edit, MapPin, UserCog, Zap, Building2, Eye
 } from 'lucide-react';
 import { db, auth } from '@/lib/firebase';
@@ -61,9 +61,8 @@ interface Stats {
     allSubscribers: NewsletterSubscriber[];
     allFeedback: Feedback[];
     allProviders: ServiceProvider[];
-    allOrganizations: Organization[]; // NEW
-    launchOfferCount: number;
-    sandboxVisits: number; // Track /prufa engagement
+    allOrganizations: Organization[];
+    sandboxVisits: number;
 }
 
 const CACHE_TTL = 5 * 60 * 1000;
@@ -107,8 +106,6 @@ export default function SuperAdminPage() {
         max_uses: 0
     });
 
-    const [paydayStatus, setPaydayStatus] = useState<{ success: boolean; message: string } | null>(null);
-    const [selectedHouseForInvoice, setSelectedHouseForInvoice] = useState<string>('');
     const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
     const [addressSearchTimer, setAddressSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
@@ -137,7 +134,6 @@ export default function SuperAdminPage() {
         allFeedback: [],
         allProviders: [],
         allOrganizations: [],
-        launchOfferCount: 0
     });
 
     // Email Templates Logic - Define BEFORE useEffect
@@ -176,7 +172,7 @@ export default function SuperAdminPage() {
                 }
             };
 
-            const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, providersSnap, organizationsData, promoSnapResult, sandboxVisitsSnap] = await Promise.all([
+            const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, providersSnap, organizationsData, sandboxVisitsSnap] = await Promise.all([
                 safeFetch('houses'),
                 safeFetch('users'),
                 safeFetch('bookings', 500),
@@ -189,10 +185,6 @@ export default function SuperAdminPage() {
                 getAllOrganizations().catch((e) => {
                     warnings.push(`Gat ekki sótt gögn fyrir "organizations": ${e.message}`);
                     return [];
-                }),
-                getDoc(doc(db, 'system', 'promotions')).catch((e) => {
-                    warnings.push(`Gat ekki sótt gögn fyrir "promotions": ${e.message}`);
-                    return null;
                 }),
                 getDocs(query(collection(db, 'funnel_events'), where('event_name', '==', 'sandbox_visited'), limit(1000))).catch((e) => {
                     warnings.push(`Gat ekki sótt funnel_events: ${e.message}`);
@@ -250,7 +242,6 @@ export default function SuperAdminPage() {
                 allFeedback: feedback.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
                 allProviders: providersSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceProvider)) || [],
                 allOrganizations: organizationsData || [],
-                launchOfferCount: promoSnapResult && promoSnapResult.exists() ? promoSnapResult.data().launch_offer_count || 0 : 0
             };
             statsCache = { data: newStats, timestamp: Date.now() };
             setStats(newStats);
@@ -306,103 +297,6 @@ export default function SuperAdminPage() {
         onConfirm: () => void;
     } | null>(null);
 
-    const initiateExtendTrial = (house: House) => {
-        setConfirmModal({
-            isOpen: true,
-            title: 'Lengja prufu?',
-            message: `Ertu viss um að þú viljir lengja prufutíma fyrir "${house.name}" um 14 daga?`,
-            type: 'info',
-            onConfirm: () => executeExtendTrial(house.id)
-        });
-    };
-
-    const initiateToggleFree = (house: House) => {
-        const isFree = house.subscription_status === 'free';
-        setConfirmModal({
-            isOpen: true,
-            title: isFree ? 'Afturkalla frítt aðgengi?' : 'Veita FRÍTT aðgengi?',
-            message: isFree
-                ? `Ertu viss um að þú viljir breyta aðgangi fyrir "${house.name}" yfir í hefðbundið prufutímabil?`
-                : `Þetta veitir "${house.name}" ókeypis aðgang að eilífu (Lifetime Free). Ertu viss?`,
-            type: isFree ? 'danger' : 'success',
-            onConfirm: () => executeToggleFree(house.id)
-        });
-    };
-
-    // Execute functions
-    const executeExtendTrial = async (houseId: string | undefined) => {
-        if (!houseId) return;
-        setConfirmModal(null); // Close modal
-        setActionLoading(houseId);
-        try {
-            const house = stats.allHouses.find(h => h.id === houseId);
-            if (!house) throw new Error('House not found');
-
-            const currentEnd = house.subscription_end
-                ? (house.subscription_end instanceof Date ? house.subscription_end : new Date(house.subscription_end))
-                : new Date();
-
-            // Add 14 days
-            const newEnd = new Date(currentEnd.getTime() + 14 * 24 * 60 * 60 * 1000);
-
-            await updateDoc(doc(db, 'houses', houseId), {
-                subscription_end: newEnd,
-                subscription_status: house.subscription_status === 'free' ? 'free' : 'trial'
-            });
-
-            // Update local state
-            setStats(prev => ({
-                ...prev,
-                allHouses: prev.allHouses.map(h =>
-                    h.id === houseId
-                        ? { ...h, subscription_end: newEnd, subscription_status: h.subscription_status === 'free' ? 'free' : 'trial' } as House
-                        : h
-                )
-            }));
-
-            alert('✅ Trial extended by 14 days!');
-        } catch (error: any) {
-            console.error('Error extending trial:', error);
-            alert(`❌ Error: ${error.message}`);
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    const executeToggleFree = async (houseId: string | undefined) => {
-        if (!houseId) return;
-        setConfirmModal(null); // Close modal
-        const house = stats.allHouses.find(h => h.id === houseId);
-        if (!house) return;
-
-        const isFree = house.subscription_status === 'free';
-        setActionLoading(houseId);
-        try {
-            const newStatus = isFree ? 'trial' : 'free';
-
-            await updateDoc(doc(db, 'houses', houseId), {
-                subscription_status: newStatus
-            });
-
-            // Update local state
-            setStats(prev => ({
-                ...prev,
-                allHouses: prev.allHouses.map(h =>
-                    h.id === houseId
-                        ? { ...h, subscription_status: newStatus } as House
-                        : h
-                )
-            }));
-
-            alert(isFree ? 'ℹ️ Access revoked (set to trial)' : '✅ Access granted permanently (Free)');
-        } catch (error: any) {
-            console.error('Error toggling status:', error);
-            alert(`❌ Error: ${error.message}`);
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
     const handleDeleteHouse = async (houseId: string) => {
         const house = stats.allHouses.find(h => h.id === houseId);
         if (!house) return;
@@ -445,39 +339,6 @@ export default function SuperAdminPage() {
             setActionLoading(null);
         }
     };
-
-    const handleTestPayday = async () => {
-        setActionLoading('payday-test');
-        setPaydayStatus(null);
-        try {
-            const res = await fetch('/api/payday-test', { method: 'POST' });
-            const data = await res.json();
-            if (res.ok) {
-                setPaydayStatus({ success: true, message: `Connected to Payday! Token expires in ${Math.round(data.expires_in / 60)} minutes.` });
-            } else {
-                setPaydayStatus({ success: false, message: data.error || 'Failed to connect' });
-            }
-        } catch (err: any) {
-            setPaydayStatus({ success: false, message: err.message });
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    const handleTestInvoice = async () => {
-        if (!selectedHouseForInvoice) {
-            alert('Veldu hús til að búa til reikning');
-            return;
-        }
-
-        // Instead of triggering an API call, we can now just open the Askell page
-        // with prefilled data if possible, or just the link.
-        const confirmPay = window.confirm('Viltu opna Áskell greiðslugáttina fyrir þetta hús?');
-        if (confirmPay) {
-            window.open('https://askell.is/public/payments/170/', '_blank');
-        }
-    };
-
 
     const handleUpdateHouse = async (houseData: House) => {
         if (!houseData.id) return;
@@ -1657,18 +1518,6 @@ export default function SuperAdminPage() {
                                 </div>
                             </button>
                             <button
-                                onClick={() => setSystemSubTab('integrations')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${systemSubTab === 'integrations'
-                                    ? 'text-charcoal border-b-2 border-amber'
-                                    : 'text-stone-500 hover:text-stone-700'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Settings className="w-4 h-4" />
-                                    Tengingar
-                                </div>
-                            </button>
-                            <button
                                 onClick={() => setSystemSubTab('coupons')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${systemSubTab === 'coupons'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1880,42 +1729,6 @@ export default function SuperAdminPage() {
 
                 {/* Overview Tab */}
                 {activeTab === 'overview' && (() => {
-                    // Calculate metrics locally for display
-                    const trialHouses = stats.allHouses.filter(h =>
-                        (h as any).subscription_status === 'trial' || !(h as any).subscription_active
-                    );
-                    const activeHousesCount = stats.totalHouses - trialHouses.length;
-
-                    // Trials expiring soon
-                    const now = new Date();
-                    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-                    const expiringTrials = trialHouses.filter(h => {
-                        const trialEnd = (h as any).trial_end;
-                        if (!trialEnd) return false;
-                        const endDate = trialEnd.toDate ? trialEnd.toDate() : new Date(trialEnd);
-                        return endDate <= threeDaysFromNow && endDate >= now;
-                    });
-
-                    // MRR Calculation (excludes demo houses AND houses within their 1-year free period)
-                    const demoHouseNames = ['Sumarbústaður við Þingvallavatn', 'Demo House'];
-                    const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-
-                    const paidHouses = stats.allHouses.filter(h => {
-                        // Exclude demo houses
-                        if (demoHouseNames.includes(h.name || '')) return false;
-
-                        // Exclude houses explicitly marked as free
-                        if ((h as any).subscription_status === 'free') return false;
-
-                        // Exclude houses within their 1-year launch offer period
-                        const createdAt = (h as any).created_at?.toDate?.() || new Date(0);
-                        if (createdAt > oneYearAgo) return false; // House is less than 12 months old
-
-                        // Include if subscription is active
-                        return (h as any).subscription_status === 'active' || (h as any).subscription_active;
-                    });
-                    const estimatedMRR = paidHouses.length * 1990;
-
                     // Activity Calculation
                     const unifiedActivity = [
                         ...stats.allHouses.map(h => {
@@ -1941,11 +1754,7 @@ export default function SuperAdminPage() {
                                         <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Hús</p>
                                     </div>
                                     <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalHouses}</p>
-                                    <div className="flex items-center gap-2 text-[10px] md:text-xs text-stone-400">
-                                        <span className="text-green-600 font-medium">{activeHousesCount} virk</span>
-                                        <span className="w-1 h-1 bg-stone-300 rounded-full"></span>
-                                        <span>{trialHouses.length} prufa</span>
-                                    </div>
+                                    <p className="text-[10px] md:text-xs text-stone-400">Skráð hús</p>
                                 </div>
 
                                 {/* Total Users */}
@@ -1962,36 +1771,6 @@ export default function SuperAdminPage() {
                                     </p>
                                 </div>
 
-                                {/* Trials Expiring */}
-                                <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
-                                            <Activity className="w-4 h-4 text-amber" />
-                                        </div>
-                                        <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Rennur út</p>
-                                    </div>
-                                    <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{expiringTrials.length}</p>
-                                    <p className={`text-[10px] md:text-xs font-medium ${expiringTrials.length > 0 ? 'text-amber' : 'text-green-600'}`}>
-                                        {expiringTrials.length > 0 ? 'Aðgerð nauðsynleg' : 'Allt í lagi'}
-                                    </p>
-                                </div>
-
-                                {/* MRR */}
-                                <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center">
-                                            <TrendingUp className="w-4 h-4 text-green-600" />
-                                        </div>
-                                        <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">MRR</p>
-                                    </div>
-                                    <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1 tracking-tight">
-                                        {estimatedMRR.toLocaleString('is-IS')}
-                                    </p>
-                                    <p className="text-[10px] md:text-xs text-stone-400">
-                                        {paidHouses.length} greiðandi hús
-                                    </p>
-                                </div>
-
                                 {/* Newsletter Subscribers */}
                                 <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
                                     <div className="flex items-center gap-2 mb-3">
@@ -2003,36 +1782,6 @@ export default function SuperAdminPage() {
                                     <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalSubscribers}</p>
                                     <p className="text-[10px] md:text-xs text-stone-400">
                                         Væntanlegir viðskiptavinir
-                                    </p>
-                                </div>
-
-                                {/* Sandbox Visits */}
-                                <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-2 opacity-10">
-                                        <Tag className="w-16 h-16 transform rotate-12" />
-                                    </div>
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center">
-                                            <Tag className="w-4 h-4 text-purple-600" />
-                                        </div>
-                                        <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Starttilboð</p>
-                                    </div>
-                                    <div className="flex items-baseline gap-1">
-                                        <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.launchOfferCount}</p>
-                                        <span className="text-sm text-stone-400 font-medium">/ 50</span>
-                                    </div>
-
-                                    {/* Progress Bar */}
-                                    <div className="w-full bg-stone-100 rounded-full h-1.5 mt-2 mb-1">
-                                        <div
-                                            className="bg-purple-500 h-1.5 rounded-full transition-all duration-1000"
-                                            style={{ width: `${(stats.launchOfferCount / 50) * 100}%` }}
-                                        ></div>
-                                    </div>
-
-
-                                    <p className="text-[10px] md:text-xs text-stone-400">
-                                        {50 - stats.launchOfferCount} pláss eftir
                                     </p>
                                 </div>
 
@@ -2430,48 +2179,10 @@ export default function SuperAdminPage() {
                                     columns={[
                                         { key: 'name', label: 'Nafn hús', sortable: true },
                                         {
-                                            key: 'subscription_status',
-                                            label: 'Staða',
-                                            render: (row) => {
-                                                const status = row.subscription_status || 'trial';
-                                                const statusLabels = { free: 'Frítt', active: 'Virkt', trial: 'Prufa', expired: 'Útrunnið' };
-                                                const colors = {
-                                                    free: 'bg-green-100 text-green-700 border-green-200',
-                                                    active: 'bg-blue-100 text-blue-700 border-blue-200',
-                                                    trial: 'bg-amber-100 text-amber-700 border-amber-200',
-                                                    expired: 'bg-red-100 text-red-700 border-red-200'
-                                                };
-                                                return (
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-bold border uppercase ${colors[status] || colors.trial}`}>
-                                                        {statusLabels[status] || statusLabels.trial}
-                                                    </span>
-                                                );
-                                            }
-                                        },
-                                        {
                                             key: 'address',
                                             label: 'Staðsetning',
                                             sortable: true,
                                             render: (row) => row.address || '—'
-                                        },
-                                        {
-                                            key: 'days_left',
-                                            label: 'Dagar eftir',
-                                            render: (row) => {
-                                                if (row.subscription_status === 'free') return <span className="text-green-600 font-bold uppercase text-[10px]">Lifetime</span>;
-                                                if (row.subscription_status === 'active') return <span className="text-blue-600 font-bold uppercase text-[10px]">Subscribed</span>;
-
-                                                if (!row.subscription_end) return <span className="text-stone-400">—</span>;
-
-                                                const now = new Date();
-                                                const endDate = (row.subscription_end as any).toDate ? (row.subscription_end as any).toDate() : new Date(row.subscription_end);
-                                                const diffTime = endDate.getTime() - now.getTime();
-                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                                                if (diffDays <= 0) return <span className="text-red-600 font-bold">Expired</span>;
-                                                if (diffDays <= 3) return <span className="text-amber-600 font-bold">{diffDays} dagar!</span>;
-                                                return <span className="text-stone-600">{diffDays} dagar</span>;
-                                            }
                                         },
                                         {
                                             key: 'owner_ids',
@@ -2505,25 +2216,6 @@ export default function SuperAdminPage() {
                                     actions={(row) => (
                                         <div className="flex gap-2">
                                             <button
-                                                onClick={() => initiateExtendTrial(row)}
-                                                disabled={actionLoading === row.id}
-                                                className="px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors disabled:opacity-50"
-                                                title="Lengja prufu"
-                                            >
-                                                {actionLoading === row.id ? 'Lengja...' : 'Lengja prufu'}
-                                            </button>
-                                            <button
-                                                onClick={() => initiateToggleFree(row)}
-                                                disabled={actionLoading === row.id}
-                                                className={`px-3 py-1.5 text-xs font-bold border rounded transition-colors disabled:opacity-50 ${row.subscription_status === 'free'
-                                                    ? 'border-red-200 text-red-600 hover:bg-red-50'
-                                                    : 'border-green-200 text-green-600 hover:bg-green-50'
-                                                    }`}
-                                                title={row.subscription_status === 'free' ? 'Afturkalla frítt' : 'Veita frítt'}
-                                            >
-                                                {row.subscription_status === 'free' ? 'Afturkalla' : 'Veita frítt'}
-                                            </button>
-                                            <button
                                                 onClick={() => setEditingHouse(row)}
                                                 className="p-1 hover:bg-stone-100 rounded"
                                                 title="Breyta"
@@ -2546,81 +2238,35 @@ export default function SuperAdminPage() {
                             {/* Mobile Cards */}
                             <div className="md:hidden space-y-4">
                                 <h2 className="text-xl font-serif font-bold px-1">Húsaskrá ({stats.allHouses.length})</h2>
-                                {stats.allHouses.map((house) => {
-                                    const status = house.subscription_status || 'trial';
-                                    const statusLabels = { free: 'Frítt', active: 'Virkt', trial: 'Prufa', expired: 'Útrunnið' };
-                                    const colors = {
-                                        free: 'bg-green-100 text-green-700 border-green-200',
-                                        active: 'bg-blue-100 text-blue-700 border-blue-200',
-                                        trial: 'bg-amber-100 text-amber-700 border-amber-200',
-                                        expired: 'bg-red-100 text-red-700 border-red-200'
-                                    };
-
-                                    // Calculate days left
-                                    let daysLeftDisplay = null;
-                                    if (status === 'free') daysLeftDisplay = <span className="text-green-600 font-bold uppercase text-[10px]">Lifetime</span>;
-                                    else if (status === 'active') daysLeftDisplay = <span className="text-blue-600 font-bold uppercase text-[10px]">Subscribed</span>;
-                                    else if (house.subscription_end) {
-                                        const now = new Date();
-                                        const endDate = (house.subscription_end as any).toDate ? (house.subscription_end as any).toDate() : new Date(house.subscription_end);
-                                        const diffTime = endDate.getTime() - now.getTime();
-                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                                        if (diffDays <= 0) daysLeftDisplay = <span className="text-red-600 font-bold text-xs">Expired</span>;
-                                        else if (diffDays <= 3) daysLeftDisplay = <span className="text-amber-600 font-bold text-xs">{diffDays} dagar!</span>;
-                                        else daysLeftDisplay = <span className="text-stone-600 text-xs">{diffDays} dagar</span>;
-                                    }
-
-                                    return (
-                                        <div key={house.id} className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <h3 className="font-serif font-bold text-lg text-charcoal">{house.name}</h3>
-                                                    <p className="text-sm text-stone-500 flex items-center gap-1 mt-1">
-                                                        <MapPin className="w-3 h-3" />
-                                                        {house.address || 'Engin staðsetning'}
-                                                    </p>
-                                                </div>
-                                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold border uppercase ${colors[status] || colors.trial}`}>
-                                                    {statusLabels[status] || statusLabels.trial}
-                                                </span>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                                                <div>
-                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Stjórnandi</p>
-                                                    <p className="font-medium truncate">{stats.allUsers.find(u => u.uid === house.manager_id)?.email || '—'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Dagar eftir</p>
-                                                    <div>{daysLeftDisplay}</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex flex-wrap gap-2 pt-3 border-t border-stone-100">
-                                                <button
-                                                    onClick={() => initiateExtendTrial(house)}
-                                                    disabled={actionLoading === house.id}
-                                                    className="flex-1 px-3 py-2 text-xs font-semibold bg-amber/10 text-amber border border-amber/20 rounded-lg hover:bg-amber hover:text-charcoal transition-colors"
-                                                >
-                                                    Lengja prufu
-                                                </button>
-                                                <button
-                                                    onClick={() => setEditingHouse(house)}
-                                                    className="px-3 py-2 bg-stone-100 text-stone-600 rounded-lg"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteHouse(house.id!)}
-                                                    className="px-3 py-2 bg-red-50 text-red-600 rounded-lg"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
+                                {stats.allHouses.map((house) => (
+                                    <div key={house.id} className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm">
+                                        <div className="mb-3">
+                                            <h3 className="font-serif font-bold text-lg text-charcoal">{house.name}</h3>
+                                            <p className="text-sm text-stone-500 flex items-center gap-1 mt-1">
+                                                <MapPin className="w-3 h-3" />
+                                                {house.address || 'Engin staðsetning'}
+                                            </p>
                                         </div>
-                                    );
-                                })}
+                                        <div className="text-sm mb-4">
+                                            <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Stjórnandi</p>
+                                            <p className="font-medium truncate">{stats.allUsers.find(u => u.uid === house.manager_id)?.email || '—'}</p>
+                                        </div>
+                                        <div className="flex gap-2 pt-3 border-t border-stone-100">
+                                            <button
+                                                onClick={() => setEditingHouse(house)}
+                                                className="px-3 py-2 bg-stone-100 text-stone-600 rounded-lg"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteHouse(house.id!)}
+                                                className="px-3 py-2 bg-red-50 text-red-600 rounded-lg"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )
@@ -2956,118 +2602,6 @@ export default function SuperAdminPage() {
                     )
                 }
 
-                {/* Integrations Tab */}
-                {
-                    activeTab === 'system' && systemSubTab === 'integrations' && (
-                        <div className="max-w-4xl space-y-6">
-                            <h2 className="text-2xl font-serif mb-6">Integrations</h2>
-
-                            <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-bold flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded bg-[#101010] flex items-center justify-center text-white font-mono text-xs">P</div>
-                                        Payday.is
-                                    </h3>
-                                    {paydayStatus?.success && (
-                                        <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                                            <CheckCircle className="w-3 h-3" /> Connected
-                                        </span>
-                                    )}
-                                </div>
-
-                                <p className="text-stone-600 mb-6 text-sm">
-                                    Connect to Payday to automatically generate invoices. This integration uses Client Credentials flow (Server-to-Server).
-                                </p>
-
-                                <div className="bg-stone-50 p-4 rounded mb-6 font-mono text-xs text-stone-500 border border-stone-100">
-                                    <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
-                                        <span className="font-bold">Client ID:</span>
-                                        <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit">
-                                            {import.meta.env.VITE_PAYDAY_CLIENT_ID ? `${import.meta.env.VITE_PAYDAY_CLIENT_ID.substring(0, 10)}...` : 'Missing ❌'}
-                                        </span>
-                                        <span className="font-bold">Auth Method:</span>
-                                        <span className="text-charcoal">Client Credentials (Secret Key)</span>
-
-                                        <span className="font-bold mt-2">Plan (Monthly):</span>
-                                        <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit mt-2">
-                                            {import.meta.env.VITE_PAYDAY_PLAN_MONTHLY || '004'}
-                                        </span>
-                                        <span className="font-bold mt-2">Plan (Annual):</span>
-                                        <span className="text-charcoal bg-white px-2 py-1 rounded border border-stone-200 inline-block w-fit mt-2">
-                                            {import.meta.env.VITE_PAYDAY_PLAN_ANNUAL || '005'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={handleTestPayday}
-                                    disabled={actionLoading === 'payday-test'}
-                                    className="btn btn-secondary flex items-center gap-2"
-                                >
-                                    {actionLoading === 'payday-test' ? <div className="w-4 h-4 border-2 border-stone-500/30 border-t-stone-500 rounded-full animate-spin" /> : <Activity className="w-4 h-4" />}
-                                    {paydayStatus?.success ? 'Test Connection Again' : 'Test Connection'}
-                                </button>
-
-                                {paydayStatus && (
-                                    <div className={`mt-4 p-4 rounded text-sm border ${paydayStatus.success ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                                        <div className="flex items-center gap-2 font-bold mb-1">
-                                            {paydayStatus.success ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                                            {paydayStatus.success ? 'Success' : 'Connection Failed'}
-                                        </div>
-                                        {paydayStatus.message}
-                                    </div>
-                                )}
-
-                                {/* Invoice Test Section */}
-                                {paydayStatus?.success && (
-                                    <div className="mt-8 pt-8 border-t border-stone-200">
-                                        <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                            <Send className="w-5 h-5 text-amber" />
-                                            Test Invoice Creation
-                                        </h4>
-                                        <p className="text-stone-600 text-sm mb-4">
-                                            Create a test invoice for a house to verify the full integration.
-                                        </p>
-
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-xs font-bold text-stone-500 mb-2">Select House</label>
-                                                <select
-                                                    className="input"
-                                                    value={selectedHouseForInvoice}
-                                                    onChange={(e) => setSelectedHouseForInvoice(e.target.value)}
-                                                >
-                                                    <option value="">-- Veldu hús --</option>
-                                                    {stats.allHouses.map(house => {
-                                                        const manager = stats.allUsers.find(u => u.uid === house.manager_id);
-                                                        return (
-                                                            <option key={house.id} value={house.id}>
-                                                                {house.name} ({manager?.email || 'No email'})
-                                                            </option>
-                                                        );
-                                                    })}
-                                                </select>
-                                            </div>
-
-                                            <button
-                                                onClick={handleTestInvoice}
-                                                disabled={actionLoading === 'invoice-test' || !selectedHouseForInvoice}
-                                                className="btn btn-primary flex items-center gap-2"
-                                            >
-                                                {actionLoading === 'invoice-test' ? (
-                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                ) : (
-                                                    <Send className="w-4 h-4" />
-                                                )}
-                                                {actionLoading === 'invoice-test' ? 'Creating Invoice...' : 'Create Test Invoice'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )
-                }
                 {/* Newsletter Tab */}
                 {
                     activeTab === 'communications' && communicationsSubTab === 'newsletter' && (
@@ -3365,17 +2899,8 @@ export default function SuperAdminPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-xs font-bold text-stone-500 uppercase">Áskriftar staða</label>
-                                        <select
-                                            className="input mt-1"
-                                            value={editingHouse.subscription_status || 'trial'}
-                                            onChange={e => setEditingHouse({ ...editingHouse, subscription_status: e.target.value as any })}
-                                        >
-                                            <option value="trial">Trial</option>
-                                            <option value="active">Active</option>
-                                            <option value="free">Free (Lifetime)</option>
-                                            <option value="expired">Expired</option>
-                                        </select>
+                                        <label className="text-xs font-bold text-stone-500 uppercase">Staða</label>
+                                        <p className="mt-1 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2">Frítt (öll hús)</p>
                                     </div>
                                 </div>
                                 <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-end gap-3">
