@@ -25,6 +25,7 @@ const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const FinancePage = lazy(() => import('@/pages/FinancePage'));
 const TasksPage = lazy(() => import('@/pages/TasksPage'));
 const SuperAdminPage = lazy(() => import('@/pages/SuperAdminPage'));
+const ArbokPage = lazy(() => import('@/pages/ArbokPage'));
 const JoinPage = lazy(() => import('@/pages/JoinPage'));
 const GuestPage = lazy(() => import('@/pages/GuestPage'));
 const FeaturesPage = lazy(() => import('@/pages/FeaturesPage'));
@@ -229,6 +230,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <CalendarPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/arbok"
+                  element={
+                    <ProtectedRoute>
+                      <ArbokPage />
                     </ProtectedRoute>
                   }
                 />

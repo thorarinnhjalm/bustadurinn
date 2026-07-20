@@ -4,7 +4,8 @@ import {
     Calendar, CheckSquare,
     Plus, Bell, Shield,
     ChevronDown, Home,
-    HelpCircle, Coffee, UserPlus
+    HelpCircle, Coffee, UserPlus,
+    BookOpen
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
 import { useAppStore } from '@/store/appStore';
@@ -129,6 +130,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         title="Heim"
                     >
                         <Home size={20} />
+                    </button>
+                    <button
+                        onClick={() => handleNavigate('/arbok')}
+                        className="text-stone-400 hover:text-amber transition-colors"
+                        title="Árbók"
+                    >
+                        <BookOpen size={20} />
                     </button>
                     <button
                         onClick={() => setShowQuickHelp(true)}
