@@ -6,7 +6,7 @@ import {
     ChevronRight, Loader2, Shield,
     Home, LogOut,
     Image as ImageIcon, MapPin, Camera,
-    ShoppingCart, CheckSquare, Sparkles, Coffee
+    ShoppingCart, CheckSquare, Coffee
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
@@ -62,7 +62,6 @@ const UserDashboard = () => {
     const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [_selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
     const [showBookingDetailModal, setShowBookingDetailModal] = useState(false);
-    const [justActivated, setJustActivated] = useState(false);
 
 
     useEffect(() => {
@@ -499,26 +498,6 @@ const UserDashboard = () => {
                 />
 
                 {/* What's Next nudges (shows when setup complete but actions pending) */}
-                {/* Success Popup */}
-                {justActivated && (
-                    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 pointer-events-none md:items-center">
-                        <div className="bg-white rounded-2xl shadow-2xl border border-green-100 p-6 max-w-sm w-full animate-in slide-in-from-bottom-8 fade-in duration-500 pointer-events-auto">
-                            <div className="flex flex-col items-center text-center">
-                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                                    <Sparkles className="w-8 h-8 text-green-600" />
-                                </div>
-                                <h3 className="text-xl font-bold text-charcoal mb-2">Áskrift virkjuð!</h3>
-                                <p className="text-stone-600 mb-6 font-medium">Bústaðurinn þinn er nú fullvirkur. Velkomin(n) til leiks!</p>
-                                <button
-                                    onClick={() => setJustActivated(false)}
-                                    className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors"
-                                >
-                                    FRÁBÆRT
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
                 <WhatsNext
                     house={currentHouse}
                     currentUser={currentUser}
