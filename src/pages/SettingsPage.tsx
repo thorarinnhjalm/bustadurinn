@@ -760,6 +760,10 @@ export default function SettingsPage() {
                 amenities: formData.amenities || [],
                 privacy_hide_finances: formData.privacy_hide_finances,
                 finance_viewer_ids: formData.finance_viewer_ids || [],
+                checkout_checklist: formData.checkout_checklist || [],
+                arrival_checklist: formData.arrival_checklist || [],
+                supply_checklist: formData.supply_checklist || [],
+                seasonal_checklists: formData.seasonal_checklists || {},
                 updated_at: new Date()
             };
 

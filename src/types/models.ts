@@ -57,6 +57,20 @@ export interface House {
      * (CheckoutModal). Absent/empty means the feature is not configured for
      * this house and the modal falls back to a static reminder line. */
     checkout_checklist?: string[];
+    /** Ordered list of arrival-ritual item labels shown during check-in
+     * (CheckInModal), e.g. "Kveikja á vatni". Optional/backward-compatible. */
+    arrival_checklist?: string[];
+    /** Ordered list of supplies to stock-check at checkout (CheckoutModal's
+     * "Birgðastaða" section). Items marked as running out are added to the
+     * shopping list. Optional/backward-compatible. */
+    supply_checklist?: string[];
+    /** Seasonal ritual checklists (spring-opening / winter-closing), shown
+     * via SeasonalChecklistCard during their respective month windows.
+     * Optional/backward-compatible. */
+    seasonal_checklists?: {
+        spring?: string[];
+        autumn?: string[];
+    };
 
     manager_id: string; // The designated administrator (Bústaðastjóri)
     owner_ids: string[]; // All members

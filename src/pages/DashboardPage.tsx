@@ -13,7 +13,7 @@ import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
-import { collection, query, where, orderBy, limit, addDoc, onSnapshot, serverTimestamp, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, addDoc, getDocs, onSnapshot, serverTimestamp, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, House, BudgetPlan } from '@/types/models';
 import { fetchWeather } from '@/utils/weather';
@@ -26,15 +26,20 @@ import WhatsNext from '@/components/WhatsNext';
 import DashboardLayout from '@/components/DashboardLayout';
 import BookingDetailModal from '@/components/calendar/BookingDetailModal';
 import CheckoutModal from '@/components/dashboard/CheckoutModal';
+import CheckInModal from '@/components/dashboard/CheckInModal';
+import SeasonalChecklistCard from '@/components/dashboard/SeasonalChecklistCard';
 import Walkthrough from '@/components/Walkthrough';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 // InternalLog does not (yet) declare a structured `kind` field in src/types/models.ts.
 // We add it locally here rather than editing the shared model file (owned by another
 // concurrent change). Older logs in production predate this field, hence optional.
-// `checklist` is populated on check_out logs when the house has a configured
-// checkout checklist (House.checkout_checklist) — keyed by item label.
-type CheckInOutLog = InternalLog & { kind?: 'check_in' | 'check_out'; checklist?: Record<string, boolean> };
+// `checklist` is populated on check_out/check_in logs when the house has a configured
+// checkout/arrival checklist, and on the once-a-year seasonal logs — keyed by item label.
+type CheckInOutLog = InternalLog & {
+    kind?: 'check_in' | 'check_out' | 'seasonal_spring' | 'seasonal_autumn';
+    checklist?: Record<string, boolean>;
+};
 
 interface LastCheckoutChecklist {
     allChecked: boolean;
@@ -76,6 +81,15 @@ const UserDashboard = () => {
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [lastCheckoutChecklist, setLastCheckoutChecklist] = useState<LastCheckoutChecklist | null>(null);
+
+    // Check-in State
+    const [showCheckInModal, setShowCheckInModal] = useState(false);
+    const [checkInLoading, setCheckInLoading] = useState(false);
+
+    // Seasonal checklist state: whether a seasonal_spring/seasonal_autumn log
+    // already exists for the current calendar year (derived from the same
+    // internal_logs listener used for check-in/out status, see setup below).
+    const [seasonalLogged, setSeasonalLogged] = useState({ spring: false, autumn: false });
     const [_selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
     const [showBookingDetailModal, setShowBookingDetailModal] = useState(false);
 
@@ -177,10 +191,16 @@ const UserDashboard = () => {
                 }, (error) => console.error("Shopping listener error:", error)));
 
                 // 4. Internal Logs (Subcollection - for Check-in status)
+                // Limit raised from 5 to 30 so this same listener can also answer
+                // "has a seasonal checklist already been logged this year?" for
+                // SeasonalChecklistCard (that only happens twice a year, but a
+                // busy house's check-in/check-out traffic could otherwise push
+                // it out of a tighter window) without standing up a second
+                // onSnapshot subscription just for that.
                 const qLogs = query(
                     collection(db, 'houses', currentHouse.id, 'internal_logs'),
                     orderBy('created_at', 'desc'),
-                    limit(5)
+                    limit(30)
                 );
                 unsubscribes.push(onSnapshot(qLogs, (snapshot) => {
                     const logsData = snapshot.docs.map(doc => ({
@@ -215,6 +235,17 @@ const UserDashboard = () => {
                     } else {
                         setLastCheckoutChecklist(null);
                     }
+
+                    // Seasonal checklist status: has a seasonal_spring/seasonal_autumn
+                    // log already been written this calendar year?
+                    const currentYear = new Date().getFullYear();
+                    const springLogged = logsData.some(
+                        log => log.kind === 'seasonal_spring' && log.created_at?.getFullYear() === currentYear
+                    );
+                    const autumnLogged = logsData.some(
+                        log => log.kind === 'seasonal_autumn' && log.created_at?.getFullYear() === currentYear
+                    );
+                    setSeasonalLogged({ spring: springLogged, autumn: autumnLogged });
                 }, (error) => console.error("Logs listener error:", error)));
 
                 // 5. Finances (Subcollection - Optimized with Start of Year filter)
@@ -350,7 +381,7 @@ const UserDashboard = () => {
         return `Eftir ${diff} daga`;
     };
 
-    const handleCheckout = async (checklist: Record<string, boolean>) => {
+    const handleCheckout = async (checklist: Record<string, boolean>, suppliesOut: string[]) => {
         if (!currentHouse || !currentUser) return;
         setCheckoutLoading(true);
         try {
@@ -363,8 +394,41 @@ const UserDashboard = () => {
                     created_at: serverTimestamp()
                 });
             }
-            // 2. Log Internal Check-out
-            const text = `${currentUser.name} skráði brottför.`;
+
+            // 2. Add any "Á þrotum" supplies to the shopping list, skipping
+            // items that already have a matching unchecked entry (case-
+            // insensitive match, queried fresh here rather than reused from
+            // the dashboard's own listener since that one is limited/sorted
+            // for display purposes only).
+            let addedSuppliesCount = 0;
+            if (suppliesOut.length > 0) {
+                const qUnchecked = query(
+                    collection(db, 'houses', currentHouse.id, 'shopping_list'),
+                    where('checked', '==', false)
+                );
+                const existingSnapshot = await getDocs(qUnchecked);
+                const existingNames = new Set(
+                    existingSnapshot.docs.map(d => String(d.data().item || '').trim().toLowerCase())
+                );
+                for (const item of suppliesOut) {
+                    if (existingNames.has(item.trim().toLowerCase())) continue;
+                    await addDoc(collection(db, 'houses', currentHouse.id, 'shopping_list'), {
+                        house_id: currentHouse.id,
+                        item,
+                        checked: false,
+                        created_at: serverTimestamp(),
+                        added_by: currentUser.uid,
+                        added_by_name: currentUser.name
+                    });
+                    addedSuppliesCount++;
+                }
+            }
+
+            // 3. Log Internal Check-out
+            let text = `${currentUser.name} skráði brottför`;
+            text += addedSuppliesCount > 0
+                ? ` og skráði ${addedSuppliesCount} vörur á innkaupalistann.`
+                : '.';
             const hasChecklist = !!currentHouse.checkout_checklist && currentHouse.checkout_checklist.length > 0;
             const newLog: Record<string, unknown> = {
                 house_id: currentHouse.id,
@@ -387,6 +451,55 @@ const UserDashboard = () => {
             console.error('Error during checkout:', error);
         } finally {
             setCheckoutLoading(false);
+        }
+    };
+
+    const handleCheckIn = async (checklist: Record<string, boolean>) => {
+        if (!currentHouse || !currentUser) return;
+        setCheckInLoading(true);
+        try {
+            const text = `${currentUser.name} skráði komu sína.`;
+            const hasChecklist = !!currentHouse.arrival_checklist && currentHouse.arrival_checklist.length > 0;
+            const newLog: Record<string, unknown> = {
+                house_id: currentHouse.id,
+                user_id: currentUser.uid,
+                user_name: currentUser.name,
+                text,
+                kind: 'check_in' as const,
+                created_at: serverTimestamp()
+            };
+            if (hasChecklist) {
+                newLog.checklist = checklist;
+            }
+            await addDoc(collection(db, 'houses', currentHouse.id, 'internal_logs'), newLog);
+
+            setShowCheckInModal(false);
+            setIsCheckedIn(true);
+        } catch (error) {
+            console.error('Error during check-in:', error);
+        } finally {
+            setCheckInLoading(false);
+        }
+    };
+
+    const handleSeasonalChecklistConfirm = async (season: 'spring' | 'autumn', checklist: Record<string, boolean>) => {
+        if (!currentHouse || !currentUser) return;
+        const kind = season === 'spring' ? 'seasonal_spring' as const : 'seasonal_autumn' as const;
+        const label = season === 'spring' ? 'vor-opnun' : 'vetrarfrágang';
+        const text = `${currentUser.name} skráði ${label} bústaðarins.`;
+        try {
+            await addDoc(collection(db, 'houses', currentHouse.id, 'internal_logs'), {
+                house_id: currentHouse.id,
+                user_id: currentUser.uid,
+                user_name: currentUser.name,
+                text,
+                kind,
+                checklist,
+                created_at: serverTimestamp()
+            });
+        } catch (error) {
+            console.error('Error logging seasonal checklist:', error);
+            throw error;
         }
     };
 
@@ -564,24 +677,34 @@ const UserDashboard = () => {
                             if (!currentHouse || !currentUser) return;
                             if (isCheckedIn) {
                                 setShowCheckoutModal(true);
-                            } else {
-                                const confirmCheckIn = window.confirm("Viltu skrá komu þína í gestabókina?");
-                                if (!confirmCheckIn) return;
-                                try {
-                                    const text = `${currentUser.name} skráði komu sína.`;
-                                    const newLog = {
-                                        house_id: currentHouse.id,
-                                        user_id: currentUser.uid,
-                                        user_name: currentUser.name,
-                                        text,
-                                        kind: 'check_in' as const,
-                                        created_at: serverTimestamp()
-                                    };
-                                    await addDoc(collection(db, 'houses', currentHouse.id, 'internal_logs'), newLog);
-                                    setIsCheckedIn(true);
-                                } catch (error) {
-                                    console.error('Error logging check-in:', error);
-                                }
+                                return;
+                            }
+
+                            // Use the richer CheckInModal when the house has configured
+                            // an arrival checklist; otherwise fall back to the plain
+                            // confirm dialog that existed before that feature.
+                            const hasArrivalChecklist = !!currentHouse.arrival_checklist && currentHouse.arrival_checklist.length > 0;
+                            if (hasArrivalChecklist) {
+                                setShowCheckInModal(true);
+                                return;
+                            }
+
+                            const confirmCheckIn = window.confirm("Viltu skrá komu þína í gestabókina?");
+                            if (!confirmCheckIn) return;
+                            try {
+                                const text = `${currentUser.name} skráði komu sína.`;
+                                const newLog = {
+                                    house_id: currentHouse.id,
+                                    user_id: currentUser.uid,
+                                    user_name: currentUser.name,
+                                    text,
+                                    kind: 'check_in' as const,
+                                    created_at: serverTimestamp()
+                                };
+                                await addDoc(collection(db, 'houses', currentHouse.id, 'internal_logs'), newLog);
+                                setIsCheckedIn(true);
+                            } catch (error) {
+                                console.error('Error logging check-in:', error);
                             }
                         }}
                         className={`flex-1 py-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 border ${isCheckedIn
@@ -595,6 +718,13 @@ const UserDashboard = () => {
                         <span>{isCheckedIn ? 'Skrá brottför' : 'Skrá komu'}</span>
                     </button>
                 </div>
+
+                {/* Seasonal checklist nudge (spring-opening / winter-closing) */}
+                <SeasonalChecklistCard
+                    house={currentHouse}
+                    seasonalLogged={seasonalLogged}
+                    onConfirm={handleSeasonalChecklistConfirm}
+                />
 
                 {/* Last Checkout Checklist Strip */}
                 {lastCheckoutChecklist && (
@@ -949,6 +1079,35 @@ const UserDashboard = () => {
                         message={checkoutMessage}
                         onMessageChange={setCheckoutMessage}
                         checklist={currentHouse?.checkout_checklist}
+                        supplyChecklist={currentHouse?.supply_checklist}
+                    />
+                </ErrorBoundary>
+            )}
+            {showCheckInModal && (
+                <ErrorBoundary fallback={
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+                        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                            <div className="text-center">
+                                <div className="text-4xl mb-4">⚠️</div>
+                                <h3 className="font-serif font-bold text-xl mb-2">Villa kom upp</h3>
+                                <p className="text-stone-600 mb-4">Ekki tókst að hlaða innskráningarglugga</p>
+                                <button
+                                    onClick={() => setShowCheckInModal(false)}
+                                    className="btn btn-primary"
+                                >
+                                    Loka
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }>
+                    <CheckInModal
+                        isOpen={showCheckInModal}
+                        onClose={() => setShowCheckInModal(false)}
+                        loading={checkInLoading}
+                        onCheckIn={handleCheckIn}
+                        checklist={currentHouse?.arrival_checklist}
                     />
                 </ErrorBoundary>
             )}

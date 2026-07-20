@@ -25,10 +25,16 @@ import {
     Dices,
     Tv,
     Flame,
-    ListChecks
+    ListChecks,
+    LogIn,
+    Package,
+    CalendarRange,
+    Sparkles,
+    Snowflake
 } from 'lucide-react';
 import type { House, User } from '@/types/models';
 import Toggle from './Toggle';
+import ChecklistEditor from './ChecklistEditor';
 
 interface HouseSettingsProps {
     house: House;
@@ -81,13 +87,18 @@ export default function HouseSettings({
         amenities: house.amenities || [],
         privacy_hide_finances: house.privacy_hide_finances || false,
         finance_viewer_ids: house.finance_viewer_ids || [],
-        checkout_checklist: house.checkout_checklist || []
+        checkout_checklist: house.checkout_checklist || [],
+        arrival_checklist: house.arrival_checklist || [],
+        supply_checklist: house.supply_checklist || [],
+        seasonal_checklists: {
+            spring: house.seasonal_checklists?.spring || [],
+            autumn: house.seasonal_checklists?.autumn || []
+        }
     });
 
     const [isEditingLocation, setIsEditingLocation] = useState(false);
     const [editLang, setEditLang] = useState<'is' | 'en'>('is');
     const [, setCropMode] = useState<'main' | 'gallery'>('main');
-    const [newChecklistItem, setNewChecklistItem] = useState('');
 
     // Sync form with house prop
     useEffect(() => {
@@ -115,7 +126,13 @@ export default function HouseSettings({
             amenities: house.amenities || [],
             privacy_hide_finances: house.privacy_hide_finances || false,
             finance_viewer_ids: house.finance_viewer_ids || [],
-            checkout_checklist: house.checkout_checklist || []
+            checkout_checklist: house.checkout_checklist || [],
+            arrival_checklist: house.arrival_checklist || [],
+            supply_checklist: house.supply_checklist || [],
+            seasonal_checklists: {
+                spring: house.seasonal_checklists?.spring || [],
+                autumn: house.seasonal_checklists?.autumn || []
+            }
         });
     }, [house]);
 
@@ -127,23 +144,35 @@ export default function HouseSettings({
         'Skrúfa fyrir vatn'
     ];
 
-    const handleAddChecklistItem = () => {
-        const label = newChecklistItem.trim();
-        if (!label) return;
-        setHouseForm({ ...houseForm, checkout_checklist: [...houseForm.checkout_checklist, label] });
-        setNewChecklistItem('');
-    };
+    const DEFAULT_ARRIVAL_CHECKLIST = [
+        'Kveikja á vatni',
+        'Kveikja á rafmagni',
+        'Kynda upp',
+        'Athuga með mýs'
+    ];
 
-    const handleRemoveChecklistItem = (index: number) => {
-        setHouseForm({
-            ...houseForm,
-            checkout_checklist: houseForm.checkout_checklist.filter((_, i) => i !== index)
-        });
-    };
+    const DEFAULT_SUPPLY_CHECKLIST = [
+        'Klósettpappír',
+        'Eldhúsrúllur',
+        'Uppþvottalögur',
+        'Kaffi',
+        'Kerti',
+        'Eldiviður'
+    ];
 
-    const handleInsertDefaultChecklist = () => {
-        setHouseForm({ ...houseForm, checkout_checklist: [...DEFAULT_CHECKOUT_CHECKLIST] });
-    };
+    const DEFAULT_SPRING_CHECKLIST = [
+        'Skrúfa frá vatni',
+        'Setja upp útihúsgögn',
+        'Yfirfara reykskynjara',
+        'Tékka á þakrennum'
+    ];
+
+    const DEFAULT_AUTUMN_CHECKLIST = [
+        'Tæma vatnslagnir',
+        'Taka inn útihúsgögn',
+        'Tæma ísskáp',
+        'Aftengja gaskút'
+    ];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -669,76 +698,92 @@ export default function HouseSettings({
                         </div>
                     </div>
 
-                    {/* CHECKOUT CHECKLIST */}
+                    {/* CHECKLISTS */}
                     <div className="bg-white p-6 rounded-lg shadow-sm">
                         <div className="flex items-center gap-2 mb-6">
                             <ListChecks className="w-6 h-6 text-amber" />
-                            <h2 className="text-xl font-serif">Gátlisti fyrir brottför</h2>
+                            <h2 className="text-xl font-serif">Gátlistar</h2>
                         </div>
                         <p className="text-sm text-stone-500 mb-6">
-                            Þessi listi birtist gestum þegar þeir skrá brottför. Hakað er við hvert atriði en það er ekki skylda.
+                            Þessir listar birtast gestum við komu og brottför. Hakað er við hvert atriði en það er ekki skylda.
                         </p>
 
-                        {houseForm.checkout_checklist.length === 0 ? (
-                            <div className="text-center py-6 bg-stone-50 rounded-xl border border-dashed border-stone-200">
-                                <p className="text-sm text-stone-500 mb-3">Enginn gátlisti hefur verið settur upp.</p>
-                                {isManager && (
-                                    <button
-                                        type="button"
-                                        onClick={handleInsertDefaultChecklist}
-                                        className="text-xs font-bold text-amber hover:underline"
-                                    >
-                                        Setja inn sjálfgefinn lista
-                                    </button>
-                                )}
-                            </div>
-                        ) : (
-                            <ul className="space-y-2 mb-4">
-                                {houseForm.checkout_checklist.map((item, idx) => (
-                                    <li
-                                        key={`${item}-${idx}`}
-                                        className="flex items-center justify-between gap-3 p-3 rounded-xl bg-stone-50 border border-stone-100"
-                                    >
-                                        <span className="text-sm text-stone-700">{item}</span>
-                                        {isManager && (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveChecklistItem(idx)}
-                                                className="text-stone-400 hover:text-red-500 transition-colors"
-                                                aria-label={`Eyða ${item}`}
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
+                        <div className="space-y-8">
+                            <ChecklistEditor
+                                icon={ListChecks}
+                                title="Brottfarargátlisti"
+                                description="Birtist gestum þegar þeir skrá brottför."
+                                items={houseForm.checkout_checklist}
+                                onChange={(items) => setHouseForm({ ...houseForm, checkout_checklist: items })}
+                                defaults={DEFAULT_CHECKOUT_CHECKLIST}
+                                isManager={isManager}
+                                placeholder="T.d. Setja rusl í tunnu"
+                            />
 
-                        {isManager && (
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    className="input flex-1"
-                                    value={newChecklistItem}
-                                    onChange={(e) => setNewChecklistItem(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            handleAddChecklistItem();
-                                        }
-                                    }}
-                                    placeholder="T.d. Setja rusl í tunnu"
+                            <div className="border-t border-stone-100 pt-8">
+                                <ChecklistEditor
+                                    icon={LogIn}
+                                    title="Komugátlisti"
+                                    description="Birtist gestum þegar þeir skrá komu."
+                                    items={houseForm.arrival_checklist}
+                                    onChange={(items) => setHouseForm({ ...houseForm, arrival_checklist: items })}
+                                    defaults={DEFAULT_ARRIVAL_CHECKLIST}
+                                    isManager={isManager}
+                                    placeholder="T.d. Kveikja á ísskáp"
                                 />
-                                <button
-                                    type="button"
-                                    onClick={handleAddChecklistItem}
-                                    className="btn btn-secondary flex items-center gap-2 px-4"
-                                >
-                                    <Plus className="w-4 h-4" /> Bæta við
-                                </button>
                             </div>
-                        )}
+
+                            <div className="border-t border-stone-100 pt-8">
+                                <ChecklistEditor
+                                    icon={Package}
+                                    title="Birgðalisti"
+                                    description="Birgðir sem eru athugaðar við brottför — ef eitthvað er á þrotum fer það sjálfkrafa á innkaupalistann."
+                                    items={houseForm.supply_checklist}
+                                    onChange={(items) => setHouseForm({ ...houseForm, supply_checklist: items })}
+                                    defaults={DEFAULT_SUPPLY_CHECKLIST}
+                                    isManager={isManager}
+                                    placeholder="T.d. Ruslapokar"
+                                />
+                            </div>
+
+                            <div className="border-t border-stone-100 pt-8">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <CalendarRange className="w-5 h-5 text-amber" />
+                                    <h3 className="font-serif text-lg">Árstíðalistar</h3>
+                                </div>
+                                <p className="text-sm text-stone-500 mb-4">
+                                    Vor-opnun og vetrarfrágangur — bústaðurinn stingur upp á þessum listum á réttum árstíma.
+                                </p>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <ChecklistEditor
+                                        icon={Sparkles}
+                                        title="Vor-opnun"
+                                        description="Stungið upp á í apríl-maí."
+                                        items={houseForm.seasonal_checklists.spring}
+                                        onChange={(items) => setHouseForm({
+                                            ...houseForm,
+                                            seasonal_checklists: { ...houseForm.seasonal_checklists, spring: items }
+                                        })}
+                                        defaults={DEFAULT_SPRING_CHECKLIST}
+                                        isManager={isManager}
+                                        placeholder="T.d. Þrífa svalir"
+                                    />
+                                    <ChecklistEditor
+                                        icon={Snowflake}
+                                        title="Vetrarfrágangur"
+                                        description="Stungið upp á í september-október."
+                                        items={houseForm.seasonal_checklists.autumn}
+                                        onChange={(items) => setHouseForm({
+                                            ...houseForm,
+                                            seasonal_checklists: { ...houseForm.seasonal_checklists, autumn: items }
+                                        })}
+                                        defaults={DEFAULT_AUTUMN_CHECKLIST}
+                                        isManager={isManager}
+                                        placeholder="T.d. Setja yfirbreiðslu á pott"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex justify-end pt-6">

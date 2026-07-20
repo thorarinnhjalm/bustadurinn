@@ -73,7 +73,7 @@ describe('CheckoutModal', () => {
             'Læsa öllum hurðum': true,
             'Loka öllum gluggum': false,
             'Taka ruslið': true
-        });
+        }, []);
     });
 
     it('allows checkout to proceed with all items unchecked (checklist is optional)', () => {
@@ -96,7 +96,72 @@ describe('CheckoutModal', () => {
 
         fireEvent.click(confirmButton);
 
-        expect(onCheckout).toHaveBeenCalledWith({ 'Læsa öllum hurðum': false });
+        expect(onCheckout).toHaveBeenCalledWith({ 'Læsa öllum hurðum': false }, []);
+    });
+
+    it('does not render a supply section when supplyChecklist is empty', () => {
+        render(
+            <CheckoutModal
+                isOpen={true}
+                onClose={vi.fn()}
+                loading={false}
+                onCheckout={vi.fn()}
+                message=""
+                onMessageChange={vi.fn()}
+            />
+        );
+
+        expect(screen.queryByText('Birgðastaða')).not.toBeInTheDocument();
+    });
+
+    it('defaults supply items to "Til" and reports only items marked "Á þrotum" as suppliesOut', () => {
+        const supplyChecklist = ['Klósettpappír', 'Kaffi', 'Eldiviður'];
+        const onCheckout = vi.fn();
+        render(
+            <CheckoutModal
+                isOpen={true}
+                onClose={vi.fn()}
+                loading={false}
+                onCheckout={onCheckout}
+                message=""
+                onMessageChange={vi.fn()}
+                supplyChecklist={supplyChecklist}
+            />
+        );
+
+        expect(screen.getByText('Birgðastaða')).toBeInTheDocument();
+
+        // Mark "Klósettpappír" and "Eldiviður" as out; leave "Kaffi" as "Til".
+        const outButtons = screen.getAllByRole('button', { name: 'Á þrotum' });
+        fireEvent.click(outButtons[0]); // Klósettpappír
+        fireEvent.click(outButtons[2]); // Eldiviður
+
+        fireEvent.click(screen.getByRole('button', { name: /Skrá brottför/ }));
+
+        expect(onCheckout).toHaveBeenCalledWith({}, ['Klósettpappír', 'Eldiviður']);
+    });
+
+    it('allows toggling a supply item back to "Til" after marking it out', () => {
+        const supplyChecklist = ['Kaffi'];
+        const onCheckout = vi.fn();
+        render(
+            <CheckoutModal
+                isOpen={true}
+                onClose={vi.fn()}
+                loading={false}
+                onCheckout={onCheckout}
+                message=""
+                onMessageChange={vi.fn()}
+                supplyChecklist={supplyChecklist}
+            />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Á þrotum' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Til' }));
+
+        fireEvent.click(screen.getByRole('button', { name: /Skrá brottför/ }));
+
+        expect(onCheckout).toHaveBeenCalledWith({}, []);
     });
 
     it('renders nothing when isOpen is false', () => {

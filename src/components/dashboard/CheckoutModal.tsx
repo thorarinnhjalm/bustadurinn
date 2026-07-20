@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, LogOut, X } from 'lucide-react';
+import { Loader2, LogOut, X, Package } from 'lucide-react';
 
 // Stable default: an inline `checklist = []` default parameter would create a
 // new array reference every render, and since the reset effect below keys on
@@ -10,10 +10,11 @@ interface CheckoutModalProps {
     isOpen: boolean;
     onClose: () => void;
     loading: boolean;
-    onCheckout: (checklist: Record<string, boolean>) => void;
+    onCheckout: (checklist: Record<string, boolean>, suppliesOut: string[]) => void;
     message: string;
     onMessageChange: (msg: string) => void;
     checklist?: string[];
+    supplyChecklist?: string[];
 }
 
 export default function CheckoutModal({
@@ -23,21 +24,26 @@ export default function CheckoutModal({
     onCheckout,
     message,
     onMessageChange,
-    checklist = NO_CHECKLIST
+    checklist = NO_CHECKLIST,
+    supplyChecklist = NO_CHECKLIST
 }: CheckoutModalProps) {
     const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+    // Per supply item: true = "Á þrotum" (out), false/absent = "Til" (in stock, default).
+    const [suppliesOutMap, setSuppliesOutMap] = useState<Record<string, boolean>>({});
 
     // Reset checked state whenever the modal (re)opens or the checklist changes,
     // so a previous checkout's ticks don't leak into the next one.
     useEffect(() => {
         if (isOpen) {
             setCheckedItems({});
+            setSuppliesOutMap({});
         }
-    }, [isOpen, checklist]);
+    }, [isOpen, checklist, supplyChecklist]);
 
     if (!isOpen) return null;
 
     const hasChecklist = checklist.length > 0;
+    const hasSupplyChecklist = supplyChecklist.length > 0;
 
     const toggleItem = (item: string) => {
         setCheckedItems((prev) => ({ ...prev, [item]: !prev[item] }));
@@ -49,7 +55,8 @@ export default function CheckoutModal({
         const fullMap: Record<string, boolean> = Object.fromEntries(
             checklist.map((item) => [item, !!checkedItems[item]])
         );
-        onCheckout(fullMap);
+        const suppliesOut = supplyChecklist.filter((item) => !!suppliesOutMap[item]);
+        onCheckout(fullMap, suppliesOut);
     };
 
     return (
@@ -110,6 +117,46 @@ export default function CheckoutModal({
                         ) : (
                             <div className="bg-stone-50 p-4 rounded-xl text-xs text-stone-500">
                                 <strong>Mundu:</strong> Læsa hurðum, loka gluggum og taka ruslið.
+                            </div>
+                        )}
+
+                        {hasSupplyChecklist && (
+                            <div className="bg-stone-50 p-4 rounded-xl">
+                                <p className="text-xs font-bold text-stone-500 uppercase tracking-wide mb-1 flex items-center gap-2">
+                                    <Package size={14} /> Birgðastaða
+                                </p>
+                                <p className="text-xs text-stone-500 mb-3">
+                                    Merktu við ef eitthvað er á þrotum — það fer sjálfkrafa á innkaupalistann.
+                                </p>
+                                <div className="space-y-2">
+                                    {supplyChecklist.map((item) => {
+                                        const isOut = !!suppliesOutMap[item];
+                                        return (
+                                            <div
+                                                key={item}
+                                                className="flex items-center justify-between gap-3 py-1"
+                                            >
+                                                <span className="text-sm text-stone-700">{item}</span>
+                                                <div className="flex bg-white rounded-lg border border-stone-200 overflow-hidden text-xs font-bold">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSuppliesOutMap((prev) => ({ ...prev, [item]: false }))}
+                                                        className={`px-3 py-1.5 transition-colors ${!isOut ? 'bg-emerald-500 text-white' : 'text-stone-500 hover:bg-stone-50'}`}
+                                                    >
+                                                        Til
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSuppliesOutMap((prev) => ({ ...prev, [item]: true }))}
+                                                        className={`px-3 py-1.5 transition-colors ${isOut ? 'bg-amber text-[#1a1a1a]' : 'text-stone-500 hover:bg-stone-50'}`}
+                                                    >
+                                                        Á þrotum
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
 
