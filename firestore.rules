@@ -202,5 +202,24 @@ service cloud.firestore {
       allow read, update, delete: if isSuperAdmin();
     }
 
+    match /contact_submissions/{id} {
+      allow create: if true;
+      allow read, update, delete: if isSuperAdmin();
+    }
+
+    match /newsletter_subscribers/{id} {
+      allow create: if true;
+      allow read, update, delete: if isSuperAdmin();
+    }
+
+    match /service_providers/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    match /bookings/{id} {
+      allow read, write: if isAuthenticated();
+    }
+
   }
 }
