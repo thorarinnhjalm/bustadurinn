@@ -64,6 +64,7 @@ export interface House {
      * "Birgðastaða" section). Items marked as running out are added to the
      * shopping list. Optional/backward-compatible. */
     supply_checklist?: string[];
+    supplies_out?: string[];
     /** Seasonal ritual checklists (spring-opening / winter-closing), shown
      * via SeasonalChecklistCard during their respective month windows.
      * Optional/backward-compatible. */
@@ -314,6 +315,20 @@ export interface Coupon {
     used_count: number;
     active: boolean;
     created_at: Date;
+}
+
+// Inventory ("Hvað er til") Item
+export interface InventoryItem {
+    id: string;
+    house_id: string;
+    name: string;
+    category: 'pantry' | 'kitchen' | 'bedding' | 'cleaning';
+    status: 'ok' | 'out'; // 'ok' = Til, 'out' = Á þrotum
+    quantity?: string; // Optional count, e.g. "12 stk", "6 sængur"
+    created_at?: Date;
+    updated_at?: Date;
+    updated_by?: string;
+    updated_by_name?: string;
 }
 
 // Shopping List

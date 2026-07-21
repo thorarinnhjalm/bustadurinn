@@ -6,16 +6,16 @@ import {
     ChevronRight, Loader2, Shield,
     Home, LogOut,
     Image as ImageIcon, MapPin, Camera,
-    ShoppingCart, CheckSquare, Coffee, Cookie
+    ShoppingCart, CheckSquare, Coffee
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
-import { collection, query, where, orderBy, limit, addDoc, getDocs, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, addDoc, getDocs, onSnapshot, serverTimestamp, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, House, BudgetPlan } from '@/types/models';
+import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, House, BudgetPlan, InventoryItem } from '@/types/models';
 import { fetchWeather } from '@/utils/weather';
 import { shouldShowWeather } from '@/services/weatherService';
 import MyServiceWidget from '@/components/dashboard/MyServiceWidget';
@@ -28,6 +28,7 @@ import BookingDetailModal from '@/components/calendar/BookingDetailModal';
 import CheckoutModal from '@/components/dashboard/CheckoutModal';
 import CheckInModal from '@/components/dashboard/CheckInModal';
 import SeasonalChecklistCard from '@/components/dashboard/SeasonalChecklistCard';
+import InventoryCard from '@/components/dashboard/InventoryCard';
 import Walkthrough from '@/components/Walkthrough';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
@@ -71,6 +72,7 @@ const UserDashboard = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isOccupied, setIsOccupied] = useState(false);
     const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
+    const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
     const [weather, setWeather] = useState({ temp: "--" as string | number, wind: 0, condition: "—" });
     const [finances, setFinances] = useState({ balance: 0, lastAction: "—", totalBudget: 0, actualYTD: 0 });
     const [budgetPlan, setBudgetPlan] = useState<BudgetPlan | null>(null);
@@ -299,6 +301,20 @@ const UserDashboard = () => {
                     }));
                 }, (error) => console.error("Finance listener error:", error)));
 
+                // 6. Inventory Subcollection ("Hvað er til")
+                const qInventory = query(
+                    collection(db, 'houses', currentHouse.id, 'inventory')
+                );
+                unsubscribes.push(onSnapshot(qInventory, (snapshot) => {
+                    const items = snapshot.docs.map(docSnap => ({
+                        id: docSnap.id,
+                        ...docSnap.data(),
+                        created_at: docSnap.data().created_at?.toDate(),
+                        updated_at: docSnap.data().updated_at?.toDate()
+                    })) as InventoryItem[];
+                    setInventoryItems(items);
+                }, (error) => console.error("Inventory listener error:", error)));
+
                 // 6. Weather (Async - One time)
                 if (currentHouse.location?.lat && currentHouse.location?.lng) {
                     fetchWeather(currentHouse.location.lat, currentHouse.location.lng)
@@ -422,6 +438,21 @@ const UserDashboard = () => {
                     });
                     addedSuppliesCount++;
                 }
+
+                // Sync status with inventory subcollection
+                const qInv = query(collection(db, 'houses', currentHouse.id, 'inventory'));
+                const invSnapshot = await getDocs(qInv);
+                for (const docSnap of invSnapshot.docs) {
+                    const data = docSnap.data();
+                    if (suppliesOut.includes(data.name)) {
+                        await updateDoc(doc(db, 'houses', currentHouse.id, 'inventory', docSnap.id), {
+                            status: 'out',
+                            updated_at: serverTimestamp(),
+                            updated_by: currentUser.uid,
+                            updated_by_name: currentUser.name
+                        });
+                    }
+                }
             }
 
             // 3. Log Internal Check-out
@@ -503,68 +534,167 @@ const UserDashboard = () => {
         }
     };
 
-    const handleInitializeCabinet = async () => {
-        if (!currentHouse) return;
+    const handleInitializeInventory = async () => {
+        if (!currentHouse || !currentUser) return;
         try {
-            await updateDoc(doc(db, 'houses', currentHouse.id), {
-                supply_checklist: [
+            const batch = writeBatch(db);
+            const inventoryColRef = collection(db, 'houses', currentHouse.id, 'inventory');
+            const hasLegacy = currentHouse.supply_checklist && currentHouse.supply_checklist.length > 0;
+
+            if (hasLegacy && currentHouse.supply_checklist) {
+                currentHouse.supply_checklist.forEach((item: string) => {
+                    const docRef = doc(inventoryColRef);
+                    const isCleaning = [
+                        'uppþvottalögur', 'klósettpappír', 'eldhúsrúllur', 
+                        'álpappír', 'bökunarpappír', 'kerti', 'sápa', 'tuska',
+                        'tuskur', 'svampur', 'svampar', 'ruslapokar', 'ruslapoki'
+                    ].some(keyword => item.toLowerCase().includes(keyword));
+
+                    const isOut = currentHouse.supplies_out?.includes(item);
+
+                    batch.set(docRef, {
+                        house_id: currentHouse.id,
+                        name: item,
+                        category: isCleaning ? 'cleaning' : 'pantry',
+                        status: isOut ? 'out' : 'ok',
+                        quantity: '',
+                        created_at: serverTimestamp(),
+                        updated_at: serverTimestamp(),
+                        updated_by: currentUser.uid,
+                        updated_by_name: currentUser.name
+                    });
+                });
+
+                const kitchenItems = [
+                    { name: 'Diskar', quantity: '12 stk' },
+                    { name: 'Glös', quantity: '12 stk' },
+                    { name: 'Bollar', quantity: '12 stk' },
+                    { name: 'Hnífapör', quantity: '12 pör' }
+                ];
+                const beddingItems = [
+                    { name: 'Sængur', quantity: '6 stk' },
+                    { name: 'Koddar', quantity: '6 stk' }
+                ];
+
+                kitchenItems.forEach((item) => {
+                    const docRef = doc(inventoryColRef);
+                    batch.set(docRef, {
+                        house_id: currentHouse.id,
+                        name: item.name,
+                        category: 'kitchen',
+                        status: 'ok',
+                        quantity: item.quantity,
+                        created_at: serverTimestamp(),
+                        updated_at: serverTimestamp(),
+                        updated_by: currentUser.uid,
+                        updated_by_name: currentUser.name
+                    });
+                });
+
+                beddingItems.forEach((item) => {
+                    const docRef = doc(inventoryColRef);
+                    batch.set(docRef, {
+                        house_id: currentHouse.id,
+                        name: item.name,
+                        category: 'bedding',
+                        status: 'ok',
+                        quantity: item.quantity,
+                        created_at: serverTimestamp(),
+                        updated_at: serverTimestamp(),
+                        updated_by: currentUser.uid,
+                        updated_by_name: currentUser.name
+                    });
+                });
+            } else {
+                const pantryItems = [
                     'Salt', 'Pipar', 'Grillkrydd', 'Oregano', 'Ólífuolía',
-                    'Matarolía', 'Sykur', 'Uppþvottalögur', 'Klósettpappír',
-                    'Eldhúsrúllur', 'Álpappír', 'Bökunarpappír', 'Kaffi', 'Kerti'
-                ],
+                    'Matarolía', 'Sykur', 'Kaffi'
+                ];
+                const cleaningItems = [
+                    'Uppþvottalögur', 'Klósettpappír', 'Eldhúsrúllur', 
+                    'Álpappír', 'Bökunarpappír', 'Kerti'
+                ];
+                const kitchenItems = [
+                    { name: 'Diskar', quantity: '12 stk' },
+                    { name: 'Glös', quantity: '12 stk' },
+                    { name: 'Bollar', quantity: '12 stk' },
+                    { name: 'Hnífapör', quantity: '12 pör' }
+                ];
+                const beddingItems = [
+                    { name: 'Sængur', quantity: '6 stk' },
+                    { name: 'Koddar', quantity: '6 stk' }
+                ];
+
+                pantryItems.forEach((item) => {
+                    const docRef = doc(inventoryColRef);
+                    batch.set(docRef, {
+                        house_id: currentHouse.id,
+                        name: item,
+                        category: 'pantry',
+                        status: 'ok',
+                        quantity: '',
+                        created_at: serverTimestamp(),
+                        updated_at: serverTimestamp(),
+                        updated_by: currentUser.uid,
+                        updated_by_name: currentUser.name
+                    });
+                });
+
+                cleaningItems.forEach((item) => {
+                    const docRef = doc(inventoryColRef);
+                    batch.set(docRef, {
+                        house_id: currentHouse.id,
+                        name: item,
+                        category: 'cleaning',
+                        status: 'ok',
+                        quantity: '',
+                        created_at: serverTimestamp(),
+                        updated_at: serverTimestamp(),
+                        updated_by: currentUser.uid,
+                        updated_by_name: currentUser.name
+                    });
+                });
+
+                kitchenItems.forEach((item) => {
+                    const docRef = doc(inventoryColRef);
+                    batch.set(docRef, {
+                        house_id: currentHouse.id,
+                        name: item.name,
+                        category: 'kitchen',
+                        status: 'ok',
+                        quantity: item.quantity,
+                        created_at: serverTimestamp(),
+                        updated_at: serverTimestamp(),
+                        updated_by: currentUser.uid,
+                        updated_by_name: currentUser.name
+                    });
+                });
+
+                beddingItems.forEach((item) => {
+                    const docRef = doc(inventoryColRef);
+                    batch.set(docRef, {
+                        house_id: currentHouse.id,
+                        name: item.name,
+                        category: 'bedding',
+                        status: 'ok',
+                        quantity: item.quantity,
+                        created_at: serverTimestamp(),
+                        updated_at: serverTimestamp(),
+                        updated_by: currentUser.uid,
+                        updated_by_name: currentUser.name
+                    });
+                });
+            }
+
+            await batch.commit();
+
+            // Clear legacy supply_checklist from house doc
+            await updateDoc(doc(db, 'houses', currentHouse.id), {
+                supply_checklist: [],
                 supplies_out: []
             });
         } catch (error) {
-            console.error('Error initializing cabinet:', error);
-        }
-    };
-
-    const handleToggleSupply = async (item: string, isCurrentlyOut: boolean) => {
-        if (!currentHouse || !currentUser) return;
-        try {
-            const houseRef = doc(db, 'houses', currentHouse.id);
-            if (isCurrentlyOut) {
-                // Mark as in-stock: remove from supplies_out
-                await updateDoc(houseRef, {
-                    supplies_out: arrayRemove(item)
-                });
-                
-                // Find and delete from shopping list
-                const q = query(
-                    collection(db, 'houses', currentHouse.id, 'shopping_list'),
-                    where('item', '==', item),
-                    where('checked', '==', false)
-                );
-                const querySnap = await getDocs(q);
-                for (const docSnap of querySnap.docs) {
-                    await deleteDoc(doc(db, 'houses', currentHouse.id, 'shopping_list', docSnap.id));
-                }
-            } else {
-                // Mark as out-of-stock: add to supplies_out
-                await updateDoc(houseRef, {
-                    supplies_out: arrayUnion(item)
-                });
-
-                // Check if already in shopping list
-                const q = query(
-                    collection(db, 'houses', currentHouse.id, 'shopping_list'),
-                    where('item', '==', item),
-                    where('checked', '==', false)
-                );
-                const querySnap = await getDocs(q);
-                if (querySnap.empty) {
-                    await addDoc(collection(db, 'houses', currentHouse.id, 'shopping_list'), {
-                        item: item,
-                        checked: false,
-                        added_by: currentUser.uid,
-                        added_by_name: currentUser.name || currentUser.email,
-                        created_at: serverTimestamp(),
-                        house_id: currentHouse.id
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Error toggling supply item:', error);
+            console.error('Error initializing inventory:', error);
         }
     };
 
@@ -1029,62 +1159,14 @@ const UserDashboard = () => {
                         </div>
                     </section>
 
-                    {/* KRYDDSKÁPURINN (SPICE CABINET) */}
-                    <section className="group">
-                        <div className="flex justify-between items-center mb-4 px-1">
-                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Kryddskápurinn & birgðir</h3>
-                        </div>
-                        <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden min-h-[200px]">
-                            {!currentHouse.supply_checklist || currentHouse.supply_checklist.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-center py-6">
-                                    <div className="w-12 h-12 bg-amber/10 text-amber rounded-full flex items-center justify-center mb-3">
-                                        <Cookie size={20} />
-                                    </div>
-                                    <p className="font-bold text-[#1a1a1a]">Tómur skápur</p>
-                                    <p className="text-xs text-stone-500 mb-4">Enginn birgðalisti eða krydd hafa verið skráð.</p>
-                                    <button
-                                        type="button"
-                                        onClick={handleInitializeCabinet}
-                                        className="btn btn-secondary text-xs px-4 py-2 font-bold border-stone-200 hover:border-stone-300"
-                                    >
-                                        Virkja kryddskápinn
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    <p className="text-[10px] text-stone-400 leading-normal mb-3">
-                                        Smelltu á hluti til að breyta stöðu. Hlutir sem eru <strong>á þrotum</strong> fara sjálfkrafa á innkaupalistann.
-                                    </p>
-                                    <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto pr-1">
-                                        {currentHouse.supply_checklist.map((item: string) => {
-                                            const isOut = currentHouse.supplies_out?.includes(item);
-                                            return (
-                                                <button
-                                                    key={item}
-                                                    type="button"
-                                                    onClick={() => handleToggleSupply(item, isOut)}
-                                                    className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all ${
-                                                        isOut
-                                                            ? 'bg-amber/5 border-amber/20 text-stone-700 hover:bg-amber/10'
-                                                            : 'bg-stone-50 border-stone-100 text-stone-700 hover:bg-stone-100'
-                                                    }`}
-                                                >
-                                                    <span className="text-xs font-semibold truncate mr-2">{item}</span>
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                                                        isOut
-                                                            ? 'bg-amber text-[#1a1a1a]'
-                                                            : 'bg-emerald-500 text-white'
-                                                    }`}>
-                                                        {isOut ? 'Á þrotum' : 'Til'}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </section>
+                    {/* HVAÐ ER TIL (INVENTORY & EQUIPMENT) */}
+                    <InventoryCard
+                        houseId={currentHouse.id}
+                        currentUserId={currentUser?.uid || ''}
+                        currentUserName={currentUser?.name || currentUser?.email || ''}
+                        inventoryItems={inventoryItems}
+                        onInitialize={handleInitializeInventory}
+                    />
 
                     {/* TASKS */}
                     <section onClick={() => navigate('/tasks')} className="group cursor-pointer">
@@ -1201,7 +1283,11 @@ const UserDashboard = () => {
                         message={checkoutMessage}
                         onMessageChange={setCheckoutMessage}
                         checklist={currentHouse?.checkout_checklist}
-                        supplyChecklist={currentHouse?.supply_checklist}
+                        supplyChecklist={
+                            inventoryItems.length > 0
+                                ? inventoryItems.filter(i => i.category === 'pantry' || i.category === 'cleaning').map(i => i.name)
+                                : currentHouse?.supply_checklist
+                        }
                     />
                 </ErrorBoundary>
             )}

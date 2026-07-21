@@ -7,6 +7,7 @@ interface ImageCropperProps {
     onCropComplete: (croppedImageBlob: Blob) => void;
     onCancel: () => void;
     aspectRatio?: number;
+    showSkipCrop?: boolean;
 }
 
 interface Area {
@@ -15,6 +16,18 @@ interface Area {
     width: number;
     height: number;
 }
+
+const dataURLToBlob = (dataURL: string): Blob => {
+    const arr = dataURL.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+};
 
 const createImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
@@ -60,7 +73,13 @@ const getCroppedImg = async (
     });
 };
 
-export default function ImageCropper({ image, onCropComplete, onCancel, aspectRatio = 16 / 9 }: ImageCropperProps) {
+export default function ImageCropper({
+    image,
+    onCropComplete,
+    onCancel,
+    aspectRatio,
+    showSkipCrop = false
+}: ImageCropperProps) {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [rotation, setRotation] = useState(0);
@@ -92,10 +111,22 @@ export default function ImageCropper({ image, onCropComplete, onCancel, aspectRa
         }
     };
 
+    const handleSkipCrop = () => {
+        try {
+            setProcessing(true);
+            const blob = dataURLToBlob(image);
+            onCropComplete(blob);
+        } catch (e) {
+            console.error('Error skipping crop:', e);
+        } finally {
+            setProcessing(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-black/90 z-50 flex flex-col">
             <div className="bg-black/50 backdrop-blur-sm p-4 flex items-center justify-between">
-                <h3 className="text-white font-bold text-lg">Skera mynd</h3>
+                <h3 className="text-white font-bold text-lg">Klippa mynd</h3>
                 <button
                     onClick={onCancel}
                     className="text-white/70 hover:text-white transition-colors"
@@ -154,6 +185,16 @@ export default function ImageCropper({ image, onCropComplete, onCancel, aspectRa
                     >
                         Hætta við
                     </button>
+                    {showSkipCrop && (
+                        <button
+                            type="button"
+                            onClick={handleSkipCrop}
+                            disabled={processing}
+                            className="btn btn-secondary flex-1 border-white/20 text-white hover:bg-white/10"
+                        >
+                            Sleppa klippingu
+                        </button>
+                    )}
                     <button
                         onClick={handleSave}
                         disabled={processing}

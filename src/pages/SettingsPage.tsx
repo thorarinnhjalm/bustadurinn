@@ -439,10 +439,10 @@ export default function SettingsPage() {
         </div>
     );
 
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>, mode: 'main' | 'gallery' = 'main') => {
         const file = e.target.files?.[0];
         if (file) {
-            setCropMode('main'); // Default to house
+            setCropMode(mode);
             const reader = new FileReader();
             reader.onload = () => {
                 setImageFile(reader.result as string);
@@ -1960,7 +1960,12 @@ export default function SettingsPage() {
                             setShowCropper(false);
                             setImageFile(null);
                         }}
-                        aspectRatio={1}
+                        aspectRatio={
+                            cropMode === 'avatar' ? 1 : 
+                            cropMode === 'main' ? 16 / 9 : 
+                            undefined
+                        }
+                        showSkipCrop={cropMode !== 'avatar'}
                     />
                 )
             }
