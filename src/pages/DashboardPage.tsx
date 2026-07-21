@@ -6,7 +6,7 @@ import {
     ChevronRight, Loader2, Shield,
     Home, LogOut,
     Image as ImageIcon, MapPin, Camera,
-    ShoppingCart, CheckSquare, Coffee
+    ShoppingCart, CheckSquare, Coffee, Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
@@ -695,6 +695,37 @@ const UserDashboard = () => {
             });
         } catch (error) {
             console.error('Error initializing inventory:', error);
+        }
+    };
+
+    const handleCheckShoppingItem = async (e: React.MouseEvent, item: ShoppingItem) => {
+        e.stopPropagation();
+        if (!currentHouse) return;
+        try {
+            await updateDoc(doc(db, 'houses', currentHouse.id, 'shopping_list', item.id), {
+                checked: true,
+                checked_by: currentUser?.uid,
+                checked_at: serverTimestamp()
+            });
+
+            // Bi-directional sync with inventory subcollection
+            if (item.item) {
+                const qInv = query(collection(db, 'houses', currentHouse.id, 'inventory'));
+                const invSnap = await getDocs(qInv);
+                for (const docSnap of invSnap.docs) {
+                    const invData = docSnap.data();
+                    if (invData.name?.trim().toLowerCase() === item.item.trim().toLowerCase() && invData.status === 'out') {
+                        await updateDoc(doc(db, 'houses', currentHouse.id, 'inventory', docSnap.id), {
+                            status: 'ok',
+                            updated_at: serverTimestamp(),
+                            updated_by: currentUser?.uid || '',
+                            updated_by_name: currentUser?.name || ''
+                        });
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Error checking shopping item on dashboard:", err);
         }
     };
 

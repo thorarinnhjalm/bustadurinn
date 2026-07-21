@@ -81,10 +81,12 @@ export default function AuthHandler() {
 
                     setRealUser(updatedUser);
                     setAuthenticated(true);
+                    setInitialLoadDone(true);
                 }, (err) => {
                     console.error("Error listening to user profile:", err);
                     setRealUser(baseUser);
                     setAuthenticated(true);
+                    setInitialLoadDone(true);
                 });
             } else {
                 setRealUser(null);
@@ -92,8 +94,9 @@ export default function AuthHandler() {
                 setCurrentUser(null);
                 setCurrentHouse(null);
                 setUserHouses([]);
+                setLoading(false);
+                setInitialLoadDone(true);
             }
-            setInitialLoadDone(true);
         });
 
         return () => {

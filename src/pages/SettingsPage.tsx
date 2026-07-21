@@ -158,7 +158,32 @@ export default function SettingsPage() {
     // Shopping handlers
     const handleToggleShoppingItem = async (item: ShoppingItem) => {
         if (!house) return;
-        await updateDoc(doc(db, 'houses', house.id, 'shopping_list', item.id), { checked: !item.checked });
+        const newCheckedState = !item.checked;
+        await updateDoc(doc(db, 'houses', house.id, 'shopping_list', item.id), {
+            checked: newCheckedState,
+            ...(newCheckedState ? { checked_by: currentUser?.uid, checked_at: serverTimestamp() } : {})
+        });
+
+        // Bi-directional sync with "Hvað er til" (Inventory)
+        if (newCheckedState && item.item) {
+            try {
+                const qInv = query(collection(db, 'houses', house.id, 'inventory'));
+                const invSnap = await getDocs(qInv);
+                for (const docSnap of invSnap.docs) {
+                    const invData = docSnap.data();
+                    if (invData.name?.trim().toLowerCase() === item.item.trim().toLowerCase() && invData.status === 'out') {
+                        await updateDoc(doc(db, 'houses', house.id, 'inventory', docSnap.id), {
+                            status: 'ok',
+                            updated_at: serverTimestamp(),
+                            updated_by: currentUser?.uid || '',
+                            updated_by_name: currentUser?.name || ''
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Error syncing inventory from shopping list check:", err);
+            }
+        }
     };
 
     const handleDeleteShoppingItem = async (item: ShoppingItem) => {
