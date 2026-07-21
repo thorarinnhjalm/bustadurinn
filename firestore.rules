@@ -224,5 +224,10 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
 
+    // Top-level or collectionGroup tasks query for SuperAdmin
+    match /{path=**}/tasks/{taskId} {
+      allow read, write: if isSuperAdmin();
+    }
+
   }
 }
