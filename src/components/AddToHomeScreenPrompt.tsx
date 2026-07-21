@@ -29,11 +29,10 @@ export default function AddToHomeScreenPrompt({ houseName, onDismiss }: AddToHom
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
                 logger.info('Notifications enabled!');
-                setShowNotificationPrompt(false);
-                // Here you would integrate with FCM for push notifications
             }
         }
         setShowNotificationPrompt(false);
+        onDismiss();
     };
 
     // Don't show on desktop

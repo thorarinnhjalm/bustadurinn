@@ -793,7 +793,7 @@ export default function OnboardingPage() {
                                 <button onClick={prevStep} className="btn btn-ghost" disabled={loading}>
                                     Til baka
                                 </button>
-                                <button onClick={handleSendInvites} className="btn btn-secondary font-medium border-transparent hover:border-stone-200" disabled={loading}>
+                                <button onClick={nextStep} className="btn btn-secondary font-medium border-transparent hover:border-stone-200" disabled={loading}>
                                     Sleppa þessu (Bæta við seinna)
                                 </button>
                                 <button onClick={handleSendInvites} className="btn btn-primary" disabled={loading}>
