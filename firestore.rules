@@ -79,7 +79,9 @@ service cloud.firestore {
                       getUserId() in request.resource.data.owner_ids;
 
       allow update: if isAuthenticated() && (
-        (resource.data.manager_id == getUserId()) || isSuperAdmin()
+        (resource.data.manager_id == getUserId()) || 
+        isSuperAdmin() ||
+        (getUserId() in resource.data.owner_ids && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['supplies_out']))
       );
       allow delete: if isAuthenticated() && (
         (resource.data.manager_id == getUserId()) || isSuperAdmin()

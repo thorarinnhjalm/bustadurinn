@@ -6,14 +6,14 @@ import {
     ChevronRight, Loader2, Shield,
     Home, LogOut,
     Image as ImageIcon, MapPin, Camera,
-    ShoppingCart, CheckSquare, Coffee
+    ShoppingCart, CheckSquare, Coffee, Cookie
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
-import { collection, query, where, orderBy, limit, addDoc, getDocs, onSnapshot, serverTimestamp, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, addDoc, getDocs, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Booking, Task, ShoppingItem, InternalLog, LedgerEntry, House, BudgetPlan } from '@/types/models';
 import { fetchWeather } from '@/utils/weather';
@@ -503,6 +503,71 @@ const UserDashboard = () => {
         }
     };
 
+    const handleInitializeCabinet = async () => {
+        if (!currentHouse) return;
+        try {
+            await updateDoc(doc(db, 'houses', currentHouse.id), {
+                supply_checklist: [
+                    'Salt', 'Pipar', 'Grillkrydd', 'Oregano', 'Ólífuolía',
+                    'Matarolía', 'Sykur', 'Uppþvottalögur', 'Klósettpappír',
+                    'Eldhúsrúllur', 'Álpappír', 'Bökunarpappír', 'Kaffi', 'Kerti'
+                ],
+                supplies_out: []
+            });
+        } catch (error) {
+            console.error('Error initializing cabinet:', error);
+        }
+    };
+
+    const handleToggleSupply = async (item: string, isCurrentlyOut: boolean) => {
+        if (!currentHouse || !currentUser) return;
+        try {
+            const houseRef = doc(db, 'houses', currentHouse.id);
+            if (isCurrentlyOut) {
+                // Mark as in-stock: remove from supplies_out
+                await updateDoc(houseRef, {
+                    supplies_out: arrayRemove(item)
+                });
+                
+                // Find and delete from shopping list
+                const q = query(
+                    collection(db, 'houses', currentHouse.id, 'shopping_list'),
+                    where('item', '==', item),
+                    where('checked', '==', false)
+                );
+                const querySnap = await getDocs(q);
+                for (const docSnap of querySnap.docs) {
+                    await deleteDoc(doc(db, 'houses', currentHouse.id, 'shopping_list', docSnap.id));
+                }
+            } else {
+                // Mark as out-of-stock: add to supplies_out
+                await updateDoc(houseRef, {
+                    supplies_out: arrayUnion(item)
+                });
+
+                // Check if already in shopping list
+                const q = query(
+                    collection(db, 'houses', currentHouse.id, 'shopping_list'),
+                    where('item', '==', item),
+                    where('checked', '==', false)
+                );
+                const querySnap = await getDocs(q);
+                if (querySnap.empty) {
+                    await addDoc(collection(db, 'houses', currentHouse.id, 'shopping_list'), {
+                        item: item,
+                        checked: false,
+                        added_by: currentUser.uid,
+                        added_by_name: currentUser.name || currentUser.email,
+                        created_at: serverTimestamp(),
+                        house_id: currentHouse.id
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error toggling supply item:', error);
+        }
+    };
+
 
     return (
         <DashboardLayout>
@@ -959,6 +1024,63 @@ const UserDashboard = () => {
                                     {shoppingItems.length >= 5 && (
                                         <p className="text-xs text-center text-stone-400 pt-2">... og fleira</p>
                                     )}
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* KRYDDSKÁPURINN (SPICE CABINET) */}
+                    <section className="group">
+                        <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Kryddskápurinn & birgðir</h3>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden min-h-[200px]">
+                            {!currentHouse.supply_checklist || currentHouse.supply_checklist.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-center py-6">
+                                    <div className="w-12 h-12 bg-amber/10 text-amber rounded-full flex items-center justify-center mb-3">
+                                        <Cookie size={20} />
+                                    </div>
+                                    <p className="font-bold text-[#1a1a1a]">Tómur skápur</p>
+                                    <p className="text-xs text-stone-500 mb-4">Enginn birgðalisti eða krydd hafa verið skráð.</p>
+                                    <button
+                                        type="button"
+                                        onClick={handleInitializeCabinet}
+                                        className="btn btn-secondary text-xs px-4 py-2 font-bold border-stone-200 hover:border-stone-300"
+                                    >
+                                        Virkja kryddskápinn
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <p className="text-[10px] text-stone-400 leading-normal mb-3">
+                                        Smelltu á hluti til að breyta stöðu. Hlutir sem eru <strong>á þrotum</strong> fara sjálfkrafa á innkaupalistann.
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto pr-1">
+                                        {currentHouse.supply_checklist.map((item: string) => {
+                                            const isOut = currentHouse.supplies_out?.includes(item);
+                                            return (
+                                                <button
+                                                    key={item}
+                                                    type="button"
+                                                    onClick={() => handleToggleSupply(item, isOut)}
+                                                    className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all ${
+                                                        isOut
+                                                            ? 'bg-amber/5 border-amber/20 text-stone-700 hover:bg-amber/10'
+                                                            : 'bg-stone-50 border-stone-100 text-stone-700 hover:bg-stone-100'
+                                                    }`}
+                                                >
+                                                    <span className="text-xs font-semibold truncate mr-2">{item}</span>
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                                                        isOut
+                                                            ? 'bg-amber text-[#1a1a1a]'
+                                                            : 'bg-emerald-500 text-white'
+                                                    }`}>
+                                                        {isOut ? 'Á þrotum' : 'Til'}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             )}
                         </div>
