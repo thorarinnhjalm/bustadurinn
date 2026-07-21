@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageSquarePlus } from 'lucide-react';
 import FeedbackModal from './FeedbackModal';
 import { useAppStore } from '@/store/appStore';
@@ -6,11 +6,20 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function FeedbackWidget() {
     const [isOpen, setIsOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const { isAuthenticated, isLoading } = useAppStore();
 
-    // Only show if authenticated and not loading
-    // HIDDEN ON MOBILE (md:flex) to prevent obstruction
-    if (isLoading || !isAuthenticated) return null;
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Only show if authenticated, not loading, and not on mobile
+    if (isLoading || !isAuthenticated || isMobile) return null;
 
     return (
         <>
