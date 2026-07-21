@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp, type DocumentSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, onSnapshot, type DocumentSnapshot } from 'firebase/firestore';
 import { useAppStore } from '@/store/appStore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { logger } from '@/utils/logger';
@@ -23,11 +23,18 @@ export default function AuthHandler() {
 
     // 1. Listen to Firebase Auth (Runs once on mount)
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        let unsubscribeProfile: (() => void) | null = null;
+
+        const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
             // Auth identity changed (sign-in, sign-out, or user switch) -
             // any cached RBAC role belongs to the previous auth state and
             // must not be served to whatever user is now current.
             setCachedRole(null);
+
+            if (unsubscribeProfile) {
+                unsubscribeProfile();
+                unsubscribeProfile = null;
+            }
 
             if (firebaseUser) {
                 // Construct base user
@@ -40,30 +47,23 @@ export default function AuthHandler() {
                     created_at: new Date(),
                 };
 
-                // Fetch Firestore Profile
-                try {
-                    const userDocRef = doc(db, 'users', firebaseUser.uid);
-                    const userSnap = await getDoc(userDocRef);
+                // Subscribe to Firestore Profile in real-time
+                const userDocRef = doc(db, 'users', firebaseUser.uid);
+                unsubscribeProfile = onSnapshot(userDocRef, async (userSnap) => {
+                    let updatedUser = { ...baseUser };
+                    
                     if (userSnap.exists()) {
-                        const firestoreData = userSnap.data();
-                        baseUser = { ...baseUser, ...firestoreData };
-                        logger.debug('AuthHandler: User profile loaded:', baseUser.email);
+                        updatedUser = { ...updatedUser, ...userSnap.data() };
+                        logger.debug('AuthHandler: User profile synchronized:', updatedUser.email);
                     } else {
                         // SELF-REPAIR: Missing profile but authenticated
-                        // CRITICAL: Check if user was JUST created (e.g. within last 15 seconds)
-                        // If so, do NOT self-repair yet, as SignupPage is likely still writing the doc.
+                        // Check if user was JUST created (e.g. within last 15 seconds)
                         const creationTime = firebaseUser.metadata.creationTime ? new Date(firebaseUser.metadata.creationTime).getTime() : 0;
-                        const now = Date.now();
-                        const isBrandNew = (now - creationTime) < 15000; // 15 seconds buffer
+                        const isBrandNew = (Date.now() - creationTime) < 15000;
 
-                        if (isBrandNew) {
-                            logger.info("AuthHandler: User is brand new, skipping self-repair to allow SignupPage to finish.", firebaseUser.email);
-                            // We still set realUser, but we don't create a dummy doc yet.
-                            // The user might see a "loading" state or a partial state until they refresh or the doc appears.
-                        } else {
-                            logger.warn("AuthHandler: Orphan user detected (older than 15s), triggering self-repair for:", firebaseUser.email);
+                        if (!isBrandNew) {
+                            logger.warn("AuthHandler: Orphan user detected, triggering self-repair for:", firebaseUser.email);
                             try {
-                                // Wait for profile creation to prevent race conditions
                                 await setDoc(userDocRef, {
                                     uid: baseUser.uid,
                                     email: baseUser.email,
@@ -73,25 +73,19 @@ export default function AuthHandler() {
                                     last_login: serverTimestamp(),
                                     repaired_auto: true
                                 }, { merge: true });
-
-                                // Re-fetch to get complete profile with server timestamp
-                                const repairedSnap = await getDoc(userDocRef);
-                                if (repairedSnap.exists()) {
-                                    baseUser = { ...baseUser, ...repairedSnap.data() };
-                                    logger.info("AuthHandler: Self-repair successful for:", firebaseUser.email);
-                                }
                             } catch (repairErr) {
                                 logger.error("AuthHandler: Self-repair failed:", repairErr);
-                                // Continue with baseUser even if repair fails
                             }
                         }
                     }
-                } catch (err) {
-                    console.error("Error fetching user profile:", err);
-                }
 
-                setRealUser(baseUser);
-                setAuthenticated(true);
+                    setRealUser(updatedUser);
+                    setAuthenticated(true);
+                }, (err) => {
+                    console.error("Error listening to user profile:", err);
+                    setRealUser(baseUser);
+                    setAuthenticated(true);
+                });
             } else {
                 setRealUser(null);
                 setAuthenticated(false);
@@ -102,7 +96,10 @@ export default function AuthHandler() {
             setInitialLoadDone(true);
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribeAuth();
+            if (unsubscribeProfile) unsubscribeProfile();
+        };
     }, [setAuthenticated, setCurrentUser, setCurrentHouse, setUserHouses, setCachedRole]); // Zustand setters are stable
 
     // 2. Handle Effective User Logic (Runs when realUser OR impersonatedUser changes)

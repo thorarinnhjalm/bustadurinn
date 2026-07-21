@@ -177,8 +177,13 @@ export default function OnboardingPage() {
         setSuggestions([]);
 
         // Extract lat/lng (HMS provides numbers, Google provides functions)
-        const lat = typeof suggestion.location.lat === 'function' ? suggestion.location.lat() : suggestion.location.lat;
-        const lng = typeof suggestion.location.lng === 'function' ? suggestion.location.lng() : suggestion.location.lng;
+        const lat = suggestion.location && typeof suggestion.location.lat === 'function'
+            ? suggestion.location.lat()
+            : (suggestion.location?.lat || 0);
+            
+        const lng = suggestion.location && typeof suggestion.location.lng === 'function'
+            ? suggestion.location.lng()
+            : (suggestion.location?.lng || 0);
 
         analytics.track('address_selected', { source: suggestion.source || 'unknown' });
 
