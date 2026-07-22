@@ -1175,7 +1175,13 @@ const UserDashboard = () => {
                                 <div className="space-y-3">
                                     {shoppingItems.map(item => (
                                         <div key={item.id} className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 group/item hover:bg-amber/10 transition-colors">
-                                            <div className="mt-0.5 w-5 h-5 rounded-md border-2 border-stone-300 flex items-center justify-center group-hover/item:border-amber"></div>
+                                            <div 
+                                                onClick={(e) => handleCheckShoppingItem(e, item)} 
+                                                className="mt-0.5 w-5 h-5 rounded-md border-2 border-stone-300 flex items-center justify-center cursor-pointer hover:border-amber hover:bg-amber/20 transition-colors shrink-0"
+                                                title="Merkja sem keypt"
+                                            >
+                                                <Check size={14} className="text-amber hidden group-hover/item:block" />
+                                            </div>
                                             <div>
                                                 <p className="font-bold text-[#1a1a1a] text-sm leading-tight">{item.item}</p>
                                                 <p className="text-[10px] text-stone-400 mt-0.5">Skráð af {item.added_by_name?.split(' ')[0]}</p>
