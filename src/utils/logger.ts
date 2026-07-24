@@ -3,7 +3,18 @@
  * Prevents sensitive data leakage in production via console.log
  */
 
+import * as Sentry from '@sentry/react';
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+// The production build strips every literal `console.*` call
+// (vite.config.ts -> esbuild.drop). Reaching the real console through an
+// alias survives that transform, so warn/error keep working in production —
+// which is what the rest of the codebase (and CLAUDE.md) already assumed.
+// `debug`/`info` deliberately keep using literal console.* so they DO get
+// dropped from production bundles.
+const consoleRef: Console | undefined =
+    typeof globalThis !== 'undefined' ? (globalThis as any).console : undefined;
 
 interface LogContext {
     timestamp: string;
@@ -44,7 +55,7 @@ export const logger = {
      */
     warn: (...args: any[]): void => {
         const context = createLogContext('warn');
-        console.warn(`[${context.timestamp}] [WARN]`, ...args);
+        consoleRef?.warn(`[${context.timestamp}] [WARN]`, ...args);
     },
 
     /**
@@ -53,11 +64,15 @@ export const logger = {
      */
     error: (...args: any[]): void => {
         const context = createLogContext('error');
-        console.error(`[${context.timestamp}] [ERROR]`, ...args);
+        consoleRef?.error(`[${context.timestamp}] [ERROR]`, ...args);
 
-        // TODO: Send to Sentry in Phase 6
-        if (import.meta.env.MODE === 'production') {
-            // Sentry.captureException(args[0]);
+        // Sentry is initialised in main.tsx; forward the first Error-like arg
+        // so production failures are actually reportable somewhere.
+        const candidate = args.find((a) => a instanceof Error);
+        if (candidate) {
+            Sentry.captureException(candidate);
+        } else if (args.length > 0) {
+            Sentry.captureMessage(args.map((a) => String(a)).join(' '), 'error');
         }
     },
 };

@@ -115,6 +115,13 @@ export interface Yearbook {
     guestbookEntries: GuestbookQuote[];
     guestbookTotalCount: number;
     bookingTypeBreakdown: BookingTypeBreakdown;
+    /**
+     * Which sub-fetches failed, if any. A failed fetch degrades that section
+     * to empty rather than throwing — without this the page cannot tell
+     * "this year genuinely had no activity" from "the query blew up", and
+     * silently renders an empty yearbook either way.
+     */
+    errors: string[];
 }
 
 /* =============================================================================
@@ -292,16 +299,37 @@ async function fetchYearBookings(houseId: string, year: number): Promise<Booking
 
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((docSnap) => {
+    // A single malformed row (missing/!Timestamp start or end) must not blow
+    // up the whole year — skip it and keep the rest.
+    const bookings: Booking[] = [];
+    for (const docSnap of snapshot.docs) {
         const data = docSnap.data();
-        return {
+        const start = toDateOrNull(data.start);
+        const end = toDateOrNull(data.end);
+        if (!start || !end) {
+            logger.warn('arbokService: skipping booking with invalid dates', docSnap.id);
+            continue;
+        }
+        bookings.push({
             id: docSnap.id,
             ...data,
-            start: data.start.toDate(),
-            end: data.end.toDate(),
-            created_at: data.created_at?.toDate() || new Date(),
-        } as Booking;
-    });
+            start,
+            end,
+            created_at: toDateOrNull(data.created_at) ?? new Date(),
+        } as Booking);
+    }
+    return bookings;
+}
+
+/** Firestore Timestamp | Date | parseable value -> Date, else null. */
+function toDateOrNull(value: any): Date | null {
+    if (!value) return null;
+    if (typeof value.toDate === 'function') {
+        const d = value.toDate();
+        return isNaN(d.getTime()) ? null : d;
+    }
+    const d = value instanceof Date ? value : new Date(value);
+    return isNaN(d.getTime()) ? null : d;
 }
 
 async function fetchHouseGuestbook(houseId: string): Promise<GuestbookEntry[]> {
@@ -363,17 +391,22 @@ async function fetchHolidayResults(houseId: string, year: number): Promise<Holid
  * the page can still render everything else.
  */
 export async function buildYearbook(houseId: string, year: number, house: House): Promise<Yearbook> {
+    const errors: string[] = [];
+
     const [bookings, guestbook, holidays] = await Promise.all([
         fetchYearBookings(houseId, year).catch((err) => {
             logger.error('arbokService: failed to fetch bookings', err);
+            errors.push(`bókanir: ${err?.message ?? err}`);
             return [] as Booking[];
         }),
         fetchHouseGuestbook(houseId).catch((err) => {
             logger.error('arbokService: failed to fetch guestbook', err);
+            errors.push(`gestabók: ${err?.message ?? err}`);
             return [] as GuestbookEntry[];
         }),
         fetchHolidayResults(houseId, year).catch((err) => {
             logger.error('arbokService: failed to fetch holiday results', err);
+            errors.push(`stórhelgar: ${err?.message ?? err}`);
             return [] as HolidayResult[];
         }),
     ]);
@@ -401,5 +434,6 @@ export async function buildYearbook(houseId: string, year: number, house: House)
         guestbookEntries: quotes,
         guestbookTotalCount: totalCount,
         bookingTypeBreakdown,
+        errors,
     };
 }

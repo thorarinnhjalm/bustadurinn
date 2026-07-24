@@ -39,11 +39,28 @@ export default function ArbokPage() {
     const currentHouse = useAppStore((state) => state.currentHouse);
 
     const currentYear = getYear(new Date());
-    const earliestYear = currentHouse?.created_at ? getYear(currentHouse.created_at) : currentYear;
+    // `currentHouse` comes straight from the Firestore snapshot in the store,
+    // so `created_at` is still a Timestamp (not a Date) — getYear() on it
+    // yields NaN, which made the year loop below produce ZERO options.
+    const earliestYear = useMemo(() => {
+        const raw: any = currentHouse?.created_at;
+        const asDate =
+            raw && typeof raw.toDate === 'function'
+                ? raw.toDate()
+                : raw instanceof Date
+                    ? raw
+                    : raw
+                        ? new Date(raw)
+                        : null;
+        const y = asDate && !isNaN(asDate.getTime()) ? getYear(asDate) : currentYear;
+        // Never let a bogus/future created_at collapse the selector.
+        return Math.min(y, currentYear);
+    }, [currentHouse?.created_at, currentYear]);
+
     const yearOptions = useMemo(() => {
         const years: number[] = [];
         for (let y = currentYear; y >= earliestYear; y--) years.push(y);
-        return years;
+        return years.length > 0 ? years : [currentYear];
     }, [currentYear, earliestYear]);
 
     const [year, setYear] = useState(currentYear);
@@ -80,9 +97,15 @@ export default function ArbokPage() {
         );
     }
 
+    // A failed fetch is NOT an empty year — surface it instead of pretending
+    // there was no activity.
+    const loadErrors = yearbook?.errors ?? [];
+    const hasLoadError = (!loading && !yearbook) || loadErrors.length > 0;
+
     const isEmpty =
         !loading &&
         yearbook &&
+        loadErrors.length === 0 &&
         yearbook.totalBookings === 0 &&
         yearbook.guestbookTotalCount === 0 &&
         yearbook.holidays.every((h) => !h.winnerUserId);
@@ -139,6 +162,27 @@ export default function ArbokPage() {
                         <div className="h-24 bg-stone-200 rounded-lg" />
                     </div>
                     <div className="h-48 bg-stone-200 rounded-lg" />
+                </div>
+            )}
+
+            {!loading && hasLoadError && (
+                <div className="max-w-4xl mx-auto px-6 arbok-no-print">
+                    <div className="bg-amber/10 border border-amber/30 rounded-xl p-5">
+                        <p className="font-serif font-bold text-charcoal mb-1">
+                            Ekki tókst að sækja öll gögn
+                        </p>
+                        <p className="text-sm text-stone-600">
+                            Árbókin gæti því verið ófullgerð. Reyndu að endurhlaða síðuna — ef þetta
+                            heldur áfram gætu gögnin þurft uppfærslu.
+                        </p>
+                        {loadErrors.length > 0 && (
+                            <ul className="mt-3 text-xs text-stone-500 font-mono space-y-1">
+                                {loadErrors.map((e) => (
+                                    <li key={e}>{e}</li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
                 </div>
             )}
 
