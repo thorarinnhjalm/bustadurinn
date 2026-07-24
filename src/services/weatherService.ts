@@ -225,8 +225,8 @@ export function getForecastReliability(bookingStartDate: Date): string {
     const now = new Date();
     const daysUntil = Math.ceil((bookingStartDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (daysUntil > 7) return 'Of langt í burtu fyrir veðurspá';
-    if (daysUntil >= 5) return 'Frumleg veðurspá';
+    if (daysUntil > 7) return 'Of langt fram í tímann fyrir veðurspá';
+    if (daysUntil >= 5) return 'Bráðabirgðaspá';
     if (daysUntil >= 3) return 'Áreiðanleg veðurspá';
     if (daysUntil >= 1) return 'Nákvæm veðurspá';
     return 'Veður fyrir ferðina';
