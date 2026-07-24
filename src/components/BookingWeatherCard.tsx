@@ -160,37 +160,51 @@ export default function BookingWeatherCard({
                     </div>
                 )}
 
-                {/* Daily Forecast - Show first 3 days */}
+                {/* Daily Forecast - Show first 3 days of booking range */}
                 <div className="grid grid-cols-3 gap-3 mb-4">
-                    {forecast.days.slice(0, 3).map((day, idx) => (
-                        <div
-                            key={idx}
-                            className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-white/60 transition-all duration-300 hover:scale-105"
-                        >
-                            <p className="text-xs font-bold text-stone-600 mb-2">
-                                {idx === 0 ? 'Í dag' : idx === 1 ? 'Á morgun' : new Date(day.date).toLocaleDateString('is-IS', { weekday: 'short' })}
-                            </p>
-                            <div className="text-3xl mb-2">{(WEATHER_ICONS as any)[day.condition]}</div>
-                            <p className="text-xs text-stone-500 mb-1">{(WEATHER_LABELS_IS as any)[day.condition]}</p>
-                            <div className="flex items-center justify-center gap-1 text-xs font-bold">
-                                <span className="text-stone-700">{Math.round(day.tempHigh)}°</span>
-                                <span className="text-stone-400">/</span>
-                                <span className="text-stone-500">{Math.round(day.tempLow)}°</span>
+                    {forecast.days.slice(0, 3).map((day, idx) => {
+                        const dayDate = new Date(day.date);
+                        const now = new Date();
+                        const tomorrow = new Date();
+                        tomorrow.setDate(now.getDate() + 1);
+
+                        let label = `${dayDate.toLocaleDateString('is-IS', { weekday: 'short' })} ${dayDate.getDate()}.${dayDate.getMonth() + 1}`;
+                        if (dayDate.getFullYear() === now.getFullYear() && dayDate.getMonth() === now.getMonth() && dayDate.getDate() === now.getDate()) {
+                            label = 'Í dag';
+                        } else if (dayDate.getFullYear() === tomorrow.getFullYear() && dayDate.getMonth() === tomorrow.getMonth() && dayDate.getDate() === tomorrow.getDate()) {
+                            label = 'Á morgun';
+                        }
+
+                        return (
+                            <div
+                                key={idx}
+                                className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-white/60 transition-all duration-300 hover:scale-105"
+                            >
+                                <p className="text-xs font-bold text-stone-600 mb-2 capitalize">
+                                    {label}
+                                </p>
+                                <div className="text-3xl mb-2">{(WEATHER_ICONS as any)[day.condition]}</div>
+                                <p className="text-xs text-stone-500 mb-1">{(WEATHER_LABELS_IS as any)[day.condition]}</p>
+                                <div className="flex items-center justify-center gap-1 text-xs font-bold">
+                                    <span className="text-stone-700">{Math.round(day.tempHigh)}°</span>
+                                    <span className="text-stone-400">/</span>
+                                    <span className="text-stone-500">{Math.round(day.tempLow)}°</span>
+                                </div>
+                                {day.precipitation > 0 && (
+                                    <div className="flex items-center justify-center gap-1 mt-1 text-xs text-blue-600">
+                                        <Droplets className="w-3 h-3" />
+                                        <span>{Math.round(day.precipitation)}mm</span>
+                                    </div>
+                                )}
+                                {day.windSpeed > 10 && (
+                                    <div className="flex items-center justify-center gap-1 mt-1 text-xs text-slate-600">
+                                        <Wind className="w-3 h-3" />
+                                        <span>{Math.round(day.windSpeed)} m/s</span>
+                                    </div>
+                                )}
                             </div>
-                            {day.precipitation > 0 && (
-                                <div className="flex items-center justify-center gap-1 mt-1 text-xs text-blue-600">
-                                    <Droplets className="w-3 h-3" />
-                                    <span>{Math.round(day.precipitation)}mm</span>
-                                </div>
-                            )}
-                            {day.windSpeed > 10 && (
-                                <div className="flex items-center justify-center gap-1 mt-1 text-xs text-slate-600">
-                                    <Wind className="w-3 h-3" />
-                                    <span>{Math.round(day.windSpeed)} m/s</span>
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Data source attribution */}

@@ -16,9 +16,10 @@ const weatherCache = new Map<string, { data: WeatherForecast; timestamp: number 
 export async function getWeatherForecast(
     latitude: number,
     longitude: number,
-    _startDate: Date
+    startDate?: Date
 ): Promise<WeatherForecast | null> {
-    const cacheKey = `${latitude},${longitude}`;
+    const dateStr = startDate ? startDate.toISOString().split('T')[0] : 'today';
+    const cacheKey = `${latitude},${longitude},${dateStr}`;
 
     // Check cache first
     const cached = weatherCache.get(cacheKey);
@@ -40,7 +41,7 @@ export async function getWeatherForecast(
         }
 
         const data = await response.json();
-        const forecast = parseMetNoForecast(data, latitude, longitude);
+        const forecast = parseMetNoForecast(data, latitude, longitude, startDate);
 
         // Cache the result
         weatherCache.set(cacheKey, {
@@ -58,11 +59,20 @@ export async function getWeatherForecast(
 /**
  * Parse met.no API response to our WeatherForecast format
  */
-function parseMetNoForecast(data: any, lat: number, lon: number): WeatherForecast {
+function parseMetNoForecast(data: any, lat: number, lon: number, startDate?: Date): WeatherForecast {
     const timeseries = data.properties.timeseries || [];
     const dailyData = groupByDay(timeseries);
 
-    const days: WeatherDay[] = dailyData.slice(0, 5).map(dayData => ({
+    let dailySlice = dailyData;
+    if (startDate) {
+        const startStr = startDate.toISOString().split('T')[0];
+        const startIndex = dailyData.findIndex(d => d.date >= startStr);
+        if (startIndex > 0) {
+            dailySlice = dailyData.slice(startIndex);
+        }
+    }
+
+    const days: WeatherDay[] = (dailySlice.length > 0 ? dailySlice : dailyData).slice(0, 5).map(dayData => ({
         date: new Date(dayData.date),
         tempHigh: Math.round(dayData.tempHigh),
         tempLow: Math.round(dayData.tempLow),
