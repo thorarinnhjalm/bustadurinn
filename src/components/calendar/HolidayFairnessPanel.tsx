@@ -148,7 +148,12 @@ export default function HolidayFairnessPanel({ houseId, ownerIds, onClaimWindow 
                         rows.map(({ window, priority }) => {
                             const now = new Date();
                             const opensToAllAt = priority?.opensToAllAt ?? null;
-                            const isOpenToAll = opensToAllAt !== null && now >= opensToAllAt;
+                            // Open when the cutoff has passed OR when there is no
+                            // rotation history yet (topUserId null => nobody's turn
+                            // to protect, the service allows everyone).
+                            const isOpenToAll =
+                                (opensToAllAt !== null && now >= opensToAllAt) ||
+                                priority?.topUserId === null;
                             const topUserName =
                                 priority?.topUserId != null
                                     ? userNames[priority.topUserId] ?? 'Óþekktur'

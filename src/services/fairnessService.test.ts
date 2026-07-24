@@ -167,7 +167,7 @@ describe('getHolidayHistory', () => {
 });
 
 describe('getHolidayPriority', () => {
-    it('ranks never-held owners above held ones, preserving ownerIds order among never-held', async () => {
+    it('ranks never-held owners above held ones (ownerIds order among never-held), and open when nobody held it', async () => {
         // All 3 lookback years empty for everyone -> nobody has ever held it.
         mockedGetDocs
             .mockResolvedValueOnce(bookingsSnapshot([]))
@@ -178,8 +178,23 @@ describe('getHolidayPriority', () => {
         const priority = await getHolidayPriority('house-1', window, ['u2', 'u1', 'u3']);
 
         expect(priority.ranking).toEqual(['u2', 'u1', 'u3']);
-        expect(priority.topUserId).toBe('u2');
+        // No rotation basis without history: topUserId must be null (open to
+        // everyone) rather than granting ownerIds[0] arbitrary priority.
+        expect(priority.topUserId).toBeNull();
         expect(priority.opensToAllAt.getTime()).toBe(addMonths(window.start, -PRIORITY_WINDOW_MONTHS).getTime());
+
+        // With actual history (u1 held 2025), never-held members rank first
+        // in ownerIds order and the top of the ranking is the topUserId.
+        const w2025 = getContestedHolidayWindows(2025).find((w) => w.key === 'paskar')!;
+        mockedGetDocs
+            .mockResolvedValueOnce(bookingsSnapshot([]))
+            .mockResolvedValueOnce(bookingsSnapshot([]))
+            .mockResolvedValueOnce(
+                bookingsSnapshot([booking('b25', 'u1', 'Anna', w2025.start, w2025.end, new Date(2025, 2, 1))])
+            );
+        const withHistory = await getHolidayPriority('house-1', window, ['u2', 'u1', 'u3']);
+        expect(withHistory.ranking).toEqual(['u2', 'u3', 'u1']);
+        expect(withHistory.topUserId).toBe('u2');
     });
 
     it('ranks the owner who held it longest ago above one who held it more recently', async () => {
@@ -273,16 +288,47 @@ describe('checkFairnessForBooking', () => {
         expect(mockedGetDocs).not.toHaveBeenCalled();
     });
 
-    it('allows the top-priority user to book before the window opens', async () => {
+    it('allows EVERYONE before the window opens when nobody has held the holiday in the lookback (no rotation basis)', async () => {
         const window = getContestedHolidayWindows(2026).find((w) => w.key === 'jol')!;
         const beforeOpen = addDays(getOpensToAllAt(window), -1);
 
+        // All three lookback years empty: a fresh house with no history.
         mockedGetDocs
             .mockResolvedValueOnce(bookingsSnapshot([]))
             .mockResolvedValueOnce(bookingsSnapshot([]))
             .mockResolvedValueOnce(bookingsSnapshot([]));
 
-        // ownerIds order ['u1','u2'], all never-held -> u1 is top priority.
+        // u2 is NOT first in ownerIds — under the old (buggy) behavior
+        // ownerIds[0] got arbitrary exclusive priority and u2 was blocked.
+        const result = await checkFairnessForBooking(
+            'house-1',
+            'u2',
+            window.start,
+            addDays(window.start, 1),
+            ['u1', 'u2'],
+            baseHouse,
+            { now: beforeOpen }
+        );
+
+        expect(result).toEqual({ allowed: true });
+    });
+
+    it('allows the top-priority user (held longest ago) to book before the window opens', async () => {
+        const window = getContestedHolidayWindows(2026).find((w) => w.key === 'jol')!;
+        const beforeOpen = addDays(getOpensToAllAt(window), -1);
+        const w2024 = getContestedHolidayWindows(2024).find((w) => w.key === 'jol')!;
+        const w2025 = getContestedHolidayWindows(2025).find((w) => w.key === 'jol')!;
+
+        // u1 held jól 2024, u2 held jól 2025 -> u1 (longest ago) is top.
+        mockedGetDocs
+            .mockResolvedValueOnce(bookingsSnapshot([])) // 2023
+            .mockResolvedValueOnce(
+                bookingsSnapshot([booking('b24', 'u1', 'Anna', w2024.start, w2024.end, new Date(2024, 10, 1))])
+            )
+            .mockResolvedValueOnce(
+                bookingsSnapshot([booking('b25', 'u2', 'Jón', w2025.start, w2025.end, new Date(2025, 10, 1))])
+            );
+
         const result = await checkFairnessForBooking(
             'house-1',
             'u1',
@@ -299,15 +345,19 @@ describe('checkFairnessForBooking', () => {
     it('blocks a non-priority user before the window opens, naming the holiday and the top user via ownerNames', async () => {
         const window = getContestedHolidayWindows(2026).find((w) => w.key === 'jol')!;
         const beforeOpen = addDays(getOpensToAllAt(window), -1);
+        const w2025 = getContestedHolidayWindows(2025).find((w) => w.key === 'jol')!;
 
+        // u2 held jól last year, u1 never has -> u1 is top priority.
         mockedGetDocs
-            .mockResolvedValueOnce(bookingsSnapshot([]))
-            .mockResolvedValueOnce(bookingsSnapshot([]))
-            .mockResolvedValueOnce(bookingsSnapshot([]));
+            .mockResolvedValueOnce(bookingsSnapshot([])) // 2023
+            .mockResolvedValueOnce(bookingsSnapshot([])) // 2024
+            .mockResolvedValueOnce(
+                bookingsSnapshot([booking('b25', 'u2', 'Jón', w2025.start, w2025.end, new Date(2025, 10, 1))])
+            );
 
         const result = await checkFairnessForBooking(
             'house-1',
-            'u2', // not top (u1 is, per ownerIds order among never-held)
+            'u2', // held it last year; u1's turn now
             window.start,
             addDays(window.start, 1),
             ['u1', 'u2'],
@@ -328,11 +378,15 @@ describe('checkFairnessForBooking', () => {
     it('falls back to a Firestore read to resolve the top user name when ownerNames is not supplied', async () => {
         const window = getContestedHolidayWindows(2026).find((w) => w.key === 'jol')!;
         const beforeOpen = addDays(getOpensToAllAt(window), -1);
+        const w2025 = getContestedHolidayWindows(2025).find((w) => w.key === 'jol')!;
 
+        // u2 held jól last year -> u1 (never held) is top priority, u2 blocked.
         mockedGetDocs
             .mockResolvedValueOnce(bookingsSnapshot([]))
             .mockResolvedValueOnce(bookingsSnapshot([]))
-            .mockResolvedValueOnce(bookingsSnapshot([]));
+            .mockResolvedValueOnce(
+                bookingsSnapshot([booking('b25', 'u2', 'Jón', w2025.start, w2025.end, new Date(2025, 10, 1))])
+            );
         mockedGetDoc.mockResolvedValueOnce({ data: () => ({ name: 'Fetched Name' }) } as any);
 
         const result = await checkFairnessForBooking(

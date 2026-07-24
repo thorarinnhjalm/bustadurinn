@@ -219,9 +219,16 @@ export async function getHolidayPriority(
 
     const ranking = [...neverHeld, ...held];
 
+    // No rotation basis: if NOBODY held this window within the lookback there
+    // is no "turn" to protect, so the window is open to everyone (topUserId
+    // null => checkFairnessForBooking allows). Without this, ownerIds[0] got
+    // arbitrary exclusive priority — which locked jól/áramót for every house
+    // the day the rotation launched, since no house had any history yet.
+    const topUserId = held.length === 0 ? null : ranking[0] ?? null;
+
     return {
         ranking,
-        topUserId: ranking[0] ?? null,
+        topUserId,
         opensToAllAt: getOpensToAllAt(window),
         history,
     };
