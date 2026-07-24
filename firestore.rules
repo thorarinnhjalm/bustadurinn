@@ -122,6 +122,13 @@ service cloud.firestore {
         allow create: if isHouseMember(houseId) || isSuperAdmin();
         allow update, delete: if isSuperAdmin();
       }
+
+      // Bookings live in this subcollection (CalendarPage, bookingService,
+      // fairnessService, arbokService all read/write here). There was no rule
+      // for it, so every query fell through to the default deny.
+      match /bookings/{bookingId} {
+        allow read, write: if isHouseMember(houseId) || isSuperAdmin();
+      }
     }
 
     // ============================================
