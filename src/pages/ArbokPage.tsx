@@ -209,11 +209,15 @@ export default function ArbokPage() {
                             backgroundPosition: 'center',
                         }}
                     >
-                        <div className="p-8 text-bone">
-                            <p className="uppercase tracking-widest text-xs font-medium text-amber mb-2">
+                        {/* index.css sets `text-charcoal` directly on every h1-h6,
+                            and a rule on the element beats colour inherited from
+                            this wrapper — so the heading needs its own light
+                            colour class to be readable over the photo. */}
+                        <div className="relative p-8 text-bone">
+                            <p className="uppercase tracking-widest text-xs font-medium text-amber mb-2 drop-shadow">
                                 Árbók {year}
                             </p>
-                            <h2 className="text-4xl md:text-5xl font-serif font-semibold">
+                            <h2 className="text-4xl md:text-5xl font-serif font-semibold text-bone mb-0 drop-shadow-lg">
                                 {currentHouse.name} {year}
                             </h2>
                         </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Calendar, CheckSquare,
     Plus, Bell, Shield,
@@ -29,6 +29,12 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const navigate = useNavigate();
+    const location = useLocation();
+    // '/' and '/dashboard' both render the dashboard.
+    const isActivePath = (path: string) =>
+        path === '/'
+            ? location.pathname === '/' || location.pathname === '/dashboard'
+            : location.pathname === path;
     const currentHouse = useAppStore((state) => state.currentHouse);
     const userHouses = useAppStore((state) => state.userHouses);
     const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
@@ -124,17 +130,39 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                             <span className="hidden sm:inline">Admin</span>
                         </button>
                     )}
+                    {/* Primary destinations. MobileNav covers these on small
+                        screens but is hidden on desktop, so without them here
+                        the calendar and tasks were only reachable via the
+                        dashboard's quick-action buttons. */}
                     <button
                         onClick={() => handleNavigate('/')}
-                        className="text-stone-400 hover:text-amber transition-colors"
+                        className={`transition-colors ${isActivePath('/') ? 'text-amber' : 'text-stone-400 hover:text-amber'}`}
                         title="Heim"
+                        aria-label="Heim"
                     >
                         <Home size={20} />
                     </button>
                     <button
+                        onClick={() => handleNavigate('/calendar')}
+                        className={`transition-colors ${isActivePath('/calendar') ? 'text-amber' : 'text-stone-400 hover:text-amber'}`}
+                        title="Dagatal"
+                        aria-label="Dagatal"
+                    >
+                        <Calendar size={20} />
+                    </button>
+                    <button
+                        onClick={() => handleNavigate('/tasks')}
+                        className={`transition-colors ${isActivePath('/tasks') ? 'text-amber' : 'text-stone-400 hover:text-amber'}`}
+                        title="Verkefni"
+                        aria-label="Verkefni"
+                    >
+                        <CheckSquare size={20} />
+                    </button>
+                    <button
                         onClick={() => handleNavigate('/arbok')}
-                        className="text-stone-400 hover:text-amber transition-colors"
+                        className={`transition-colors ${isActivePath('/arbok') ? 'text-amber' : 'text-stone-400 hover:text-amber'}`}
                         title="Árbók"
+                        aria-label="Árbók"
                     >
                         <BookOpen size={20} />
                     </button>
