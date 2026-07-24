@@ -15,6 +15,8 @@ import {
     computeLongestStay,
     computeFirstAndLastVisit,
     computeBookingTypeBreakdown,
+    computeOccupiedNights,
+    computeOccupancy,
     selectYearGuestbookEntries,
     GUESTBOOK_DISPLAY_CAP,
 } from './arbokService';
@@ -189,5 +191,56 @@ describe('selectYearGuestbookEntries', () => {
         const { quotes, totalCount } = selectYearGuestbookEntries(entries, 2020);
         expect(quotes).toEqual([]);
         expect(totalCount).toBe(0);
+    });
+});
+
+describe('computeOccupiedNights', () => {
+    it('counts nights once even when two bookings overlap', () => {
+        const bookings = [
+            booking({ user_id: 'a', user_name: 'A', start: new Date(2026, 5, 1), end: new Date(2026, 5, 5) }), // 4
+            booking({ user_id: 'b', user_name: 'B', start: new Date(2026, 5, 3), end: new Date(2026, 5, 7) }), // 4, 2 shared
+        ];
+        // Union is Jun 1-6 inclusive of nights = 6, not 4 + 4.
+        expect(computeOccupiedNights(bookings, 2026)).toBe(6);
+    });
+
+    it('clamps bookings that run past the year boundary', () => {
+        const bookings = [
+            booking({ user_id: 'a', user_name: 'A', start: new Date(2026, 11, 30), end: new Date(2027, 0, 3) }),
+        ];
+        // Only Dec 30 and Dec 31 belong to 2026.
+        expect(computeOccupiedNights(bookings, 2026)).toBe(2);
+    });
+
+    it('is zero with no bookings', () => {
+        expect(computeOccupiedNights([], 2026)).toBe(0);
+    });
+});
+
+describe('computeOccupancy', () => {
+    it('uses the full year as denominator for a finished year', () => {
+        const result = computeOccupancy(73, 2025, new Date(2026, 6, 24));
+        expect(result.availableNights).toBe(365);
+        expect(result.isPartialYear).toBe(false);
+        expect(Math.round(result.percent)).toBe(20);
+    });
+
+    it('accounts for leap years', () => {
+        const result = computeOccupancy(0, 2024, new Date(2026, 0, 1));
+        expect(result.availableNights).toBe(366);
+    });
+
+    it('uses year-to-date as denominator while the year is still running', () => {
+        // Jan 1 -> Jul 24 2026 is 204 nights elapsed, not 365.
+        const result = computeOccupancy(51, 2026, new Date(2026, 6, 24));
+        expect(result.availableNights).toBe(204);
+        expect(result.isPartialYear).toBe(true);
+        expect(Math.round(result.percent)).toBe(25);
+    });
+
+    it('reports zero (not NaN) for a year that has not started', () => {
+        const result = computeOccupancy(0, 2030, new Date(2026, 6, 24));
+        expect(result.availableNights).toBe(0);
+        expect(result.percent).toBe(0);
     });
 });

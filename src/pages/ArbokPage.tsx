@@ -229,6 +229,25 @@ export default function ArbokPage() {
                             <Moon className="w-5 h-5 text-amber mx-auto mb-2" />
                             <p className="text-4xl font-serif text-charcoal">{yearbook.totalNights}</p>
                             <p className="text-sm text-grey-mid mt-1">nætur</p>
+                            {yearbook.occupancy.availableNights > 0 && (
+                                <div className="mt-3">
+                                    <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-amber rounded-full"
+                                            style={{
+                                                width: `${Math.min(100, yearbook.occupancy.percent)}%`,
+                                            }}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-grey-mid mt-1.5">
+                                        {Math.round(yearbook.occupancy.percent)}% nýting
+                                        {yearbook.occupancy.isPartialYear ? ' það sem af er ári' : ' af árinu'}
+                                    </p>
+                                    <p className="text-[11px] text-grey-mid/70">
+                                        {yearbook.occupancy.occupiedNights} af {yearbook.occupancy.availableNights} nóttum
+                                    </p>
+                                </div>
+                            )}
                         </div>
                         <div className="arbok-card card text-center">
                             <CalendarDays className="w-5 h-5 text-amber mx-auto mb-2" />

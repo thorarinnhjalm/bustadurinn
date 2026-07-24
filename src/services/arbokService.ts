@@ -38,7 +38,7 @@
  */
 
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
-import { differenceInCalendarDays, addDays, getYear } from 'date-fns';
+import { differenceInCalendarDays, addDays, getYear, startOfDay } from 'date-fns';
 import { db } from '@/lib/firebase';
 import { logger } from '@/utils/logger';
 import { getHolidayHistory } from '@/services/fairnessService';
@@ -115,6 +115,8 @@ export interface Yearbook {
     guestbookEntries: GuestbookQuote[];
     guestbookTotalCount: number;
     bookingTypeBreakdown: BookingTypeBreakdown;
+    /** Distinct nights used vs nights available so far this year. */
+    occupancy: Occupancy;
     /**
      * Which sub-fetches failed, if any. A failed fetch degrades that section
      * to empty rather than throwing — without this the page cannot tell
@@ -141,6 +143,67 @@ export function clampBookingNights(booking: Pick<Booking, 'start' | 'end'>, year
     const end = booking.end > yearEnd ? yearEnd : booking.end;
     const nights = differenceInCalendarDays(end, start);
     return nights > 0 ? nights : 0;
+}
+
+/**
+ * Distinct nights the house was occupied during `year`.
+ *
+ * Deliberately NOT the sum of per-booking nights: overlapping bookings are
+ * allowed (the calendar warns but lets you "Bóka samt"), and a night two
+ * families shared is still only one night of use. This is the numerator that
+ * makes sense for utilisation.
+ */
+export function computeOccupiedNights(
+    bookings: Pick<Booking, 'start' | 'end'>[],
+    year: number
+): number {
+    const yearStart = new Date(year, 0, 1);
+    const yearEnd = new Date(year + 1, 0, 1);
+    const nights = new Set<number>();
+
+    for (const booking of bookings) {
+        const from = booking.start < yearStart ? yearStart : booking.start;
+        const to = booking.end > yearEnd ? yearEnd : booking.end;
+        for (let d = startOfDay(from); d < to; d = addDays(d, 1)) {
+            nights.add(d.getTime());
+        }
+    }
+
+    return nights.size;
+}
+
+export interface Occupancy {
+    occupiedNights: number;
+    /** Nights available so far — the whole year, or year-to-date if it's still running. */
+    availableNights: number;
+    percent: number;
+    /** True when `year` is still in progress, so the denominator is year-to-date. */
+    isPartialYear: boolean;
+}
+
+/**
+ * Utilisation for `year`. For a finished year the denominator is every night
+ * in it (365/366); for the year currently running it is only the nights that
+ * have already passed — measuring a half-finished year against 365 would
+ * halve the number for no reason.
+ */
+export function computeOccupancy(
+    occupiedNights: number,
+    year: number,
+    now: Date = new Date()
+): Occupancy {
+    const yearStart = new Date(year, 0, 1);
+    const yearEnd = new Date(year + 1, 0, 1);
+    const cutoff = now < yearEnd ? now : yearEnd;
+    const availableNights = Math.max(0, differenceInCalendarDays(cutoff, yearStart));
+    const percent = availableNights > 0 ? (occupiedNights / availableNights) * 100 : 0;
+
+    return {
+        occupiedNights,
+        availableNights,
+        percent,
+        isPartialYear: cutoff < yearEnd,
+    };
 }
 
 /** Nights + booking count per family (grouped by user_id), sorted by nights desc. */
@@ -434,6 +497,7 @@ export async function buildYearbook(houseId: string, year: number, house: House)
         guestbookEntries: quotes,
         guestbookTotalCount: totalCount,
         bookingTypeBreakdown,
+        occupancy: computeOccupancy(computeOccupiedNights(bookings, year), year),
         errors,
     };
 }
