@@ -21,15 +21,25 @@
  * src/lib/firebase.ts) and API routes must always hit the network.
  */
 
-import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
+import { precacheAndRoute, createHandlerBoundToURL, cleanupOutdatedCaches } from 'workbox-precaching';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
+import { clientsClaim } from 'workbox-core';
 import { initializeApp } from 'firebase/app';
 import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
+
+// --- Update behaviour ------------------------------------------------------
+
+// Without these, a newly deployed worker sits in "waiting" until every tab
+// controlled by the old one is closed — which on a phone that keeps the site
+// open can be days, so users keep seeing stale assets long after a fix ships.
+self.skipWaiting();
+clientsClaim();
 
 // --- App-shell precache (Workbox) -----------------------------------------
 
 // self.__WB_MANIFEST is replaced at build time with the list of hashed
 // build assets (JS/CSS chunks, index.html, etc.) by vite-plugin-pwa.
+cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
 // SPA fallback: serve the precached index.html for any navigation request

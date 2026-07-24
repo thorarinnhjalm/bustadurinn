@@ -102,6 +102,20 @@ initPerformanceMonitoring();
 // there is no generated worker to register during `vite dev`
 // (devOptions.enabled: false in vite.config.ts).
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  // Whether a worker was already in charge when this page loaded. On a first
+  // ever visit there is none, and clientsClaim() fires controllerchange
+  // immediately — reloading then would be a pointless flash.
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return;
+    // A newer worker just took over: the page is still running the previous
+    // build's JS, so reload once to pick up the deployed version.
+    reloading = true;
+    window.location.reload();
+  });
+
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/firebase-messaging-sw.js')
       .then(reg => logger.debug('SW registered:', reg))
