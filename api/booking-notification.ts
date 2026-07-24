@@ -66,25 +66,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const typeLabel = t[bookingType] || bookingType || t.personal;
 
-        // Send email to all house owners
-        const data = await resend.emails.send({
-            from: 'Bústaðurinn <hallo@bustadurinn.is>',
-            to: ownerEmails,
-            subject: t.subject,
-            html: `
-                <h2>${t.title}</h2>
-                <p><strong>${t.house}:</strong> ${houseName}</p>
-                <p><strong>${t.bookedBy}:</strong> ${userName}</p>
-                <p><strong>${t.date}:</strong> ${start} - ${end}</p>
-                <p><strong>${t.type}:</strong> ${typeLabel}</p>
-                <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e5e5;">
-                <p style="color: #666; font-size: 14px;">
-                    ${t.footer}
-                </p>
-            `,
-        });
+        const emailList: string[] = Array.isArray(ownerEmails) ? ownerEmails : [ownerEmails];
 
-        return res.status(200).json({ success: true, data });
+        // Send individual emails to each house owner for privacy and better deliverability
+        const sendResults = await Promise.allSettled(
+            emailList.map((email: string) =>
+                resend.emails.send({
+                    from: 'Bústaðurinn <hallo@bustadurinn.is>',
+                    to: email,
+                    subject: t.subject,
+                    html: `
+                        <h2>${t.title}</h2>
+                        <p><strong>${t.house}:</strong> ${houseName}</p>
+                        <p><strong>${t.bookedBy}:</strong> ${userName}</p>
+                        <p><strong>${t.date}:</strong> ${start} - ${end}</p>
+                        <p><strong>${t.type}:</strong> ${typeLabel}</p>
+                        <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e5e5;">
+                        <p style="color: #666; font-size: 14px;">
+                            ${t.footer}
+                        </p>
+                    `,
+                })
+            )
+        );
+
+        const successes = sendResults.filter((r) => r.status === 'fulfilled');
+        const errors = sendResults.filter((r) => r.status === 'rejected');
+
+        if (errors.length > 0) {
+            console.error('Some booking notification emails failed to send:', errors);
+        }
+
+        return res.status(200).json({
+            success: true,
+            sentCount: successes.length,
+            failCount: errors.length,
+        });
     } catch (error: any) {
         console.error('Error sending booking notification:', error);
         return res.status(500).json({ error: error.message });
