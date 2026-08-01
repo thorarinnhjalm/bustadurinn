@@ -759,7 +759,7 @@ export default function SettingsPage() {
         setSuccess('');
 
         try {
-            const updates = {
+            const updates: Record<string, any> = {
                 name: formData.name,
                 address: formData.address,
                 location: {
@@ -791,6 +791,18 @@ export default function SettingsPage() {
                 seasonal_checklists: formData.seasonal_checklists || {},
                 updated_at: new Date()
             };
+
+            // Gas cylinder: the settings form only owns size/connection/notes.
+            // last_changed_* is stamped from the dashboard, so merge rather than
+            // overwrite or a save here would wipe the replacement date.
+            if (formData.gas_cylinder_size && formData.gas_cylinder_connection) {
+                updates.gas_cylinder = {
+                    ...(house.gas_cylinder || {}),
+                    size: formData.gas_cylinder_size,
+                    connection: formData.gas_cylinder_connection,
+                    notes: formData.gas_cylinder_notes || ''
+                };
+            }
 
             await updateDoc(doc(db, 'houses', house.id), updates);
 

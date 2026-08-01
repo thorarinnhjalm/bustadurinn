@@ -28,6 +28,7 @@ import BookingDetailModal from '@/components/calendar/BookingDetailModal';
 import CheckoutModal from '@/components/dashboard/CheckoutModal';
 import CheckInModal from '@/components/dashboard/CheckInModal';
 import SeasonalChecklistCard from '@/components/dashboard/SeasonalChecklistCard';
+import GasCylinderCard from '@/components/dashboard/GasCylinderCard';
 import InventoryCard from '@/components/dashboard/InventoryCard';
 import Walkthrough from '@/components/Walkthrough';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -534,6 +535,34 @@ const UserDashboard = () => {
         }
     };
 
+    // Stamps the replacement on the house doc and drops a log line, so the
+    // "who last changed it" question has an answer beyond the current value.
+    const handleGasCylinderChanged = async () => {
+        if (!currentHouse?.gas_cylinder || !currentUser) return;
+        try {
+            await updateDoc(doc(db, 'houses', currentHouse.id), {
+                gas_cylinder: {
+                    ...currentHouse.gas_cylinder,
+                    last_changed_at: new Date(),
+                    last_changed_by: currentUser.uid,
+                    last_changed_by_name: currentUser.name
+                },
+                updated_at: new Date()
+            });
+
+            await addDoc(collection(db, 'houses', currentHouse.id, 'internal_logs'), {
+                house_id: currentHouse.id,
+                user_id: currentUser.uid,
+                user_name: currentUser.name,
+                text: `${currentUser.name} skipti um gaskút.`,
+                kind: 'gas_cylinder_changed',
+                created_at: serverTimestamp()
+            });
+        } catch (error) {
+            console.error('Error recording gas cylinder change:', error);
+        }
+    };
+
     const handleInitializeInventory = async () => {
         if (!currentHouse || !currentUser) return;
         try {
@@ -950,6 +979,12 @@ const UserDashboard = () => {
                     house={currentHouse}
                     seasonalLogged={seasonalLogged}
                     onConfirm={handleSeasonalChecklistConfirm}
+                />
+
+                {/* Gas cylinder — renders only when configured in settings */}
+                <GasCylinderCard
+                    gasCylinder={currentHouse.gas_cylinder}
+                    onRecordChange={handleGasCylinderChanged}
                 />
 
                 {/* Last Checkout Checklist Strip */}

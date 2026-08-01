@@ -24,6 +24,26 @@ export interface UTMParams {
 // Role Types
 export type UserRole = 'manager' | 'member' | 'guest';
 
+/** The two cylinder sizes sold for Icelandic summer houses. */
+export type GasCylinderSize = '5l' | '10l';
+/**
+ * How the cylinder attaches to the regulator. 'smellugas' is the clip-on
+ * fitting; 'standard' is the ordinary screw connection. Buying the wrong one
+ * is the whole reason this is recorded.
+ */
+export type GasCylinderConnection = 'smellugas' | 'standard';
+
+export interface GasCylinder {
+    size: GasCylinderSize;
+    connection: GasCylinderConnection;
+    /** When the cylinder was last replaced. Absent = never recorded. */
+    last_changed_at?: Date;
+    last_changed_by?: string;
+    last_changed_by_name?: string;
+    /** Free text, e.g. where the spare is kept. */
+    notes?: string;
+}
+
 export interface House {
     id: string;
     name: string;
@@ -72,6 +92,13 @@ export interface House {
         spring?: string[];
         autumn?: string[];
     };
+
+    /**
+     * The gas cylinder fitted in the house — size and connection type so a
+     * member standing in the shop knows which one to buy, plus when it was
+     * last replaced.
+     */
+    gas_cylinder?: GasCylinder;
 
     manager_id: string; // The designated administrator (Bústaðastjóri)
     owner_ids: string[]; // All members

@@ -93,7 +93,10 @@ export default function HouseSettings({
         seasonal_checklists: {
             spring: house.seasonal_checklists?.spring || [],
             autumn: house.seasonal_checklists?.autumn || []
-        }
+        },
+        gas_cylinder_size: house.gas_cylinder?.size || '',
+        gas_cylinder_connection: house.gas_cylinder?.connection || '',
+        gas_cylinder_notes: house.gas_cylinder?.notes || ''
     });
 
     const [isEditingLocation, setIsEditingLocation] = useState(false);
@@ -132,7 +135,10 @@ export default function HouseSettings({
             seasonal_checklists: {
                 spring: house.seasonal_checklists?.spring || [],
                 autumn: house.seasonal_checklists?.autumn || []
-            }
+            },
+            gas_cylinder_size: house.gas_cylinder?.size || '',
+            gas_cylinder_connection: house.gas_cylinder?.connection || '',
+            gas_cylinder_notes: house.gas_cylinder?.notes || ''
         });
     }, [house]);
 
@@ -696,6 +702,65 @@ export default function HouseSettings({
                                 </label>
                             ))}
                         </div>
+                    </div>
+
+                    {/* GAS CYLINDER */}
+                    <div className="bg-white p-6 rounded-lg shadow-sm">
+                        <div className="flex items-center gap-2 mb-6">
+                            <Flame className="w-6 h-6 text-amber" />
+                            <h2 className="text-xl font-serif">Gaskútur</h2>
+                        </div>
+                        <p className="text-sm text-stone-500 mb-6">
+                            Svo enginn þurfi að giska í búðinni. Gerðin birtist á stjórnborðinu ásamt því hvenær síðast var skipt.
+                        </p>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-stone-600 mb-2">Stærð</label>
+                                <select
+                                    className="input"
+                                    value={houseForm.gas_cylinder_size}
+                                    onChange={(e) => setHouseForm({ ...houseForm, gas_cylinder_size: e.target.value })}
+                                    disabled={!isManager}
+                                >
+                                    <option value="">Ekki skráð</option>
+                                    <option value="5l">5 lítra</option>
+                                    <option value="10l">10 lítra</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-stone-600 mb-2">Tengi</label>
+                                <select
+                                    className="input"
+                                    value={houseForm.gas_cylinder_connection}
+                                    onChange={(e) => setHouseForm({ ...houseForm, gas_cylinder_connection: e.target.value })}
+                                    disabled={!isManager}
+                                >
+                                    <option value="">Ekki skráð</option>
+                                    <option value="smellugas">Smellugas</option>
+                                    <option value="standard">Venjulegt tengi</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="mt-4">
+                            <label className="block text-sm font-bold text-stone-600 mb-2">
+                                Athugasemd <span className="font-normal text-stone-400">(valfrjálst)</span>
+                            </label>
+                            <input
+                                type="text"
+                                className="input"
+                                placeholder="t.d. Varakútur er í geymslunni bakvið húsið"
+                                value={houseForm.gas_cylinder_notes}
+                                onChange={(e) => setHouseForm({ ...houseForm, gas_cylinder_notes: e.target.value })}
+                                disabled={!isManager}
+                            />
+                        </div>
+
+                        <p className="text-xs text-stone-400 mt-4">
+                            Skráning á því hvenær skipt var um kút fer fram á stjórnborðinu — þá fylgir sjálfkrafa hver gerði það.
+                        </p>
                     </div>
 
                     {/* CHECKLISTS */}
