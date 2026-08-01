@@ -48,6 +48,25 @@ describe('GasCylinderCard', () => {
         expect(screen.getByText(/Anna/)).toBeInTheDocument();
     });
 
+    it('accepts a Firestore Timestamp, not just a Date', () => {
+        const twoMonthsAgo = new Date();
+        twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+        // The dashboard listener spreads snap.data() without converting nested
+        // Timestamps, so this is the shape the card actually receives in the
+        // app — treating it as a Date made every save look like a no-op.
+        const timestampLike = { toDate: () => twoMonthsAgo } as unknown as Date;
+
+        render(
+            <GasCylinderCard
+                gasCylinder={{ ...configured, last_changed_at: timestampLike }}
+                onRecordChange={vi.fn()}
+            />
+        );
+
+        expect(screen.getByText(/Skipt fyrir/)).toBeInTheDocument();
+        expect(screen.queryByText(/Ekki skráð hvenær síðast var skipt/)).not.toBeInTheDocument();
+    });
+
     it('survives a malformed stored date instead of rendering "Invalid Date"', () => {
         render(
             <GasCylinderCard

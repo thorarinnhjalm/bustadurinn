@@ -16,6 +16,24 @@ const CONNECTION_LABELS: Record<string, string> = {
     standard: 'Venjulegt tengi',
 };
 
+/**
+ * The dashboard's house listener maps snapshots with `{ id, ...snap.data() }`
+ * and never converts nested Timestamps, so `last_changed_at` arrives here as a
+ * Firestore Timestamp rather than a Date. `new Date(timestamp)` yields an
+ * Invalid Date, which made a successful save look like nothing had happened:
+ * the card fell back to "not recorded" every time.
+ */
+function toDate(value: unknown): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof (value as any).toDate === 'function') {
+        const d = (value as any).toDate();
+        return d instanceof Date ? d : null;
+    }
+    const parsed = new Date(value as any);
+    return isNaN(parsed.getTime()) ? null : parsed;
+}
+
 interface GasCylinderCardProps {
     gasCylinder?: GasCylinder;
     onRecordChange: () => Promise<void> | void;
@@ -36,9 +54,7 @@ export default function GasCylinderCard({ gasCylinder, onRecordChange }: GasCyli
     const sizeLabel = SIZE_LABELS[gasCylinder.size] ?? gasCylinder.size;
     const connectionLabel = CONNECTION_LABELS[gasCylinder.connection] ?? gasCylinder.connection;
 
-    const lastChanged = gasCylinder.last_changed_at
-        ? new Date(gasCylinder.last_changed_at)
-        : null;
+    const lastChanged = toDate(gasCylinder.last_changed_at);
     const lastChangedValid = lastChanged && !isNaN(lastChanged.getTime());
 
     const handleClick = async () => {
