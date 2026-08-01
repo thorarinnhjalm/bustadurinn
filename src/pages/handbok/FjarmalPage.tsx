@@ -1,9 +1,32 @@
 import MarketingLayout from '@/components/MarketingLayout';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { TrendingUp, ChevronLeft, ArrowRight, CheckSquare, PiggyBank } from 'lucide-react';
 
 export default function FjarmalPage() {
     const navigate = useNavigate();
+
+    // This page is explanatory content about hússjóður/cost-splitting, not a
+    // literal Q&A page or a step-by-step procedure, so it is marked up as a
+    // WebPage rather than FAQPage or HowTo.
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "WebPage",
+                "name": "Hússjóður og rafmagnskostnaður sumarhúss",
+                "description": "Hvernig meðeigendur skipta rafmagni, tryggingum og viðhaldi sumarhúss — jafnt eða eftir eignarhlutföllum. Hússjóður, rekstraráætlun og ársyfirlit.",
+                "url": "https://www.bustadurinn.is/handbok/fjarmal"
+            },
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Heim", "item": "https://www.bustadurinn.is/" },
+                    { "@type": "ListItem", "position": 2, "name": "Handbók", "item": "https://www.bustadurinn.is/handbok" },
+                    { "@type": "ListItem", "position": 3, "name": "Fjárhaldslausnir", "item": "https://www.bustadurinn.is/handbok/fjarmal" }
+                ]
+            }
+        ]
+    };
 
     return (
         <MarketingLayout
@@ -13,18 +36,19 @@ export default function FjarmalPage() {
             title="Hússjóður og rafmagnskostnaður sumarhúss"
             description="Hvernig meðeigendur skipta rafmagni, tryggingum og viðhaldi sumarhúss — jafnt eða eftir eignarhlutföllum. Hússjóður, rekstraráætlun og ársyfirlit."
             keywords="hússjóður, kostnaðarskipting sameignarhús, bókhald sumarhús, rekstraráætlun, fjármál sameign"
+            structuredData={structuredData}
             canonical="https://www.bustadurinn.is/handbok/fjarmal"
         >
             {/* Breadcrumbs */}
             <section className="bg-stone-50 border-b border-stone-200 py-4">
                 <div className="container max-w-4xl mx-auto px-6">
-                    <button
-                        onClick={() => navigate('/handbok')}
+                    <Link
+                        to="/handbok"
                         className="flex items-center text-grey-mid hover:text-amber transition-colors text-sm"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         <span>Til baka í handbók</span>
-                    </button>
+                    </Link>
                 </div>
             </section>
 
@@ -335,6 +359,27 @@ export default function FjarmalPage() {
                         </p>
                     </div>
 
+                </div>
+            </section>
+
+            {/* Sjá einnig */}
+            <section className="py-16 bg-white border-t border-stone-200">
+                <div className="container max-w-4xl mx-auto px-6">
+                    <h2 className="text-2xl font-serif font-bold mb-6">Sjá einnig</h2>
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <Link to="/handbok/bokunarkerfi" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Bókunarkerfi fyrir sameignarhús</h3>
+                            <p className="text-sm text-grey-dark">Sanngirnisregla og árekstraviðvörun fyrir bókanir.</p>
+                        </Link>
+                        <Link to="/handbok/vidhald" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Viðhald og verkefnastjórnun</h3>
+                            <p className="text-sm text-grey-dark">Verkefnalisti og árstíðabundnir gátlistar.</p>
+                        </Link>
+                        <Link to="/handbok/uppsetning" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Hvernig á að setja upp kerfið</h3>
+                            <p className="text-sm text-grey-dark">Skref-fyrir-skref leiðarvísir til að byrja.</p>
+                        </Link>
+                    </div>
                 </div>
             </section>
 

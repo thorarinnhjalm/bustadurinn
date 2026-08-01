@@ -92,26 +92,45 @@ export default function MarketplacePage() {
     });
 
     // SEO Data (JSON-LD)
+    // Note: providers are fetched client-side from Firestore, so crawlers
+    // can't see this markup today — correctness still matters for when
+    // prerendering lands. LocalBusiness requires `address`; providers without
+    // one (address is optional on ServiceProvider) fall back to the less
+    // demanding `Organization` type rather than emitting invalid markup.
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "ItemList",
-        "itemListElement": filteredProviders.map((provider, index) => ({
-            "@type": "LocalBusiness",
-            "position": index + 1,
-            "name": provider.name,
-            "description": provider.description,
-            "telephone": provider.contact_phone,
-            "email": provider.contact_email,
-            "areaServed": provider.service_areas.map(area => ({
-                "@type": "Place",
-                "name": area
-            })),
-            "aggregateRating": provider.rating_count > 0 ? {
-                "@type": "AggregateRating",
-                "ratingValue": provider.rating_avg,
-                "reviewCount": provider.rating_count
-            } : undefined
-        }))
+        "itemListElement": filteredProviders.map((provider, index) => {
+            const item: Record<string, unknown> = {
+                "@type": provider.address ? "LocalBusiness" : "Organization",
+                "name": provider.name,
+                "description": provider.description,
+                "telephone": provider.contact_phone,
+                "email": provider.contact_email,
+                "areaServed": provider.service_areas.map(area => ({
+                    "@type": "Place",
+                    "name": area
+                }))
+            };
+
+            if (provider.address) {
+                item.address = provider.address;
+            }
+
+            if (provider.rating_count > 0) {
+                item.aggregateRating = {
+                    "@type": "AggregateRating",
+                    "ratingValue": provider.rating_avg,
+                    "reviewCount": provider.rating_count
+                };
+            }
+
+            return {
+                "@type": "ListItem",
+                "position": index + 1,
+                "item": item
+            };
+        })
     };
 
     const content = (

@@ -1,5 +1,5 @@
 import MarketingLayout from '@/components/MarketingLayout';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { BookOpen, Calendar, TrendingUp, CheckSquare, Home, ArrowRight, ChevronRight } from 'lucide-react';
 
 // Tailwind's JIT compiler only picks up class names it can find literally in
@@ -51,6 +51,10 @@ export default function HandbokPage() {
         }
     ];
 
+    // This page is a hub linking out to four guide pages — it is not itself a
+    // set of instructions, so the nested items are WebPage entries (truthful
+    // to what they are) rather than HowTo objects, which would require a
+    // `step` array this page does not have.
     const structuredData = {
         "@context": "https://schema.org",
         "@type": "ItemList",
@@ -58,7 +62,7 @@ export default function HandbokPage() {
             "@type": "ListItem",
             "position": index + 1,
             "item": {
-                "@type": "HowTo",
+                "@type": "WebPage",
                 "name": section.title,
                 "description": section.description,
                 "url": `https://www.bustadurinn.is${section.path}`
@@ -104,9 +108,9 @@ export default function HandbokPage() {
                             const Icon = section.icon;
                             const colorClasses = SECTION_COLOR_CLASSES[section.color] ?? SECTION_COLOR_CLASSES.amber;
                             return (
-                                <button
+                                <Link
                                     key={section.id}
-                                    onClick={() => navigate(section.path)}
+                                    to={section.path}
                                     className="group bg-white border-2 border-stone-200 hover:border-amber hover:shadow-lg rounded-xl p-8 text-left transition-all duration-300"
                                 >
                                     <div className={`w-14 h-14 rounded-full ${colorClasses.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
@@ -122,7 +126,7 @@ export default function HandbokPage() {
                                         <span>Lesa meira</span>
                                         <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                     </div>
-                                </button>
+                                </Link>
                             );
                         })}
                     </div>
@@ -192,7 +196,7 @@ export default function HandbokPage() {
                             </h3>
                             <p className="text-grey-dark leading-relaxed">
                                 Margir byrja án þess að setja niður skýrar reglur um bókanir, fjármál og ábyrgð. Þetta leiðir oft til misskilnings og deilna.
-                                <strong className="text-charcoal"> Lausn:</strong> Notaðu <button onClick={() => navigate('/handbok/uppsetning')} className="text-amber hover:underline">uppsetningarleiðbeiningar</button> til að byrja rétt.
+                                <strong className="text-charcoal"> Lausn:</strong> Notaðu <Link to="/handbok/uppsetning" className="text-amber hover:underline">uppsetningarleiðbeiningar</Link> til að byrja rétt.
                             </p>
                         </div>
 
@@ -205,7 +209,7 @@ export default function HandbokPage() {
                             </h3>
                             <p className="text-grey-dark leading-relaxed">
                                 Excel töflur týnast, kvittanir gleymast og enginn veit hvað hefur raunverulega verið keypt.
-                                <strong className="text-charcoal"> Lausn:</strong> Notaðu <button onClick={() => navigate('/handbok/fjarmal')} className="text-amber hover:underline">hússjóð með sjálfvirku bókhaldi</button>.
+                                <strong className="text-charcoal"> Lausn:</strong> Notaðu <Link to="/handbok/fjarmal" className="text-amber hover:underline">hússjóð með sjálfvirku bókhaldi</Link>.
                             </p>
                         </div>
 
@@ -218,7 +222,7 @@ export default function HandbokPage() {
                             </h3>
                             <p className="text-grey-dark leading-relaxed">
                                 Húsið fer að eyðileggjast þegar enginn tekur ábyrgð á viðhaldi. Grasflöt vex yfir, málning flagnast og smáviðgerðir verða að stórum kostnaði.
-                                <strong className="text-charcoal"> Lausn:</strong> Settu upp <button onClick={() => navigate('/handbok/vidhald')} className="text-amber hover:underline">verkefnalista með árstíðabundnum gátlista</button>.
+                                <strong className="text-charcoal"> Lausn:</strong> Settu upp <Link to="/handbok/vidhald" className="text-amber hover:underline">verkefnalista með árstíðabundnum gátlista</Link>.
                             </p>
                         </div>
 
@@ -231,7 +235,7 @@ export default function HandbokPage() {
                             </h3>
                             <p className="text-grey-dark leading-relaxed">
                                 Sami eigandi fær alltaf jólin, páskan og verslunarmannahelgina. Aðrir eigendur verða óánægðir.
-                                <strong className="text-charcoal"> Lausn:</strong> Notaðu <button onClick={() => navigate('/handbok/bokunarkerfi')} className="text-amber hover:underline">sanngirnisreglu</button> sem tryggir sanngjarnt jafnræði.
+                                <strong className="text-charcoal"> Lausn:</strong> Notaðu <Link to="/handbok/bokunarkerfi" className="text-amber hover:underline">sanngirnisreglu</Link> sem tryggir sanngjarnt jafnræði.
                             </p>
                         </div>
                     </div>
@@ -319,13 +323,13 @@ export default function HandbokPage() {
                     <p className="text-xl text-grey-dark mb-8 max-w-2xl mx-auto">
                         Skoðaðu algengar spurningar og svör um Bústaðinn.is
                     </p>
-                    <button
-                        onClick={() => navigate('/spurt-og-svarad')}
+                    <Link
+                        to="/spurt-og-svarad"
                         className="inline-flex items-center gap-2 text-amber hover:text-amber-600 font-bold text-lg transition-colors"
                     >
                         Spurt og svarað
                         <ArrowRight className="w-5 h-5" />
-                    </button>
+                    </Link>
                 </div>
             </section>
 

@@ -19,6 +19,7 @@ interface SEOProps {
 const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": "https://www.bustadurinn.is/#organization",
     "name": "Bústaðurinn.is",
     "alternateName": "Neðri Hóll Hugmyndahús ehf.",
     "url": "https://www.bustadurinn.is",
@@ -44,6 +45,19 @@ const organizationSchema = {
         "email": "hall@bustadurinn.is",
         "contactType": "customer support",
         "availableLanguage": "Icelandic"
+    }
+};
+
+// WebSite schema rendered on every page. No SearchAction/sitelinks-searchbox —
+// the site has no site-wide search, so claiming one would be false markup.
+const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Bústaðurinn.is",
+    "url": "https://www.bustadurinn.is",
+    "inLanguage": "is",
+    "publisher": {
+        "@id": "https://www.bustadurinn.is/#organization"
     }
 };
 
@@ -103,6 +117,11 @@ export default function SEO({
             {/* Organization Schema — renders on every page */}
             <script type="application/ld+json">
                 {JSON.stringify(organizationSchema)}
+            </script>
+
+            {/* WebSite Schema — renders on every page */}
+            <script type="application/ld+json">
+                {JSON.stringify(websiteSchema)}
             </script>
 
             {/* Page-specific Structured Data (JSON-LD) */}

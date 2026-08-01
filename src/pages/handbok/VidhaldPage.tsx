@@ -1,27 +1,51 @@
 import MarketingLayout from '@/components/MarketingLayout';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { CheckSquare, ChevronLeft, ArrowRight } from 'lucide-react';
 
 export default function VidhaldPage() {
     const navigate = useNavigate();
+
+    // Explanatory content about task/maintenance features (task lifecycle,
+    // seasonal checklists) — not literal Q&A and not a single procedure the
+    // reader performs step-by-step, so marked up as WebPage.
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "WebPage",
+                "name": "Viðhald og verkefnastjórnun",
+                "description": "Hvernig á að halda utan um viðhald og verkefni í sumarhúsi. Verkefnalisti, árstíðabundinn gátlisti og skipulag fyrir eigendur.",
+                "url": "https://www.bustadurinn.is/handbok/vidhald"
+            },
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Heim", "item": "https://www.bustadurinn.is/" },
+                    { "@type": "ListItem", "position": 2, "name": "Handbók", "item": "https://www.bustadurinn.is/handbok" },
+                    { "@type": "ListItem", "position": 3, "name": "Viðhald og verkefnastjórnun", "item": "https://www.bustadurinn.is/handbok/vidhald" }
+                ]
+            }
+        ]
+    };
 
     return (
         <MarketingLayout
             title="Viðhald og verkefnastjórnun - Bústaðurinn.is"
             description="Hvernig á að halda utan um viðhald og verkefni í sumarhúsi. Verkefnalisti, árstíðabundinn gátlisti og skipulag fyrir eigendur."
             keywords="viðhald sumarhús, verkefnastjórnun, task management, seasonal checklist, sumarhús skipulag"
+            structuredData={structuredData}
             canonical="https://www.bustadurinn.is/handbok/vidhald"
         >
             {/* Breadcrumbs */}
             <section className="bg-stone-50 border-b border-stone-200 py-4">
                 <div className="container max-w-4xl mx-auto px-6">
-                    <button
-                        onClick={() => navigate('/handbok')}
+                    <Link
+                        to="/handbok"
                         className="flex items-center text-grey-mid hover:text-amber transition-colors text-sm"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         <span>Til baka í handbók</span>
-                    </button>
+                    </Link>
                 </div>
             </section>
 
@@ -262,6 +286,27 @@ export default function VidhaldPage() {
                         </ul>
                     </div>
 
+                </div>
+            </section>
+
+            {/* Sjá einnig */}
+            <section className="py-16 bg-white border-t border-stone-200">
+                <div className="container max-w-4xl mx-auto px-6">
+                    <h2 className="text-2xl font-serif font-bold mb-6">Sjá einnig</h2>
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <Link to="/handbok/bokunarkerfi" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Bókunarkerfi fyrir sameignarhús</h3>
+                            <p className="text-sm text-grey-dark">Sanngirnisregla og árekstraviðvörun fyrir bókanir.</p>
+                        </Link>
+                        <Link to="/handbok/fjarmal" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Fjárhaldslausnir</h3>
+                            <p className="text-sm text-grey-dark">Hússjóður og kostnaðarskipting milli eigenda.</p>
+                        </Link>
+                        <Link to="/handbok/uppsetning" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Hvernig á að setja upp kerfið</h3>
+                            <p className="text-sm text-grey-dark">Skref-fyrir-skref leiðarvísir til að byrja.</p>
+                        </Link>
+                    </div>
                 </div>
             </section>
 

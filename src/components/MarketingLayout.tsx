@@ -1,4 +1,4 @@
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import Logo from '@/components/Logo';
 import SEO from '@/components/SEO';
 import NewsletterSignup from '@/components/NewsletterSignup';
@@ -22,7 +22,6 @@ export default function MarketingLayout({
     structuredData,
     canonical
 }: MarketingLayoutProps) {
-    const navigate = useNavigate();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -81,20 +80,20 @@ export default function MarketingLayout({
                     </div>
 
                     <div className="flex items-center gap-2 md:gap-4">
-                        <button
-                            onClick={() => navigate('/signup')}
+                        <Link
+                            to="/signup"
                             className="btn btn-primary px-4 py-2 text-sm md:px-6 md:py-2.5 shadow-sm"
                         >
                             Byrja núna
-                        </button>
+                        </Link>
 
                         <div className="hidden md:block">
-                            <button
-                                onClick={() => navigate('/login')}
+                            <Link
+                                to="/login"
                                 className="btn btn-ghost hover:bg-amber/10 text-charcoal font-semibold text-sm"
                             >
                                 Innskrá
-                            </button>
+                            </Link>
                         </div>
 
                         {/* Mobile Menu Toggle */}
@@ -123,13 +122,14 @@ export default function MarketingLayout({
                             </Link>
                         ))}
                         <div className={`w-12 h-0.5 bg-amber/20 transition-all duration-500 ${isMenuOpen ? 'w-24' : 'w-0'}`}></div>
-                        <button
-                            onClick={() => { setIsMenuOpen(false); navigate('/login'); }}
+                        <Link
+                            to="/login"
+                            onClick={() => setIsMenuOpen(false)}
                             className={`text-lg font-semibold text-charcoal hover:text-amber transition-all duration-300 transform ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
                             style={{ transitionDelay: `${navLinks.length * 50}ms` }}
                         >
                             Innskrá
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </nav >

@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import MarketingLayout from '@/components/MarketingLayout';
 import { Plus, Minus } from 'lucide-react';
 
 export default function FAQPage() {
-    const navigate = useNavigate();
-
     const faqs = [
         {
             q: "Hvað kostar þjónustan?",
@@ -153,15 +151,15 @@ export default function FAQPage() {
                         <p className="text-xl text-grey-dark mb-8 max-w-2xl mx-auto">
                             Skoðaðu ítarlega handbók okkar með leiðbeiningum um bókunarkerfi, fjármál, viðhald og uppsetningu.
                         </p>
-                        <button
-                            onClick={() => navigate('/handbok')}
+                        <Link
+                            to="/handbok"
                             className="btn btn-primary bg-amber text-charcoal hover:bg-amber/90 px-8 py-4 text-lg inline-flex items-center gap-2"
                         >
                             Skoða handbók
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>

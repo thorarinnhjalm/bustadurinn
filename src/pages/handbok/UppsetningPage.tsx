@@ -1,27 +1,73 @@
 import MarketingLayout from '@/components/MarketingLayout';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { BookOpen, ChevronLeft, ArrowRight, CheckCircle, Home as HomeIcon, Settings } from 'lucide-react';
 
 export default function UppsetningPage() {
     const navigate = useNavigate();
+
+    // Steps mirror the four numbered steps actually rendered on this page
+    // below (Step 1-4). The page states the whole process takes "innan við
+    // 5 mínútur" (under 5 minutes), hence totalTime PT5M.
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "HowTo",
+                "name": "Hvernig á að setja upp Bústaðinn.is",
+                "description": "Skref-fyrir-skref leiðarvísir um hvernig þú setur upp sumarhúsið þitt í Bústaðnum á innan við 5 mínútum.",
+                "totalTime": "PT5M",
+                "step": [
+                    {
+                        "@type": "HowToStep",
+                        "name": "Stofnaðu aðgang",
+                        "text": "Farðu á bustadurinn.is/signup og stofnaðu aðgang með netfanginu þínu, lykilorði og nafni."
+                    },
+                    {
+                        "@type": "HowToStep",
+                        "name": "Skráðu húsið",
+                        "text": "Eftir að þú skráir þig inn býrðu til fyrsta húsið þitt, gefur því nafn og bætir við grunnupplýsingum eins og heimilisfangi og mynd (valfrjálst)."
+                    },
+                    {
+                        "@type": "HowToStep",
+                        "name": "Bjóddu meðeigendum",
+                        "text": "Farðu í stillingarvalmyndina, veldu \"Bjóða meðeigendum\" og deildu boðshlekknum með öðrum eigendum svo þeir geti stofnað eigin aðgang og gengið til liðs."
+                    },
+                    {
+                        "@type": "HowToStep",
+                        "name": "Stilltu sanngirnisreglur (valfrjálst)",
+                        "text": "Veldu í stillingum hvort þið viljið nota \"Hver kemur fyrst\" eða \"Sanngirnisreglu\" fyrir stórhelgarnar."
+                    }
+                ]
+            },
+            {
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Heim", "item": "https://www.bustadurinn.is/" },
+                    { "@type": "ListItem", "position": 2, "name": "Handbók", "item": "https://www.bustadurinn.is/handbok" },
+                    { "@type": "ListItem", "position": 3, "name": "Hvernig á að setja upp kerfið", "item": "https://www.bustadurinn.is/handbok/uppsetning" }
+                ]
+            }
+        ]
+    };
 
     return (
         <MarketingLayout
             title="Hvernig á að setja upp Bústaðinn.is - Uppsetningarleiðbeiningar"
             description="Skref-fyrir-skref leiðarvísir um hvernig þú setur upp sumarhúsið þitt í Bústaðnum á innan við 5 mínútum. Stofna aðgang, bjóða meðeigendum og byrja að nota."
             keywords="bústaðurinn setup, setja upp sumarhús, stofna aðgang, bjóða meðeigendum, onboarding"
+            structuredData={structuredData}
             canonical="https://www.bustadurinn.is/handbok/uppsetning"
         >
             {/* Breadcrumbs */}
             <section className="bg-stone-50 border-b border-stone-200 py-4">
                 <div className="container max-w-4xl mx-auto px-6">
-                    <button
-                        onClick={() => navigate('/handbok')}
+                    <Link
+                        to="/handbok"
                         className="flex items-center text-grey-mid hover:text-amber transition-colors text-sm"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         <span>Til baka í handbók</span>
-                    </button>
+                    </Link>
                 </div>
             </section>
 
@@ -300,6 +346,27 @@ export default function UppsetningPage() {
                         </div>
                     </div>
 
+                </div>
+            </section>
+
+            {/* Sjá einnig */}
+            <section className="py-16 bg-white border-t border-stone-200">
+                <div className="container max-w-4xl mx-auto px-6">
+                    <h2 className="text-2xl font-serif font-bold mb-6">Sjá einnig</h2>
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <Link to="/handbok/bokunarkerfi" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Bókunarkerfi fyrir sameignarhús</h3>
+                            <p className="text-sm text-grey-dark">Sanngirnisregla og árekstraviðvörun fyrir bókanir.</p>
+                        </Link>
+                        <Link to="/handbok/fjarmal" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Fjárhaldslausnir</h3>
+                            <p className="text-sm text-grey-dark">Hússjóður og kostnaðarskipting milli eigenda.</p>
+                        </Link>
+                        <Link to="/handbok/vidhald" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Viðhald og verkefnastjórnun</h3>
+                            <p className="text-sm text-grey-dark">Verkefnalisti og árstíðabundnir gátlistar.</p>
+                        </Link>
+                    </div>
                 </div>
             </section>
 

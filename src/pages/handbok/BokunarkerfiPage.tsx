@@ -1,5 +1,5 @@
 import MarketingLayout from '@/components/MarketingLayout';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Calendar, ChevronLeft, Shield, AlertCircle, ArrowRight, CheckSquare } from 'lucide-react';
 
 export default function BokunarkerfiPage() {
@@ -7,24 +7,36 @@ export default function BokunarkerfiPage() {
 
     const structuredData = {
         "@context": "https://schema.org",
-        "@type": "HowTo",
-        "name": "Bókunarkerfi fyrir sameignarhús",
-        "description": "Lærðu hvernig bókunarkerfi virkar fyrir sameignarhús og sumarhús, með sanngirnisröðun stórhelga og árekstraviðvörun.",
-        "step": [
+        "@graph": [
             {
-                "@type": "HowToStep",
-                "name": "Veldu dagsetningar",
-                "text": "Smelltu á dagatalið og veldu hvaða daga þú vilt bóka"
+                "@type": "HowTo",
+                "name": "Bókunarkerfi fyrir sameignarhús",
+                "description": "Lærðu hvernig bókunarkerfi virkar fyrir sameignarhús og sumarhús, með sanngirnisröðun stórhelga og árekstraviðvörun.",
+                "step": [
+                    {
+                        "@type": "HowToStep",
+                        "name": "Veldu dagsetningar",
+                        "text": "Smelltu á dagatalið og veldu hvaða daga þú vilt bóka"
+                    },
+                    {
+                        "@type": "HowToStep",
+                        "name": "Bættu við upplýsingum",
+                        "text": "Skráðu hverjir koma og ef það eru athugasemdir"
+                    },
+                    {
+                        "@type": "HowToStep",
+                        "name": "Staðfestu bókun",
+                        "text": "Kerfið varar við ef dagsetningar skarast við aðra bókun og sendir tilkynningar á alla þegar bókun er staðfest"
+                    }
+                ]
             },
             {
-                "@type": "HowToStep",
-                "name": "Bættu við upplýsingum",
-                "text": "Skráðu hverjir koma og ef það eru athugasemdir"
-            },
-            {
-                "@type": "HowToStep",
-                "name": "Staðfestu bókun",
-                "text": "Kerfið varar við ef dagsetningar skarast við aðra bókun og sendir tilkynningar á alla þegar bókun er staðfest"
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Heim", "item": "https://www.bustadurinn.is/" },
+                    { "@type": "ListItem", "position": 2, "name": "Handbók", "item": "https://www.bustadurinn.is/handbok" },
+                    { "@type": "ListItem", "position": 3, "name": "Bókunarkerfi fyrir sameignarhús", "item": "https://www.bustadurinn.is/handbok/bokunarkerfi" }
+                ]
             }
         ]
     };
@@ -42,13 +54,13 @@ export default function BokunarkerfiPage() {
             {/* Breadcrumbs */}
             <section className="bg-stone-50 border-b border-stone-200 py-4">
                 <div className="container max-w-4xl mx-auto px-6">
-                    <button
-                        onClick={() => navigate('/handbok')}
+                    <Link
+                        to="/handbok"
                         className="flex items-center text-grey-mid hover:text-amber transition-colors text-sm"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         <span>Til baka í handbók</span>
-                    </button>
+                    </Link>
                 </div>
             </section>
 
@@ -308,6 +320,27 @@ export default function BokunarkerfiPage() {
                         </ul>
                     </div>
 
+                </div>
+            </section>
+
+            {/* Sjá einnig */}
+            <section className="py-16 bg-white border-t border-stone-200">
+                <div className="container max-w-4xl mx-auto px-6">
+                    <h2 className="text-2xl font-serif font-bold mb-6">Sjá einnig</h2>
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <Link to="/handbok/fjarmal" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Fjárhaldslausnir</h3>
+                            <p className="text-sm text-grey-dark">Hússjóður og kostnaðarskipting milli eigenda.</p>
+                        </Link>
+                        <Link to="/handbok/vidhald" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Viðhald og verkefnastjórnun</h3>
+                            <p className="text-sm text-grey-dark">Verkefnalisti og árstíðabundnir gátlistar.</p>
+                        </Link>
+                        <Link to="/handbok/uppsetning" className="block bg-stone-50 hover:bg-amber/10 rounded-lg p-5 transition-colors">
+                            <h3 className="font-bold text-charcoal mb-1">Hvernig á að setja upp kerfið</h3>
+                            <p className="text-sm text-grey-dark">Skref-fyrir-skref leiðarvísir til að byrja.</p>
+                        </Link>
+                    </div>
                 </div>
             </section>
 

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
     Calendar, CheckCircle, ArrowRight, Users,
@@ -85,7 +85,7 @@ export default function LandingPage() {
                 "name": "Hvað ef ég hætti að nota kerfið?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Þú átt þín gögn. Ef þú ákveður að hætta getur þú hvenær sem er flutt út allar bókanir og söguleg gögn. Við trúum því að þú verðir áfram vegna gæðanna, ekki vegna þess að þú sért læst(ur) inni."
+                    "text": "Þú átt þín gögn og kerfið er ókeypis — engin binding og enginn uppsagnarfrestur. Ef þú vilt hætta getur þú eytt aðgangi og öllum tengdum gögnum í stillingunum hvenær sem er. Við trúum því að þú verðir áfram vegna gæðanna, ekki vegna þess að þú sért læst(ur) inni."
                 }
             },
             {
@@ -163,8 +163,8 @@ export default function LandingPage() {
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                                <button
-                                    onClick={() => navigate('/signup')}
+                                <Link
+                                    to="/signup"
                                     className="btn btn-primary bg-charcoal hover:bg-black text-white text-lg px-8 py-4 h-auto shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)] transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 rounded-2xl group border-0"
                                 >
                                     <div className="bg-white/10 p-2 rounded-full group-hover:bg-amber group-hover:text-charcoal transition-colors">
@@ -174,15 +174,15 @@ export default function LandingPage() {
                                         <div className="text-xs text-white/60 font-medium uppercase tracking-wider">Byrjaðu strax</div>
                                         <div className="font-bold">Stofna aðgang — ókeypis</div>
                                     </div>
-                                </button>
+                                </Link>
 
-                                <button
-                                    onClick={() => navigate('/prufa')}
+                                <Link
+                                    to="/prufa"
                                     className="btn btn-secondary bg-white/50 backdrop-blur-md border border-white/60 hover:bg-white text-stone-600 hover:text-charcoal text-lg px-8 py-4 h-auto shadow-sm hover:shadow-md transition-all rounded-2xl flex items-center justify-center gap-2"
                                 >
                                     <Sparkles className="w-5 h-5 opacity-60" />
                                     Skoða prufu-útgáfu (Engin skráning)
-                                </button>
+                                </Link>
                             </div>
 
                             <div className="flex items-center gap-8 text-sm text-stone-500 font-medium border-t border-stone-200/60 pt-8 max-w-md">
@@ -322,13 +322,13 @@ export default function LandingPage() {
                     </div>
 
                     <div className="text-center">
-                        <button
-                            onClick={() => navigate('/eiginleikar')}
+                        <Link
+                            to="/eiginleikar"
                             className="inline-flex items-center gap-2 text-charcoal font-semibold hover:text-amber transition-colors text-lg group"
                         >
                             Sjá alla eiginleika og skjámyndir
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </section>
@@ -348,6 +348,65 @@ export default function LandingPage() {
                     </div>
 
                     <HolidayPriorityVisualizer />
+                </div>
+            </section>
+
+            {/* Handbook Cross-links Section */}
+            <section className="py-24 bg-bone">
+                <div className="container max-w-6xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <div className="text-amber text-xs font-bold uppercase tracking-widest mb-3">Handbókin</div>
+                        <h2 className="text-4xl md:text-5xl font-serif mb-4">Allt sem þú þarft að vita um sameignina</h2>
+                        <p className="text-xl text-grey-dark max-w-2xl mx-auto">
+                            Ítarlegar leiðbeiningar um hvernig best er að reka sumarhús í sameign — frá fyrsta degi.
+                        </p>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <Link
+                            to="/handbok/bokunarkerfi"
+                            className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group"
+                        >
+                            <Calendar className="w-8 h-8 text-amber mb-4" />
+                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber transition-colors">Bókunarkerfi og sanngirni</h3>
+                            <p className="text-sm text-grey-dark leading-relaxed">
+                                Hvernig meðeigendur skipta stórhelgunum fjórum sín á milli án árekstra.
+                            </p>
+                        </Link>
+
+                        <Link
+                            to="/handbok/fjarmal"
+                            className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group"
+                        >
+                            <TrendingUp className="w-8 h-8 text-amber mb-4" />
+                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber transition-colors">Hússjóður og fjármál</h3>
+                            <p className="text-sm text-grey-dark leading-relaxed">
+                                Skipting sameiginlegs kostnaðar, rafmagns og annarra útgjalda milli eigenda.
+                            </p>
+                        </Link>
+
+                        <Link
+                            to="/handbok/vidhald"
+                            className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group"
+                        >
+                            <Settings className="w-8 h-8 text-amber mb-4" />
+                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber transition-colors">Viðhald og árstíðaverk</h3>
+                            <p className="text-sm text-grey-dark leading-relaxed">
+                                Vor-opnun, vetrarfrágangur og önnur árstíðabundin verkefni í sumarhúsinu.
+                            </p>
+                        </Link>
+
+                        <Link
+                            to="/handbok/uppsetning"
+                            className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group"
+                        >
+                            <Users className="w-8 h-8 text-amber mb-4" />
+                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber transition-colors">Að stofna til sameignar</h3>
+                            <p className="text-sm text-grey-dark leading-relaxed">
+                                Skref fyrir skref leiðbeiningar um að setja upp sameign frá grunni.
+                            </p>
+                        </Link>
+                    </div>
                 </div>
             </section>
 
@@ -385,18 +444,18 @@ export default function LandingPage() {
                             </ul>
 
                             <div className="flex gap-4">
-                                <button
-                                    onClick={() => navigate('/torgid')}
+                                <Link
+                                    to="/torgid"
                                     className="btn btn-primary bg-amber text-charcoal hover:bg-white hover:text-charcoal px-8 py-4 text-lg"
                                 >
                                     Skoða Torgið
-                                </button>
-                                <button
-                                    onClick={() => navigate('/verktakar')}
+                                </Link>
+                                <Link
+                                    to="/verktakar"
                                     className="btn btn-ghost border border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg"
                                 >
                                     Skráðu þjónustu (Frítt)
-                                </button>
+                                </Link>
                             </div>
                         </div>
 
@@ -609,13 +668,13 @@ export default function LandingPage() {
                             </ul>
 
                             <div className="pt-4">
-                                <button
-                                    onClick={() => navigate('/signup')}
+                                <Link
+                                    to="/signup"
                                     className="btn btn-primary text-lg px-8 py-4 flex items-center gap-2 group"
                                 >
                                     Byrjaðu að nota kerfið
                                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     </div>
@@ -667,9 +726,9 @@ export default function LandingPage() {
                                 </li>
                             </ul>
 
-                            <button onClick={() => navigate('/signup')} className="btn btn-primary bg-amber w-full py-4 text-lg shadow-lg shadow-amber/20 border-0">
+                            <Link to="/signup" className="btn btn-primary bg-amber w-full py-4 text-lg shadow-lg shadow-amber/20 border-0">
                                 Stofna ókeypis aðgang
-                            </button>
+                            </Link>
                         </div>
 
                         {/* Support message */}
@@ -701,12 +760,12 @@ export default function LandingPage() {
                         <p className="text-stone-500 max-w-xl mx-auto mb-8">
                             Stofnaðu ókeypis aðgang og sjáðu hvernig kerfið gagnast ykkur. Enginn falinn kostnaður.
                         </p>
-                        <button
-                            onClick={() => navigate('/signup')}
+                        <Link
+                            to="/signup"
                             className="btn btn-primary mb-12 px-10 py-4 text-lg"
                         >
                             Stofna ókeypis aðgang
-                        </button>
+                        </Link>
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
                                 <span className="w-full border-t border-stone-200" />
@@ -743,7 +802,7 @@ export default function LandingPage() {
                         <div>
                             <h3 className="text-xl font-bold mb-3">Hvað ef ég hætti að nota kerfið?</h3>
                             <p className="text-stone-600 leading-relaxed font-light">
-                                Þú átt þín gögn. Ef þú ákveður að hætta getur þú hvenær sem er flutt út allar bókanir og söguleg gögn. Við trúum því að þú verðir áfram vegna gæðanna, ekki vegna þess að þú sért læst(ur) inni.
+                                Þú átt þín gögn og kerfið er ókeypis — engin binding og enginn uppsagnarfrestur. Ef þú vilt hætta getur þú eytt aðgangi og öllum tengdum gögnum í stillingunum hvenær sem er. Við trúum því að þú verðir áfram vegna gæðanna, ekki vegna þess að þú sért læst(ur) inni.
                             </p>
                         </div>
 
@@ -772,18 +831,18 @@ export default function LandingPage() {
                         Ókeypis og opið öllum. Stofnaðu aðgang á undir mínútu.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <button
-                            onClick={() => navigate('/signup')}
+                        <Link
+                            to="/signup"
                             className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark text-lg px-8 py-4 shadow-xl shadow-amber/20"
                         >
                             Stofna ókeypis aðgang
-                        </button>
-                        <button
-                            onClick={() => navigate('/prufa')}
+                        </Link>
+                        <Link
+                            to="/prufa"
                             className="btn btn-ghost border-2 border-white/20 text-bone hover:bg-white/10 text-lg px-8 py-4"
                         >
                             Skoða prufu-útgáfu (Engin skráning)
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </section>
