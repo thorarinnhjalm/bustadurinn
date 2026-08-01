@@ -29,6 +29,7 @@ import CheckoutModal from '@/components/dashboard/CheckoutModal';
 import CheckInModal from '@/components/dashboard/CheckInModal';
 import SeasonalChecklistCard from '@/components/dashboard/SeasonalChecklistCard';
 import GasCylinderCard from '@/components/dashboard/GasCylinderCard';
+import { logger } from '@/utils/logger';
 import InventoryCard from '@/components/dashboard/InventoryCard';
 import Walkthrough from '@/components/Walkthrough';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -559,7 +560,11 @@ const UserDashboard = () => {
                 created_at: serverTimestamp()
             });
         } catch (error) {
-            console.error('Error recording gas cylinder change:', error);
+            // console.* is stripped from production builds, so a failure here
+            // was previously invisible — the button simply did nothing. Rethrow
+            // so the card can tell the user something went wrong.
+            logger.error('Error recording gas cylinder change:', error);
+            throw error;
         }
     };
 

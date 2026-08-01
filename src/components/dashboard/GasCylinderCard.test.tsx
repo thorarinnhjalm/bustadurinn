@@ -58,6 +58,20 @@ describe('GasCylinderCard', () => {
         expect(screen.getByText(/Ekki skráð hvenær síðast var skipt/)).toBeInTheDocument();
     });
 
+    it('tells the user when recording the change fails', async () => {
+        const onRecordChange = vi.fn().mockRejectedValue(new Error('permission-denied'));
+        render(<GasCylinderCard gasCylinder={configured} onRecordChange={onRecordChange} />);
+
+        fireEvent.click(screen.getByRole('button', { name: /Skipti um kút/ }));
+
+        // A silent failure is indistinguishable from success — that is exactly
+        // how the Firestore rules rejection went unnoticed.
+        await waitFor(() =>
+            expect(screen.getByText(/Ekki tókst að skrá skiptin/)).toBeInTheDocument()
+        );
+        expect(screen.getByRole('button', { name: /Skipti um kút/ })).not.toBeDisabled();
+    });
+
     it('reports a replacement and re-enables the button afterwards', async () => {
         const onRecordChange = vi.fn().mockResolvedValue(undefined);
         render(<GasCylinderCard gasCylinder={configured} onRecordChange={onRecordChange} />);

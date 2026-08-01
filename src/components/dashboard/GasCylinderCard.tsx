@@ -27,6 +27,7 @@ interface GasCylinderCardProps {
  */
 export default function GasCylinderCard({ gasCylinder, onRecordChange }: GasCylinderCardProps) {
     const [saving, setSaving] = useState(false);
+    const [failed, setFailed] = useState(false);
 
     // Not configured: nothing useful to show, and the settings page is where
     // it gets set up.
@@ -42,8 +43,13 @@ export default function GasCylinderCard({ gasCylinder, onRecordChange }: GasCyli
 
     const handleClick = async () => {
         setSaving(true);
+        setFailed(false);
         try {
             await onRecordChange();
+        } catch {
+            // Silence here would look identical to success — the whole reason
+            // this went unnoticed the first time round.
+            setFailed(true);
         } finally {
             setSaving(false);
         }
@@ -78,6 +84,12 @@ export default function GasCylinderCard({ gasCylinder, onRecordChange }: GasCyli
 
                     {gasCylinder.notes && (
                         <p className="text-xs text-stone-400 mt-1">{gasCylinder.notes}</p>
+                    )}
+
+                    {failed && (
+                        <p className="text-xs text-red-600 mt-2">
+                            Ekki tókst að skrá skiptin. Reyndu aftur.
+                        </p>
                     )}
                 </div>
             </div>

@@ -89,7 +89,11 @@ service cloud.firestore {
       allow update: if isAuthenticated() && (
         (resource.data.manager_id == getUserId()) || 
         isSuperAdmin() ||
-        (getUserId() in resource.data.owner_ids && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['supplies_out']))
+        // Members may record house-state facts without being manager: which
+        // supplies ran out, and that they swapped the gas cylinder. Whoever
+        // is actually at the house is the one who knows, and they are rarely
+        // the manager. Anything else still requires manager or super admin.
+        (getUserId() in resource.data.owner_ids && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['supplies_out', 'gas_cylinder', 'updated_at']))
       );
       allow delete: if isAuthenticated() && (
         (resource.data.manager_id == getUserId()) || isSuperAdmin()
