@@ -41,7 +41,8 @@ import { readFile, writeFile, mkdir, stat, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright-core';
+import puppeteer from 'puppeteer-core';
+import sparticuz from '@sparticuz/chromium';
 import { routes as sitemapRoutes } from './generate-sitemap.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -147,11 +148,6 @@ async function resolveChromiumExecutable() {
         return process.env.PRERENDER_CHROMIUM_PATH;
     }
 
-    const expected = chromium.executablePath();
-    if (expected && existsSync(expected)) {
-        return expected;
-    }
-
     const browsersDir = process.env.PLAYWRIGHT_BROWSERS_PATH;
     if (!browsersDir || !existsSync(browsersDir)) {
         return null;
@@ -175,18 +171,70 @@ async function resolveChromiumExecutable() {
     return null;
 }
 
-async function prerenderRoute(browser, baseUrl, path) {
-    const context = await browser.newContext();
-    // Deterministic + offline-safe: only allow requests back to our own
-    // local static server. See file header for rationale.
-    await context.route('**/*', (route) => {
-        if (route.request().url().startsWith(baseUrl)) {
-            return route.continue();
-        }
-        return route.abort();
+/**
+ * Launches Chromium, trying each source in turn.
+ *
+ * A locally installed browser is preferred when present (fast, no extraction
+ * step) but Vercel's build image is the case that actually matters: it can
+ * DOWNLOAD a Chromium yet lacks the shared libraries to run it (libnspr4.so
+ * and friends), with no root available to install them. @sparticuz/chromium
+ * ships a build for exactly that environment, so it is the fallback — and the
+ * one that will normally be used in CI.
+ */
+async function launchBrowser() {
+    const candidates = [];
+
+    const local = await resolveChromiumExecutable();
+    if (local) {
+        candidates.push({
+            label: `local Chromium (${local})`,
+            executablePath: local,
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        });
+    }
+
+    candidates.push({
+        label: '@sparticuz/chromium',
+        // Resolved lazily: this extracts the bundled binary to /tmp, so only
+        // pay for it if the local browser is absent or refuses to start.
+        executablePath: () => sparticuz.executablePath(),
+        args: sparticuz.args,
     });
 
-    const page = await context.newPage();
+    const failures = [];
+    for (const candidate of candidates) {
+        try {
+            const executablePath =
+                typeof candidate.executablePath === 'function'
+                    ? await candidate.executablePath()
+                    : candidate.executablePath;
+
+            const browser = await puppeteer.launch({
+                executablePath,
+                args: candidate.args,
+                headless: true,
+            });
+            console.log(`[prerender] Launched via ${candidate.label}`);
+            return browser;
+        } catch (err) {
+            console.warn(`[prerender] ${candidate.label} unusable: ${err?.message || err}`);
+            failures.push(`${candidate.label}: ${err?.message || err}`);
+        }
+    }
+
+    throw new Error(`No usable Chromium. Tried:\n  - ${failures.join('\n  - ')}`);
+}
+
+async function prerenderRoute(browser, baseUrl, path) {
+    const page = await browser.newPage();
+    // Deterministic + offline-safe: only allow requests back to our own
+    // local static server. See file header for rationale.
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+        if (req.url().startsWith(baseUrl)) return req.continue();
+        return req.abort();
+    });
+
     try {
         await page.goto(`${baseUrl}${path}`, { waitUntil: 'load', timeout: 20000 });
         // Real content signal — the Suspense/PageLoader fallback has no h1,
@@ -199,12 +247,12 @@ async function prerenderRoute(browser, baseUrl, path) {
             () => !!document.querySelector('link[rel="canonical"]'),
             { timeout: 5000 }
         );
-        await page.waitForTimeout(200);
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
         const html = await page.content();
         return { path, html };
     } finally {
-        await context.close();
+        await page.close();
     }
 }
 
@@ -219,29 +267,11 @@ async function main() {
         process.exit(1);
     }
 
-    console.log(`[prerender] Resolving Chromium executable...`);
-    const executablePath = await resolveChromiumExecutable();
-    if (!executablePath) {
-        console.error(
-            '[prerender] No usable Chromium found (checked playwright-core\'s expected ' +
-            'path and PLAYWRIGHT_BROWSERS_PATH). Install one with ' +
-            '`npx playwright install chromium`, or point PRERENDER_CHROMIUM_PATH at an ' +
-            'executable. Skipping prerendering — dist/ remains a valid (client-only-' +
-            'rendered) build.'
-        );
-        process.exit(0);
-    }
-    console.log(`[prerender] Using Chromium at ${executablePath}`);
-
     const server = await startStaticServer();
     const { port } = server.address();
     const baseUrl = `http://127.0.0.1:${port}`;
 
-    const browser = await chromium.launch({
-        executablePath,
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    const browser = await launchBrowser();
 
     const results = [];
     const start = Date.now();
