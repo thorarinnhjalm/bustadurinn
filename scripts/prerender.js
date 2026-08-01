@@ -289,8 +289,18 @@ async function main() {
 }
 
 main().catch((err) => {
-    console.error('[prerender] Unexpected error:', err);
-    process.exit(1);
+    // Prerendering is an SEO enhancement, never a deploy gate. Vercel's build
+    // image ships a Chromium download but not the shared libraries it needs
+    // (libnspr4.so and friends), and there is no root to install them — that
+    // surfaced here as a hard build failure that took the whole site down.
+    // Any failure now degrades to a valid client-rendered dist/ instead.
+    console.error('[prerender] FAILED — shipping a client-rendered build instead.');
+    console.error('[prerender] Cause:', err?.message || err);
+    console.error(
+        '[prerender] Search engines will still index the site, but AI crawlers ' +
+        'that do not run JavaScript will only see index.html + llms.txt.'
+    );
+    process.exit(0);
 });
 
 // --- Vercel routing note ----------------------------------------------
