@@ -57,7 +57,14 @@ export default function SEO({
     noIndex = false,
 }: SEOProps) {
     const location = useLocation();
-    const fullTitle = title.includes('|') || title.includes('—') || title.includes('–') ? title : `${title} | Bústaðurinn.is`;
+    // Only append the brand when the title doesn't already carry it. The old
+    // check looked for | — – separators alone, so the eleven pages ending in
+    // " - Bústaðurinn.is" (plain hyphen) were served titles reading
+    // "... - Bústaðurinn.is | Bústaðurinn.is", wasting ~17 characters of a
+    // ~60-character budget on a repeated brand name.
+    const alreadyBranded = /bústaðurinn\.is/i.test(title);
+    const hasSeparator = title.includes('|') || title.includes('—') || title.includes('–');
+    const fullTitle = alreadyBranded || hasSeparator ? title : `${title} | Bústaðurinn.is`;
 
     // Construct canonical URL
     // If explicit canonical provided, use it.

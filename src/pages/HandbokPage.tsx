@@ -68,8 +68,9 @@ export default function HandbokPage() {
 
     return (
         <MarketingLayout
-            title="Handbók fyrir sameignarhús - Bústaðurinn.is"
-            description="Ítarleg handbók um hvernig á að stjórna sameignarhúsi. Lærðu um bókunarkerfi, fjárhaldslausnir, viðhald og skipulag."
+            // "handbók hússins" surfaces this page at pos 15.3.
+            title="Handbók fyrir sumarhús í sameign"
+            description="Handbók um rekstur sumarhúss í sameign: bókanir og sanngirni milli fjölskyldna, hússjóður og kostnaðarskipting, viðhald, árstíðaverk og uppsetning frá grunni."
             keywords="sameignarhús handbók, sumarhús handbók, bókunarkerfi, fjárhaldslausnir, viðhald sumarhús"
             structuredData={structuredData}
             canonical="https://www.bustadurinn.is/handbok"

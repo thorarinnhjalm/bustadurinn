@@ -265,8 +265,9 @@ export default function FeaturesPage() {
     return (
         <>
             <MarketingLayout
-                title="Eiginleikar | Bústaðurinn.is — Ókeypis app og bókunarkerfi fyrir sumarhús"
-                description="Allir eiginleikar Bústaðurinn.is: Bókunardagatal, sanngirnisregla, hússjóður, verkefnastjórnun og gestaaðgangur. Ókeypis sumarhúsaforrit — engin binding."
+                // Was 73 chars and truncated in results; trimmed to ~57.
+                title="Eiginleikar — ókeypis bókunarkerfi og hússjóður"
+                description="Bókunardagatal, sanngirnisregla fyrir stórhelgar, hússjóður, gátlistar og árbók. Virkar án nettengingar í bústaðnum. Ókeypis — engin áskrift."
                 keywords="sumarhúsaforrit eiginleikar, bókunarkerfi sumarhús, sumarhús app, hússjóður, sanngirnisregla, gestaaðgangur sumarhús, ókeypis sumarhús kerfi"
                 canonical="https://www.bustadurinn.is/eiginleikar"
                 structuredData={{

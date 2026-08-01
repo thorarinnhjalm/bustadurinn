@@ -7,8 +7,11 @@ export default function FjarmalPage() {
 
     return (
         <MarketingLayout
-            title="Fjárhaldslausnir fyrir sameignarhús - Bústaðurinn.is"
-            description="Hvernig á að halda utan um hússjóð, kostnaðarskiptingu og bókhald í sameignarhúsi. Gagnsæi og traust fyrir alla eigendur."
+            // Ranks page 1 for "hár rafmagnsreikningur" (pos 7.5) and
+            // "sameiginlegur (banka)reikningur" (pos 8.5-9.0) with zero clicks —
+            // the old title answered none of those queries.
+            title="Hússjóður og rafmagnskostnaður sumarhúss"
+            description="Hvernig meðeigendur skipta rafmagni, tryggingum og viðhaldi sumarhúss — jafnt eða eftir eignarhlutföllum. Hússjóður, rekstraráætlun og ársyfirlit."
             keywords="hússjóður, kostnaðarskipting sameignarhús, bókhald sumarhús, rekstraráætlun, fjármál sameign"
             canonical="https://www.bustadurinn.is/handbok/fjarmal"
         >

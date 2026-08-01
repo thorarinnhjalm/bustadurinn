@@ -31,8 +31,10 @@ export default function BokunarkerfiPage() {
 
     return (
         <MarketingLayout
-            title="Bókunarkerfi fyrir sameignarhús - Bústaðurinn.is"
-            description="Hvernig bókunarkerfi fyrir sameignarhús virkar. Sanngirnisregla með snúningi milli eigenda á stórhelgum, árekstraviðvaranir og sjálfvirkar tilkynningar."
+            // "bókunarkerfi" is the biggest non-brand query by impressions
+            // (33) but sits at pos 29.7 — page 3. Lead with the exact term.
+            title="Bókunarkerfi fyrir sumarhús í sameign"
+            description="Bókunardagatal fyrir sumarhús í sameign: viðvörun ef bókanir skarast og sanngirnisregla sem skiptir stórhelgum milli fjölskyldna. Ókeypis, engin áskrift."
             keywords="bókunarkerfi sameignarhús, bókun sumarhús, sanngirnisregla, dagatal sameign, árekstraviðvörun"
             structuredData={structuredData}
             canonical="https://www.bustadurinn.is/handbok/bokunarkerfi"
