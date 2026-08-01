@@ -19,16 +19,13 @@ export default function LandingPage() {
     const navigate = useNavigate();
     const { isAuthenticated, currentUser, isLoading } = useAppStore();
     const [reviews, setReviews] = useState<Feedback[]>([]);
-    const [avgRating, setAvgRating] = useState<number>(5);
 
+    // Note: these only load for signed-in visitors, so they drive the on-page
+    // testimonials only — never structured data (see softwareAppSchema below).
     useEffect(() => {
         if (!isAuthenticated) return;
         feedbackService.getFeaturedFeedback().then(data => {
             setReviews(data);
-            if (data.length > 0) {
-                const total = data.reduce((acc, r) => acc + r.rating, 0);
-                setAvgRating(Number((total / data.length).toFixed(1)));
-            }
         }).catch(() => {});
     }, [isAuthenticated]);
 
@@ -46,16 +43,19 @@ export default function LandingPage() {
         "name": "Bústaðurinn.is",
         "applicationCategory": "LifestyleApplication",
         "operatingSystem": "Web",
+        "url": "https://www.bustadurinn.is/",
         "offers": {
             "@type": "Offer",
             "price": "0",
-            "priceCurrency": "ISK"
+            "priceCurrency": "ISK",
+            "availability": "https://schema.org/InStock"
         },
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": avgRating.toString(),
-            "ratingCount": Math.max(reviews.length, 1).toString()
-        },
+        // NO aggregateRating here on purpose. Reviews are only fetched when a
+        // user is signed in (see the effect above), and crawlers never are —
+        // so this previously emitted a hardcoded 5.0 from a single invented
+        // rating to every search engine, which breaks Google's structured-data
+        // policy on review markup. Restore it only if real, publicly-visible
+        // review data is fetched for logged-out visitors too.
         "description": "Bókunarkerfi og bókunardagatal fyrir sameiginleg sumarhús í sameign. Einfaldar bókanir, sanngjarna skiptingu helga og gagnsæ fjármál fyrir íslenskar fjölskyldur."
     };
 

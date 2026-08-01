@@ -1,9 +1,20 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Shield } from 'lucide-react';
+import SEO from '@/components/SEO';
 
 export default function PrivacyPage() {
     return (
         <div className="min-h-screen bg-[#FDFCF8]">
+            {/* This page is submitted in sitemap.xml but previously rendered no
+                Helmet tags at all, so it inherited the static homepage title and
+                canonical — i.e. it announced itself to Google as a duplicate of
+                the front page. `/privacy` renders this same component, hence the
+                explicit canonical pointing at the Icelandic slug. */}
+            <SEO
+                title="Persónuverndarstefna"
+                description="Hvernig Bústaðurinn.is safnar, geymir og vinnur með persónuupplýsingar notenda. Unnið í samræmi við GDPR og íslensk persónuverndarlög."
+                canonical="https://www.bustadurinn.is/personuvernd"
+            />
             {/* Header */}
             <header className="bg-white border-b border-stone-100 py-4 px-6 sticky top-0 z-10">
                 <div className="max-w-3xl mx-auto flex items-center gap-4">

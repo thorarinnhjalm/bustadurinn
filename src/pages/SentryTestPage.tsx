@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/react';
+import SEO from '@/components/SEO';
 
 export default function SentryTestPage() {
     const triggerError = () => {
@@ -44,6 +45,12 @@ export default function SentryTestPage() {
             margin: '0 auto',
             fontFamily: 'system-ui, -apple-system, sans-serif'
         }}>
+            {/* Internal diagnostics page — crawlable and indexable until now. */}
+            <SEO
+                title="Sentry test"
+                description="Innri prófunarsíða."
+                noIndex
+            />
             <h1 style={{ marginBottom: '20px' }}>Sentry Test Page</h1>
 
             <div style={{

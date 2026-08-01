@@ -8,9 +8,17 @@
   <meta name="theme-color" content="#ffffff" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bústaðurinn.is — Bókunarkerfi fyrir sumarhús í sameign</title>
-  <meta name="description" content="Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti fyrir meðeigendur. Ókeypis og opið öllum." />
-  <meta name="keywords" content="bókunarkerfi sumarhús, sumarhús í sameign, bókunardagatal, utanumhald sumarhús, hússjóður, meðeigendur, sanngirnisregla, skipulag sumarhúss, orlofshús, íslenskt app" />
-  <link rel="canonical" href="https://www.bustadurinn.is/" />
+  <!--
+    data-rh="true" marks these as Helmet-managed. react-helmet-async only
+    removes tags carrying that attribute, so without it these static tags
+    SURVIVE alongside Helmet's per-route ones — every page then served two
+    descriptions and two canonicals, the static canonical always pointing at
+    the homepage. They stay here (unmarked crawlers with no JS still get a
+    sensible fallback) but are now replaced once the app renders.
+  -->
+  <meta data-rh="true" name="description" content="Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti fyrir meðeigendur. Ókeypis og opið öllum." />
+  <meta data-rh="true" name="keywords" content="bókunarkerfi sumarhús, sumarhús í sameign, bókunardagatal, utanumhald sumarhús, hússjóður, meðeigendur, sanngirnisregla, skipulag sumarhúss, orlofshús, íslenskt app" />
+  <link data-rh="true" rel="canonical" href="https://www.bustadurinn.is/" />
 
   <!-- Performance: DNS Prefetch & Preconnect for external resources -->
   <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
@@ -64,20 +72,24 @@
   <!-- End Meta Pixel Code -->
 
   <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://www.bustadurinn.is/" />
-  <meta property="og:title" content="Bústaðurinn.is — Bókunarkerfi fyrir sumarhús í sameign" />
-  <meta property="og:description"
+  <meta data-rh="true" property="og:type" content="website" />
+  <meta data-rh="true" property="og:url" content="https://www.bustadurinn.is/" />
+  <meta data-rh="true" property="og:title" content="Bústaðurinn.is — Bókunarkerfi fyrir sumarhús í sameign" />
+  <meta data-rh="true" property="og:description"
     content="Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti. Ókeypis og opið öllum." />
-  <meta property="og:image" content="https://bustadurinn.is/og-preview.png" />
+  <!-- www: vercel.json 301-redirects the bare domain, so the non-www asset URL
+       cost a needless hop for every social/preview fetch. -->
+  <meta data-rh="true" property="og:image" content="https://www.bustadurinn.is/og-preview.png" />
+  <meta property="og:locale" content="is_IS" />
 
   <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:url" content="https://www.bustadurinn.is/" />
-  <meta name="twitter:title" content="Bústaðurinn.is — Bókunarkerfi fyrir sumarhús í sameign" />
-  <meta name="twitter:description"
+  <meta data-rh="true" name="twitter:card" content="summary_large_image" />
+  <meta data-rh="true" name="twitter:url" content="https://www.bustadurinn.is/" />
+  <meta data-rh="true" name="twitter:title" content="Bústaðurinn.is — Bókunarkerfi fyrir sumarhús í sameign" />
+  <meta data-rh="true" name="twitter:description"
     content="Utanumhald og bókunardagatal fyrir sameiginleg sumarhús. Sanngjörn skipting helga, hússjóður og verkefnalisti. Ókeypis og opið öllum." />
-  <meta property="twitter:image" content="https://bustadurinn.is/og-preview.png" />
+  <!-- was property="twitter:image"; Twitter reads name=, not property= -->
+  <meta data-rh="true" name="twitter:image" content="https://www.bustadurinn.is/og-preview.png" />
 
   <!-- Facebook In-App Browser Fix & iOS Polyfill -->
   <script>

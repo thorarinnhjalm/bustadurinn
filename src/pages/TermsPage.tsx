@@ -1,9 +1,18 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, FileText } from 'lucide-react';
+import SEO from '@/components/SEO';
 
 export default function TermsPage() {
     return (
         <div className="min-h-screen bg-[#FDFCF8]">
+            {/* In sitemap.xml but previously emitted no Helmet tags, so it
+                inherited the static homepage title/canonical and looked like a
+                duplicate of the front page to search engines. */}
+            <SEO
+                title="Notkunarskilmálar"
+                description="Skilmálar fyrir notkun á Bústaðurinn.is — ókeypis kerfi til að halda utan um sumarhús í sameign. Réttindi og skyldur notenda."
+                canonical="https://www.bustadurinn.is/skilmalar"
+            />
             {/* Header */}
             <header className="bg-white border-b border-stone-100 py-4 px-6 sticky top-0 z-10">
                 <div className="max-w-3xl mx-auto flex items-center gap-4">

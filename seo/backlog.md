@@ -1,6 +1,15 @@
 # SEO + GEO Backlog — Bústaðurinn.is
 _Generated 2026-07-01 from GSC (last 3 months) + codebase. Each item carries the evidence that justifies it and the file(s) it touches. Effort: S = minutes, M = hours, L = days._
 
+## P0 — blockers found 2026-07-24 (all done)
+
+These were not in the 2026-07-01 pass and outranked everything below it.
+
+- [x] **Static `index.html` meta/canonical duplicated on every route** — _why:_ `react-helmet-async` only removes tags carrying `data-rh`; the static tags had none, so every page served **two** descriptions and **two** canonicals, the static one always `https://www.bustadurinn.is/`. Every page was announcing itself as a duplicate of the homepage — the most likely single cause of the handbook cluster sitting at pos 20–50 with 0 clicks. _done 2026-07-24:_ marked the Helmet-managed static tags `data-rh="true"` in [index.html](index.html) (kept as no-JS fallback, now replaced on render). Also fixed non-www og/twitter image URLs, `property="twitter:image"` → `name=`, added `og:locale`.
+- [x] **Fabricated `aggregateRating` served to crawlers** — _why:_ homepage `SoftwareApplication` emitted `ratingValue: "5"`, `ratingCount: "1"` because reviews only load `if (isAuthenticated)` and crawlers never are. Violates Google's review-snippet policy (manual-action risk). _done 2026-07-24:_ removed from [src/pages/LandingPage.tsx](src/pages/LandingPage.tsx); added `url` + `offers.availability`. Restore only if real reviews are fetched for logged-out visitors.
+- [x] **`/personuvernd` + `/skilmalar` in sitemap with no meta** — _why:_ submitted for indexing while inheriting the homepage title and canonical. _done 2026-07-24:_ added `SEO` with explicit canonicals ([PrivacyPage](src/pages/PrivacyPage.tsx), [TermsPage](src/pages/TermsPage.tsx)); `/privacy` renders the same component so it canonicalises to `/personuvernd`.
+- [x] **`/sentry-example-page` crawlable and indexable** — _done 2026-07-24:_ `noIndex` added.
+
 ## Quick wins (high impact / low effort)
 
 - [ ] **Rewrite `/eiginleikar` title + description for intent + CTR** — _why:_ pos 8.2, 45 impressions, **0 clicks** (highest-impression zero-click page). _effort:_ S · _files:_ [src/pages/FeaturesPage.tsx](src/pages/FeaturesPage.tsx) (`SEO` props)
