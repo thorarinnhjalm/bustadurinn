@@ -13,7 +13,11 @@ const __dirname = dirname(__filename);
 const baseUrl = 'https://www.bustadurinn.is';
 const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-const routes = [
+// This array is also imported by scripts/prerender.js, which prerenders
+// (a subset of) these routes at build time. Keep it as the single source of
+// truth for "which public marketing/handbook routes exist" so the sitemap
+// and the prerenderer can never drift apart.
+export const routes = [
     // Core Marketing Pages
     { path: '/', priority: '1.0', changefreq: 'weekly' },
     { path: '/eiginleikar', priority: '0.9', changefreq: 'monthly' },
@@ -61,4 +65,10 @@ ${routes
     console.log(`✅ Sitemap (${routes.length} URLs) generated successfully at public/sitemap.xml`);
 };
 
-generateSitemap();
+// Only run when invoked directly (`node scripts/generate-sitemap.js` / `npm
+// run generate-sitemap`, and via the `prebuild` hook) — not when imported by
+// scripts/prerender.js for its route list.
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isMain) {
+    generateSitemap();
+}

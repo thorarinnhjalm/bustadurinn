@@ -1,4 +1,5 @@
 {
+    "installCommand": "npm install && (npx playwright install chromium || true)",
     "redirects": [
         {
             "source": "/:path*",
