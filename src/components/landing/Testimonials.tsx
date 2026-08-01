@@ -10,7 +10,11 @@ export default function Testimonials({ loading = false }: TestimonialsProps) {
     if (loading) return null;
 
     return (
-        <section className="py-24 bg-charcoal border-b border-stone-800 relative overflow-hidden">
+        // Hidden on mobile: the cross-origin umsognin.is iframe below creates
+        // its own stacking/hit-testing context and was intercepting taps meant
+        // for the mobile menu. Desktop is unaffected, so the reviews stay there
+        // rather than being removed outright.
+        <section className="hidden md:block py-24 bg-charcoal border-b border-stone-800 relative overflow-hidden">
             {/* Decor */}
             <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
                 <Quote size={200} color="white" />
