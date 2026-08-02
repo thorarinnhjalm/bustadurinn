@@ -148,8 +148,27 @@
   </div>
   
   <!-- Umsognin.is Widget -->
-  <script src="https://umsognin.is/widget.js" defer></script>
-  <div id="umsognin-widget" 
+  <!--
+    Desktop only. The widget injects a floating badge that sat on top of the
+    mobile menu and swallowed taps meant for it. Hiding the injected element
+    with CSS would be guesswork — a third-party script can mount anywhere in
+    the DOM — so the script simply isn't loaded on small screens. The
+    container and its crawler-facing llms.txt link stay put either way.
+  -->
+  <script>
+    if (window.matchMedia('(min-width: 768px)').matches) {
+      var umsogninScript = document.createElement('script');
+      umsogninScript.src = 'https://umsognin.is/widget.js';
+      umsogninScript.defer = true;
+      // Prerendering runs at desktop width, so this branch executes and the
+      // tag would otherwise be serialised into the static HTML — handing the
+      // widget to phones anyway. scripts/prerender.js strips anything marked
+      // this way before saving.
+      umsogninScript.dataset.runtimeInjected = 'true';
+      document.head.appendChild(umsogninScript);
+    }
+  </script>
+  <div id="umsognin-widget"
        data-business-slug="bustadurinn-is"
        data-theme="light"
        data-color="#1a1a1a">

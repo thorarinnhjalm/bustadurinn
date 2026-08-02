@@ -249,6 +249,17 @@ async function prerenderRoute(browser, baseUrl, path) {
         );
         await new Promise((resolve) => setTimeout(resolve, 200));
 
+        // Anything injected at runtime purely because of THIS browser's
+        // conditions must not be baked into HTML served to every visitor —
+        // the review widget is loaded only above a viewport width the
+        // prerenderer always satisfies, so serialising it would ship it to
+        // phones too.
+        await page.evaluate(() => {
+            document
+                .querySelectorAll('[data-runtime-injected]')
+                .forEach((el) => el.remove());
+        });
+
         const html = await page.content();
         return { path, html };
     } finally {
