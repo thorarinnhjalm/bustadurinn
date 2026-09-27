@@ -90,7 +90,7 @@ export function computeMemberShares(
     const exact = weights.map((w) => (target * w) / totalWeight);
     const floored = exact.map((v) => Math.floor(v));
     const allocated = floored.reduce((sum, v) => sum + v, 0);
-    let remainder = target - allocated;
+    const remainder = target - allocated;
 
     // Distribute the leftover whole-ISK units to the largest fractional
     // remainders first; ties broken by ascending uid for a deterministic,

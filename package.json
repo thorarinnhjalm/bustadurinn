@@ -83,5 +83,10 @@
   },
   "engines": {
     "node": "20.x"
+  },
+  "overrides": {
+    "@vercel/python-analysis": {
+      "zod": "^3.25.76"
+    }
   }
 }

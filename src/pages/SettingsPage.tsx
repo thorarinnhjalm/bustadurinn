@@ -699,6 +699,34 @@ export default function SettingsPage() {
                     }
 
                     setHouse(houseData);
+                    // The Gestir tab edits and saves houseForm, so it must start
+                    // from the stored values or a save would blank them out.
+                    setHouseForm(prev => ({
+                        ...prev,
+                        name: houseData.name || '',
+                        address: houseData.address || '',
+                        lat: houseData.location?.lat || 0,
+                        lng: houseData.location?.lng || 0,
+                        invite_code: houseData.invite_code || '',
+                        wifi_ssid: houseData.wifi_ssid || '',
+                        wifi_password: houseData.wifi_password || '',
+                        no_wifi: houseData.no_wifi || false,
+                        holiday_mode: (houseData.holiday_mode as any) || 'first_come',
+                        house_rules: houseData.house_rules || '',
+                        house_rules_en: houseData.house_rules_en || '',
+                        check_in_time: houseData.check_in_time || '',
+                        check_out_time: houseData.check_out_time || '',
+                        directions: houseData.directions || '',
+                        directions_en: houseData.directions_en || '',
+                        access_instructions: houseData.access_instructions || '',
+                        access_instructions_en: houseData.access_instructions_en || '',
+                        emergency_contact: houseData.emergency_contact || '',
+                        guest_instructions: houseData.guest_instructions || '',
+                        guest_instructions_en: houseData.guest_instructions_en || '',
+                        amenities: houseData.amenities || [],
+                        privacy_hide_finances: houseData.privacy_hide_finances || false,
+                        finance_viewer_ids: houseData.finance_viewer_ids || []
+                    }));
                 }
             } catch (err) {
                 console.error('Error loading house:', err);
@@ -762,10 +790,6 @@ export default function SettingsPage() {
             const updates: Record<string, any> = {
                 name: formData.name,
                 address: formData.address,
-                location: {
-                    lat: Number(formData.lat) || 0,
-                    lng: Number(formData.lng) || 0
-                },
                 wifi_ssid: formData.wifi_ssid,
                 wifi_password: formData.wifi_password,
                 no_wifi: formData.no_wifi,
@@ -782,15 +806,30 @@ export default function SettingsPage() {
                 emergency_contact: formData.emergency_contact,
                 guest_instructions: formData.guest_instructions,
                 guest_instructions_en: formData.guest_instructions_en,
-                amenities: formData.amenities || [],
+                amenities: formData.amenities,
                 privacy_hide_finances: formData.privacy_hide_finances,
-                finance_viewer_ids: formData.finance_viewer_ids || [],
-                checkout_checklist: formData.checkout_checklist || [],
-                arrival_checklist: formData.arrival_checklist || [],
-                supply_checklist: formData.supply_checklist || [],
-                seasonal_checklists: formData.seasonal_checklists || {},
+                finance_viewer_ids: formData.finance_viewer_ids,
+                checkout_checklist: formData.checkout_checklist,
+                arrival_checklist: formData.arrival_checklist,
+                supply_checklist: formData.supply_checklist,
+                seasonal_checklists: formData.seasonal_checklists,
                 updated_at: new Date()
             };
+
+            // Only write the fields this form actually supplied. Defaulting a
+            // missing field to ''/[]/0 would wipe data a partial form (e.g. the
+            // Gestir tab) doesn't edit — that is how house locations got reset
+            // to 0,0 and the dashboard weather went blank.
+            for (const key of Object.keys(updates)) {
+                if (updates[key] === undefined) delete updates[key];
+            }
+
+            // Skip 0,0 too: it's the "no location" placeholder, never a real house.
+            const lat = Number(formData.lat);
+            const lng = Number(formData.lng);
+            if (lat && lng) {
+                updates.location = { lat, lng };
+            }
 
             // Gas cylinder: the settings form only owns size/connection/notes.
             // last_changed_* is stamped from the dashboard, so merge rather than
@@ -826,11 +865,8 @@ export default function SettingsPage() {
                     emergency_contact: formData.emergency_contact,
                     guest_instructions: formData.guest_instructions,
                     guest_instructions_en: formData.guest_instructions_en,
-                    amenities: formData.amenities || [],
-                    location: {
-                        lat: formData.lat,
-                        lng: formData.lng
-                    },
+                    amenities: formData.amenities,
+                    ...(updates.location && { location: updates.location }),
                     image_url: house.image_url || '',
                     gallery_urls: house.gallery_urls || [],
                     updated_at: new Date()
@@ -851,6 +887,26 @@ export default function SettingsPage() {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    // Gestir tab: send only the fields it edits so a stale houseForm can't
+    // overwrite changes saved from the Hús tab (name, wifi, location, ...).
+    const handleSaveGuestInfo = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleSaveHouse({
+            house_rules: houseForm.house_rules,
+            house_rules_en: houseForm.house_rules_en,
+            check_in_time: houseForm.check_in_time,
+            check_out_time: houseForm.check_out_time,
+            directions: houseForm.directions,
+            directions_en: houseForm.directions_en,
+            access_instructions: houseForm.access_instructions,
+            access_instructions_en: houseForm.access_instructions_en,
+            emergency_contact: houseForm.emergency_contact,
+            guest_instructions: houseForm.guest_instructions,
+            guest_instructions_en: houseForm.guest_instructions_en,
+            amenities: houseForm.amenities
+        });
     };
 
     const handleGenerateInvite = async () => {
@@ -1558,7 +1614,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="card p-6 border-2 border-stone-100">
-                                        <form onSubmit={handleSaveHouse} className="space-y-6 pb-24">
+                                        <form onSubmit={handleSaveGuestInfo} className="space-y-6 pb-24">
                                             <div className="grid md:grid-cols-2 gap-4">
                                                 <div>
                                                     <label className="label">Innritun (kl.)</label>

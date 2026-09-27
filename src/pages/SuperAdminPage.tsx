@@ -908,7 +908,7 @@ export default function SuperAdminPage() {
             let data;
             try {
                 data = await res.json();
-            } catch (jsonError) {
+            } catch {
                 // If parsing fails (e.g. 404 HTML page), throw specific error
                 throw new Error(`Server returned non-JSON response (${res.status}). Ensure API is deployed.`);
             }

@@ -38,7 +38,7 @@ export default function AuthHandler() {
 
             if (firebaseUser) {
                 // Construct base user
-                let baseUser: User = {
+                const baseUser: User = {
                     uid: firebaseUser.uid,
                     email: firebaseUser.email || '',
                     name: firebaseUser.displayName || '',

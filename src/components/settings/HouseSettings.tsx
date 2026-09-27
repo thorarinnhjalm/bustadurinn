@@ -315,7 +315,11 @@ export default function HouseSettings({
                             type="text"
                             className={`input ${isEditingLocation ? 'border-[#e8b058] border-2' : ''}`}
                             value={houseForm.address}
-                            onChange={(e) => handleAddressChange(e.target.value)}
+                            onChange={(e) => {
+                                // Update the form that gets saved; the parent only runs the search.
+                                setHouseForm(prev => ({ ...prev, address: e.target.value }));
+                                handleAddressChange(e.target.value);
+                            }}
                             disabled={!isManager || !isEditingLocation}
                             autoComplete="off"
                             placeholder={isEditingLocation ? "Leitaðu að heimilisfangi..." : houseForm.address || "Heimilisfang"}
@@ -325,7 +329,15 @@ export default function HouseSettings({
                                 {suggestions.map((suggestion) => (
                                     <li
                                         key={suggestion.id}
-                                        onClick={() => handleSelectPrediction(suggestion)}
+                                        onClick={() => {
+                                            setHouseForm(prev => ({
+                                                ...prev,
+                                                address: suggestion.description,
+                                                lat: suggestion.location.lat,
+                                                lng: suggestion.location.lng
+                                            }));
+                                            handleSelectPrediction(suggestion);
+                                        }}
                                         className="px-4 py-3 hover:bg-stone-50 cursor-pointer text-sm border-b last:border-0 border-stone-100 flex items-center justify-between"
                                     >
                                         <div className="flex items-center gap-3">
