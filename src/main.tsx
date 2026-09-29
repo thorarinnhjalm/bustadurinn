@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import * as Sentry from '@sentry/react';
 import { logger } from './utils/logger';
 import { initPerformanceMonitoring, markPerformance } from './utils/performance';
+import { installFunnelErrorCapture } from './utils/funnel';
 import { onForegroundMessage } from './utils/pushNotifications';
 import './index.css'
 import App from './App.tsx'
@@ -94,6 +95,9 @@ if (dsn) {
 
 // Initialize performance monitoring
 initPerformanceMonitoring();
+
+// Record uncaught errors on signup/login/onboarding pages in funnel_events.
+installFunnelErrorCapture();
 
 // Force deploy check
 // Register the merged Service Worker (Workbox app-shell precache + FCM

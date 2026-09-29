@@ -16,6 +16,7 @@ import { LogIn } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import SEO from '@/components/SEO';
 import { analytics } from '@/utils/analytics';
+import { trackFunnel, describeError } from '@/utils/funnel';
 import { logger } from '@/utils/logger';
 
 // Only allows relative paths — rejects absolute and protocol-relative URLs
@@ -88,6 +89,7 @@ export default function LoginPage() {
             // Clear stored email and fire analytics only after all async ops succeed
             window.localStorage.removeItem('emailForSignIn');
             analytics.loginCompleted('email_link');
+            void trackFunnel('login_completed', { method: 'email_link' });
 
             const safe = safeRedirect(returnUrl);
             if (isAdmin) {
@@ -103,6 +105,7 @@ export default function LoginPage() {
             logger.error('Email link sign in error:', err);
             setError('Villa við að skrá inn með hlekk: ' + (err.message || 'Ógildur eða útrunninn hlekkur'));
             analytics.error('login_email_link', err.message, err.code);
+            void trackFunnel('login_error', { context: 'login_email_link', ...describeError(err) });
             signingInRef.current = false;
         } finally {
             setIsLoading(false);
@@ -154,6 +157,7 @@ export default function LoginPage() {
             logger.error('Error sending magic link:', err);
             setError('Villa við að senda hlekk: ' + (err.message || 'Prófaðu aftur síðar'));
             analytics.error('send_magic_link_error', err.message, err.code);
+            void trackFunnel('login_error', { context: 'send_magic_link_error', ...describeError(err) });
         } finally {
             setIsLoading(false);
         }
@@ -164,12 +168,14 @@ export default function LoginPage() {
         setError('');
         setIsLoading(true);
         analytics.loginStarted('email');
+        void trackFunnel('login_submitted', { method: 'email' });
 
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
             analytics.loginCompleted('email');
+            void trackFunnel('login_completed', { method: 'email' });
 
             const isAdmin = await checkIsSuperAdmin(user.uid);
             const safe = safeRedirect(returnUrl);
@@ -184,6 +190,7 @@ export default function LoginPage() {
             setError('Rangt netfang eða lykilorð');
             logger.error('Login error:', err);
             analytics.error('login_email', err.message, err.code);
+            void trackFunnel('login_error', { context: 'login_email', ...describeError(err) });
         } finally {
             setIsLoading(false);
         }
@@ -193,6 +200,7 @@ export default function LoginPage() {
         setError('');
         setIsLoading(true);
         analytics.loginStarted('google');
+        void trackFunnel('login_submitted', { method: 'google' });
         try {
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
@@ -202,6 +210,7 @@ export default function LoginPage() {
 
             if (!userDoc.exists()) {
                 analytics.signupCompleted('google');
+                void trackFunnel('signup_completed', { method: 'google', via: 'login' });
                 await setDoc(doc(db, 'users', user.uid), {
                     uid: user.uid,
                     email: user.email,
@@ -222,6 +231,7 @@ export default function LoginPage() {
                 }
             } else {
                 analytics.loginCompleted('google');
+                void trackFunnel('login_completed', { method: 'google' });
                 await setDoc(doc(db, 'users', user.uid), {
                     last_login: serverTimestamp()
                 }, { merge: true });
@@ -239,6 +249,7 @@ export default function LoginPage() {
             setError('Villa við innskráningu með Google');
             logger.error('Google login error:', err);
             analytics.error('login_google', err.message, err.code);
+            void trackFunnel('login_error', { context: 'login_google', ...describeError(err) });
         } finally {
             setIsLoading(false);
         }
@@ -248,6 +259,7 @@ export default function LoginPage() {
         setError('');
         setIsLoading(true);
         analytics.loginStarted('facebook');
+        void trackFunnel('login_submitted', { method: 'facebook' });
         try {
             const result = await signInWithPopup(auth, facebookProvider);
             const user = result.user;
@@ -257,6 +269,7 @@ export default function LoginPage() {
 
             if (!userDoc.exists()) {
                 analytics.signupCompleted('facebook');
+                void trackFunnel('signup_completed', { method: 'facebook', via: 'login' });
                 await setDoc(doc(db, 'users', user.uid), {
                     uid: user.uid,
                     email: user.email,
@@ -277,6 +290,7 @@ export default function LoginPage() {
                 }
             } else {
                 analytics.loginCompleted('facebook');
+                void trackFunnel('login_completed', { method: 'facebook' });
                 await setDoc(doc(db, 'users', user.uid), {
                     last_login: serverTimestamp()
                 }, { merge: true });
@@ -294,6 +308,7 @@ export default function LoginPage() {
             setError('Villa við innskráningu með Facebook');
             logger.error('Facebook login error:', err);
             analytics.error('login_facebook', err.message, err.code);
+            void trackFunnel('login_error', { context: 'login_facebook', ...describeError(err) });
         } finally {
             setIsLoading(false);
         }

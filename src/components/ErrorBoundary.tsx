@@ -6,6 +6,7 @@
 import React, { Component, type ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
 import { logger } from '@/utils/logger';
+import { trackFunnel, describeError } from '@/utils/funnel';
 
 interface Props {
     children: ReactNode;
@@ -48,6 +49,13 @@ class ErrorBoundary extends Component<Props, State> {
             errorInfo,
         });
 
+        // Record the crash where we can read it (the fallback UI replaces
+        // the whole app, so a new user who hits this is stuck).
+        void trackFunnel('app_error_boundary', {
+            ...describeError(error),
+            component_stack: errorInfo.componentStack ?? undefined,
+        });
+
         // Send to Sentry with full context
         if (import.meta.env.VITE_SENTRY_DSN) {
             Sentry.captureException(error, {
@@ -66,6 +74,7 @@ class ErrorBoundary extends Component<Props, State> {
     }
 
     handleReset = (): void => {
+        void trackFunnel('app_error_retry');
         this.setState({
             hasError: false,
             error: null,

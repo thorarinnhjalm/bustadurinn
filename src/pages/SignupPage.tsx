@@ -15,6 +15,7 @@ import SEO from '@/components/SEO';
 
 import { useSearchParams } from 'react-router-dom';
 import { analytics } from '@/utils/analytics';
+import { trackFunnel, describeError, redactPath } from '@/utils/funnel';
 
 export default function SignupPage() {
     const navigate = useNavigate();
@@ -48,6 +49,8 @@ export default function SignupPage() {
 
     useEffect(() => {
         analytics.signupStarted();
+        void trackFunnel('signup_viewed', { has_return_url: !!returnUrl });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleSignup = async (e: React.FormEvent) => {
@@ -58,10 +61,13 @@ export default function SignupPage() {
         if (formData.password.length < 6) {
             setError('Lykilorð verður að vera að minnsta kosti 6 stafir');
             analytics.error('signup_validation', 'Password too short');
+            void trackFunnel('signup_error', { method: 'email', stage: 'validation', code: 'password_too_short' });
             return;
         }
 
         setIsLoading(true);
+        void trackFunnel('signup_submitted', { method: 'email', has_name: !!formData.name });
+        let stage = 'create_auth';
 
         try {
             const userCredential = await createUserWithEmailAndPassword(
@@ -70,7 +76,10 @@ export default function SignupPage() {
                 formData.password
             );
 
+            void trackFunnel('signup_auth_created', { method: 'email' });
+
             // Update user profile with name
+            stage = 'update_display_name';
             await updateProfile(userCredential.user, {
                 displayName: formData.name
             });
@@ -80,6 +89,7 @@ export default function SignupPage() {
             const utmParams = getStoredUTMParams();
 
             logger.info('SignupPage: Creating profile for', user.uid);
+            stage = 'create_profile';
             await createProfileWithRetry(user.uid, {
                 uid: user.uid,
                 email: user.email,
@@ -93,6 +103,7 @@ export default function SignupPage() {
 
             analytics.signupCompleted('email');
             logger.info('SignupPage: Signup successful, redirecting');
+            void trackFunnel('signup_completed', { method: 'email', next: redactPath(returnUrl || '/onboarding') });
 
             if (returnUrl) {
                 navigate(returnUrl);
@@ -104,6 +115,7 @@ export default function SignupPage() {
             if (err.code === 'auth/email-already-in-use') {
                 logger.warn('SignupPage: Email taken, attempting ghost user recovery...');
                 analytics.error('signup_error', 'Email already in use', err.code);
+                void trackFunnel('signup_error', { method: 'email', stage, ...describeError(err) });
                 try {
                     // Try to sign in with the provided password
                     const credential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
@@ -128,17 +140,20 @@ export default function SignupPage() {
                         });
 
                         analytics.signupCompleted('recovered_ghost');
+                        void trackFunnel('signup_completed', { method: 'recovered_ghost', next: '/onboarding' });
                         navigate('/onboarding');
                         return;
                     } else {
                         // They have a profile, just redirect them
                         logger.info('SignupPage: User already exists fully, redirecting...');
+                        void trackFunnel('signup_existing_user', { method: 'email', next: redactPath(returnUrl || '/dashboard') });
                         navigate(returnUrl || '/dashboard');
                         return;
                     }
                 } catch (recoveryErr) {
                     // Password didn't match or other error
                     logger.warn('SignupPage: Recovery failed', recoveryErr);
+                    void trackFunnel('signup_error', { method: 'email', stage: 'ghost_recovery', ...describeError(recoveryErr) });
                     setError('Þetta netfang er þegar í notkun.');
                     setShowLoginLink(true);
                 }
@@ -146,6 +161,7 @@ export default function SignupPage() {
                 logger.error('SignupPage: Signup error:', err);
                 setError(`Villa kom upp við skráningu: ${err.message} (${err.code || 'unknown'})`);
                 analytics.error('signup_error', err.message, err.code);
+                void trackFunnel('signup_error', { method: 'email', stage, ...describeError(err) });
             }
         } finally {
             setIsLoading(false);
@@ -155,6 +171,7 @@ export default function SignupPage() {
     const handleGoogleSignup = async () => {
         setError('');
         setIsLoading(true);
+        void trackFunnel('signup_submitted', { method: 'google' });
         try {
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
@@ -177,6 +194,7 @@ export default function SignupPage() {
                 });
 
                 analytics.signupCompleted('google');
+                void trackFunnel('signup_completed', { method: 'google', next: redactPath(returnUrl || '/onboarding') });
                 navigate(returnUrl || '/onboarding');
             } else {
                 await createProfileWithRetry(user.uid, {
@@ -184,10 +202,12 @@ export default function SignupPage() {
                 });
 
                 analytics.signupCompleted('google-login');
+                void trackFunnel('signup_existing_user', { method: 'google', next: redactPath(returnUrl || '/dashboard') });
                 navigate(returnUrl || '/dashboard');
             }
         } catch (err: any) {
             setError('Villa við skráningu með Google');
+            void trackFunnel('signup_error', { method: 'google', ...describeError(err) });
             logger.error('SignupPage: Google signup error:', err);
         } finally {
             setIsLoading(false);
@@ -197,6 +217,7 @@ export default function SignupPage() {
     const handleFacebookSignup = async () => {
         setError('');
         setIsLoading(true);
+        void trackFunnel('signup_submitted', { method: 'facebook' });
         try {
             const result = await signInWithPopup(auth, facebookProvider);
             const user = result.user;
@@ -219,6 +240,7 @@ export default function SignupPage() {
                 });
 
                 analytics.signupCompleted('facebook');
+                void trackFunnel('signup_completed', { method: 'facebook', next: redactPath(returnUrl || '/onboarding') });
                 navigate(returnUrl || '/onboarding');
             } else {
                 await createProfileWithRetry(user.uid, {
@@ -226,10 +248,12 @@ export default function SignupPage() {
                 });
 
                 analytics.signupCompleted('facebook-login');
+                void trackFunnel('signup_existing_user', { method: 'facebook', next: redactPath(returnUrl || '/dashboard') });
                 navigate(returnUrl || '/dashboard');
             }
         } catch (err: any) {
             setError('Villa við skráningu með Facebook');
+            void trackFunnel('signup_error', { method: 'facebook', ...describeError(err) });
             logger.error('SignupPage: Facebook signup error:', err);
         } finally {
             setIsLoading(false);
