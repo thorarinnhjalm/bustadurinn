@@ -146,6 +146,7 @@ From address is always `Bústaðurinn <hallo@bustadurinn.is>`. Run `npm run seed
 - **Firestore timestamps**: Use `serverTimestamp()` for writes, convert Firestore Timestamps to JS `Date` on reads
 - **Language**: All user-facing strings in Icelandic, Icelandic date locale (`is-IS`), ISK currency
 - **Firebase client**: `experimentalForceLongPolling: true` and `ignoreUndefinedProperties: true` are set in `src/lib/firebase.ts` (Safari compatibility)
+- **Funnel tracking**: Record new-user funnel steps and errors with `trackFunnel()` from `src/utils/funnel.ts`. It writes to `funnel_events`, never throws, and buffers events from before sign-in. Call it as `void trackFunnel(...)`. See `docs/engineering/SYSTEM_MODEL.md` for the event list and how to read reload vs remount vs back.
 - **Logging**: Use `logger` from `src/utils/logger.ts` — never `console.log` directly. `logger.debug` is dev-only; `logger.warn`/`error` fire everywhere. The production build drops all `console.*` calls anyway.
 - **`userService.ts` fan-outs**: Name updates sync across 7+ collections using `writeBatch`. `in` queries are chunked into groups of 10 (Firestore limit).
 

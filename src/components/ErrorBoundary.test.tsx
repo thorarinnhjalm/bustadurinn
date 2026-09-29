@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { logger } from '@/utils/logger';
 
@@ -16,6 +16,12 @@ vi.mock('@/utils/logger', () => ({
         info: vi.fn(),
         warn: vi.fn(),
     },
+}));
+
+const trackFunnel = vi.fn();
+vi.mock('@/utils/funnel', () => ({
+    trackFunnel: (...args: unknown[]) => trackFunnel(...args),
+    describeError: (e: Error) => ({ code: e.name, message: e.message }),
 }));
 
 // Test component that throws an error
@@ -83,5 +89,21 @@ describe('ErrorBoundary', () => {
         // Should have buttons for recovery
         const buttons = screen.getAllByRole('button');
         expect(buttons).toHaveLength(2); // "Reyna aftur" and "Fara heim"
+    });
+
+    it('records the crash and the retry in funnel_events', () => {
+        render(
+            <ErrorBoundary>
+                <ThrowError shouldThrow={true} />
+            </ErrorBoundary>
+        );
+
+        expect(trackFunnel).toHaveBeenCalledWith(
+            'app_error_boundary',
+            expect.objectContaining({ code: 'Error', message: 'Test error message' })
+        );
+
+        fireEvent.click(screen.getByText('Reyna aftur'));
+        expect(trackFunnel).toHaveBeenCalledWith('app_error_retry');
     });
 });
