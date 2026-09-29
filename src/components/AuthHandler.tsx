@@ -5,7 +5,7 @@ import { doc, getDoc, setDoc, serverTimestamp, onSnapshot, type DocumentSnapshot
 import { useAppStore } from '@/store/appStore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { logger } from '@/utils/logger';
-import { trackFunnel, flushFunnelBuffer, describeError } from '@/utils/funnel';
+import { trackFunnel, flushFunnelBuffer, resetFunnelSession, describeError } from '@/utils/funnel';
 import type { House, User } from '@/types/models';
 
 export default function AuthHandler() {
@@ -25,6 +25,7 @@ export default function AuthHandler() {
     // 1. Listen to Firebase Auth (Runs once on mount)
     useEffect(() => {
         let unsubscribeProfile: (() => void) | null = null;
+        let signedInUid: string | null = null;
 
         const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
             // Auth identity changed (sign-in, sign-out, or user switch) -
@@ -36,6 +37,13 @@ export default function AuthHandler() {
                 unsubscribeProfile();
                 unsubscribeProfile = null;
             }
+
+            // Signed in → signed out (or a different user): forget the previous
+            // user's funnel session so nothing is attributed to the next one.
+            if (signedInUid && signedInUid !== firebaseUser?.uid) {
+                resetFunnelSession();
+            }
+            signedInUid = firebaseUser?.uid ?? null;
 
             if (firebaseUser) {
                 // Attribute anything recorded before sign-in (signup page,

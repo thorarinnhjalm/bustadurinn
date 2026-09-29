@@ -65,7 +65,6 @@ export default function OnboardingPage() {
     // while a new load_id means the page was reloaded.
     const [mountId] = useState(() => Math.random().toString(36).slice(2, 10));
     useEffect(() => {
-        markInOnboarding();
         void trackFunnel('onboarding_mounted', {
             mount_id: mountId,
             initial_step: initialStep,
@@ -76,17 +75,19 @@ export default function OnboardingPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Record leaving the page (tab closed, app switched, navigated away)
-    // together with the step the user was on.
+    // Record leaving the page (app switched, tab hidden or closed, navigated
+    // away) together with the step the user was on. Best effort: a write
+    // started while the tab is closing may never reach the server.
     const currentStepRef = useRef(currentStep);
     currentStepRef.current = currentStep;
     useEffect(() => {
         const onHide = () => {
+            if (document.visibilityState !== 'hidden') return;
             void trackFunnel('onboarding_page_hidden', { step: currentStepRef.current, mount_id: mountId });
         };
-        window.addEventListener('pagehide', onHide);
+        document.addEventListener('visibilitychange', onHide);
         return () => {
-            window.removeEventListener('pagehide', onHide);
+            document.removeEventListener('visibilitychange', onHide);
             void trackFunnel('onboarding_unmounted', { step: currentStepRef.current, mount_id: mountId });
         };
     }, [mountId]);
@@ -504,6 +505,8 @@ export default function OnboardingPage() {
             console.log("Tracking analytics...");
             analytics.onboardingStep('invite');
             logFunnelEvent('house_created', { house_id: houseId! });
+            // Lets the dashboard record the end of the funnel once.
+            markInOnboarding();
 
             console.log("Calling nextStep()...");
             nextStep();

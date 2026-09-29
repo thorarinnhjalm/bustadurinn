@@ -15,7 +15,7 @@ import SEO from '@/components/SEO';
 
 import { useSearchParams } from 'react-router-dom';
 import { analytics } from '@/utils/analytics';
-import { trackFunnel, describeError } from '@/utils/funnel';
+import { trackFunnel, describeError, redactPath } from '@/utils/funnel';
 
 export default function SignupPage() {
     const navigate = useNavigate();
@@ -50,7 +50,8 @@ export default function SignupPage() {
     useEffect(() => {
         analytics.signupStarted();
         void trackFunnel('signup_viewed', { has_return_url: !!returnUrl });
-    }, [returnUrl]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -102,7 +103,7 @@ export default function SignupPage() {
 
             analytics.signupCompleted('email');
             logger.info('SignupPage: Signup successful, redirecting');
-            void trackFunnel('signup_completed', { method: 'email', next: returnUrl || '/onboarding' });
+            void trackFunnel('signup_completed', { method: 'email', next: redactPath(returnUrl || '/onboarding') });
 
             if (returnUrl) {
                 navigate(returnUrl);
@@ -145,7 +146,7 @@ export default function SignupPage() {
                     } else {
                         // They have a profile, just redirect them
                         logger.info('SignupPage: User already exists fully, redirecting...');
-                        void trackFunnel('signup_existing_user', { method: 'email', next: returnUrl || '/dashboard' });
+                        void trackFunnel('signup_existing_user', { method: 'email', next: redactPath(returnUrl || '/dashboard') });
                         navigate(returnUrl || '/dashboard');
                         return;
                     }
@@ -193,7 +194,7 @@ export default function SignupPage() {
                 });
 
                 analytics.signupCompleted('google');
-                void trackFunnel('signup_completed', { method: 'google', next: returnUrl || '/onboarding' });
+                void trackFunnel('signup_completed', { method: 'google', next: redactPath(returnUrl || '/onboarding') });
                 navigate(returnUrl || '/onboarding');
             } else {
                 await createProfileWithRetry(user.uid, {
@@ -201,7 +202,7 @@ export default function SignupPage() {
                 });
 
                 analytics.signupCompleted('google-login');
-                void trackFunnel('signup_existing_user', { method: 'google', next: returnUrl || '/dashboard' });
+                void trackFunnel('signup_existing_user', { method: 'google', next: redactPath(returnUrl || '/dashboard') });
                 navigate(returnUrl || '/dashboard');
             }
         } catch (err: any) {
@@ -239,7 +240,7 @@ export default function SignupPage() {
                 });
 
                 analytics.signupCompleted('facebook');
-                void trackFunnel('signup_completed', { method: 'facebook', next: returnUrl || '/onboarding' });
+                void trackFunnel('signup_completed', { method: 'facebook', next: redactPath(returnUrl || '/onboarding') });
                 navigate(returnUrl || '/onboarding');
             } else {
                 await createProfileWithRetry(user.uid, {
@@ -247,7 +248,7 @@ export default function SignupPage() {
                 });
 
                 analytics.signupCompleted('facebook-login');
-                void trackFunnel('signup_existing_user', { method: 'facebook', next: returnUrl || '/dashboard' });
+                void trackFunnel('signup_existing_user', { method: 'facebook', next: redactPath(returnUrl || '/dashboard') });
                 navigate(returnUrl || '/dashboard');
             }
         } catch (err: any) {

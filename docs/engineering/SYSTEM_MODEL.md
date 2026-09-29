@@ -15,7 +15,7 @@
 | Google/Facebook signup | `signInWithPopup` | `SignupPage` or `LoginPage` create a profile if missing | `signup_*` (`via: 'login'` when from LoginPage), `login_*` | `SignupPage.tsx`, `LoginPage.tsx` | Verified |
 | Profile missing after auth | `AuthHandler` `onSnapshot(users/{uid})` | Self-repair setDoc if the account is older than 15s | `profile_self_repair[_error]`, `profile_listen_error`, `houses_fetch_error` | `src/components/AuthHandler.tsx` | Verified |
 | Onboarding | Zustand `currentUser` | `runTransaction`: create `houses/{id}` and add it to `users.house_ids`, then tasks/internal_logs, then emails through `/api/send-email` | `onboarding_mounted/unmounted/page_hidden`, `onboarding_started`, `step_*`, `onboarding_back`, `house_create_submitted/error`, `house_created`, `house_init_error`, `invites_*`, `onboarding_email_error`, `onboarding_completed`, `join_request_*`, `maps_*`, `address_*` | `src/pages/OnboardingPage.tsx` | Verified |
-| Dashboard with no house | `useEffectiveUser` | `navigate('/onboarding')` | `dashboard_redirect_onboarding`, `dashboard_no_house_screen`, `dashboard_reached` (first view after onboarding in this tab) | `src/pages/DashboardPage.tsx` | Verified |
+| Dashboard with no house | `useEffectiveUser` | `navigate('/onboarding')` | `dashboard_redirect_onboarding`, `dashboard_no_house_screen` (only when the user has house_ids but no house loaded), `dashboard_reached` (first view after `house_created` in this tab) | `src/pages/DashboardPage.tsx` | Verified |
 | App crash | `ErrorBoundary` | Fallback UI; "Reyna aftur" remounts the children | `app_error_boundary`, `app_error_retry` | `src/components/ErrorBoundary.tsx` | Verified |
 | Uncaught JS errors on `/signup`, `/login`, `/onboarding`, `/join` | window `error` / `unhandledrejection` | — | `js_error`, `js_unhandled_rejection` | `src/utils/funnel.ts` | Verified |
 
@@ -27,6 +27,11 @@ Telling cases apart: a new `load_id` in the same `session_id` means the page was
 
 ### Invariants
 
+- Nothing is recorded while a super admin is impersonating a user (`admin_impersonation` in localStorage).
+- Paths and `next` values are redacted: `/join/:houseId/:code` → `/join/:houseId/*`. The invite code is never stored.
+- Uncaught `js_error`/`js_unhandled_rejection` events are de-duplicated and capped at 10 per page load.
+- On sign-out (or a user switch) AuthHandler calls `resetFunnelSession()`, which drops the buffer and the session id. Buffered events older than 30 minutes are dropped at flush.
+- `onboarding_page_hidden` fires on `visibilitychange` → hidden. It is best effort: writes started while a tab is closing may be lost.
 - Tracking never throws and never blocks the flow. Callsites use `void trackFunnel(...)`. Verified by `src/utils/funnel.test.ts`.
 - Rules allow only authenticated creates on `funnel_events` (`firestore.rules`, Verified). So events recorded before sign-in are buffered in sessionStorage (max 30) and flushed with the uid on sign-in. Failed signups that never reach sign-in are **not** recorded.
 - Reads are super-admin only.

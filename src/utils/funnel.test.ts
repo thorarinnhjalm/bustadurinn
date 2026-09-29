@@ -203,7 +203,7 @@ describe('installFunnelErrorCapture', () => {
 
     it('records uncaught errors on funnel pages only', async () => {
         const { installFunnelErrorCapture } = await load();
-        installFunnelErrorCapture();
+        const uninstall = installFunnelErrorCapture();
 
         window.history.pushState({}, '', '/onboarding');
         window.dispatchEvent(new ErrorEvent('error', { error: new TypeError('x is undefined'), message: 'x is undefined' }));
@@ -220,5 +220,98 @@ describe('installFunnelErrorCapture', () => {
             path: '/onboarding',
             data: { code: 'TypeError', message: 'x is undefined' },
         });
+        uninstall();
+    });
+});
+
+describe('review hardening', () => {
+    beforeEach(() => {
+        addDoc.mockReset();
+        addDoc.mockResolvedValue({ id: 'x' });
+        authMock.currentUser = null;
+        sessionStorage.clear();
+        localStorage.clear();
+        window.history.pushState({}, '', '/');
+    });
+
+    it('resetFunnelSession drops the buffer and starts a new session (sign-out on a shared tab)', async () => {
+        authMock.currentUser = { uid: 'A' };
+        const { trackFunnel, resetFunnelSession, flushFunnelBuffer } = await load();
+        await trackFunnel('a1');
+        const sessionA = addDoc.mock.calls[0][1].session_id;
+
+        authMock.currentUser = null;
+        await trackFunnel('buffered_while_signed_out');
+        resetFunnelSession();
+
+        authMock.currentUser = { uid: 'B' };
+        await flushFunnelBuffer();
+        await trackFunnel('b1');
+
+        const names = addDoc.mock.calls.map((c) => c[1].event_name);
+        expect(names).toEqual(['a1', 'b1']);
+        expect(addDoc.mock.calls[1][1].session_id).not.toBe(sessionA);
+    });
+
+    it('drops buffered events older than 30 minutes at flush', async () => {
+        const now = Date.now();
+        const spy = vi.spyOn(Date, 'now').mockReturnValue(now - 31 * 60_000);
+        const { trackFunnel, flushFunnelBuffer } = await load();
+        await trackFunnel('stale');
+        spy.mockReturnValue(now);
+        await trackFunnel('fresh');
+        authMock.currentUser = { uid: 'C' };
+        await flushFunnelBuffer();
+        spy.mockRestore();
+
+        expect(addDoc.mock.calls.map((c) => c[1].event_name)).toEqual(['fresh']);
+    });
+
+    it('does not record anything while an admin is impersonating a user', async () => {
+        authMock.currentUser = { uid: 'admin' };
+        localStorage.setItem('admin_impersonation', '{"uid":"someone"}');
+        const { trackFunnel } = await load();
+        await trackFunnel('dashboard_reached');
+        expect(addDoc).not.toHaveBeenCalled();
+    });
+
+    it('redacts the join code from recorded paths and data', async () => {
+        authMock.currentUser = { uid: 'D' };
+        window.history.pushState({}, '', '/join/house123/SECRET');
+        const { trackFunnel, redactPath } = await load();
+        await trackFunnel('x', { next: redactPath('/join/house123/SECRET?x=1') });
+
+        const p = addDoc.mock.calls[0][1];
+        expect(p.path).toBe('/join/house123/*');
+        expect(p.data.next).toBe('/join/house123/*');
+    });
+
+    it('caps and de-duplicates uncaught error events per page load', async () => {
+        authMock.currentUser = { uid: 'E' };
+        const { installFunnelErrorCapture } = await load();
+        const uninstall = installFunnelErrorCapture();
+        window.history.pushState({}, '', '/onboarding');
+
+        for (let i = 0; i < 50; i++) {
+            window.dispatchEvent(new ErrorEvent('error', { error: new Error('same'), message: 'same' }));
+        }
+        for (let i = 0; i < 50; i++) {
+            window.dispatchEvent(new ErrorEvent('error', { error: new Error(`e${i}`), message: `e${i}` }));
+        }
+        await new Promise((r) => setTimeout(r, 0));
+
+        const messages = addDoc.mock.calls.map((c) => c[1].data.message);
+        expect(messages.filter((m) => m === 'same')).toHaveLength(1);
+        expect(addDoc.mock.calls.length).toBe(10);
+        uninstall();
+    });
+
+    it('describeError never throws, even for hostile values', async () => {
+        const { describeError } = await load();
+        const hostile = Object.create(null);
+        const throwing = { toString() { throw new Error('no'); } };
+        expect(() => describeError(hostile)).not.toThrow();
+        expect(() => describeError(throwing)).not.toThrow();
+        expect(describeError(throwing).code).toBe('unknown');
     });
 });

@@ -351,8 +351,10 @@ const UserDashboard = () => {
         };
     }, [currentHouse?.id, currentUser?.uid, navigate]);
 
-    // Funnel: a signed-in user left on the "Engin hús fundust" screen is stuck.
-    const showsNoHouseScreen = !appLoading && !currentHouse && !!currentUser;
+    // Funnel: a user who has house_ids but still sees "Engin hús fundust" is
+    // stuck. (Users with no house_ids see it for one frame before the redirect
+    // to onboarding, which is recorded separately.)
+    const showsNoHouseScreen = !appLoading && !currentHouse && (currentUser?.house_ids?.length ?? 0) > 0;
     useEffect(() => {
         if (showsNoHouseScreen) {
             void trackFunnel('dashboard_no_house_screen', { house_ids: currentUser?.house_ids?.length ?? 0 });

@@ -23,6 +23,12 @@ const SESSION_KEY = 'funnel_session_id';
 const BUFFER_KEY = 'funnel_buffer';
 const MAX_BUFFER = 30;
 const MAX_STRING = 500;
+// Buffered events older than this are dropped at flush: on a shared tab they
+// most likely belong to someone else.
+const MAX_BUFFER_AGE_MS = 30 * 60_000;
+const MAX_ERROR_EVENTS_PER_LOAD = 10;
+// Set by ImpersonationContext while a super admin acts as another user.
+const IMPERSONATION_KEY = 'admin_impersonation';
 
 type FunnelValue = string | number | boolean | null;
 export type FunnelData = Record<string, unknown>;
@@ -105,11 +111,25 @@ function readBuffer(): PendingEvent[] {
     }
 }
 
+/** Strips secrets from app paths: `/join/:houseId/:code` keeps only the house id. */
+export function redactPath(path: string): string {
+    const withoutQuery = path.split(/[?#]/)[0];
+    return withoutQuery.replace(/^(\/join\/[^/]+)\/[^/]+.*$/, '$1/*');
+}
+
 function currentPath(): string {
     try {
-        return window.location.pathname;
+        return redactPath(window.location.pathname);
     } catch {
         return '';
+    }
+}
+
+function isImpersonating(): boolean {
+    try {
+        return !!localStorage.getItem(IMPERSONATION_KEY);
+    } catch {
+        return false;
     }
 }
 
@@ -154,14 +174,30 @@ export async function flushFunnelBuffer(): Promise<void> {
     const pending = readBuffer();
     if (pending.length === 0) return;
     safeStorageSet(BUFFER_KEY, null);
-    for (const event of pending) {
-        await write(uid, event, true);
-    }
+    const cutoff = Date.now() - MAX_BUFFER_AGE_MS;
+    // Start every write before awaiting any, so all are queued even if the
+    // tab closes mid-flush. Order is recoverable from client_ts.
+    await Promise.all(
+        pending.filter((event) => event.client_ts >= cutoff).map((event) => write(uid, event, true))
+    );
+}
+
+/**
+ * Forgets everything tied to the previous user of this tab: the pre-sign-in
+ * buffer and the session id. Call on sign-out.
+ */
+export function resetFunnelSession(): void {
+    safeStorageSet(BUFFER_KEY, null);
+    safeStorageSet(SESSION_KEY, null);
+    memorySessionId = null;
 }
 
 /** Records one funnel event. Never throws. */
 export async function trackFunnel(eventName: string, data?: FunnelData): Promise<void> {
     try {
+        // An admin acting as another user is not a funnel participant.
+        if (isImpersonating()) return;
+
         const event: PendingEvent = {
             event_name: eventName,
             client_ts: Date.now(),
@@ -186,13 +222,17 @@ export async function trackFunnel(eventName: string, data?: FunnelData): Promise
 
 /** Normalises anything thrown into a small { code, message } pair for logging. */
 export function describeError(err: unknown): { code: string; message: string } {
-    if (err && typeof err === 'object') {
-        const e = err as { code?: unknown; name?: unknown; message?: unknown };
-        const code = typeof e.code === 'string' ? e.code : typeof e.name === 'string' ? e.name : 'unknown';
-        const message = typeof e.message === 'string' ? e.message : String(err);
-        return { code, message: truncate(message) };
+    try {
+        if (err && typeof err === 'object') {
+            const e = err as { code?: unknown; name?: unknown; message?: unknown };
+            const code = typeof e.code === 'string' ? e.code : typeof e.name === 'string' ? e.name : 'unknown';
+            const message = typeof e.message === 'string' ? e.message : String(err);
+            return { code, message: truncate(message) };
+        }
+        return { code: 'unknown', message: truncate(String(err)) };
+    } catch {
+        return { code: 'unknown', message: 'unserialisable error' };
     }
-    return { code: 'unknown', message: truncate(String(err)) };
 }
 
 const IN_ONBOARDING_KEY = 'funnel_in_onboarding';
@@ -219,26 +259,41 @@ function onFunnelPath(): boolean {
 }
 
 let errorCaptureInstalled = false;
+const seenErrors = new Set<string>();
+
+/** Records an uncaught error once per distinct message, at most 10 per page load. */
+function trackUncaught(eventName: string, details: { code: string; message: string }, extra?: FunnelData): void {
+    const key = `${eventName}|${details.code}|${details.message}`;
+    if (seenErrors.has(key) || seenErrors.size >= MAX_ERROR_EVENTS_PER_LOAD) return;
+    seenErrors.add(key);
+    void trackFunnel(eventName, { ...details, ...extra });
+}
 
 /**
  * Records uncaught errors and unhandled promise rejections while the user is
- * on a funnel page. Call once at startup.
+ * on a funnel page. Call once at startup. Returns an uninstall function.
  */
-export function installFunnelErrorCapture(): void {
-    if (errorCaptureInstalled || typeof window === 'undefined') return;
+export function installFunnelErrorCapture(): () => void {
+    if (errorCaptureInstalled || typeof window === 'undefined') return () => {};
     errorCaptureInstalled = true;
 
-    window.addEventListener('error', (event) => {
+    const onError = (event: ErrorEvent) => {
         if (!onFunnelPath()) return;
-        void trackFunnel('js_error', {
-            ...describeError(event.error ?? event.message),
+        trackUncaught('js_error', describeError(event.error ?? event.message), {
             source: event.filename,
             line: event.lineno,
         });
-    });
-
-    window.addEventListener('unhandledrejection', (event) => {
+    };
+    const onRejection = (event: PromiseRejectionEvent) => {
         if (!onFunnelPath()) return;
-        void trackFunnel('js_unhandled_rejection', describeError(event.reason));
-    });
+        trackUncaught('js_unhandled_rejection', describeError(event.reason));
+    };
+
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onRejection);
+    return () => {
+        window.removeEventListener('error', onError);
+        window.removeEventListener('unhandledrejection', onRejection);
+        errorCaptureInstalled = false;
+    };
 }
