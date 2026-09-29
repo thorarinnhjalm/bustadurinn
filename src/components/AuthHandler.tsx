@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc, serverTimestamp, onSnapshot, type DocumentSnapshot
 import { useAppStore } from '@/store/appStore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { logger } from '@/utils/logger';
+import { trackFunnel, flushFunnelBuffer, describeError } from '@/utils/funnel';
 import type { House, User } from '@/types/models';
 
 export default function AuthHandler() {
@@ -37,6 +38,10 @@ export default function AuthHandler() {
             }
 
             if (firebaseUser) {
+                // Attribute anything recorded before sign-in (signup page,
+                // failed attempts) to this user.
+                void flushFunnelBuffer();
+
                 // Construct base user
                 const baseUser: User = {
                     uid: firebaseUser.uid,
@@ -63,6 +68,7 @@ export default function AuthHandler() {
 
                         if (!isBrandNew) {
                             logger.warn("AuthHandler: Orphan user detected, triggering self-repair for:", firebaseUser.email);
+                            void trackFunnel('profile_self_repair');
                             try {
                                 await setDoc(userDocRef, {
                                     uid: baseUser.uid,
@@ -75,6 +81,7 @@ export default function AuthHandler() {
                                 }, { merge: true });
                             } catch (repairErr) {
                                 logger.error("AuthHandler: Self-repair failed:", repairErr);
+                                void trackFunnel('profile_self_repair_error', describeError(repairErr));
                             }
                         }
                     }
@@ -84,6 +91,7 @@ export default function AuthHandler() {
                     setInitialLoadDone(true);
                 }, (err) => {
                     console.error("Error listening to user profile:", err);
+                    void trackFunnel('profile_listen_error', describeError(err));
                     setRealUser(baseUser);
                     setAuthenticated(true);
                     setInitialLoadDone(true);
@@ -164,6 +172,7 @@ export default function AuthHandler() {
                     }
                 } catch (e) {
                     console.error("Error fetching houses:", e);
+                    void trackFunnel('houses_fetch_error', describeError(e));
                     setUserHouses([]);
                     setCurrentHouse(null);
                 }

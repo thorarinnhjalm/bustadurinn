@@ -30,6 +30,7 @@ import CheckInModal from '@/components/dashboard/CheckInModal';
 import SeasonalChecklistCard from '@/components/dashboard/SeasonalChecklistCard';
 import GasCylinderCard from '@/components/dashboard/GasCylinderCard';
 import { logger } from '@/utils/logger';
+import { trackFunnel, consumeOnboardingMark } from '@/utils/funnel';
 import InventoryCard from '@/components/dashboard/InventoryCard';
 import Walkthrough from '@/components/Walkthrough';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -56,6 +57,14 @@ const UserDashboard = () => {
 
     // UI state
     const [showWalkthrough, setShowWalkthrough] = useState(false);
+
+    // Funnel: the first dashboard view after onboarding in this tab is the
+    // end of the new-user funnel.
+    useEffect(() => {
+        if (currentUser && currentHouse && consumeOnboardingMark()) {
+            void trackFunnel('dashboard_reached', { house_id: currentHouse.id });
+        }
+    }, [currentUser, currentHouse]);
 
     // Check for first-time walkthrough
     useEffect(() => {
@@ -100,6 +109,7 @@ const UserDashboard = () => {
 
     useEffect(() => {
         if (currentUser && (!currentUser.house_ids || currentUser.house_ids.length === 0)) {
+            void trackFunnel('dashboard_redirect_onboarding');
             navigate('/onboarding');
             return;
         }
@@ -340,6 +350,15 @@ const UserDashboard = () => {
             unsubscribes.forEach(u => u());
         };
     }, [currentHouse?.id, currentUser?.uid, navigate]);
+
+    // Funnel: a signed-in user left on the "Engin hús fundust" screen is stuck.
+    const showsNoHouseScreen = !appLoading && !currentHouse && !!currentUser;
+    useEffect(() => {
+        if (showsNoHouseScreen) {
+            void trackFunnel('dashboard_no_house_screen', { house_ids: currentUser?.house_ids?.length ?? 0 });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showsNoHouseScreen]);
 
     if (appLoading) {
         return (

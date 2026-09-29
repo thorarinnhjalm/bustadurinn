@@ -1,7 +1,7 @@
 // Declare Google Maps types
 declare const google: any;
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Home, MapPin, Users, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, doc, arrayUnion, getDoc, runTransaction } from 'firebase/firestore';
@@ -11,6 +11,7 @@ import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { analytics } from '@/utils/analytics';
 import { logger } from '@/utils/logger';
+import { trackFunnel, describeError, markInOnboarding } from '@/utils/funnel';
 import AddToHomeScreenPrompt from '@/components/AddToHomeScreenPrompt';
 import type { AppNotification } from '@/types/models';
 
@@ -55,19 +56,40 @@ export default function OnboardingPage() {
 
     const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
-    const logFunnelEvent = useCallback(async (eventName: string) => {
-        if (!currentUser) return;
-        try {
-            await addDoc(collection(db, 'funnel_events'), {
-                uid: currentUser.uid,
-                event_name: eventName,
-                timestamp: serverTimestamp(),
-                house_id: houseData.id || null
-            });
-        } catch (e) {
-            console.error('Funnel log error:', e);
-        }
-    }, [currentUser, houseData.id]);
+    const logFunnelEvent = useCallback(async (eventName: string, data?: Record<string, unknown>) => {
+        await trackFunnel(eventName, { house_id: houseData.id || undefined, ...data });
+    }, [houseData.id]);
+
+    // One event per mount: a new mount_id without a new load_id means React
+    // remounted the page (e.g. after the error boundary's "Reyna aftur"),
+    // while a new load_id means the page was reloaded.
+    const [mountId] = useState(() => Math.random().toString(36).slice(2, 10));
+    useEffect(() => {
+        markInOnboarding();
+        void trackFunnel('onboarding_mounted', {
+            mount_id: mountId,
+            initial_step: initialStep,
+            new_param: searchParams.get('new'),
+            has_user: !!currentUser,
+            house_count: currentUser?.house_ids?.length ?? 0,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Record leaving the page (tab closed, app switched, navigated away)
+    // together with the step the user was on.
+    const currentStepRef = useRef(currentStep);
+    currentStepRef.current = currentStep;
+    useEffect(() => {
+        const onHide = () => {
+            void trackFunnel('onboarding_page_hidden', { step: currentStepRef.current, mount_id: mountId });
+        };
+        window.addEventListener('pagehide', onHide);
+        return () => {
+            window.removeEventListener('pagehide', onHide);
+            void trackFunnel('onboarding_unmounted', { step: currentStepRef.current, mount_id: mountId });
+        };
+    }, [mountId]);
 
     useEffect(() => {
         // Only auto-redirect if they have a house AND are on the very first step
@@ -75,6 +97,7 @@ export default function OnboardingPage() {
         const isCreatingNew = searchParams.get('new') === 'true';
 
         if (currentUser && currentUser.house_ids && currentUser.house_ids.length > 0 && currentStep === 'welcome' && !isCreatingNew) {
+            void trackFunnel('onboarding_redirect_dashboard', { house_count: currentUser.house_ids.length });
             navigate('/dashboard');
         } else if (currentStep === 'welcome') {
             // Track visit to onboarding
@@ -90,6 +113,7 @@ export default function OnboardingPage() {
                 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
                 if (!apiKey) {
                     console.warn('Google Maps API key not found.');
+                    void trackFunnel('maps_key_missing');
                     return;
                 }
 
@@ -100,7 +124,10 @@ export default function OnboardingPage() {
                     script.async = true;
                     script.defer = true;
                     script.onload = () => setScriptLoaded(true);
-                    script.onerror = () => console.error('Failed to load Maps');
+                    script.onerror = () => {
+                        console.error('Failed to load Maps');
+                        void trackFunnel('maps_load_error');
+                    };
                     document.head.appendChild(script);
                 } else {
                     setScriptLoaded(true);
@@ -135,6 +162,7 @@ export default function OnboardingPage() {
                     });
                 } catch (e) {
                     console.error("HMS search error:", e);
+                    void trackFunnel('address_search_error', { source: 'hms', ...describeError(e) });
                 }
 
                 // 2. Search Google (Google Maps)
@@ -162,6 +190,7 @@ export default function OnboardingPage() {
                         }
                     } catch (e) {
                         console.error("Google search error:", e);
+                        void trackFunnel('address_search_error', { source: 'google', ...describeError(e) });
                     }
                 }
 
@@ -186,6 +215,7 @@ export default function OnboardingPage() {
             : (suggestion.location?.lng || 0);
 
         analytics.track('address_selected', { source: suggestion.source || 'unknown' });
+        void trackFunnel('address_selected', { source: suggestion.source || 'unknown' });
 
         setHouseData(prev => ({
             ...prev,
@@ -212,12 +242,14 @@ export default function OnboardingPage() {
             const prevStepId = steps[prevIndex].id;
             // Track backtracking
             analytics.funnelDropoff(currentStep, 'back_button');
+            void trackFunnel('onboarding_back', { from: currentStep, to: prevStepId, mount_id: mountId });
             setCurrentStep(prevStepId as OnboardingStep);
         }
     };
 
     const handleSendJoinRequest = async () => {
         if (!duplicateHouse || !currentUser) return;
+        void trackFunnel('join_request_submitted', { target_house_id: duplicateHouse.id });
         setLoading(true);
         setError('');
 
@@ -264,8 +296,10 @@ export default function OnboardingPage() {
             await addDoc(collection(db, 'notifications'), joinRequestNotification);
 
             setJoinRequestSent(true);
+            void trackFunnel('join_request_sent', { target_house_id: duplicateHouse.id });
         } catch (err: any) {
             console.error('Error sending request:', err);
+            void trackFunnel('join_request_error', describeError(err));
             setError('Ekki tókst að senda beiðni: ' + err.message);
         } finally {
             setLoading(false);
@@ -274,14 +308,22 @@ export default function OnboardingPage() {
 
     const handleCreateHouse = async () => {
         // Only name is strictly required now
+        void trackFunnel('house_create_submitted', {
+            has_name: !!houseData.name,
+            has_address: !!houseData.address,
+            has_location: !!(houseData.location?.lat || houseData.location?.lng),
+        });
+
         if (!houseData.name) {
             setError('Vinsamlegast settu inn nafn á húsið');
             analytics.error('house_creation', 'Missing house name');
+            void trackFunnel('house_create_error', { stage: 'validation', code: 'missing_name' });
             return;
         }
 
         if (!currentUser) {
             setError('Engin notandi skráður inn');
+            void trackFunnel('house_create_error', { stage: 'validation', code: 'no_current_user' });
             return;
         }
 
@@ -372,6 +414,7 @@ export default function OnboardingPage() {
                 });
             } catch (initErr) {
                 console.error("Error initializing default data:", initErr);
+                void trackFunnel('house_init_error', { house_id: houseId!, ...describeError(initErr) });
                 // Non-critical, continue
             }
 
@@ -416,9 +459,11 @@ export default function OnboardingPage() {
                         logger.info('Welcome email sent');
                     } else {
                         console.error('❌ Failed to send welcome email');
+                        void trackFunnel('onboarding_email_error', { template: 'welcome', status: res.status });
                     }
                 } catch (e) {
                     console.error("Failed to send welcome email:", e);
+                    void trackFunnel('onboarding_email_error', { template: 'welcome', ...describeError(e) });
                 }
             })();
 
@@ -448,20 +493,23 @@ export default function OnboardingPage() {
                         logger.info('Onboarding completion email sent');
                     } else {
                         console.error('❌ Failed to send onboarding email');
+                        void trackFunnel('onboarding_email_error', { template: 'onboarding_complete', status: res.status });
                     }
                 } catch (e) {
                     console.error("Failed to send onboarding email:", e);
+                    void trackFunnel('onboarding_email_error', { template: 'onboarding_complete', ...describeError(e) });
                 }
             })();
 
             console.log("Tracking analytics...");
             analytics.onboardingStep('invite');
-            logFunnelEvent('house_created');
+            logFunnelEvent('house_created', { house_id: houseId! });
 
             console.log("Calling nextStep()...");
             nextStep();
         } catch (err: any) {
             console.error('Error creating house:', err);
+            void trackFunnel('house_create_error', { stage: 'transaction', ...describeError(err) });
             if (err.message && err.message.includes("User does not exist")) {
                 setError('Villa: Notandaskráningu ekki lokið. Vinsamlegast endurhladdu síðuna til að klára uppsetningu.');
             } else {
@@ -476,6 +524,7 @@ export default function OnboardingPage() {
 
     const handleSendInvites = async () => {
         if (!inviteEmails.trim()) {
+            void trackFunnel('invites_skipped', { reason: 'empty' });
             nextStep();
             return;
         }
@@ -490,6 +539,7 @@ export default function OnboardingPage() {
             if (emailList.length === 0) {
                 // If user typed something but no valid emails, just move on or warn? 
                 // Let's move on to avoid blocking flow, similar to previous behavior
+                void trackFunnel('invites_skipped', { reason: 'no_valid_emails' });
                 nextStep();
                 return;
             }
@@ -521,6 +571,11 @@ export default function OnboardingPage() {
 
             // Check for failures
             const failures = results.filter(r => r.status === 'rejected');
+            void trackFunnel('invites_result', {
+                requested: emailList.length,
+                failed: failures.length,
+                first_error: failures.length > 0 ? describeError((failures[0] as PromiseRejectedResult).reason).message : undefined,
+            });
             if (failures.length > 0) {
                 console.error('Some invites failed:', failures);
                 setError(`Villa: Gat ekki sent boð á ${failures.length} af ${emailList.length} netföngum. Þú getur reynt aftur, eða smellt á 'Sleppa þessu' til að halda áfram og bæta þeim við síðar.`);
@@ -530,6 +585,7 @@ export default function OnboardingPage() {
             nextStep();
         } catch (err: any) {
             console.error('Error sending invites:', err);
+            void trackFunnel('invites_error', describeError(err));
             setError('Villa við að senda boð: ' + err.message);
         } finally {
             setLoading(false);
@@ -793,7 +849,7 @@ export default function OnboardingPage() {
                                 <button onClick={prevStep} className="btn btn-ghost" disabled={loading}>
                                     Til baka
                                 </button>
-                                <button onClick={nextStep} className="btn btn-secondary font-medium border-transparent hover:border-stone-200" disabled={loading}>
+                                <button onClick={() => { void trackFunnel('invites_skipped', { reason: 'skip_button' }); nextStep(); }} className="btn btn-secondary font-medium border-transparent hover:border-stone-200" disabled={loading}>
                                     Sleppa þessu (Bæta við seinna)
                                 </button>
                                 <button onClick={handleSendInvites} className="btn btn-primary" disabled={loading}>
@@ -828,6 +884,7 @@ export default function OnboardingPage() {
                                     if (isMobile) {
                                         // Show PWA prompt after a short delay
                                         setTimeout(() => {
+                                            void trackFunnel('pwa_prompt_shown');
                                             setShowPwaPrompt(true);
                                         }, 800);
                                     } else {
