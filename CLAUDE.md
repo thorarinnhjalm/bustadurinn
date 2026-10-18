@@ -1,5 +1,37 @@
 # CLAUDE.md
 
+<!-- verklag:start — sameiginleg blokk í öllum repo-um eigandans. Uppfærð miðlægt; ekki breyta hér heldur í verklag-skillinu. -->
+## Verklag eigandans (gildir alltaf)
+
+Eigandinn skrifar ekki kóða og les hann ekki. Hann stýrir á mannamáli, þú sérð um
+framkvæmd, eftirlit og frásögn. Leiðbeiningarnar `verklag` og `oruggt-ship` (skills)
+lýsa ferlinu í heild. Þetta eru reglurnar sem aldrei víkja, nema kaflinn "Ákvarðanir
+sem gilda" neðst í þessu skjali segi annað um þetta repo:
+
+- **Íslenska, mannamál.** Svör til eigandans, PR-lýsingar og samantektir á íslensku,
+  án tæknimáls nema það skipti máli fyrir ákvörðunina. Reglur um tungumál kóða og
+  skjala í repo-inu sjálfu standa óbreyttar.
+- **Aldrei á main.** `main` er production. Öll vinna á sér-branch, einn afmarkaður
+  hlutur á hverja branch og hvern PR.
+- **Eigandinn mergear.** Opnaðu PR, bíddu eftir að allar athuganir (checks) séu
+  grænar, segðu honum nákvæmlega hvað á að prófa. Smelltu aldrei sjálfur á merge.
+- **Samþykktarskilyrði fyrst.** Áður en byrjað er: 1 til 3 línur um hvað notandinn á
+  að geta gert þegar verkið er rétt. Það er það sem eigandinn prófar í lokin.
+- **Sannreynt áður en sagt er tilbúið.** Keyrðu typecheck, lint og próf sem repo-ið
+  hefur. Ef eitthvað fellur, segðu það með úttakinu, ekki "ætti að virka".
+- **Sjálfstæð rýni.** Ferskur subagent, stilltur á mikla hugsun (hátt effort), les
+  hvert diff eins og hann treysti ekki höfundinum, áður en PR er opnaður. Subagents
+  sem aðeins leita og lesa fá litla hugsun (lágt effort).
+- **Engir lyklar í samtali eða git.** Lyklar búa í umhverfisbreytum hýsingarinnar
+  (Vercel, Docker, Firebase) eða í network secrets í cloud environment Claude Code.
+  `.env` fer aldrei í commit. Ef lykill lekur: stopp, segja frá, leggja til endurnýjun.
+- **Frávik feitletruð.** Í lokasamantekt er allt sem vék frá beiðninni eða
+  samþykktarskilyrðunum feitletrað, líka ákvarðanir sem þú tókst sjálfur. Ef ekkert
+  vék frá, segðu það berum orðum.
+- **Ákvarðanir sem eiga að gilda áfram** fara í kaflann "Ákvarðanir sem gilda" neðst í
+  þessu skjali, í sama verki og þær eru teknar.
+<!-- verklag:end -->
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
@@ -201,3 +233,9 @@ Client-side vars (prefixed `VITE_`) are documented in `.env.example`. Server-sid
 Security rules in `firestore.rules`, storage rules in `storage.rules`. `admin_actions` is immutable — updates and deletes are blocked at the rules level. Composite indexes defined in `firestore.indexes.json`.
 
 Firebase emulators available: Auth (:9099), Firestore (:8080), Storage (:9199), UI (:4000).
+
+## Ákvarðanir sem gilda
+
+Ákvarðanir eigandans sem eiga að halda milli verka. Bætt við í sama verki og þær eru teknar.
+
+- (engar skráðar enn)
