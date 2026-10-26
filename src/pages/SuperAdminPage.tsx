@@ -3,13 +3,13 @@
  * Desktop-first, high-density data tables, real impersonation
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { Fragment, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Home, Users, BarChart2, Mail, Tag, FileSearch, Settings, Send,
     Database, LogOut, Trash2, CheckCircle, AlertTriangle,
     XCircle, RefreshCw, Loader2, Shield, Activity, Reply, Star,
-    Edit, MapPin, UserCog, Zap, Building2, Eye
+    Edit, MapPin, UserCog, Zap, Building2, Eye, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { db, auth } from '@/lib/firebase';
 import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where, limit } from 'firebase/firestore';
@@ -22,6 +22,7 @@ import AdminLayout from '@/components/AdminLayout';
 import DataTable from '@/components/DataTable';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
 import BusinessIntelligenceDashboard from '@/components/analytics/BusinessIntelligenceDashboard';
+import FunnelTimeline from '@/components/analytics/FunnelTimeline';
 import { logger } from '@/utils/logger';
 import { feedbackService } from '@/services/feedbackService';
 import { getAllOrganizations } from '@/services/organizationService';
@@ -86,6 +87,7 @@ export default function SuperAdminPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [fetchWarnings, setFetchWarnings] = useState<string[]>([]);
+    const [expandedSignupUid, setExpandedSignupUid] = useState<string | null>(null);
     const [seeding, setSeeding] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const { startImpersonation } = useImpersonation();
@@ -1205,10 +1207,19 @@ export default function SuperAdminPage() {
                                 .map(user => {
                                     const hasHouse = user.house_ids && user.house_ids.length > 0;
                                     const createdDate = user.created_at ? new Date((user.created_at as any).seconds * 1000) : new Date();
+                                    const expanded = expandedSignupUid === user.uid;
                                     return (
-                                        <tr key={user.uid} className="border-b border-stone-50 last:border-0 hover:bg-stone-50">
+                                        <Fragment key={user.uid}>
+                                        <tr
+                                            onClick={() => setExpandedSignupUid(expanded ? null : user.uid)}
+                                            title="Smelltu til að sjá skrefin"
+                                            className="border-b border-stone-50 last:border-0 hover:bg-stone-50 cursor-pointer"
+                                        >
                                             <td className="py-2 text-grey-mid">
-                                                {createdDate.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}
+                                                <span className="flex items-center gap-1">
+                                                    {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                                    {createdDate.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
                                             </td>
                                             <td className="py-2 font-medium text-charcoal">
                                                 <div>{user.name || 'Nafnlaust'}</div>
@@ -1230,6 +1241,14 @@ export default function SuperAdminPage() {
                                                 {hasHouse ? `${user.house_ids?.length} hús` : '-'}
                                             </td>
                                         </tr>
+                                        {expanded && (
+                                            <tr className="border-b border-stone-100 bg-stone-50/50">
+                                                <td colSpan={4} className="py-3 px-2">
+                                                    <FunnelTimeline uid={user.uid} />
+                                                </td>
+                                            </tr>
+                                        )}
+                                        </Fragment>
                                     );
                                 })}
                             {stats.allUsers.filter(u => {
