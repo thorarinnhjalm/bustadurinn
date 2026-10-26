@@ -34,7 +34,7 @@ Telling cases apart: a new `load_id` in the same `session_id` means the page was
 - `onboarding_page_hidden` fires on `visibilitychange` → hidden. It is best effort: writes started while a tab is closing may be lost.
 - Tracking never throws and never blocks the flow. Callsites use `void trackFunnel(...)`. Verified by `src/utils/funnel.test.ts`.
 - Rules allow only authenticated creates on `funnel_events` (`firestore.rules`, Verified). So events recorded before sign-in are buffered in sessionStorage (max 30) and flushed with the uid on sign-in. Failed signups that never reach sign-in are **not** recorded.
-- Reads are super-admin only. SuperAdminPage shows one user's events as a timeline: click a row under "Nýskráningar (síðustu 24 klst)" (`src/components/analytics/FunnelTimeline.tsx`, `src/services/funnelService.ts`). Sorted by `client_ts`; a new `load_id` in a known session is shown as a reload, a new `session_id` as a new tab.
+- Reads are super-admin only. SuperAdminPage shows one user's events as a timeline: click a row under "Nýskráningar (síðustu 24 klst)" (`src/components/analytics/FunnelTimeline.tsx`, `src/services/funnelService.ts`). Sorted by `client_ts`; a new `load_id` in a known session is shown as a new page load (user reload or an app-initiated full load), a new `session_id` as a new session (tab, visit or sign-in). Documents are sanitised before rendering, since any signed-in user can create them.
 - `npm run dev` uses the production Firebase project, so dev sessions write real `funnel_events`. They are tagged `env: 'development'`, and React StrictMode doubles mount events there.
 
 ### Open uncertainties

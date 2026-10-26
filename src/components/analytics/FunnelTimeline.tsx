@@ -58,17 +58,26 @@ const EVENT_LABELS: Record<string, string> = {
     pwa_prompt_shown: 'Sá „bæta á heimaskjá“',
 };
 
-function isProblem(name: string): boolean {
-    return name.includes('error') || name.startsWith('js_') || name === 'maps_key_missing';
+function labelFor(name: string): string {
+    return Object.prototype.hasOwnProperty.call(EVENT_LABELS, name) ? EVENT_LABELS[name] : name;
 }
 
-function formatTime(date: Date): string {
+function isProblem(event: AnnotatedFunnelEvent): boolean {
+    const name = event.event_name;
+    if (name === 'invites_result') return Number(event.data.failed) > 0;
+    return (name.includes('error') && name !== 'app_error_retry')
+        || name.startsWith('js_')
+        || name === 'maps_key_missing';
+}
+
+function formatTime(date: Date | null): string {
+    if (!date) return 'óþekktur tími';
     return date.toLocaleString('is-IS', {
         day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
     });
 }
 
-function formatValue(value: unknown): string {
+function formatValue(value: string | number | boolean | null): string {
     return value === null ? '–' : String(value);
 }
 
@@ -107,28 +116,33 @@ export default function FunnelTimeline({ uid }: { uid: string }) {
 
     return (
         <div>
-            <p className="text-xs text-grey-mid mb-2 break-all">Tæki: {events[0].ua || 'óþekkt'}</p>
+            <p className="text-xs text-grey-mid mb-2 break-all">
+                Tæki: {events.find((e) => e.ua)?.ua || 'óþekkt'}
+            </p>
             <ol className="space-y-1">
                 {events.map((event) => {
-                    const problem = isProblem(event.event_name);
+                    const problem = isProblem(event);
                     const details = Object.entries(event.data).filter(([key]) => key !== 'house_id');
                     return (
                         <li key={event.id}>
                             {event.newSession && (
                                 <div className="flex items-center gap-1 text-xs font-bold text-blue-700 mt-2 mb-1">
-                                    <AppWindow className="w-3 h-3" /> Nýr flipi eða ný heimsókn
+                                    <AppWindow className="w-3 h-3" /> Ný lota: nýr flipi, ný heimsókn eða ný innskráning
                                 </div>
                             )}
                             {event.reload && (
                                 <div className="flex items-center gap-1 text-xs font-bold text-amber-700 mt-2 mb-1">
-                                    <RotateCw className="w-3 h-3" /> Endurhlóð síðuna
+                                    <RotateCw className="w-3 h-3" /> Síðan hlóðst upp á nýtt (notandinn eða forritið)
                                 </div>
                             )}
                             <div className={`flex flex-wrap items-baseline gap-x-3 gap-y-1 px-2 py-1 rounded ${problem ? 'bg-red-50' : ''}`}>
                                 <span className="text-xs text-grey-mid tabular-nums">{formatTime(event.at)}</span>
                                 <span className={`text-sm font-medium ${problem ? 'text-red-700' : 'text-charcoal'}`}>
-                                    {EVENT_LABELS[event.event_name] || event.event_name}
+                                    {labelFor(event.event_name)}
                                 </span>
+                                {event.env && event.env !== 'production' && (
+                                    <span className="text-xs bg-amber/20 text-amber-800 px-1.5 py-0.5 rounded">{event.env}</span>
+                                )}
                                 <span className="text-xs text-grey-mid">{event.event_name} · {event.path}</span>
                                 {details.map(([key, value]) => (
                                     <span key={key} className="text-xs bg-stone-100 text-grey-dark px-1.5 py-0.5 rounded break-all">

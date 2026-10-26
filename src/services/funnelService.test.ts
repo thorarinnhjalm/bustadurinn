@@ -95,4 +95,25 @@ describe('getFunnelEventsForUser', () => {
         expect(result[0].data).toEqual({});
         expect(result[1].data).toEqual({ from: 'house' });
     });
+
+    it('turns malformed documents into plain text instead of crashing', async () => {
+        mockedGetDocs.mockResolvedValue({
+            docs: [
+                {
+                    id: 'x',
+                    data: () => ({
+                        event_name: { nested: true },
+                        data: { obj: { toString: 'a' }, n: 3, missing: null },
+                    }),
+                },
+            ],
+        } as any);
+
+        const [result] = await getFunnelEventsForUser('user-1');
+
+        expect(result.event_name).toBe('{"nested":true}');
+        expect(result.at).toBeNull();
+        expect(result.data).toEqual({ obj: '{"toString":"a"}', n: 3, missing: null });
+        expect([result.reload, result.newSession]).toEqual([false, false]);
+    });
 });
