@@ -6,7 +6,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
-import { initializeFirebaseAdmin, auth, db } from '../utils/firebaseAdmin';
+import { initializeFirebaseAdmin, getDb, getAuth, admin } from '../utils/firebaseAdmin.js';
 
 // Initialize Firebase Admin
 initializeFirebaseAdmin();
@@ -17,22 +17,31 @@ interface FacebookSignedRequest {
     issued_at: number;
 }
 
+function decodeBase64Url(input: string): Buffer {
+    return Buffer.from(input.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+}
+
 /**
  * Parse and verify Facebook signed request
  */
 function parseSignedRequest(signedRequest: string, appSecret: string): FacebookSignedRequest | null {
     try {
-        const [encodedSig, payload] = signedRequest.split('.');
+        const parts = signedRequest.split('.');
+        if (parts.length !== 2) return null;
+        const [encodedSig, payload] = parts;
 
-        // Decode the data
-        const sig = Buffer.from(encodedSig.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
-        const data = JSON.parse(Buffer.from(payload.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
+        const sig = decodeBase64Url(encodedSig);
+        const data = JSON.parse(decodeBase64Url(payload).toString());
 
-        // Verify signature
+        // Verify signature (timingSafeEqual throws on length mismatch, so guard first)
         const expectedSig = crypto.createHmac('sha256', appSecret).update(payload).digest();
 
-        if (!crypto.timingSafeEqual(sig, expectedSig)) {
+        if (sig.length !== expectedSig.length || !crypto.timingSafeEqual(sig, expectedSig)) {
             console.error('Bad signed request signature');
+            return null;
+        }
+
+        if (!data || typeof data.user_id !== 'string' || !data.user_id) {
             return null;
         }
 
@@ -47,58 +56,84 @@ function parseSignedRequest(signedRequest: string, appSecret: string): FacebookS
  * Delete user data from Firebase
  */
 async function deleteUserData(facebookUserId: string): Promise<string> {
+    const db = getDb();
+    const auth = getAuth();
+
+    if (!db || !auth) {
+        throw new Error('Firebase Admin not initialized');
+    }
+
+    // Find user by Facebook provider uid
+    let userUid: string | null = null;
     try {
-        // Find user by Facebook ID
-        // First, we need to query users to find the one with this Facebook ID
-        const usersSnapshot = await db.collection('users').get();
-        let userUid: string | null = null;
+        const userRecord = await auth.getUserByProviderUid('facebook.com', facebookUserId);
+        userUid = userRecord.uid;
+    } catch (error: any) {
+        if (error?.code !== 'auth/user-not-found') {
+            throw error;
+        }
+    }
 
-        for (const doc of usersSnapshot.docs) {
-            // const userData = doc.data();
-            // Check if user has Facebook provider
-            const user = await auth.getUser(doc.id);
-            const facebookProvider = user.providerData.find((p: any) => p.providerId === 'facebook.com');
+    if (!userUid) {
+        console.log('No user found for the given Facebook ID');
+        // Generate confirmation code anyway (Facebook requires this)
+        return generateConfirmationCode(facebookUserId);
+    }
 
-            if (facebookProvider && facebookProvider.uid === facebookUserId) {
-                userUid = doc.id;
-                break;
+    // Delete user from Firebase Auth
+    await auth.deleteUser(userUid);
+
+    // Delete user document and RBAC roles document
+    await db.collection('users').doc(userUid).delete();
+    try {
+        await db.collection('user_roles').doc(userUid).delete();
+    } catch {
+        // Non-critical
+    }
+
+    // Remove the user from houses they belong to; delete houses with no other owners
+    const housesSnap = await db.collection('houses').where('owner_ids', 'array-contains', userUid).get();
+    if (!housesSnap.empty) {
+        const batch = db.batch();
+        housesSnap.docs.forEach((houseDoc) => {
+            const houseData = houseDoc.data();
+            const owners: string[] = Array.isArray(houseData.owner_ids) ? houseData.owner_ids : [];
+            const otherOwners = owners.filter((id) => id !== userUid);
+
+            if (otherOwners.length === 0) {
+                batch.delete(houseDoc.ref);
+            } else {
+                batch.update(houseDoc.ref, {
+                    owner_ids: admin.firestore.FieldValue.arrayRemove(userUid),
+                });
+                if (houseData.manager_id === userUid) {
+                    batch.update(houseDoc.ref, { manager_id: null });
+                }
             }
-        }
+        });
+        await batch.commit();
+    }
 
-        if (!userUid) {
-            console.log(`No user found with Facebook ID: ${facebookUserId}`);
-            // Generate confirmation code anyway (Facebook requires this)
-            return generateConfirmationCode(facebookUserId);
-        }
+    // Delete other user-related data
+    const collections = ['bookings', 'tasks', 'notifications'];
 
-        // Delete user from Firebase Auth
-        await auth.deleteUser(userUid);
+    for (const collectionName of collections) {
+        const snapshot = await db.collection(collectionName)
+            .where('user_id', '==', userUid)
+            .get();
 
-        // Delete user document from Firestore
-        await db.collection('users').doc(userUid).delete();
-
-        // Delete other user-related data (tasks, bookings, etc.)
-        // You may want to add more collections here based on your data model
-        const collections = ['bookings', 'tasks', 'notifications'];
-
-        for (const collectionName of collections) {
-            const snapshot = await db.collection(collectionName)
-                .where('user_id', '==', userUid)
-                .get();
-
+        if (snapshot.empty) continue;
+        // Firestore batches are limited to 500 writes
+        for (let i = 0; i < snapshot.docs.length; i += 400) {
             const batch = db.batch();
-            snapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
+            snapshot.docs.slice(i, i + 400).forEach((d) => batch.delete(d.ref));
             await batch.commit();
         }
-
-        console.log(`Successfully deleted user data for Facebook ID: ${facebookUserId}`);
-
-        // Generate confirmation code
-        return generateConfirmationCode(facebookUserId);
-    } catch (error) {
-        console.error('Error deleting user data:', error);
-        throw error;
     }
+
+    console.log('Successfully deleted user data for a Facebook data-deletion request');
+
+    return generateConfirmationCode(facebookUserId);
 }
 
 /**
@@ -121,13 +156,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { signed_request } = req.body;
+        const signed_request = req.body?.signed_request;
 
-        if (!signed_request) {
+        if (!signed_request || typeof signed_request !== 'string') {
             return res.status(400).json({ error: 'Missing signed_request parameter' });
         }
 
-        const appSecret = process.env.VITE_FACEBOOK_APP_SECRET || process.env.FACEBOOK_APP_SECRET;
+        // Server-only secret: never read from a VITE_-prefixed variable (those are bundled into the client)
+        const appSecret = process.env.FACEBOOK_APP_SECRET;
 
         if (!appSecret) {
             console.error('Facebook App Secret not configured');
@@ -146,15 +182,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Return confirmation code to Facebook
         return res.status(200).json({
-            url: `https://bustadurinn.is/data-deletion?code=${confirmationCode}`,
+            url: `https://www.bustadurinn.is/data-deletion?code=${confirmationCode}`,
             confirmation_code: confirmationCode
         });
 
     } catch (error) {
         console.error('Error in data deletion callback:', error);
-        return res.status(500).json({
-            error: 'Internal server error',
-            message: error instanceof Error ? error.message : 'Unknown error'
-        });
+        return res.status(500).json({ error: 'Internal server error' });
     }
 }

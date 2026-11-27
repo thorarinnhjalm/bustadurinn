@@ -1,6 +1,33 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { initializeFirebaseAdmin, getDb } from './utils/firebaseAdmin.js';
+import { requireAuth, getAuthErrorResponse, isSuperAdminRole } from './utils/apiAuth.js';
+import { checkRateLimit, getEmailRateLimit, tryGetRateLimit } from './utils/ratelimit.js';
+
+const SITE_ORIGIN = 'https://www.bustadurinn.is';
+const TEMPLATE_ID_PATTERN = /^[a-z0-9_-]{1,64}$/i;
+const VARIABLE_KEY_PATTERN = /^[A-Za-z0-9_]{1,64}$/;
+const MAX_VARIABLE_LENGTH = 2000;
+const MAX_ADMIN_RECIPIENTS = 50;
+const EMAIL_PATTERN = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]+$/;
+
+/**
+ * Coerce `variables` to a flat Record<string, string>: strings kept, numbers
+ * coerced, everything else dropped. Keys restricted to a safe charset.
+ */
+function sanitizeVariables(input: unknown): Record<string, string> {
+    const out: Record<string, string> = {};
+    if (!input || typeof input !== 'object' || Array.isArray(input)) return out;
+    for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
+        if (!VARIABLE_KEY_PATTERN.test(key)) continue;
+        let str: string | null = null;
+        if (typeof value === 'string') str = value;
+        else if (typeof value === 'number' && Number.isFinite(value)) str = String(value);
+        if (str === null) continue;
+        out[key] = str.slice(0, MAX_VARIABLE_LENGTH);
+    }
+    return out;
+}
 
 /**
  * 🔒 SECURITY: Escape HTML entities to prevent XSS injection in template variables.
@@ -49,8 +76,8 @@ function replaceVariables(content: string, variables: Record<string, string>): s
     for (const [key, value] of Object.entries(variables)) {
         // 🔒 SECURITY: Escape HTML to prevent XSS injection
         const sanitized = escapeHtml(value);
-        const regex = new RegExp(`{${key}}`, 'g');
-        result = result.replace(regex, sanitized);
+        // split/join: no regex built from user input, no `$&` replacement patterns
+        result = result.split(`{${key}}`).join(sanitized);
     }
     return result;
 }
@@ -67,15 +94,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         initServices();
 
         // 🔒 SECURITY: Require authentication to send emails
+        let decodedToken;
         try {
-            const { requireAuth } = await import('./utils/apiAuth.js');
-            await requireAuth(req);
+            decodedToken = await requireAuth(req);
         } catch (authError: any) {
-            const { getAuthErrorResponse } = await import('./utils/apiAuth.js');
             const errorResponse = getAuthErrorResponse(authError);
             return res.status(errorResponse.status).json(errorResponse.body);
         }
-
 
         if (!resend) {
             throw new Error('Resend client failed to initialize (Missing API Key?)');
@@ -85,16 +110,69 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             throw new Error('Firebase DB failed to initialize (Missing/Invalid FIREBASE_SERVICE_ACCOUNT?)');
         }
 
-        const { templateId, to, variables } = req.body;
+        const body = req.body || {};
+        const { templateId, to } = body;
 
         if (!templateId || !to) {
             return res.status(400).json({ error: 'Missing templateId or recipient' });
         }
+        if (typeof templateId !== 'string' || !TEMPLATE_ID_PATTERN.test(templateId)) {
+            return res.status(400).json({ error: 'Invalid templateId' });
+        }
 
-        // Get dynamic base URL for links
-        const protocol = req.headers['x-forwarded-proto'] || 'https';
-        const host = req.headers['x-forwarded-host'] || req.headers.host || 'bustadurinn.is';
-        const baseUrl = req.headers.origin || `${protocol}://${host}`;
+        // Normalise recipients to a string array
+        const toList: unknown[] = Array.isArray(to) ? to : [to];
+        if (toList.length === 0 || toList.some((r) => typeof r !== 'string' || r.length > 254 || !EMAIL_PATTERN.test(r.trim()))) {
+            return res.status(400).json({ error: 'Invalid recipient' });
+        }
+        const recipients = (toList as string[]).map((r) => r.trim());
+
+        // 🔒 SECURITY: recipient restriction. Super admins may mail anyone;
+        // everyone else only their own (token) email address.
+        let isAdmin = false;
+        try {
+            const roleSnap = await db.collection('user_roles').doc(decodedToken.uid).get();
+            isAdmin = roleSnap.exists && isSuperAdminRole(roleSnap.data());
+        } catch (roleError) {
+            console.error('send-email: role lookup failed', roleError);
+            isAdmin = false;
+        }
+
+        if (isAdmin) {
+            if (recipients.length > MAX_ADMIN_RECIPIENTS) {
+                return res.status(400).json({ error: 'Too many recipients' });
+            }
+        } else {
+            const ownEmail = typeof decodedToken.email === 'string' ? decodedToken.email.toLowerCase() : '';
+            if (recipients.length !== 1 || !ownEmail || recipients[0].toLowerCase() !== ownEmail) {
+                return res.status(403).json({ error: 'Forbidden', message: 'Insufficient permissions' });
+            }
+        }
+
+        // Rate limit per uid (admins exempt; fail open when Redis is unavailable)
+        if (!isAdmin) {
+            const limiter = tryGetRateLimit(getEmailRateLimit);
+            if (limiter) {
+                const rl = await checkRateLimit(limiter, decodedToken.uid, { failOpen: true });
+                if (!rl.allowed) {
+                    return res.status(rl.error.status).json(rl.error.body);
+                }
+            }
+        }
+
+        const variables = sanitizeVariables(body.variables);
+
+        // 🔒 SECURITY: non-admins may not inject off-site links through URL-like variables
+        if (!isAdmin) {
+            for (const [key, value] of Object.entries(variables)) {
+                if (/url|link/i.test(key) && value !== '' && !value.startsWith(`${SITE_ORIGIN}/`) && value !== SITE_ORIGIN) {
+                    return res.status(400).json({ error: 'Invalid link variable' });
+                }
+            }
+        }
+
+        // Constant base URL for links (never derived from request headers)
+        const baseUrl = SITE_ORIGIN;
 
         // Fetch template from Firestore
         const templateDoc = await db.collection('email_templates').doc(templateId).get();
@@ -274,8 +352,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // Replace variables in subject and content
-        const subject = replaceVariables(template.subject, variables || {});
-        const html = replaceVariables(template.html_content, variables || {});
+        const subject = replaceVariables(template.subject, variables);
+        const html = replaceVariables(template.html_content, variables);
 
         // Send email via Resend
         if (!process.env.RESEND_API_KEY) {
@@ -284,25 +362,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const response = await resend.emails.send({
             from: 'Bústaðurinn <hallo@bustadurinn.is>',
-            to: Array.isArray(to) ? to : [to],
+            to: recipients,
             subject,
             html,
         });
 
         if (response.error) {
             console.error(`❌ Resend API Error for '${templateId}':`, response.error);
-            return res.status(400).json({
-                error: response.error.message,
-                code: (response.error as any).code || 'resend_error'
+            return res.status(502).json({
+                error: 'Failed to send email',
+                code: 'resend_error'
             });
         }
 
-        console.log(`✅ Successfully sent email '${templateId}' to ${to}. ID: ${response.data?.id}`);
+        console.log(`✅ Successfully sent email '${templateId}'. ID: ${response.data?.id}`);
 
         return res.status(200).json({ success: true, data: response.data });
     } catch (error: any) {
         console.error('❌ Server Error sending email:', error);
 
-        return res.status(500).json({ error: error.message, code: error.code || 'internal_server_error' });
+        return res.status(500).json({ error: 'Internal server error', code: 'internal_server_error' });
     }
 }

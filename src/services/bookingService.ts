@@ -29,12 +29,11 @@ import {
     addDoc,
     deleteDoc,
     doc,
-    getDoc,
     serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { logger } from '@/utils/logger';
-import type { Booking, BookingType, User } from '@/types/models';
+import type { Booking, BookingType } from '@/types/models';
 
 /**
  * Pure overlap test for two date ranges. `end` is treated as an EXCLUSIVE
@@ -118,10 +117,10 @@ export interface CreateBookingParams {
 
 /**
  * Creates a booking. Re-checks for conflicts immediately before writing
- * (unless allowConflicts is true), then fans out notifications to the
- * house's owners (in-app, push, email), respecting each owner's
- * notification_settings. Notification failures are logged but never make
- * booking creation fail — the booking itself already succeeded.
+ * (unless allowConflicts is true), then asks `/api/booking-notification` to
+ * notify the house's other owners (in-app, push, email) server-side,
+ * respecting each owner's notification_settings. Notification failures are
+ * logged but never make booking creation fail — the booking already succeeded.
  *
  * Returns the new booking's document id.
  */
@@ -148,118 +147,31 @@ export async function createBooking(params: CreateBookingParams): Promise<string
 
     const bookingId = docRef.id;
 
-    // Send notifications (don't block on this / don't fail booking creation)
+    // Ask the server to notify co-owners (in-app, email, push). The server
+    // resolves recipients and honours their notification settings. Failures are
+    // logged but never make booking creation fail.
     try {
-        await sendBookingNotifications({ houseId, bookingId, userId, userName, start, end, type });
+        const idToken = await auth.currentUser?.getIdToken();
+        if (!idToken) {
+            logger.warn('Skipping booking notifications: no signed-in user');
+        } else {
+            const response = await fetch('/api/booking-notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({ houseId, bookingId, language: 'is' }),
+            });
+            if (!response.ok) {
+                logger.warn('Booking notification request failed:', response.status);
+            }
+        }
     } catch (notifyError) {
-        logger.error('Failed to send booking notifications:', notifyError);
+        logger.warn('Failed to send booking notifications:', notifyError);
     }
 
     return bookingId;
-}
-
-interface SendBookingNotificationsParams {
-    houseId: string;
-    bookingId: string;
-    userId: string;
-    userName: string;
-    start: Date;
-    end: Date;
-    type: BookingType;
-}
-
-async function sendBookingNotifications({
-    houseId,
-    bookingId,
-    userId,
-    userName,
-    start,
-    end,
-    type,
-}: SendBookingNotificationsParams): Promise<void> {
-    // Fetch house to get owner IDs
-    const houseDoc = await getDoc(doc(db, 'houses', houseId));
-    const house = houseDoc.data();
-
-    if (!house || !house.owner_ids) return;
-
-    const ownerEmails: string[] = [];
-    const allTokens: string[] = [];
-    const houseName = house.name || 'Sumarhús';
-
-    for (const ownerId of house.owner_ids) {
-        // Don't notify the person who made the booking
-        if (ownerId === userId) continue;
-
-        const userDoc = await getDoc(doc(db, 'users', ownerId));
-        const userData = userDoc.data() as User;
-        if (!userData) continue;
-
-        // Check Notification Settings
-        const settings = userData.notification_settings;
-
-        // 1. In-App Notification (Respecting Settings)
-        const inAppEnabled = settings?.in_app?.new_bookings ?? true; // Default to true if not set
-        if (inAppEnabled) {
-            await addDoc(collection(db, 'notifications'), {
-                user_id: ownerId,
-                house_id: houseId,
-                title: 'Ný bókun',
-                message: `${userName} bókaði ${houseName}`,
-                type: 'booking',
-                read: false,
-                data: {
-                    booking_id: bookingId,
-                },
-                created_at: serverTimestamp(),
-            });
-
-            // Collect tokens for push if in-app is enabled
-            if (userData.fcm_tokens && userData.fcm_tokens.length > 0) {
-                allTokens.push(...userData.fcm_tokens);
-            }
-        }
-
-        // 2. Email Notification (Respecting Settings)
-        const emailEnabled = settings?.emails?.new_bookings ?? true;
-        if (emailEnabled && userData.email) {
-            ownerEmails.push(userData.email);
-        }
-    }
-
-    // Send gathered emails via API
-    if (ownerEmails.length > 0) {
-        await fetch('/api/booking-notification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                houseName,
-                userName,
-                startDate: start.toISOString(),
-                endDate: end.toISOString(),
-                bookingType: type,
-                ownerEmails,
-                language: 'is', // Logic for individual languages could be added here
-            }),
-        });
-    }
-
-    // Send Push Notifications via API
-    if (allTokens.length > 0) {
-        await fetch('/api/push-notification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                tokens: allTokens,
-                title: 'Ný bókun 🏠',
-                body: `${userName} bókaði ${houseName} (${start.toLocaleDateString('is-IS')} - ${end.toLocaleDateString('is-IS')})`,
-                data: {
-                    link: 'https://www.bustadurinn.is/calendar',
-                    booking_id: bookingId,
-                },
-            }),
-        });
-    }
 }
 
 /**

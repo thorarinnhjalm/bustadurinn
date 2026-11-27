@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Star, X, Loader2 } from 'lucide-react';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { collection, doc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { useAppStore } from '@/store/appStore';
 import type { ServiceProvider } from '@/types/models';
@@ -75,19 +75,28 @@ export default function ReviewModal({ provider, onClose, onReviewSubmitted }: Re
 
         // Send notification email (fire and forget)
         if (provider.contact_email) {
-            fetch('/api/send-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    templateId: 'general_notification',
-                    to: provider.contact_email,
-                    variables: {
-                        title: 'Ný umsögn á Torginu! ⭐',
-                        message: `Þú hefur fengið nýja ${rating} stjörnu umsögn frá ${currentUser.name || 'notanda'}. Kíktu á Torgið til að sjá hvað viðskiptavinir eru að segja.`,
-                        actionUrl: 'https://www.bustadurinn.is/torgid'
-                    }
-                })
-            }).catch(console.error); // Log error but don't block UI
+            (async () => {
+                const idToken = await auth.currentUser?.getIdToken();
+                // NOTE: /api/send-email only lets non-admin users mail their own address,
+                // so this notification to the provider is rejected (403) for regular users.
+                // It needs a dedicated server-side trigger.
+                await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
+                    },
+                    body: JSON.stringify({
+                        templateId: 'general_notification',
+                        to: provider.contact_email,
+                        variables: {
+                            title: 'Ný umsögn á Torginu! ⭐',
+                            message: `Þú hefur fengið nýja ${rating} stjörnu umsögn frá ${currentUser.name || 'notanda'}. Kíktu á Torgið til að sjá hvað viðskiptavinir eru að segja.`,
+                            actionUrl: 'https://www.bustadurinn.is/torgid'
+                        }
+                    })
+                });
+            })().catch(console.error); // Log error but don't block UI
         }
     };
 

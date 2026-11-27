@@ -1,3 +1,4 @@
+import { auth } from '@/lib/firebase';
 
 export interface AnalyticsData {
     activeUsers: number;
@@ -17,7 +18,10 @@ export interface AnalyticsData {
 export const analyticsService = {
     getWebAnalytics: async (period: '7d' | '30d' | '90d' = '30d'): Promise<AnalyticsData> => {
         try {
-            const response = await fetch(`/api/analytics?period=${period}`);
+            const idToken = await auth.currentUser?.getIdToken();
+            const response = await fetch(`/api/analytics?period=${period}`, {
+                headers: idToken ? { Authorization: `Bearer ${idToken}` } : {}
+            });
 
             if (!response.ok) {
                 const errorText = await response.text();
