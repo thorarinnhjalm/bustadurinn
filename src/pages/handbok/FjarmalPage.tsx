@@ -1,10 +1,8 @@
 import MarketingLayout from '@/components/MarketingLayout';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { TrendingUp, ChevronLeft, ArrowRight, CheckSquare, PiggyBank } from 'lucide-react';
 
 export default function FjarmalPage() {
-    const navigate = useNavigate();
-
     // This page is explanatory content about hússjóður/cost-splitting, not a
     // literal Q&A page or a step-by-step procedure, so it is marked up as a
     // WebPage rather than FAQPage or HowTo.
@@ -44,9 +42,9 @@ export default function FjarmalPage() {
                 <div className="container max-w-4xl mx-auto px-6">
                     <Link
                         to="/handbok"
-                        className="flex items-center text-grey-mid hover:text-amber transition-colors text-sm"
+                        className="flex items-center text-grey-mid hover:text-amber-ink transition-colors text-sm"
                     >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft aria-hidden="true" className="w-4 h-4" />
                         <span>Til baka í handbók</span>
                     </Link>
                 </div>
@@ -57,7 +55,7 @@ export default function FjarmalPage() {
                 <div className="container max-w-4xl mx-auto px-6">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-14 h-14 rounded-full bg-emerald-600/10 flex items-center justify-center">
-                            <TrendingUp className="w-7 h-7 text-emerald-600" />
+                            <TrendingUp aria-hidden="true" className="w-7 h-7 text-emerald-600" />
                         </div>
                         <h1 className="text-4xl md:text-5xl font-serif font-bold">
                             Fjárhaldslausnir
@@ -86,19 +84,19 @@ export default function FjarmalPage() {
                             <h3 className="text-xl font-bold mb-4">Tegundir framlaga:</h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Föst mánaðarleg innborgun:</strong> Hver eigandi greiðir sömu upphæð í hverjum mánuði
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Árleg innborgun:</strong> Öll innborgun fer fram einu sinni á ári
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Innborganir eftir þörfum:</strong> Þegar stór verkefni koma upp biðja eigendur um innborgun
                                     </div>
@@ -120,7 +118,7 @@ export default function FjarmalPage() {
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div className="border border-stone-200 rounded-lg p-4">
                                     <h4 className="font-bold text-green-700 mb-2 flex items-center gap-2">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                         </svg>
                                         Tekjur
@@ -133,7 +131,7 @@ export default function FjarmalPage() {
                                 </div>
                                 <div className="border border-stone-200 rounded-lg p-4">
                                     <h4 className="font-bold text-red-700 mb-2 flex items-center gap-2">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
                                         </svg>
                                         Gjöld
@@ -150,7 +148,7 @@ export default function FjarmalPage() {
                         </div>
 
                         <div className="bg-emerald-50 rounded-xl p-6 border-2 border-emerald-200">
-                            <h4 className="font-bold text-lg mb-3">Dæmi um rekstraráætlun:</h4>
+                            <h3 className="font-bold text-lg mb-3">Dæmi um rekstraráætlun:</h3>
                             <div className="bg-white rounded-lg p-5 space-y-3">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-grey-dark">Fasteignaskattur (árleg):</span>
@@ -197,19 +195,19 @@ export default function FjarmalPage() {
                             <h3 className="text-xl font-bold mb-4">Hvað er hægt að skrá:</h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Útgjöld:</strong> Skráðu upphæð, dagsetningu og flokk (t.d. rafmagn, viðhald, tryggingar)
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Tekjur:</strong> Innborganir frá eigendum eða útleigutekjur
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Skipta kostnaði:</strong> Ef margir eigendur greiða saman fyrir eitthvað, skráðu hverjir tóku þátt og upphæðin skiptist jafnt milli þeirra
                                     </div>
@@ -232,15 +230,15 @@ export default function FjarmalPage() {
                             </p>
                             <ul className="space-y-3 pt-2">
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
                                     <span><strong>Sjálfvirk skráning:</strong> Eigendur skrá innborganir og útgjöld beint í kerfið.</span>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
                                     <span><strong>Áminningar um fasta kostnaðarliði:</strong> Kerfið minnir ykkur á þegar reglulegir liðir eins og rafmagnsreikningurinn eru væntanlegir, og forfyllir skráninguna svo hún taki eina mínútu.</span>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
                                     <span><strong>Rauntíma yfirlit:</strong> Allir meðeigendur sjá nákvæmlega hver staða sameiginlega reikningsins er.</span>
                                 </li>
                             </ul>
@@ -256,7 +254,7 @@ export default function FjarmalPage() {
                                 Sumarhús á Íslandi eru oft kynt með rafmagni (ýmist með ofnum eða gólfhita) og ef heitur pottur er kyntur allan ársins hring getur það kostað sitt.
                             </p>
                             <div className="bg-stone-50 border border-stone-200 rounded-lg p-5 my-4">
-                                <h4 className="font-bold text-charcoal mb-2">Hvað er meðal rafmagnsreikningur í sumarhúsi?</h4>
+                                <h3 className="text-2xl font-bold text-charcoal mb-2">Hvað er meðal rafmagnsreikningur í sumarhúsi?</h3>
                                 <ul className="space-y-2 text-sm text-grey-dark">
                                     <li>• <strong>Sumar:</strong> 4.000 – 8.000 kr. á mánuði (lágmarks kynding, enginn heitur pottur).</li>
                                     <li>• <strong>Vetur (meðal kynding):</strong> 12.000 – 20.000 kr. á mánuði.</li>
@@ -274,11 +272,11 @@ export default function FjarmalPage() {
                             </p>
                             <ul className="space-y-3 pt-2">
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
                                     <span><strong>Jöfn skipting (sjálfgefið):</strong> Allir eigendur bera jafnan hlut af sameiginlegum kostnaði.</span>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-1" />
                                     <span><strong>Eignarhlutfallsskipting:</strong> Stjórnandi getur stillt vægi hvers eiganda svo skiptingin endurspegli eignarhlutföll.</span>
                                 </li>
                             </ul>
@@ -316,7 +314,7 @@ export default function FjarmalPage() {
                     {/* Gagnsæi og traust */}
                     <div className="bg-gradient-to-br from-blue-50 to-white rounded-xl p-8 border-2 border-blue-200">
                         <div className="flex items-center gap-3 mb-6">
-                            <PiggyBank className="w-8 h-8 text-blue-600" />
+                            <PiggyBank aria-hidden="true" className="w-8 h-8 text-blue-600" />
                             <h2 className="text-3xl font-serif font-bold">Gagnsæi og traust</h2>
                         </div>
 
@@ -327,19 +325,19 @@ export default function FjarmalPage() {
                         <h3 className="text-xl font-bold mb-4">Allir eigendur geta séð:</h3>
                         <div className="space-y-3">
                             <div className="bg-white rounded-lg p-4 flex items-start gap-3">
-                                <CheckSquare className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                                <CheckSquare aria-hidden="true" className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
                                 <span>Hversu mikið er í hússjóði núna (rauntíma staða)</span>
                             </div>
                             <div className="bg-white rounded-lg p-4 flex items-start gap-3">
-                                <CheckSquare className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                                <CheckSquare aria-hidden="true" className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
                                 <span>Öll útgjöld með flokkun og skýringum</span>
                             </div>
                             <div className="bg-white rounded-lg p-4 flex items-start gap-3">
-                                <CheckSquare className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                                <CheckSquare aria-hidden="true" className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
                                 <span>Hver hefur greitt og hverjir eiga eftir að greiða</span>
                             </div>
                             <div className="bg-white rounded-lg p-4 flex items-start gap-3">
-                                <CheckSquare className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                                <CheckSquare aria-hidden="true" className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
                                 <span>Samanburð: Áætlaður vs raunverulegur kostnaður</span>
                             </div>
                         </div>
@@ -348,7 +346,7 @@ export default function FjarmalPage() {
                     {/* Privacy settings */}
                     <div className="bg-amber/10 rounded-xl p-6 border-l-4 border-amber">
                         <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-                            <svg className="w-5 h-5 text-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg aria-hidden="true" className="w-5 h-5 text-amber-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                             </svg>
                             Athugið:
@@ -390,13 +388,13 @@ export default function FjarmalPage() {
                     <p className="text-xl text-stone-300 mb-8">
                         Byrjaðu að nota hússjóð og bókhald í Bústaðnum.
                     </p>
-                    <button
-                        onClick={() => navigate('/signup')}
+                    <Link
+                        to="/signup"
                         className="btn btn-primary bg-amber text-charcoal hover:bg-amber/90 px-8 py-4 text-lg inline-flex items-center gap-2"
                     >
                         Byrja núna
-                        <ArrowRight className="w-5 h-5" />
-                    </button>
+                        <ArrowRight aria-hidden="true" className="w-5 h-5" />
+                    </Link>
                 </div>
             </section>
         </MarketingLayout>

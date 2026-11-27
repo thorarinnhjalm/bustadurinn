@@ -32,18 +32,18 @@ export default function AboutPage() {
 
                         <div className="grid md:grid-cols-3 gap-8 my-16 not-prose">
                             <div className="text-center p-6 bg-bone rounded-2xl">
-                                <Heart className="w-10 h-10 text-amber mx-auto mb-4" />
-                                <h4 className="font-serif text-lg mb-2">Fjölskyldufriður</h4>
+                                <Heart aria-hidden="true" className="w-10 h-10 text-amber-ink mx-auto mb-4" />
+                                <h3 className="font-serif text-lg mb-2">Fjölskyldufriður</h3>
                                 <p className="text-sm text-grey-mid">Skýrar reglur og sanngjörn skipting dregur úr nagli.</p>
                             </div>
                             <div className="text-center p-6 bg-bone rounded-2xl">
-                                <ShieldCheck className="w-10 h-10 text-amber mx-auto mb-4" />
-                                <h4 className="font-serif text-lg mb-2">Gagnsæi</h4>
+                                <ShieldCheck aria-hidden="true" className="w-10 h-10 text-amber-ink mx-auto mb-4" />
+                                <h3 className="font-serif text-lg mb-2">Gagnsæi</h3>
                                 <p className="text-sm text-grey-mid">Allir sjá hver bókaði hvað og hvað hlutirnir kosta.</p>
                             </div>
                             <div className="text-center p-6 bg-bone rounded-2xl">
-                                <Users className="w-10 h-10 text-amber mx-auto mb-4" />
-                                <h4 className="font-serif text-lg mb-2">Einfaldleiki</h4>
+                                <Users aria-hidden="true" className="w-10 h-10 text-amber-ink mx-auto mb-4" />
+                                <h3 className="font-serif text-lg mb-2">Einfaldleiki</h3>
                                 <p className="text-sm text-grey-mid">Hannað til að vera auðvelt í notkun fyrir alla kynslóðir.</p>
                             </div>
                         </div>
@@ -55,7 +55,7 @@ export default function AboutPage() {
 
                         <div className="bg-charcoal text-bone p-10 md:p-14 rounded-[2.5rem] my-20 not-prose relative overflow-hidden shadow-2xl border border-white/5">
                             <div className="relative z-10">
-                                <h3 className="text-3xl font-serif mb-6 text-white tracking-tight">Hvað er næst?</h3>
+                                <h2 className="text-3xl font-serif mb-6 text-white tracking-tight">Hvað er næst?</h2>
                                 <p className="text-stone-200 text-lg leading-relaxed mb-0 opacity-95">
                                     Við erum stöðugt að bæta kerfið í samstarfi við okkar notendur. Framundan eru spennandi nýjungar eins og snjalltenginar við rafmagnsmæla og enn dýpri samþætting við íslenska banka.
                                 </p>
@@ -65,23 +65,23 @@ export default function AboutPage() {
                         </div>
 
                         <div className="mb-20">
-                            <h3 className="text-3xl font-serif text-charcoal mb-8">Um Stofnandann</h3>
+                            <h2 className="text-3xl font-serif text-charcoal mb-8">Um Stofnandann</h2>
                             <div className="bg-stone-50 rounded-2xl p-8 md:p-10 border border-stone-100 flex flex-col md:flex-row gap-8 items-start">
                                 <div className="flex-1 space-y-4">
-                                    <h4 className="text-xl font-bold text-charcoal">Þórarinn Hjálmarsson</h4>
+                                    <h3 className="text-xl font-bold text-charcoal">Þórarinn Hjálmarsson</h3>
                                     <p className="text-grey-dark leading-relaxed">
                                         Þórarinn á og rekur Bústaðinn.is en hann hefur starfað við vefþróun og markaðsmál frá árinu 2007.
                                         Hugmyndin að kerfinu kviknaði út frá hans eigin þörf fyrir betra skipulag í kringum fjölskyldubústaðinn.
                                     </p>
                                     <p className="text-grey-dark leading-relaxed">
-                                        Hann er einnig stofnandi fræðsluvefsins <a href="https://www.markadssetning.is" target="_blank" rel="noopener" className="text-amber hover:text-amber-600 font-medium">Markaðssetning.is</a> og hefur komið að þróun fjölda annarra vefja eins og <a href="https://nagrannar.is" target="_blank" rel="noopener" className="text-amber hover:text-amber-600 font-medium">Nágrannar.is</a> og <a href="https://vaktaplan.is" target="_blank" rel="noopener" className="text-amber hover:text-amber-600 font-medium">Vaktaplan.is</a>.
+                                        Hann er einnig stofnandi fræðsluvefsins <a href="https://www.markadssetning.is" target="_blank" rel="noopener noreferrer" className="text-amber-ink hover:text-amber-600 font-medium">Markaðssetning.is<span className="sr-only"> (opnast í nýjum flipa)</span></a> og hefur komið að þróun fjölda annarra vefja eins og <a href="https://nagrannar.is" target="_blank" rel="noopener noreferrer" className="text-amber-ink hover:text-amber-600 font-medium">Nágrannar.is<span className="sr-only"> (opnast í nýjum flipa)</span></a> og <a href="https://vaktaplan.is" target="_blank" rel="noopener noreferrer" className="text-amber-ink hover:text-amber-600 font-medium">Vaktaplan.is<span className="sr-only"> (opnast í nýjum flipa)</span></a>.
                                         Til dagsins starfar Þórarinn sem forstöðumaður stjórnenda- og tæknináms hjá Akademias.
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <h3 className="text-2xl font-serif text-charcoal mt-12 mb-6 text-center">Hafið samband</h3>
+                        <h2 className="text-2xl font-serif text-charcoal mt-12 mb-6 text-center">Hafið samband</h2>
                         <p className="mb-8 text-center">
                             Við elskum að heyra í notendum okkar. Ef þú hefur ábendingar, spurningar eða vilt einfaldlega segja hæ, sendu okkur línu.
                         </p>
@@ -92,17 +92,17 @@ export default function AboutPage() {
                         </div>
 
                         <div className="mt-20 pt-10 border-t border-grey-warm/30">
-                            <h3 className="text-lg font-serif mb-4">Systurverkefni</h3>
+                            <h2 className="text-lg font-serif mb-4">Systurverkefni</h2>
                             <p className="text-sm text-grey-mid leading-relaxed">
                                 Bústaðurinn.is er hluti af vöruúrvali frá <strong>Neðri Hóll Hugmyndahús ehf</strong>.
                                 Við leggjum metnað í að smíða hugbúnað sem einfaldar líf fólks.
                                 <br /><br />
-                                Skoðaðu einnig <a href="https://vaktaplan.is" target="_blank" rel="noopener" className="text-charcoal font-semibold hover:text-amber transition-colors underline decoration-amber/30 underline-offset-4">Vaktaplan.is</a> fyrir snjallara vaktaskipulag og <a href="https://nagrannar.is" target="_blank" rel="noopener" className="text-charcoal font-semibold hover:text-amber transition-colors underline decoration-amber/30 underline-offset-4">Nágrannar.is</a> sem er sérsniðið utanumhald fyrir húsfélög í fjöleignarhúsum.
+                                Skoðaðu einnig <a href="https://vaktaplan.is" target="_blank" rel="noopener noreferrer" className="text-charcoal font-semibold hover:text-amber-ink transition-colors underline decoration-amber/30 underline-offset-4">Vaktaplan.is<span className="sr-only"> (opnast í nýjum flipa)</span></a> fyrir snjallara vaktaskipulag og <a href="https://nagrannar.is" target="_blank" rel="noopener noreferrer" className="text-charcoal font-semibold hover:text-amber-ink transition-colors underline decoration-amber/30 underline-offset-4">Nágrannar.is<span className="sr-only"> (opnast í nýjum flipa)</span></a> sem er sérsniðið utanumhald fyrir húsfélög í fjöleignarhúsum.
                             </p>
                         </div>
 
                         <div className="mt-12 pt-10 border-t border-grey-warm/30">
-                            <h3 className="text-lg font-serif mb-4">Um fyrirtækið</h3>
+                            <h2 className="text-lg font-serif mb-4">Um fyrirtækið</h2>
                             <div className="text-sm text-grey-mid leading-relaxed space-y-2">
                                 <p><strong>Neðri Hóll Hugmyndahús ehf.</strong></p>
                                 <p>Kennitala: 4701262480 • VSK númer: 159950</p>

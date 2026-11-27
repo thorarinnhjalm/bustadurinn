@@ -3,7 +3,7 @@
  * For organization members to browse houses and request bookings
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useId } from 'react';
 import { useParams } from 'react-router-dom';
 import { Building2, Home, Calendar, User, MapPin } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
@@ -15,12 +15,20 @@ import {
     isOrgMember,
 } from '@/services/organizationService';
 import { logger } from '@/utils/logger';
+import { getUserMessage } from '@/utils/userMessages';
 import { toLocalDateInputValue, parseLocalDateInput } from './localDate';
 import type { Organization, BookingRequest, House } from '@/types/models';
 import SEO from '@/components/SEO';
+import Modal from '@/components/ui/Modal';
 
 export default function MemberDashboardPage() {
     const { orgId } = useParams<{ orgId: string }>();
+    const uid = useId();
+    const fieldId = (name: string) => `${uid}-${name}`;
+    const bookingFormId = `${uid}-booking-form`;
+    const [bookingError, setBookingError] = useState('');
+    const [bookingSuccess, setBookingSuccess] = useState('');
+    const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
     const currentUser = useAppStore((state) => state.currentUser);
     const [organization, setOrganization] = useState<Organization | null>(null);
     const [houses, setHouses] = useState<House[]>([]);
@@ -84,6 +92,8 @@ export default function MemberDashboardPage() {
 
     const handleRequestBooking = (house: House) => {
         setSelectedHouse(house);
+        setBookingError('');
+        setBookingSuccess('');
         setShowBookingForm(true);
     };
 
@@ -91,10 +101,12 @@ export default function MemberDashboardPage() {
         e.preventDefault();
 
         if (!orgId || !currentUser || !selectedHouse || !organization) return;
+        if (isSubmittingBooking) return;
+        setBookingError('');
 
         // Validation
         if (!bookingFormData.start_date || !bookingFormData.end_date) {
-            alert('Vinsamlegast veldu dagsetningar');
+            setBookingError('Vinsamlegast veldu dagsetningar');
             return;
         }
 
@@ -102,15 +114,16 @@ export default function MemberDashboardPage() {
         const endDate = parseLocalDateInput(bookingFormData.end_date);
 
         if (!startDate || !endDate) {
-            alert('Vinsamlegast veldu dagsetningar');
+            setBookingError('Vinsamlegast veldu dagsetningar');
             return;
         }
 
         if (startDate >= endDate) {
-            alert('Brottfarardagur verður að vera eftir komudags');
+            setBookingError('Brottfarardagur verður að vera eftir komudags');
             return;
         }
 
+        setIsSubmittingBooking(true);
         try {
             await submitBookingRequest(orgId, {
                 user_id: currentUser.uid,
@@ -139,33 +152,35 @@ export default function MemberDashboardPage() {
             // Reload data
             await loadData();
 
-            alert('Bókunarbeiðni send!');
-        } catch (err: any) {
+            setBookingSuccess('Bókunarbeiðni send!');
+        } catch (err: unknown) {
             logger.error('Error submitting booking request:', err);
-            alert(err.message || 'Villa kom upp við að senda bókunarbeiðni');
+            setBookingError(getUserMessage(err, 'Villa kom upp við að senda bókunarbeiðni'));
+        } finally {
+            setIsSubmittingBooking(false);
         }
     };
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-bone flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
+            <main id="main" className="min-h-screen bg-bone flex items-center justify-center">
+                <div role="status" className="text-center">
+                    <div aria-hidden="true" className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
                     <p className="text-grey-mid">Hleð...</p>
                 </div>
-            </div>
+            </main>
         );
     }
 
     if (!isMember || !organization) {
         return (
-            <div className="min-h-screen bg-bone flex items-center justify-center p-6">
+            <main id="main" className="min-h-screen bg-bone flex items-center justify-center p-6">
                 <div className="card max-w-md text-center">
-                    <Building2 className="w-16 h-16 mx-auto mb-4 text-grey-mid" />
-                    <h2 className="text-2xl font-serif mb-4">Aðgangur bannaður</h2>
-                    <p className="text-grey-dark mb-6">{error || 'Þú hefur ekki aðgang að þessu félagi'}</p>
+                    <Building2 aria-hidden="true" className="w-16 h-16 mx-auto mb-4 text-grey-mid" />
+                    <h1 className="text-2xl font-serif mb-4">Aðgangur bannaður</h1>
+                    <p role="alert" className="text-grey-dark mb-6">{error || 'Þú hefur ekki aðgang að þessu félagi'}</p>
                 </div>
-            </div>
+            </main>
         );
     }
 
@@ -173,48 +188,56 @@ export default function MemberDashboardPage() {
     const approvedRequests = myBookingRequests.filter((r) => r.status === 'approved');
 
     return (
-        <div className="min-h-screen bg-bone">
+        <main id="main" className="min-h-screen bg-bone">
             <SEO
                 title={`Mitt svæði - ${organization.name}`}
                 description="Skoða hús og bóka"
             />
 
             {/* Header */}
-            <div className="bg-white border-b">
+            <header className="bg-white border-b">
                 <div className="max-w-7xl mx-auto px-6 py-6">
                     <div className="flex items-center gap-4">
-                        <Building2 className="w-12 h-12 text-charcoal" />
+                        <Building2 aria-hidden="true" className="w-12 h-12 text-charcoal" />
                         <div>
                             <h1 className="text-3xl font-serif">{organization.name}</h1>
                             <p className="text-grey-mid">Mitt svæði</p>
                         </div>
                     </div>
                 </div>
-            </div>
+            </header>
 
             <div className="max-w-7xl mx-auto px-6 py-8">
+                <div role="status">
+                    {bookingSuccess && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-green-800">
+                            {bookingSuccess}
+                        </div>
+                    )}
+                </div>
+
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="card">
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-grey-mid text-sm">Tiltæk hús</h3>
-                            <Home className="w-5 h-5 text-grey-mid" />
+                            <h2 className="text-grey-mid text-sm mb-4">Tiltæk hús</h2>
+                            <Home aria-hidden="true" className="w-5 h-5 text-grey-mid" />
                         </div>
                         <p className="text-3xl font-bold">{houses.length}</p>
                     </div>
 
                     <div className="card">
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-grey-mid text-sm">Beiðnir í bið</h3>
-                            <Calendar className="w-5 h-5 text-grey-mid" />
+                            <h2 className="text-grey-mid text-sm mb-4">Beiðnir í bið</h2>
+                            <Calendar aria-hidden="true" className="w-5 h-5 text-grey-mid" />
                         </div>
                         <p className="text-3xl font-bold">{pendingRequests.length}</p>
                     </div>
 
                     <div className="card">
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-grey-mid text-sm">Samþykktar bókanir</h3>
-                            <User className="w-5 h-5 text-grey-mid" />
+                            <h2 className="text-grey-mid text-sm mb-4">Samþykktar bókanir</h2>
+                            <User aria-hidden="true" className="w-5 h-5 text-grey-mid" />
                         </div>
                         <p className="text-3xl font-bold">{approvedRequests.length}</p>
                     </div>
@@ -281,7 +304,7 @@ export default function MemberDashboardPage() {
 
                     {houses.length === 0 ? (
                         <div className="card text-center py-12">
-                            <Home className="w-16 h-16 mx-auto mb-4 text-grey-mid" />
+                            <Home aria-hidden="true" className="w-16 h-16 mx-auto mb-4 text-grey-mid" />
                             <p className="text-grey-mid">Engin hús tiltæk enn</p>
                         </div>
                     ) : (
@@ -291,13 +314,15 @@ export default function MemberDashboardPage() {
                                     {house.image_url && (
                                         <img
                                             src={house.image_url}
-                                            alt={house.name}
+                                            alt={`Mynd af ${house.name}`}
+                                            loading="lazy"
+                                            decoding="async"
                                             className="w-full h-48 object-cover rounded-lg mb-4"
                                         />
                                     )}
                                     <h3 className="text-xl font-serif mb-2">{house.name}</h3>
                                     <div className="flex items-start gap-2 text-grey-mid text-sm mb-4">
-                                        <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                        <MapPin aria-hidden="true" className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                         <p>{house.address}</p>
                                     </div>
 
@@ -320,10 +345,11 @@ export default function MemberDashboardPage() {
                                     )}
 
                                     <button
+                                        type="button"
                                         onClick={() => handleRequestBooking(house)}
                                         className="btn btn-primary w-full"
                                     >
-                                        <Calendar className="w-5 h-5" />
+                                        <Calendar aria-hidden="true" className="w-5 h-5" />
                                         Óska eftir bókun
                                     </button>
                                 </div>
@@ -334,32 +360,57 @@ export default function MemberDashboardPage() {
             </div>
 
             {/* Booking Form Modal */}
-            {showBookingForm && selectedHouse && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 z-50">
-                    <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-2xl font-serif">Bókunarbeiðni</h2>
-                            <button
-                                onClick={() => setShowBookingForm(false)}
-                                className="text-grey-mid hover:text-charcoal text-2xl"
-                            >
-                                ×
-                            </button>
-                        </div>
-
+            <Modal
+                open={showBookingForm && !!selectedHouse}
+                onClose={() => setShowBookingForm(false)}
+                title="Bókunarbeiðni"
+                size="xl"
+                footer={
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setShowBookingForm(false)}
+                            className="btn btn-secondary"
+                        >
+                            Hætta við
+                        </button>
+                        <button
+                            type="submit"
+                            form={bookingFormId}
+                            aria-busy={isSubmittingBooking}
+                            className="btn btn-primary"
+                        >
+                            Senda beiðni
+                        </button>
+                    </>
+                }
+            >
+                {selectedHouse && (
+                    <>
                         <div className="mb-6 p-4 bg-grey-lightest rounded-lg">
-                            <h3 className="font-semibold mb-1">{selectedHouse.name}</h3>
+                            <h3 className="text-xl font-semibold mb-1">{selectedHouse.name}</h3>
                             <p className="text-sm text-grey-mid">{selectedHouse.address}</p>
                         </div>
 
-                        <form onSubmit={handleSubmitBooking} className="space-y-6">
+                        <form id={bookingFormId} onSubmit={handleSubmitBooking} className="space-y-6" aria-busy={isSubmittingBooking}>
+                            <div role="alert">
+                                {bookingError && (
+                                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 text-sm">
+                                        {bookingError}
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-sm text-grey-dark">
+                                Reitir merktir með <span aria-hidden="true">*</span><span className="sr-only">stjörnu</span> eru nauðsynlegir.
+                            </p>
                             {/* Dates */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-charcoal mb-2">
-                                        Komudagur <span className="text-red-500">*</span>
+                                    <label htmlFor={fieldId('start')} className="block text-sm font-medium text-charcoal mb-2">
+                                        Komudagur <span aria-hidden="true" className="text-red-700">*</span>
                                     </label>
                                     <input
+                                        id={fieldId('start')}
                                         type="date"
                                         value={bookingFormData.start_date}
                                         onChange={(e) =>
@@ -374,10 +425,11 @@ export default function MemberDashboardPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-charcoal mb-2">
-                                        Brottfarardagur <span className="text-red-500">*</span>
+                                    <label htmlFor={fieldId('end')} className="block text-sm font-medium text-charcoal mb-2">
+                                        Brottfarardagur <span aria-hidden="true" className="text-red-700">*</span>
                                     </label>
                                     <input
+                                        id={fieldId('end')}
                                         type="date"
                                         value={bookingFormData.end_date}
                                         onChange={(e) =>
@@ -398,11 +450,13 @@ export default function MemberDashboardPage() {
 
                             {/* Number of Guests */}
                             <div>
-                                <label className="block text-sm font-medium text-charcoal mb-2">
+                                <label htmlFor={fieldId('guests')} className="block text-sm font-medium text-charcoal mb-2">
                                     Fjöldi gesta
                                 </label>
                                 <input
+                                    id={fieldId('guests')}
                                     type="number"
+                                    inputMode="numeric"
                                     value={bookingFormData.num_guests}
                                     onChange={(e) =>
                                         setBookingFormData({
@@ -418,10 +472,11 @@ export default function MemberDashboardPage() {
 
                             {/* Purpose */}
                             <div>
-                                <label className="block text-sm font-medium text-charcoal mb-2">
+                                <label htmlFor={fieldId('purpose')} className="block text-sm font-medium text-charcoal mb-2">
                                     Tilgangur
                                 </label>
                                 <select
+                                    id={fieldId('purpose')}
                                     value={bookingFormData.purpose}
                                     onChange={(e) =>
                                         setBookingFormData({
@@ -442,10 +497,11 @@ export default function MemberDashboardPage() {
 
                             {/* Notes */}
                             <div>
-                                <label className="block text-sm font-medium text-charcoal mb-2">
+                                <label htmlFor={fieldId('notes')} className="block text-sm font-medium text-charcoal mb-2">
                                     Athugasemdir (valkvæmt)
                                 </label>
                                 <textarea
+                                    id={fieldId('notes')}
                                     value={bookingFormData.notes}
                                     onChange={(e) =>
                                         setBookingFormData({ ...bookingFormData, notes: e.target.value })
@@ -465,24 +521,10 @@ export default function MemberDashboardPage() {
                                     </p>
                                 </div>
                             )}
-
-                            {/* Buttons */}
-                            <div className="flex gap-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowBookingForm(false)}
-                                    className="btn btn-secondary flex-1"
-                                >
-                                    Hætta við
-                                </button>
-                                <button type="submit" className="btn btn-primary flex-1">
-                                    Senda beiðni
-                                </button>
-                            </div>
                         </form>
-                    </div>
-                </div>
-            )}
-        </div>
+                    </>
+                )}
+            </Modal>
+        </main>
     );
 }

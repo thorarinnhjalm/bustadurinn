@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useId, useState } from 'react';
+import { Link } from 'react-router-dom';
 import MarketingLayout from '@/components/MarketingLayout';
 import { db } from '@/lib/firebase';
 import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
@@ -9,10 +9,12 @@ import { logger } from '@/utils/logger';
 
 
 export default function ForProvidersPage() {
-    const navigate = useNavigate();
     const { currentUser } = useAppStore();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [formError, setFormError] = useState('');
+    const uid = useId();
+    const fieldId = (name: string) => `${uid}-${name}`;
 
     const [formData, setFormData] = useState({
         name: '',
@@ -27,6 +29,8 @@ export default function ForProvidersPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (loading) return;
+        setFormError('');
         setLoading(true);
 
         try {
@@ -40,7 +44,7 @@ export default function ForProvidersPage() {
                 formData.website.length > 300 || formData.address.length > 300 ||
                 areas.length > 20 || areas.some(a => a.length > 100)
             ) {
-                alert('Einn eða fleiri reitir eru of langir. Vinsamlegast styttu textann og reyndu aftur.');
+                setFormError('Einn eða fleiri reitir eru of langir. Vinsamlegast styttu textann og reyndu aftur.');
                 return;
             }
 
@@ -70,7 +74,7 @@ export default function ForProvidersPage() {
             setSuccess(true);
         } catch (error) {
             logger.error('Error registering provider:', error);
-            alert('Villa kom upp við skráningu. Vinsamlegast reyndu aftur.');
+            setFormError('Villa kom upp við skráningu. Vinsamlegast reyndu aftur.');
         } finally {
             setLoading(false);
         }
@@ -98,11 +102,11 @@ export default function ForProvidersPage() {
         >
             {/* Hero Section */}
             <section className="relative py-20 bg-charcoal text-white overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20"></div>
+                <div aria-hidden="true" className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20"></div>
                 <div className="relative max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber/20 text-amber text-sm font-medium mb-6">
-                            <Star className="w-4 h-4" />
+                            <Star aria-hidden="true" className="w-4 h-4" />
                             <span>Fyrir verktaka og þjónustuaðila</span>
                         </div>
                         <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight text-white">
@@ -120,7 +124,7 @@ export default function ForProvidersPage() {
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3 text-stone-300">
                                     <div className="p-1 rounded-full bg-green-500/20 text-green-400">
-                                        <Check className="w-4 h-4" />
+                                        <Check aria-hidden="true" className="w-4 h-4" />
                                     </div>
                                     {item}
                                 </li>
@@ -136,21 +140,21 @@ export default function ForProvidersPage() {
                 <div className="max-w-3xl mx-auto px-6">
                     <div className="card bg-white shadow-xl p-8 md:p-12">
                         {success ? (
-                            <div className="text-center py-12">
+                            <div role="status" className="text-center py-12">
                                 <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Check className="w-8 h-8" />
+                                    <Check aria-hidden="true" className="w-8 h-8" />
                                 </div>
                                 <h2 className="text-2xl font-serif font-bold text-charcoal mb-4">Umsókn móttekin!</h2>
                                 <p className="text-grey-mid mb-8 max-w-md mx-auto">
                                     Takk fyrir að skrá þig. Við förum yfir umsóknina og þú birtist á Torginu
                                     um leið og hún hefur verið samþykkt.
                                 </p>
-                                <button
-                                    onClick={() => navigate('/torgid')}
+                                <Link
+                                    to="/torgid"
                                     className="btn btn-primary"
                                 >
                                     Skoða Torgið
-                                </button>
+                                </Link>
                             </div>
                         ) : (
                             <>
@@ -159,12 +163,15 @@ export default function ForProvidersPage() {
                                     <p className="text-grey-mid">Fylltu út formið hér að neðan. Það tekur innan við 2 mínútur.</p>
                                 </div>
 
-                                <form onSubmit={handleSubmit} className="space-y-6">
+                                <form onSubmit={handleSubmit} className="space-y-6" aria-busy={loading}>
+                                    <p className="text-sm text-grey-mid">Reitir merktir með <span aria-hidden="true">*</span><span className="sr-only">stjörnu</span> eru nauðsynlegir.</p>
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-charcoal">Nafn fyrirtækis / Verktaka</label>
+                                            <label htmlFor={fieldId('name')} className="text-sm font-medium text-charcoal">Nafn fyrirtækis / Verktaka <span aria-hidden="true">*</span></label>
                                             <input
+                                                id={fieldId('name')}
                                                 type="text"
+                                                autoComplete="organization"
                                                 required
                                                 className="input w-full"
                                                 placeholder="t.d. Snjómokstur Suðurlands"
@@ -173,8 +180,9 @@ export default function ForProvidersPage() {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-charcoal">Flokkur</label>
+                                            <label htmlFor={fieldId('category')} className="text-sm font-medium text-charcoal">Flokkur</label>
                                             <select
+                                                id={fieldId('category')}
                                                 className="input w-full"
                                                 value={formData.category}
                                                 onChange={e => setFormData({ ...formData, category: e.target.value })}
@@ -191,8 +199,10 @@ export default function ForProvidersPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-charcoal">Þjónustusvæði (aðskildu með kommu)</label>
+                                        <label htmlFor={fieldId('areas')} className="text-sm font-medium text-charcoal">Þjónustusvæði (aðskildu með kommu) <span aria-hidden="true">*</span></label>
                                         <input
+                                            id={fieldId('areas')}
+                                            aria-describedby={fieldId('areas-hint')}
                                             type="text"
                                             required
                                             className="input w-full"
@@ -200,12 +210,13 @@ export default function ForProvidersPage() {
                                             value={formData.service_areas}
                                             onChange={e => setFormData({ ...formData, service_areas: e.target.value })}
                                         />
-                                        <p className="text-xs text-grey-mid">Þetta hjálpar eigendum að finna þig eftir staðsetningu.</p>
+                                        <p id={fieldId('areas-hint')} className="text-xs text-grey-mid">Þetta hjálpar eigendum að finna þig eftir staðsetningu.</p>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-charcoal">Lýsing á þjónustu</label>
+                                        <label htmlFor={fieldId('description')} className="text-sm font-medium text-charcoal">Lýsing á þjónustu <span aria-hidden="true">*</span></label>
                                         <textarea
+                                            id={fieldId('description')}
                                             required
                                             rows={4}
                                             className="input w-full"
@@ -217,9 +228,12 @@ export default function ForProvidersPage() {
 
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-charcoal">Netfang</label>
+                                            <label htmlFor={fieldId('email')} className="text-sm font-medium text-charcoal">Netfang <span aria-hidden="true">*</span></label>
                                             <input
+                                                id={fieldId('email')}
                                                 type="email"
+                                                autoComplete="email"
+                                                inputMode="email"
                                                 required
                                                 className="input w-full"
                                                 value={formData.contact_email}
@@ -227,9 +241,12 @@ export default function ForProvidersPage() {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-charcoal">Símanúmer</label>
+                                            <label htmlFor={fieldId('phone')} className="text-sm font-medium text-charcoal">Símanúmer <span aria-hidden="true">*</span></label>
                                             <input
+                                                id={fieldId('phone')}
                                                 type="tel"
+                                                autoComplete="tel"
+                                                inputMode="tel"
                                                 required
                                                 className="input w-full"
                                                 value={formData.contact_phone}
@@ -239,9 +256,12 @@ export default function ForProvidersPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-charcoal">Vefsíða (valfrjálst)</label>
+                                        <label htmlFor={fieldId('website')} className="text-sm font-medium text-charcoal">Vefsíða (valfrjálst)</label>
                                         <input
+                                            id={fieldId('website')}
                                             type="url"
+                                            autoComplete="url"
+                                            inputMode="url"
                                             className="input w-full"
                                             placeholder="https://..."
                                             value={formData.website}
@@ -250,9 +270,11 @@ export default function ForProvidersPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-charcoal">Heimilisfang / Aðsetur</label>
+                                        <label htmlFor={fieldId('address')} className="text-sm font-medium text-charcoal">Heimilisfang / Aðsetur <span aria-hidden="true">*</span></label>
                                         <input
+                                            id={fieldId('address')}
                                             type="text"
+                                            autoComplete="street-address"
                                             required
                                             className="input w-full"
                                             placeholder="t.d. Smiðjuvegur 1, Kópavogur"
@@ -262,13 +284,19 @@ export default function ForProvidersPage() {
                                     </div>
 
                                     <div className="pt-4">
+                                        <div role="alert">
+                                            {formError && <p className="text-sm text-red-700 mb-4 text-center">{formError}</p>}
+                                        </div>
                                         <button
                                             type="submit"
-                                            disabled={loading}
-                                            className="btn btn-primary w-full py-4 text-lg shadow-lg hover:translate-y-[-2px] transition-all"
+                                            aria-busy={loading}
+                                            className="btn btn-primary w-full py-4 text-lg shadow-lg motion-safe:hover:translate-y-[-2px] transition-all"
                                         >
                                             {loading ? (
-                                                <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                                                <span role="status">
+                                                    <Loader2 aria-hidden="true" className="w-6 h-6 animate-spin mx-auto" />
+                                                    <span className="sr-only">Hleð…</span>
+                                                </span>
                                             ) : (
                                                 'Skrá mig frítt á Torgið'
                                             )}

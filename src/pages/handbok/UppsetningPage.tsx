@@ -1,10 +1,8 @@
 import MarketingLayout from '@/components/MarketingLayout';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { BookOpen, ChevronLeft, ArrowRight, CheckCircle, Home as HomeIcon, Settings } from 'lucide-react';
 
 export default function UppsetningPage() {
-    const navigate = useNavigate();
-
     // Steps mirror the four numbered steps actually rendered on this page
     // below (Step 1-4). The page states the whole process takes "innan við
     // 5 mínútur" (under 5 minutes), hence totalTime PT5M.
@@ -63,9 +61,9 @@ export default function UppsetningPage() {
                 <div className="container max-w-4xl mx-auto px-6">
                     <Link
                         to="/handbok"
-                        className="flex items-center text-grey-mid hover:text-amber transition-colors text-sm"
+                        className="flex items-center text-grey-mid hover:text-amber-ink transition-colors text-sm"
                     >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft aria-hidden="true" className="w-4 h-4" />
                         <span>Til baka í handbók</span>
                     </Link>
                 </div>
@@ -76,7 +74,7 @@ export default function UppsetningPage() {
                 <div className="container max-w-4xl mx-auto px-6">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-14 h-14 rounded-full bg-purple-600/10 flex items-center justify-center">
-                            <BookOpen className="w-7 h-7 text-purple-600" />
+                            <BookOpen aria-hidden="true" className="w-7 h-7 text-purple-600" />
                         </div>
                         <h1 className="text-4xl md:text-5xl font-serif font-bold">
                             Hvernig á að setja upp kerfið
@@ -102,7 +100,7 @@ export default function UppsetningPage() {
                             <div className="flex-1">
                                 <h2 className="text-3xl font-serif font-bold mb-3">Stofnaðu aðgang</h2>
                                 <p className="text-lg text-grey-dark leading-relaxed">
-                                    Farðu á <a href="/signup" className="text-amber underline font-medium">bústaðurinn.is/signup</a> og
+                                    Farðu á <a href="/signup" className="text-amber-ink underline font-medium">bústaðurinn.is/signup</a> og
                                     stofnaðu aðgang með netfanginu þínu.
                                 </p>
                             </div>
@@ -110,18 +108,18 @@ export default function UppsetningPage() {
 
                         <div className="pl-22 space-y-4">
                             <div className="bg-stone-50 rounded-lg p-5">
-                                <h4 className="font-bold mb-2">Hvað þarftu:</h4>
+                                <h3 className="text-2xl font-bold mb-2">Hvað þarftu:</h3>
                                 <ul className="space-y-2 text-grey-dark">
                                     <li className="flex items-center gap-2">
-                                        <CheckCircle className="w-4 h-4 text-green-600" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600" />
                                         <span>Netfang</span>
                                     </li>
                                     <li className="flex items-center gap-2">
-                                        <CheckCircle className="w-4 h-4 text-green-600" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600" />
                                         <span>Lykilorð (að minnsta kosti 6 stafir)</span>
                                     </li>
                                     <li className="flex items-center gap-2">
-                                        <CheckCircle className="w-4 h-4 text-green-600" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600" />
                                         <span>Nafn þitt</span>
                                     </li>
                                 </ul>
@@ -130,7 +128,7 @@ export default function UppsetningPage() {
                             <div className="bg-amber/10 rounded-lg p-5 border-l-4 border-amber">
                                 <p className="text-sm text-charcoal">
                                     <strong className="flex items-center gap-1.5">
-                                        <svg className="w-4 h-4 text-amber inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg aria-hidden="true" className="w-4 h-4 text-amber-ink inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                         </svg>
                                         Ábending:
@@ -157,18 +155,18 @@ export default function UppsetningPage() {
 
                         <div className="pl-22 space-y-4">
                             <div className="bg-stone-50 rounded-lg p-5">
-                                <h4 className="font-bold mb-2">Upplýsingar um húsið:</h4>
+                                <h3 className="text-2xl font-bold mb-2">Upplýsingar um húsið:</h3>
                                 <ul className="space-y-2 text-grey-dark">
                                     <li className="flex items-start gap-2">
-                                        <CheckCircle className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
                                         <span><strong>Nafn:</strong> T.d. "Sumarbústaður Jóns" eða "Hús okkar í Hvalfirði"</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <CheckCircle className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
                                         <span><strong>Heimilisfang</strong> (valfrjálst): Gott til að hafa skráð</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <CheckCircle className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
                                         <span><strong>Mynd</strong> (valfrjálst): Hlaða upp mynd af húsinu</span>
                                     </li>
                                 </ul>
@@ -193,7 +191,7 @@ export default function UppsetningPage() {
 
                         <div className="pl-22 space-y-4">
                             <div className="bg-stone-50 rounded-lg p-5">
-                                <h4 className="font-bold mb-2">Hvernig virkar boðið:</h4>
+                                <h3 className="text-2xl font-bold mb-2">Hvernig virkar boðið:</h3>
                                 <ol className="space-y-3 text-grey-dark">
                                     <li className="flex items-start gap-3">
                                         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber/20 text-charcoal font-bold text-sm flex items-center justify-center">1</span>
@@ -213,7 +211,7 @@ export default function UppsetningPage() {
                             <div className="bg-blue-50 rounded-lg p-5 border-l-4 border-blue-500">
                                 <p className="text-sm text-charcoal">
                                     <strong className="flex items-center gap-1.5">
-                                        <svg className="w-4 h-4 text-blue-600 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg aria-hidden="true" className="w-4 h-4 text-blue-600 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                         </svg>
                                         Öryggi:
@@ -241,14 +239,14 @@ export default function UppsetningPage() {
 
                         <div className="pl-22 space-y-4">
                             <div className="bg-stone-50 rounded-lg p-5">
-                                <h4 className="font-bold mb-2">Tvær útgáfur:</h4>
+                                <h3 className="text-2xl font-bold mb-2">Tvær útgáfur:</h3>
                                 <div className="space-y-3 mt-3">
                                     <div className="border-l-4 border-stone-300 pl-4">
-                                        <h5 className="font-bold text-grey-dark">Hver kemur fyrst</h5>
+                                        <h4 className="text-base font-bold mb-0 text-grey-dark">Hver kemur fyrst</h4>
                                         <p className="text-sm text-grey-mid mt-1">Hverjum sem bókar fyrst er úthlutað fyrst. Engin sanngirni.</p>
                                     </div>
                                     <div className="border-l-4 border-amber pl-4">
-                                        <h5 className="font-bold text-amber-900">Sanngirnisregla</h5>
+                                        <h4 className="text-base font-bold mb-0 text-amber-900">Sanngirnisregla</h4>
                                         <p className="text-sm text-grey-dark mt-1">
                                             Fyrir hverja af fjórum stórhelgum (páska, verslunarmannahelgina, jólin, áramótin) reiknar kerfið
                                             forgangsröð: sá sem aldrei hefur haldið helgina — eða hélt hana lengst síðan — fær forgang. Forgangurinn
@@ -276,18 +274,18 @@ export default function UppsetningPage() {
 
                                 <div className="grid md:grid-cols-3 gap-4">
                                     <div className="bg-white rounded-lg p-4 text-center">
-                                        <HomeIcon className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                                        <h4 className="font-bold text-sm">Bókun</h4>
+                                        <HomeIcon aria-hidden="true" className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                                        <h3 className="font-bold text-sm mb-0">Bókun</h3>
                                         <p className="text-xs text-grey-mid mt-1">Skipulagðu dvöl</p>
                                     </div>
                                     <div className="bg-white rounded-lg p-4 text-center">
-                                        <Settings className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                                        <h4 className="font-bold text-sm">Hússjóður</h4>
+                                        <Settings aria-hidden="true" className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                                        <h3 className="font-bold text-sm mb-0">Hússjóður</h3>
                                         <p className="text-xs text-grey-mid mt-1">Haltu utan um kostnað</p>
                                     </div>
                                     <div className="bg-white rounded-lg p-4 text-center">
-                                        <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                                        <h4 className="font-bold text-sm">Verkefni</h4>
+                                        <CheckCircle aria-hidden="true" className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                                        <h3 className="font-bold text-sm mb-0">Verkefni</h3>
                                         <p className="text-xs text-grey-mid mt-1">Skipulagðu viðhald</p>
                                     </div>
                                 </div>
@@ -297,48 +295,48 @@ export default function UppsetningPage() {
 
                     {/* FAQ */}
                     <div className="bg-white rounded-xl p-8">
-                        <h3 className="text-2xl font-serif font-bold mb-6">Algengar spurningar</h3>
+                        <h2 className="text-2xl font-serif font-bold mb-6">Algengar spurningar</h2>
                         <div className="space-y-6">
                             <div>
-                                <h4 className="font-bold mb-2 flex items-center gap-2">
-                                    <svg className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <h3 className="text-base font-bold mb-2 flex items-center gap-2">
+                                    <svg aria-hidden="true" className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                     </svg>
                                     Kostar þetta eitthvað?
-                                </h4>
+                                </h3>
                                 <p className="text-grey-dark">
                                     Nei! Bústaðurinn.is er algjörlega ókeypis. Enginn falinn kostnaður og engin greiðslukort þarf.
                                 </p>
                             </div>
                             <div>
-                                <h4 className="font-bold mb-2 flex items-center gap-2">
-                                    <svg className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <h3 className="text-base font-bold mb-2 flex items-center gap-2">
+                                    <svg aria-hidden="true" className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                     </svg>
                                     Hversu margir eigendur geta verið í sama húsi?
-                                </h4>
+                                </h3>
                                 <p className="text-grey-dark">
                                     Engin takmörk! Þú getur bætt við eins mörgum eigendum og þú vilt.
                                 </p>
                             </div>
                             <div>
-                                <h4 className="font-bold mb-2 flex items-center gap-2">
-                                    <svg className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <h3 className="text-base font-bold mb-2 flex items-center gap-2">
+                                    <svg aria-hidden="true" className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                     </svg>
                                     Virkar þetta í símanum?
-                                </h4>
+                                </h3>
                                 <p className="text-grey-dark">
                                     Já! Bústaðurinn.is virkar í öllum tækjum og virkar vel í símanum, spjaldtölvu og tölvu.
                                 </p>
                             </div>
                             <div>
-                                <h4 className="font-bold mb-2 flex items-center gap-2">
-                                    <svg className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <h3 className="text-base font-bold mb-2 flex items-center gap-2">
+                                    <svg aria-hidden="true" className="w-5 h-5 text-grey-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                     </svg>
                                     Get ég verið með mörg hús?
-                                </h4>
+                                </h3>
                                 <p className="text-grey-dark">
                                     Já! Þú getur verið með ótakmarkaðan fjölda húsa í sama aðgangnum.
                                 </p>
@@ -377,13 +375,13 @@ export default function UppsetningPage() {
                     <p className="text-xl text-stone-300 mb-8">
                         Stofnaðu aðgang og settu upp húsið þitt á 5 mínútum.
                     </p>
-                    <button
-                        onClick={() => navigate('/signup')}
+                    <Link
+                        to="/signup"
                         className="btn btn-primary bg-amber text-charcoal hover:bg-amber/90 px-8 py-4 text-lg inline-flex items-center gap-2"
                     >
                         Byrja núna
-                        <ArrowRight className="w-5 h-5" />
-                    </button>
+                        <ArrowRight aria-hidden="true" className="w-5 h-5" />
+                    </Link>
                 </div>
             </section>
         </MarketingLayout>

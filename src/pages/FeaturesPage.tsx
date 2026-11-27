@@ -310,7 +310,7 @@ export default function FeaturesPage() {
                             <div className="mt-8 flex gap-4 justify-center flex-wrap">
                                 <Link to="/prufa" className="btn btn-primary">
                                     Skoða kerfið í vinnslu
-                                    <ArrowRight className="w-4 h-4 ml-2" />
+                                    <ArrowRight aria-hidden="true" className="w-4 h-4 ml-2" />
                                 </Link>
                                 <Link to="/" className="btn btn-secondary">
                                     Byrja ókeypis</Link>
@@ -318,10 +318,11 @@ export default function FeaturesPage() {
                         </div>
 
                         {/* Feature Grid */}
+                        <h2 className="sr-only">Yfirlit yfir eiginleika</h2>
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
                             {features.map((feature, index) => (
                                 <div key={index} className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                                    <feature.icon className="w-10 h-10 text-amber mb-6" />
+                                    <feature.icon aria-hidden="true" className="w-10 h-10 text-amber-ink mb-6" />
                                     <h3 className="text-xl font-serif mb-3">{feature.title}</h3>
                                     <p className="text-grey-dark leading-relaxed">
                                         {feature.shortDesc}
@@ -337,7 +338,7 @@ export default function FeaturesPage() {
                                     <div className="flex-1">
                                         <div className="flex items-center gap-4 mb-4">
                                             <div className="w-14 h-14 bg-amber/10 rounded-lg flex items-center justify-center">
-                                                <feature.icon className="w-8 h-8 text-amber" />
+                                                <feature.icon aria-hidden="true" className="w-8 h-8 text-amber-ink" />
                                             </div>
                                             <h2 className="text-3xl font-serif">{feature.title}</h2>
                                         </div>
@@ -346,11 +347,11 @@ export default function FeaturesPage() {
                                         </p>
 
                                         <div className="mb-6">
-                                            <h4 className="font-semibold text-charcoal mb-3">Kostir:</h4>
+                                            <h3 className="text-2xl font-semibold text-charcoal mb-3">Kostir:</h3>
                                             <ul className="space-y-2">
                                                 {feature.benefits.map((benefit, i) => (
                                                     <li key={i} className="flex items-start gap-2">
-                                                        <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                                        <CheckCircle2 aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                                                         <span className="text-grey-dark">{benefit}</span>
                                                     </li>
                                                 ))}
@@ -358,11 +359,11 @@ export default function FeaturesPage() {
                                         </div>
 
                                         <div>
-                                            <h4 className="font-semibold text-charcoal mb-3">Dæmi um notkun:</h4>
+                                            <h3 className="text-2xl font-semibold text-charcoal mb-3">Dæmi um notkun:</h3>
                                             <ul className="space-y-2">
                                                 {feature.useCases.map((useCase, i) => (
                                                     <li key={i} className="flex items-start gap-2">
-                                                        <span className="text-amber font-mono">→</span>
+                                                        <span aria-hidden="true" className="text-amber-ink font-mono">→</span>
                                                         <span className="text-grey-dark">{useCase}</span>
                                                     </li>
                                                 ))}
@@ -370,13 +371,17 @@ export default function FeaturesPage() {
                                         </div>
                                     </div>
                                     <div className="flex-1">
-                                        <div className="bg-white rounded-2xl overflow-hidden shadow-2xl border border-stone-100 aspect-video relative group transform hover:scale-[1.02] transition-transform duration-500">
+                                        <div className="bg-white rounded-2xl overflow-hidden shadow-2xl border border-stone-100 aspect-video relative group transform motion-safe:hover:scale-[1.02] transition-transform duration-500">
                                             {feature.MockupComponent ? (
                                                 <feature.MockupComponent />
                                             ) : (
                                                 <img
                                                     src={feature.imageUrl}
-                                                    alt={feature.title}
+                                                    alt={`Skjámynd úr kerfinu: ${feature.title}`}
+                                                    width={1920}
+                                                    height={886}
+                                                    loading="lazy"
+                                                    decoding="async"
                                                     className="w-full h-full object-cover"
                                                 />
                                             )}
@@ -414,24 +419,24 @@ export default function FeaturesPage() {
                             </div>
                             <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-4">
                                 <Link to="/handbok/bokunarkerfi" className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
-                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber transition-colors">Bókunarkerfi fyrir sameignarhús</h3>
+                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber-ink transition-colors">Bókunarkerfi fyrir sameignarhús</h3>
                                     <p className="text-grey-dark text-sm">Hvernig sanngirnisreglan og árekstrarvörnin virka fyrir sumarhús í meðeign.</p>
                                 </Link>
                                 <Link to="/handbok/fjarmal" className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
-                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber transition-colors">Hússjóður og fjármál</h3>
+                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber-ink transition-colors">Hússjóður og fjármál</h3>
                                     <p className="text-grey-dark text-sm">Sameiginlegur reikningur, skipting kostnaðar og utanumhald á hússjóði.</p>
                                 </Link>
                                 <Link to="/handbok/vidhald" className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
-                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber transition-colors">Viðhald og verkefnalisti</h3>
+                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber-ink transition-colors">Viðhald og verkefnalisti</h3>
                                     <p className="text-grey-dark text-sm">Hvernig meðeigendur halda utan um viðhald og sameiginleg verkefni.</p>
                                 </Link>
                                 <Link to="/handbok/uppsetning" className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
-                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber transition-colors">Uppsetning á kerfinu</h3>
+                                    <h3 className="text-lg font-semibold text-charcoal mb-2 group-hover:text-amber-ink transition-colors">Uppsetning á kerfinu</h3>
                                     <p className="text-grey-dark text-sm">Skref-fyrir-skref leiðbeiningar til að koma sumarhúsinu í kerfið.</p>
                                 </Link>
                             </div>
                             <div className="text-center mt-8">
-                                <Link to="/handbok" className="text-amber font-medium hover:underline">Skoða alla handbókina →</Link>
+                                <Link to="/handbok" className="text-amber-ink font-medium hover:underline">Skoða alla handbókina →</Link>
                             </div>
                         </div>
 

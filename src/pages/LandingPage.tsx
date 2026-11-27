@@ -147,14 +147,14 @@ export default function LandingPage() {
                             {/* Badge */}
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8 animate-fade-in">
                                 <div className="inline-flex items-center gap-2 bg-white/60 text-stone-600 border border-stone-200/50 px-4 py-1.5 rounded-full text-xs font-medium backdrop-blur-md shadow-sm">
-                                    <Sparkles className="w-3 h-3 text-amber" />
+                                    <Sparkles aria-hidden="true" className="w-3 h-3 text-amber-ink" />
                                     Ný kynslóð af bústaðakerfi
                                 </div>
                             </div>
 
                             <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-[5.5rem] font-serif font-medium leading-[1.1] mb-8 text-charcoal tracking-tight">
                                 Sumarbústaðurinn, <br />
-                                <span className="text-amber italic">eins og hann á að vera.</span>
+                                <span className="text-amber-ink italic">eins og hann á að vera.</span>
                             </h1>
 
                             <p className="text-xl md:text-2xl mb-10 text-stone-600 leading-relaxed font-light max-w-xl">
@@ -164,10 +164,10 @@ export default function LandingPage() {
                             <div className="flex flex-col sm:flex-row gap-4 mb-12">
                                 <Link
                                     to="/signup"
-                                    className="btn btn-primary bg-charcoal hover:bg-black text-white text-lg px-8 py-4 h-auto shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)] transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 rounded-2xl group border-0"
+                                    className="btn btn-primary bg-charcoal hover:bg-black text-white text-lg px-8 py-4 h-auto shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.2)] transform motion-safe:hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 rounded-2xl group border-0"
                                 >
                                     <div className="bg-white/10 p-2 rounded-full group-hover:bg-amber group-hover:text-charcoal transition-colors">
-                                        <Home className="w-5 h-5" />
+                                        <Home aria-hidden="true" className="w-5 h-5" />
                                     </div>
                                     <div className="text-left">
                                         <div className="text-xs text-white/60 font-medium uppercase tracking-wider">Byrjaðu strax</div>
@@ -179,33 +179,33 @@ export default function LandingPage() {
                                     to="/prufa"
                                     className="btn btn-secondary bg-white/50 backdrop-blur-md border border-white/60 hover:bg-white text-stone-600 hover:text-charcoal text-lg px-8 py-4 h-auto shadow-sm hover:shadow-md transition-all rounded-2xl flex items-center justify-center gap-2"
                                 >
-                                    <Sparkles className="w-5 h-5 opacity-60" />
+                                    <Sparkles aria-hidden="true" className="w-5 h-5 opacity-60" />
                                     Skoða prufu-útgáfu (Engin skráning)
                                 </Link>
                             </div>
 
                             <div className="flex items-center gap-8 text-sm text-stone-500 font-medium border-t border-stone-200/60 pt-8 max-w-md">
                                 <div className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                    <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-500" />
                                     <span>100% ókeypis</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                    <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-500" />
                                     <span>Engin binding</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                    <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-500" />
                                     <span>Virkar í öllum tækjum</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Hero Visual - Phone Mockup */}
-                        <div className="w-full lg:w-1/2 relative perspective-1000 hidden lg:block">
+                        <div aria-hidden="true" className="w-full lg:w-1/2 relative perspective-1000 hidden lg:block">
                             {/* Blobs */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-amber/10 rounded-full blur-3xl -z-10 animate-pulse-slow"></div>
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-amber/10 rounded-full blur-3xl -z-10 motion-safe:animate-pulse-slow"></div>
 
-                            <div className="relative transform rotate-y-[-5deg] rotate-x-[5deg] hover:rotate-0 transition-all duration-700 ease-out z-10">
+                            <div className="relative transform rotate-y-[-5deg] rotate-x-[5deg] motion-safe:hover:rotate-0 transition-all duration-700 ease-out z-10">
                                 {/* Use a placeholder frame if no image, or a nice CSS mock */}
                                 <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[14px] rounded-[2.5rem] h-[600px] w-[300px] shadow-xl">
                                     <div className="w-[148px] h-[18px] bg-gray-800 top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute"></div>
@@ -219,7 +219,7 @@ export default function LandingPage() {
                                             {/* Header */}
                                             <div className="bg-white p-6 pt-12 border-b border-stone-100 flex justify-between items-center">
                                                 <div>
-                                                    <div className="text-xs text-stone-400 font-medium">Bústaðurinn</div>
+                                                    <div className="text-xs text-stone-500 font-medium">Bústaðurinn</div>
                                                     <div className="font-serif font-bold text-xl text-charcoal">Yfirlit</div>
                                                 </div>
                                                 <div className="w-8 h-8 bg-amber/10 rounded-full flex items-center justify-center">
@@ -233,7 +233,7 @@ export default function LandingPage() {
                                                 <div className="bg-white p-4 rounded-xl shadow-sm border border-stone-100">
                                                     <div className="flex justify-between items-start mb-2">
                                                         <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Næsta helgi</span>
-                                                        <span className="text-stone-400 text-xs">3 dagar</span>
+                                                        <span className="text-stone-500 text-xs">3 dagar</span>
                                                     </div>
                                                     <div className="font-bold text-charcoal">Jón & Sigga</div>
                                                     <div className="text-xs text-stone-500 flex items-center gap-1 mt-1">
@@ -250,7 +250,7 @@ export default function LandingPage() {
                                                         </div>
                                                         <div>
                                                             <div className="text-sm font-bold text-stone-600">Klárað verkefni</div>
-                                                            <div className="text-xs text-stone-400 line-through">Mála pallinn</div>
+                                                            <div className="text-xs text-stone-500 line-through">Mála pallinn</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -265,7 +265,7 @@ export default function LandingPage() {
                                 </div>
 
                                 {/* Floating Badges - Outside Phone */}
-                                <div className="absolute -right-12 top-24 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/50 animate-float w-56 z-20">
+                                <div className="absolute -right-12 top-24 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/50 motion-safe:animate-float w-56 z-20">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
                                             <CheckCircle2 size={20} />
@@ -277,7 +277,7 @@ export default function LandingPage() {
                                     </div>
                                 </div>
 
-                                <div className="absolute -left-12 bottom-32 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/50 animate-float-delayed w-64 z-20">
+                                <div className="absolute -left-12 bottom-32 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/50 motion-safe:animate-float-delayed w-64 z-20">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-amber/10 text-amber flex items-center justify-center">
                                             <Shield className="w-5 h-5" />
@@ -290,6 +290,7 @@ export default function LandingPage() {
                                 </div>
                             </div>
                         </div>
+                        <p className="sr-only">Myndskreyting: yfirlitssíða appsins með næstu bókun og kláruðu verkefni.</p>
                     </div>
                 </div>
             </section>
@@ -311,7 +312,7 @@ export default function LandingPage() {
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
                         {features.map((feature, index) => (
                             <div key={index} className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                                <feature.icon className="w-10 h-10 text-amber mb-6" />
+                                <feature.icon aria-hidden="true" className="w-10 h-10 text-amber-ink mb-6" />
                                 <h3 className="text-xl font-serif mb-3">{feature.title}</h3>
                                 <p className="text-grey-dark leading-relaxed">
                                     {feature.description}
@@ -323,10 +324,10 @@ export default function LandingPage() {
                     <div className="text-center">
                         <Link
                             to="/eiginleikar"
-                            className="inline-flex items-center gap-2 text-charcoal font-semibold hover:text-amber transition-colors text-lg group"
+                            className="inline-flex items-center gap-2 text-charcoal font-semibold hover:text-amber-ink transition-colors text-lg group"
                         >
                             Sjá alla eiginleika og skjámyndir
-                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            <ArrowRight aria-hidden="true" className="w-5 h-5 motion-safe:group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </div>
                 </div>
@@ -337,7 +338,7 @@ export default function LandingPage() {
                 <div className="container max-w-6xl mx-auto px-6">
                     <div className="text-center mb-16">
                         <div className="inline-flex items-center gap-2 bg-amber/10 text-amber-800 px-4 py-2 rounded-full text-sm font-bold mb-4">
-                            <Shield className="w-4 h-4" />
+                            <Shield aria-hidden="true" className="w-4 h-4" />
                             <span>Sanngirnisreglan</span>
                         </div>
                         <h2 className="text-4xl md:text-5xl font-serif mb-6">Hvernig virkar "Sanngirni"?</h2>
@@ -354,7 +355,7 @@ export default function LandingPage() {
             <section className="py-24 bg-bone">
                 <div className="container max-w-6xl mx-auto px-6">
                     <div className="text-center mb-16">
-                        <div className="text-amber text-xs font-bold uppercase tracking-widest mb-3">Handbókin</div>
+                        <div className="text-amber-ink text-xs font-bold uppercase tracking-widest mb-3">Handbókin</div>
                         <h2 className="text-4xl md:text-5xl font-serif mb-4">Allt sem þú þarft að vita um sameignina</h2>
                         <p className="text-xl text-grey-dark max-w-2xl mx-auto">
                             Ítarlegar leiðbeiningar um hvernig best er að reka sumarhús í sameign — frá fyrsta degi.
@@ -366,8 +367,8 @@ export default function LandingPage() {
                             to="/handbok/bokunarkerfi"
                             className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group"
                         >
-                            <Calendar className="w-8 h-8 text-amber mb-4" />
-                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber transition-colors">Bókunarkerfi og sanngirni</h3>
+                            <Calendar aria-hidden="true" className="w-8 h-8 text-amber-ink mb-4" />
+                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber-ink transition-colors">Bókunarkerfi og sanngirni</h3>
                             <p className="text-sm text-grey-dark leading-relaxed">
                                 Hvernig meðeigendur skipta stórhelgunum fjórum sín á milli án árekstra.
                             </p>
@@ -377,8 +378,8 @@ export default function LandingPage() {
                             to="/handbok/fjarmal"
                             className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group"
                         >
-                            <TrendingUp className="w-8 h-8 text-amber mb-4" />
-                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber transition-colors">Hússjóður og fjármál</h3>
+                            <TrendingUp aria-hidden="true" className="w-8 h-8 text-amber-ink mb-4" />
+                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber-ink transition-colors">Hússjóður og fjármál</h3>
                             <p className="text-sm text-grey-dark leading-relaxed">
                                 Skipting sameiginlegs kostnaðar, rafmagns og annarra útgjalda milli eigenda.
                             </p>
@@ -388,8 +389,8 @@ export default function LandingPage() {
                             to="/handbok/vidhald"
                             className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group"
                         >
-                            <Settings className="w-8 h-8 text-amber mb-4" />
-                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber transition-colors">Viðhald og árstíðaverk</h3>
+                            <Settings aria-hidden="true" className="w-8 h-8 text-amber-ink mb-4" />
+                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber-ink transition-colors">Viðhald og árstíðaverk</h3>
                             <p className="text-sm text-grey-dark leading-relaxed">
                                 Vor-opnun, vetrarfrágangur og önnur árstíðabundin verkefni í sumarhúsinu.
                             </p>
@@ -399,8 +400,8 @@ export default function LandingPage() {
                             to="/handbok/uppsetning"
                             className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group"
                         >
-                            <Users className="w-8 h-8 text-amber mb-4" />
-                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber transition-colors">Að stofna til sameignar</h3>
+                            <Users aria-hidden="true" className="w-8 h-8 text-amber-ink mb-4" />
+                            <h3 className="font-serif text-lg mb-2 group-hover:text-amber-ink transition-colors">Að stofna til sameignar</h3>
                             <p className="text-sm text-grey-dark leading-relaxed">
                                 Skref fyrir skref leiðbeiningar um að setja upp sameign frá grunni.
                             </p>
@@ -411,12 +412,12 @@ export default function LandingPage() {
 
             {/* Marketplace Promo Section (NEW) */}
             <section className="py-24 bg-charcoal text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516934891124-766723223126?q=80&w=2069')] bg-cover bg-center opacity-10" style={{ contentVisibility: 'auto' }}></div>
+                <div aria-hidden="true" className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516934891124-766723223126?q=80&w=2069')] bg-cover bg-center opacity-10" style={{ contentVisibility: 'auto' }}></div>
                 <div className="container max-w-6xl mx-auto px-6 relative z-10">
                     <div className="flex flex-col md:flex-row items-center gap-12">
                         <div className="w-full md:w-1/2">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber text-charcoal text-sm font-bold mb-6">
-                                <Sparkles className="w-4 h-4" />
+                                <Sparkles aria-hidden="true" className="w-4 h-4" />
                                 <span>Nýtt á Bústaðurinn.is</span>
                             </div>
                             <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight text-white">
@@ -429,15 +430,15 @@ export default function LandingPage() {
 
                             <ul className="space-y-4 mb-10">
                                 <li className="flex items-center gap-3">
-                                    <div className="p-1 rounded bg-amber/20 text-amber"><CheckCircle className="w-5 h-5" /></div>
+                                    <div className="p-1 rounded bg-amber/20 text-amber"><CheckCircle aria-hidden="true" className="w-5 h-5" /></div>
                                     <span className="text-lg">Finndu snjómokstur í þínu hverfi</span>
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <div className="p-1 rounded bg-amber/20 text-amber"><CheckCircle className="w-5 h-5" /></div>
+                                    <div className="p-1 rounded bg-amber/20 text-amber"><CheckCircle aria-hidden="true" className="w-5 h-5" /></div>
                                     <span className="text-lg">Skoðaðu einkunnir og umsagnir</span>
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <div className="p-1 rounded bg-amber/20 text-amber"><CheckCircle className="w-5 h-5" /></div>
+                                    <div className="p-1 rounded bg-amber/20 text-amber"><CheckCircle aria-hidden="true" className="w-5 h-5" /></div>
                                     <span className="text-lg">Hafðu beint samband við verktaka</span>
                                 </li>
                             </ul>
@@ -460,14 +461,15 @@ export default function LandingPage() {
 
                         {/* Visual for Marketplace */}
                         <div className="w-full md:w-1/2">
-                            <div className="card bg-white text-charcoal p-6 transform rotate-2 hover:rotate-0 transition-transform duration-500 shadow-2xl">
+                            <p className="sr-only">Myndskreyting: dæmi um þjónustuaðila á Torginu með einkunnum, til dæmis snjómokstur, þrif og rafvirkja.</p>
+                            <div aria-hidden="true" className="card bg-white text-charcoal p-6 transform rotate-2 motion-safe:hover:rotate-0 transition-transform duration-500 shadow-2xl">
                                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-stone-100">
                                     <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center">
                                         <Home className="w-5 h-5 text-stone-400" />
                                     </div>
                                     <div>
                                         <div className="font-bold">Hverfið mitt</div>
-                                        <div className="text-xs text-stone-400">Grímsnes og Grafningur</div>
+                                        <div className="text-xs text-stone-500">Grímsnes og Grafningur</div>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
@@ -476,7 +478,7 @@ export default function LandingPage() {
                                         { name: 'Bústaðaþrif ehf.', stars: '4.8', job: 'Þrif & Umsjón' },
                                         { name: 'Rafvirkni Suðurlands', stars: '4.9', job: 'Rafvirki' }
                                     ].map((item, i) => (
-                                        <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-stone-50 hover:bg-amber/5 transition-colors border border-transparent hover:border-amber/20 cursor-pointer">
+                                        <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-stone-50 hover:bg-amber/5 transition-colors border border-transparent hover:border-amber/20">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-charcoal text-white flex items-center justify-center font-bold text-sm">
                                                     {item.name[0]}
@@ -539,7 +541,7 @@ export default function LandingPage() {
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 md:w-96 md:h-96 bg-amber/20 rounded-full blur-3xl z-0"></div>
 
                             {/* Phone Mockup Frame (CSS) */}
-                            <div className="relative z-10 mx-auto w-[280px] md:w-[320px] aspect-[9/19.5] bg-charcoal rounded-[3rem] p-3 shadow-2xl ring-8 ring-charcoal/10 transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
+                            <div aria-hidden="true" className="relative z-10 mx-auto w-[280px] md:w-[320px] aspect-[9/19.5] bg-charcoal rounded-[3rem] p-3 shadow-2xl ring-8 ring-charcoal/10 transform rotate-[-2deg] motion-safe:hover:rotate-0 transition-transform duration-500">
                                 {/* Speaker/Sensors */}
                                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-charcoal rounded-b-2xl z-20"></div>
 
@@ -589,7 +591,7 @@ export default function LandingPage() {
                                                     <div className="w-4 h-4 rounded border-2 border-[#e8b058] flex items-center justify-center"></div>
                                                     <div className="flex-1">
                                                         <p className="text-xs font-bold text-[#1a1a1a]">Klippa grasið</p>
-                                                        <p className="text-[10px] text-stone-400">Jón Jónsson</p>
+                                                        <p className="text-[10px] text-stone-500">Jón Jónsson</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-3 p-3">
@@ -597,7 +599,7 @@ export default function LandingPage() {
                                                         <CheckSquare size={10} className="text-stone-300" />
                                                     </div>
                                                     <div className="flex-1">
-                                                        <p className="text-xs font-bold text-stone-400 line-through">Mála pallinn</p>
+                                                        <p className="text-xs font-bold text-stone-500 line-through">Mála pallinn</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -616,6 +618,7 @@ export default function LandingPage() {
                                     </div>
                                 </div>
                             </div>
+                            <p className="sr-only">Myndskreyting: forsíða appsins í síma með næstu bókun og verkefnalista.</p>
                         </div>
 
                         {/* Text Content */}
@@ -630,37 +633,37 @@ export default function LandingPage() {
                             <ul className="space-y-6">
                                 <li className="flex items-start gap-4 group">
                                     <div className="mt-1 w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center shrink-0 group-hover:bg-amber group-hover:text-charcoal transition-colors">
-                                        <CheckCircle className="w-5 h-5 text-amber group-hover:text-inherit" />
+                                        <CheckCircle aria-hidden="true" className="w-5 h-5 text-amber-ink group-hover:text-inherit" />
                                     </div>
                                     <div>
-                                        <h4 className="text-lg font-bold mb-1">Settu sumarhúsið á símann þinn</h4>
+                                        <h3 className="text-lg font-bold mb-1">Settu sumarhúsið á símann þinn</h3>
                                         <p className="text-stone-500">Bættu Bústaðnum á heimaskjáinn þinn á augabragði. Engin þörf á App Store – virkar eins og app, beint í gegnum vafrann.</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-4 group">
                                     <div className="mt-1 w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center shrink-0 group-hover:bg-amber group-hover:text-charcoal transition-colors">
-                                        <CheckCircle className="w-5 h-5 text-amber group-hover:text-inherit" />
+                                        <CheckCircle aria-hidden="true" className="w-5 h-5 text-amber-ink group-hover:text-inherit" />
                                     </div>
                                     <div>
-                                        <h4 className="text-lg font-bold mb-1">Rauntíma tilkynningar</h4>
+                                        <h3 className="text-lg font-bold mb-1">Rauntíma tilkynningar</h3>
                                         <p className="text-stone-500">Fáðu tilkynningu um leið og einhver bókar næstu helgi, bætir við á innkaupalistann eða þegar nýtt verkefni er stofnað.</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-4 group">
                                     <div className="mt-1 w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center shrink-0 group-hover:bg-amber group-hover:text-charcoal transition-colors">
-                                        <CheckCircle className="w-5 h-5 text-amber group-hover:text-inherit" />
+                                        <CheckCircle aria-hidden="true" className="w-5 h-5 text-amber-ink group-hover:text-inherit" />
                                     </div>
                                     <div>
-                                        <h4 className="text-lg font-bold mb-1">Allt á hreinu á staðnum</h4>
+                                        <h3 className="text-lg font-bold mb-1">Allt á hreinu á staðnum</h3>
                                         <p className="text-stone-500">Skráðu komu, athugaðu veðurspána eða finndu WiFi lykilorðið með einum smelli þegar þú mætir í bústaðinn.</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-4 group">
                                     <div className="mt-1 w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center shrink-0 group-hover:bg-amber group-hover:text-charcoal transition-colors">
-                                        <CheckCircle className="w-5 h-5 text-amber group-hover:text-inherit" />
+                                        <CheckCircle aria-hidden="true" className="w-5 h-5 text-amber-ink group-hover:text-inherit" />
                                     </div>
                                     <div>
-                                        <h4 className="text-lg font-bold mb-1">Virkar líka ótengt</h4>
+                                        <h3 className="text-lg font-bold mb-1">Virkar líka ótengt</h3>
                                         <p className="text-stone-500">Dagatal, verkefni og innkaupalisti eru læsileg þó ekkert netsamband sé í bústaðnum — breytingar samstillast sjálfkrafa þegar samband næst á ný.</p>
                                     </div>
                                 </li>
@@ -672,7 +675,7 @@ export default function LandingPage() {
                                     className="btn btn-primary text-lg px-8 py-4 flex items-center gap-2 group"
                                 >
                                     Byrjaðu að nota kerfið
-                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    <ArrowRight aria-hidden="true" className="w-5 h-5 motion-safe:group-hover:translate-x-1 transition-transform" />
                                 </Link>
                             </div>
                         </div>
@@ -687,7 +690,7 @@ export default function LandingPage() {
                     <p className="text-center text-grey-mid mb-16 max-w-2xl mx-auto">Bústaðurinn.is er ókeypis og opið öllum. Enginn falinn kostnaður, engin áskrift, engin binding.</p>
 
                     <div className="max-w-2xl mx-auto">
-                        <div className="card relative ring-4 ring-amber transform hover:-translate-y-1 transition-transform bg-white overflow-hidden">
+                        <div className="card relative ring-4 ring-amber transform motion-safe:hover:-translate-y-1 transition-transform bg-white overflow-hidden">
                             <div className="text-center mb-8 pt-4">
                                 <h3 className="text-2xl font-serif mb-2">Allir eiginleikar</h3>
                                 <div className="flex flex-col items-center">
@@ -700,27 +703,27 @@ export default function LandingPage() {
 
                             <ul className="space-y-4 mb-8">
                                 <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <CheckCircle aria-hidden="true" className="w-5 h-5 text-amber-ink flex-shrink-0" />
                                     <span className="font-bold">Ótakmarkaður fjöldi notenda</span>
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <CheckCircle aria-hidden="true" className="w-5 h-5 text-amber-ink flex-shrink-0" />
                                     <span>Bókunardagatal og sanngirnisregla</span>
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <CheckCircle aria-hidden="true" className="w-5 h-5 text-amber-ink flex-shrink-0" />
                                     <span>Hússjóður og fjármálayfirlit</span>
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <CheckCircle aria-hidden="true" className="w-5 h-5 text-amber-ink flex-shrink-0" />
                                     <span>Verkefnastjórnun og tilkynningar</span>
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <CheckCircle aria-hidden="true" className="w-5 h-5 text-amber-ink flex-shrink-0" />
                                     <span>Veðurviðvaranir og gestaaðgangur</span>
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-amber flex-shrink-0" />
+                                    <CheckCircle aria-hidden="true" className="w-5 h-5 text-amber-ink flex-shrink-0" />
                                     <span>Gátlistar, árbók og virkar ótengt (offline)</span>
                                 </li>
                             </ul>
@@ -754,7 +757,7 @@ export default function LandingPage() {
                                 <span className="w-full border-t border-stone-200" />
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="px-4 bg-bone text-stone-400 uppercase tracking-widest font-bold">Eða fylgstu með nýjungum</span>
+                                <span className="px-4 bg-bone text-stone-500 uppercase tracking-widest font-bold">Eða fylgstu með nýjungum</span>
                             </div>
                         </div>
                     </div>
@@ -798,7 +801,7 @@ export default function LandingPage() {
                     </div>
 
                     <div className="text-center mt-12">
-                        <a href="/spurt-og-svarad" className="text-amber hover:underline font-medium">
+                        <a href="/spurt-og-svarad" className="text-amber-ink hover:underline font-medium">
                             Sjá allar spurningar og svör →
                         </a>
                     </div>

@@ -67,10 +67,10 @@ export default function VibersPage() {
                 <meta name="robots" content="noindex, nofollow" />
             </Helmet>
 
-            <div className="max-w-2xl mx-auto px-6 py-16 md:py-24">
+            <main id="main" className="max-w-2xl mx-auto px-6 py-16 md:py-24">
                 {/* Header */}
-                <p className="text-amber font-bold text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span className="w-8 h-0.5 bg-amber inline-block"></span>
+                <p className="text-amber-ink font-bold text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span aria-hidden="true" className="w-8 h-0.5 bg-amber inline-block"></span>
                     Leynisíða — bara fyrir ykkur
                 </p>
                 <h1 className="font-serif text-4xl md:text-5xl font-bold mb-6">
@@ -89,8 +89,8 @@ export default function VibersPage() {
                 <div className="space-y-10">
                     {sections.map(({ icon: Icon, title, text }) => (
                         <div key={title} className="flex gap-4">
-                            <div className="w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center flex-shrink-0 text-amber mt-1">
-                                <Icon size={18} />
+                            <div className="w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center flex-shrink-0 text-amber-ink mt-1">
+                                <Icon size={18} aria-hidden="true" />
                             </div>
                             <div>
                                 <h2 className="font-serif font-bold text-xl mb-2">{title}</h2>
@@ -104,15 +104,15 @@ export default function VibersPage() {
                 <div className="mt-16 pt-8 border-t border-stone-200 text-stone-500 text-sm leading-relaxed space-y-3">
                     <p>
                         Allt þetta er þegar komið í loftið á{' '}
-                        <a href="https://bustadurinn.is" className="text-amber font-bold hover:underline">bustadurinn.is</a>
+                        <a href="https://bustadurinn.is" className="text-amber-ink font-bold hover:underline">bustadurinn.is</a>
                         {' '}— og kerfið er og verður ókeypis.
                     </p>
                     <p className="flex items-center gap-2">
-                        <Coffee size={16} className="text-amber" />
+                        <Coffee size={16} aria-hidden="true" className="text-amber-ink" />
                         <span>Kær kveðja, Claude — gervigreind með veikan blett fyrir íslenskum sumarbústöðum.</span>
                     </p>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

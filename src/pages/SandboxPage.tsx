@@ -3,9 +3,10 @@
  * A fully functional "Demo Mode" running on local state.
  */
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
+import Modal from '@/components/ui/Modal';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addDays } from 'date-fns';
 import { is } from 'date-fns/locale';
@@ -77,6 +78,7 @@ const SandboxCalendar = ({ onUnlockRequest }: { onUnlockRequest: (feature: strin
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-serif font-bold text-charcoal">Bókunardagatal</h2>
                 <button
+                    type="button"
                     onClick={() => onUnlockRequest('Ný Bókun')}
                     className="btn btn-primary"
                 >
@@ -110,9 +112,9 @@ const SandboxCalendar = ({ onUnlockRequest }: { onUnlockRequest: (feature: strin
                     }}
                     eventPropGetter={(event: any) => ({
                         style: {
-                            backgroundColor: event.type === 'rental' ? '#10b981' : '#e8b058',
+                            backgroundColor: event.type === 'rental' ? '#047857' : '#e8b058',
                             borderRadius: '4px',
-                            color: 'white',
+                            color: event.type === 'rental' ? 'white' : '#1a1a1a',
                             border: '0px',
                             display: 'block'
                         }
@@ -136,7 +138,7 @@ const SandboxFinance = ({ onUnlockRequest }: { onUnlockRequest: (feature: string
         <div className="max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-serif font-bold text-charcoal">Fjármál</h2>
-                <button onClick={handleAdd} className="btn btn-primary">Skrá færslu</button>
+                <button type="button" onClick={handleAdd} className="btn btn-primary">Skrá færslu</button>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -162,7 +164,7 @@ const SandboxFinance = ({ onUnlockRequest }: { onUnlockRequest: (feature: string
             <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
                 <div className="p-4 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                     <h3 className="font-semibold text-charcoal">Færsluyfirlit</h3>
-                    <button className="text-sm text-amber font-medium">Sækja Excel</button>
+                    <button type="button" className="text-sm text-amber-ink font-medium">Sækja Excel</button>
                 </div>
                 <div className="divide-y divide-stone-100">
                     {entries.map(entry => (
@@ -170,7 +172,7 @@ const SandboxFinance = ({ onUnlockRequest }: { onUnlockRequest: (feature: string
                             <div className="flex items-center gap-4">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${entry.type === 'income' ? 'bg-green-100 text-green-600' : 'bg-red-50 text-red-500'
                                     }`}>
-                                    <DollarSign className="w-5 h-5" />
+                                    <DollarSign aria-hidden="true" className="w-5 h-5" />
                                 </div>
                                 <div>
                                     <p className="font-medium text-charcoal">{entry.description}</p>
@@ -207,34 +209,42 @@ const SandboxTasks = ({ onUnlockRequest }: { onUnlockRequest: (feature: string) 
                 </div>
                 <div className="divide-y divide-stone-100">
                     {tasks.map(task => (
-                        <div key={task.id} className="p-4 flex items-center gap-4 hover:bg-stone-50 cursor-pointer" onClick={() => toggleTask(task.id)}>
-                            <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${task.status === 'done' ? 'bg-green-500 border-green-500' : 'border-stone-300'
+                        <button
+                            type="button"
+                            role="checkbox"
+                            aria-checked={task.status === 'done'}
+                            key={task.id}
+                            className="w-full p-4 flex items-center gap-4 text-left hover:bg-stone-50"
+                            onClick={() => toggleTask(task.id)}
+                        >
+                            <span className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${task.status === 'done' ? 'bg-green-500 border-green-500' : 'border-stone-300'
                                 }`}>
-                                {task.status === 'done' && <CheckSquare className="w-4 h-4 text-white" />}
-                            </div>
-                            <div className="flex-1">
-                                <p className={`font-medium ${task.status === 'done' ? 'line-through text-stone-400' : 'text-charcoal'}`}>
+                                {task.status === 'done' && <CheckSquare aria-hidden="true" className="w-4 h-4 text-white" />}
+                            </span>
+                            <span className="flex-1">
+                                <span className={`block font-medium ${task.status === 'done' ? 'line-through text-stone-500' : 'text-charcoal'}`}>
                                     {task.title}
-                                </p>
+                                </span>
                                 {task.assignee && (
-                                    <p className="text-xs text-stone-500 mt-0.5">Ábyrgð: {task.assignee}</p>
+                                    <span className="block text-xs text-stone-500 mt-0.5">Ábyrgð: {task.assignee}</span>
                                 )}
-                            </div>
-                            <div className={`px-2 py-1 rounded text-xs font-medium ${task.status === 'done' ? 'bg-green-100 text-green-700' :
+                            </span>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${task.status === 'done' ? 'bg-green-100 text-green-700' :
                                 task.status === 'in_progress' ? 'bg-amber/10 text-amber-dark' :
                                     'bg-stone-100 text-stone-600'
                                 }`}>
                                 {task.status === 'done' ? 'Lokið' : task.status === 'in_progress' ? 'Í vinnslu' : 'Óunnið'}
-                            </div>
-                        </div>
+                            </span>
+                        </button>
                     ))}
                 </div>
                 <div className="p-4 bg-stone-50 border-t border-stone-200">
                     <button
+                        type="button"
                         onClick={() => {
                             onUnlockRequest('Stofna nýtt verkefni');
                         }}
-                        className="text-amber font-medium text-sm hover:underline"
+                        className="text-amber-ink font-medium text-sm hover:underline"
                     >
                         + Bæta við verkefni
                     </button>
@@ -249,28 +259,33 @@ const SandboxUsers = ({ onUnlockRequest }: { onUnlockRequest: (feature: string) 
             <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-serif font-bold text-charcoal">Fjölskyldan</h2>
                 <button
+                    type="button"
                     onClick={() => onUnlockRequest('Bjóða Fjölskyldunni')}
                     className="btn btn-secondary flex items-center gap-2"
                 >
-                    <Plus size={16} />
-                    Bjóða meðeiganda <Shield size={14} className="text-amber" />
+                    <Plus size={16} aria-hidden="true" />
+                    Bjóða meðeiganda <Shield size={14} aria-hidden="true" className="text-amber-ink" />
                 </button>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden relative">
                 {/* Locked Overlay */}
-                <div className="absolute inset-0 bg-stone-50/40 backdrop-blur-sm z-10 flex items-center justify-center p-8 text-center cursor-pointer" onClick={() => onUnlockRequest('Fjölskyldan & Meðeigendur')}>
-                    <div className="bg-white/90 p-8 rounded-2xl shadow-xl border border-stone-100 max-w-sm hover:scale-105 transition-transform duration-300">
-                        <Users className="w-12 h-12 text-amber mx-auto mb-4" />
-                        <h4 className="text-xl font-bold mb-2">Læstur eiginleiki</h4>
-                        <p className="text-stone-500 text-sm mb-6">
+                <button
+                    type="button"
+                    className="absolute inset-0 bg-stone-50/40 backdrop-blur-sm z-10 flex items-center justify-center p-8 text-center cursor-pointer"
+                    onClick={() => onUnlockRequest('Fjölskyldan & Meðeigendur')}
+                >
+                    <span className="block bg-white/90 p-8 rounded-2xl shadow-xl border border-stone-100 max-w-sm motion-safe:hover:scale-105 transition-transform duration-300">
+                        <Users aria-hidden="true" className="w-12 h-12 text-amber-ink mx-auto mb-4" />
+                        <span className="block text-xl font-bold mb-2">Læstur eiginleiki</span>
+                        <span className="block text-stone-500 text-sm mb-6">
                             Í alvöru kerfinu geturðu fjölgað eigendum og fjölskyldumeðlimum að vild, algjörlega án takmarkana.
-                        </p>
-                        <button className="btn btn-primary w-full pointer-events-none">Sjá meira</button>
-                    </div>
-                </div>
+                        </span>
+                        <span className="btn btn-primary w-full">Sjá meira</span>
+                    </span>
+                </button>
 
-                <div className="p-6 space-y-6 opacity-30">
+                <div aria-hidden="true" className="p-6 space-y-6 opacity-30">
                     <div className="flex items-center justify-between py-4 border-b border-stone-100">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-full bg-stone-200"></div>
@@ -313,13 +328,15 @@ const MenuLink = ({
     onClick: (id: any) => void
 }) => (
     <button
+        type="button"
+        aria-current={isActive ? 'page' : undefined}
         onClick={() => onClick(id)}
         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium mb-1 ${isActive
             ? 'bg-amber text-charcoal shadow-sm'
             : 'text-stone-400 hover:text-white hover:bg-charcoal-light'
             }`}
     >
-        <Icon size={20} />
+        <Icon size={20} aria-hidden="true" />
         {label}
     </button>
 );
@@ -327,10 +344,23 @@ const MenuLink = ({
 // --- Main Page Component ---
 
 export default function SandboxPage() {
-    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'calendar' | 'finance' | 'tasks' | 'users' | 'settings'>('calendar');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [unlockModal, setUnlockModal] = useState<{ isOpen: boolean; feature: string }>({ isOpen: false, feature: '' });
+    const sidebarToggleRef = useRef<HTMLButtonElement>(null);
+
+    // Close the mobile menu with Escape and return focus to the toggle
+    useEffect(() => {
+        if (!sidebarOpen) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setSidebarOpen(false);
+                sidebarToggleRef.current?.focus();
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [sidebarOpen]);
 
     const handleUnlockRequest = (feature: string) => {
         setUnlockModal({ isOpen: true, feature });
@@ -339,19 +369,25 @@ export default function SandboxPage() {
     return (
         <div className="flex h-screen bg-bone font-sans overflow-hidden">
             <SEO title="Prufa Bústaðurinn.is — Gagnvirkt dæmi" noIndex={true} />
+            <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[300] focus:bg-charcoal focus:text-white focus:px-4 focus:py-2 focus:rounded"
+            >
+                Fara beint í efni
+            </a>
             {/* Sidebar (Mocking the real one) */}
-            <aside className={`
-                fixed inset-y-0 left-0 z-40 w-64 bg-charcoal text-white transform transition-transform duration-300 ease-in-out
-                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            <aside id="sandbox-sidebar" className={`
+                fixed inset-y-0 left-0 z-40 w-64 bg-charcoal text-white transform transition-[transform,visibility] duration-300 ease-in-out
+                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full max-md:invisible md:translate-x-0'}
             `}>
                 <div className="p-6">
-                    <h1 className="text-2xl font-serif text-amber italic tracking-wide">bústaðurinn</h1>
+                    <p className="text-2xl font-serif text-amber italic tracking-wide">bústaðurinn</p>
                     <div className="mt-2 text-[10px] bg-amber/20 text-amber inline-block px-2 py-0.5 rounded uppercase tracking-wider font-semibold">
                         Prufu-hamur
                     </div>
                 </div>
 
-                <nav className="px-3 mt-6">
+                <nav aria-label="Prufuvalmynd" className="px-3 mt-6">
                     <MenuLink id="calendar" icon={Calendar} label="Dagatal" isActive={activeTab === 'calendar'} onClick={setActiveTab} />
                     <MenuLink id="finance" icon={DollarSign} label="Fjármál" isActive={activeTab === 'finance'} onClick={setActiveTab} />
                     <MenuLink id="tasks" icon={CheckSquare} label="Verkefni" isActive={activeTab === 'tasks'} onClick={setActiveTab} />
@@ -369,32 +405,41 @@ export default function SandboxPage() {
                             <p className="text-xs text-stone-400 truncate">Prufuaðgangur</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => navigate('/signup')}
+                    <Link
+                        to="/signup"
                         className="w-full btn bg-white text-charcoal hover:bg-stone-100 flex items-center justify-center gap-2"
                     >
-                        <UserIcon size={16} />
+                        <UserIcon size={16} aria-hidden="true" />
                         Stofna aðgang
-                    </button>
-                    <button
-                        onClick={() => navigate('/')}
-                        className="w-full mt-2 text-xs text-stone-500 hover:text-stone-300 text-center"
+                    </Link>
+                    <Link
+                        to="/"
+                        className="block w-full mt-2 py-1 text-xs text-stone-400 hover:text-stone-300 text-center"
                     >
                         Hætta í prufu
-                    </button>
+                    </Link>
                 </div>
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 md:ml-64 flex flex-col h-full overflow-hidden relative">
+            <main id="main" className="flex-1 md:ml-64 flex flex-col h-full overflow-hidden relative">
+                <h1 className="sr-only">Prufu-hamur Bústaðurinn.is</h1>
 
                 {/* Mobile Header */}
                 <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-stone-200">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-charcoal">
-                            <Menu size={24} />
+                        <button
+                            ref={sidebarToggleRef}
+                            type="button"
+                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                            className="p-2 text-charcoal"
+                            aria-label={sidebarOpen ? 'Loka valmynd' : 'Opna valmynd'}
+                            aria-expanded={sidebarOpen}
+                            aria-controls="sandbox-sidebar"
+                        >
+                            <Menu size={24} aria-hidden="true" />
                         </button>
-                        <h1 className="font-serif text-lg">Prufu-hamur</h1>
+                        <p className="font-serif text-lg">Prufu-hamur</p>
                     </div>
                 </header>
 
@@ -403,7 +448,7 @@ export default function SandboxPage() {
                     {/* Floating Info Banner */}
                     <div className="bg-blue-50 border border-blue-100 text-blue-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3 shadow-sm max-w-4xl mx-auto">
                         <div className="bg-blue-100 p-1 rounded-full mt-0.5">
-                            <Bell size={16} />
+                            <Bell size={16} aria-hidden="true" />
                         </div>
                         <div>
                             <p className="text-sm font-medium">Velkomin(n) í sandkassann!</p>
@@ -412,9 +457,9 @@ export default function SandboxPage() {
                                 Engar breytingar vistast varanlega.
                             </p>
                         </div>
-                        <button onClick={() => navigate('/signup')} className="ml-auto text-xs font-bold underline whitespace-nowrap hidden md:block">
+                        <Link to="/signup" className="ml-auto text-xs font-bold underline whitespace-nowrap hidden md:block">
                             Stofna alvöru aðgang →
-                        </button>
+                        </Link>
                     </div>
 
                     {/* View Rendering */}
@@ -424,42 +469,41 @@ export default function SandboxPage() {
                         {activeTab === 'tasks' && <SandboxTasks onUnlockRequest={handleUnlockRequest} />}
                         {activeTab === 'users' && <SandboxUsers onUnlockRequest={handleUnlockRequest} />}
                         {activeTab === 'settings' && (
-                            <div className="text-center py-20 cursor-pointer hover:bg-white/50 rounded-2xl transition-colors p-8" onClick={() => handleUnlockRequest('Stillingar Hússins')}>
-                                <Settings className="w-16 h-16 text-amber mx-auto mb-4" />
+                            <div className="text-center py-20 hover:bg-white/50 rounded-2xl transition-colors p-8">
+                                <Settings aria-hidden="true" className="w-16 h-16 text-amber-ink mx-auto mb-4" />
                                 <h2 className="text-xl font-bold text-charcoal">Stillingar hússins</h2>
                                 <p className="text-stone-500 max-w-md mx-auto mt-2 mb-6">
                                     Hér myndir þú stilla WiFi lykilorð, húsreglur og upplýsingar sem gestir þínir sjá strax í símanum sínum.
                                 </p>
-                                <button className="btn btn-primary pointer-events-none">Prófa alvöru kerfið</button>
+                                <button type="button" onClick={() => handleUnlockRequest('Stillingar Hússins')} className="btn btn-primary">Prófa alvöru kerfið</button>
                             </div>
                         )}
                     </div>
                     
                     {/* Unlock Modal */}
-                    {unlockModal.isOpen && (
-                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in" onClick={() => setUnlockModal({ isOpen: false, feature: '' })}>
-                            <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                                <button onClick={() => setUnlockModal({ isOpen: false, feature: '' })} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-stone-400 hover:text-stone-600 rounded-full hover:bg-stone-100">
-                                    ✕
+                    <Modal
+                        open={unlockModal.isOpen}
+                        onClose={() => setUnlockModal({ isOpen: false, feature: '' })}
+                        title={`Opnaðu ${unlockModal.feature}`}
+                        size="md"
+                        footer={
+                            <>
+                                <button type="button" onClick={() => setUnlockModal({ isOpen: false, feature: '' })} className="btn btn-ghost py-3 text-stone-600">
+                                    Skoða áfram sýnishornið
                                 </button>
-                                <div className="w-16 h-16 bg-amber/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Sparkles className="w-8 h-8 text-amber" />
-                                </div>
-                                <h3 className="text-2xl font-serif font-bold text-center mb-4">Opnaðu {unlockModal.feature}</h3>
-                                <p className="text-stone-600 text-center mb-8 leading-relaxed">
-                                    Þetta er sýnishorn af kerfinu. Ef þú stofnar ókeypis aðgang núna geturðu byrjað á að leika þér með kerfið sjálft fyrir þinn bústað.
-                                </p>
-                                <div className="space-y-3">
-                                    <button onClick={() => navigate('/signup')} className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark w-full py-4 text-lg border-0">
-                                        Stofna ókeypis aðgang
-                                    </button>
-                                    <button onClick={() => setUnlockModal({ isOpen: false, feature: '' })} className="btn btn-ghost w-full py-4 text-stone-500">
-                                        Skoða áfram sýnishornið
-                                    </button>
-                                </div>
-                            </div>
+                                <Link to="/signup" className="btn btn-primary bg-amber text-charcoal hover:bg-amber-dark py-3 border-0">
+                                    Stofna ókeypis aðgang
+                                </Link>
+                            </>
+                        }
+                    >
+                        <div className="w-16 h-16 bg-amber/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Sparkles aria-hidden="true" className="w-8 h-8 text-amber-ink" />
                         </div>
-                    )}
+                        <p className="text-stone-600 text-center leading-relaxed">
+                            Þetta er sýnishorn af kerfinu. Ef þú stofnar ókeypis aðgang núna geturðu byrjað á að leika þér með kerfið sjálft fyrir þinn bústað.
+                        </p>
+                    </Modal>
 
                     {/* Conversion Footer Banner */}
                     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-auto md:min-w-[500px] z-50">
@@ -469,16 +513,16 @@ export default function SandboxPage() {
 
                             <div className="flex-1">
                                 <p className="text-amber text-xs font-bold uppercase tracking-widest mb-1">Einfaldara líf í sumar</p>
-                                <h4 className="text-lg font-serif font-bold">Prófaðu kerfið frítt í 30 daga</h4>
+                                <h2 className="text-lg font-serif font-bold text-white mb-0">Prófaðu kerfið frítt í 30 daga</h2>
                                 <p className="text-stone-400 text-xs mt-1">Bættu við fjölskyldunni og sjáðu hvort þetta hentar ykkur. Engin skuldbinding.</p>
                             </div>
 
-                            <button
-                                onClick={() => navigate('/signup')}
-                                className="w-full md:w-auto btn bg-amber text-charcoal hover:bg-amber-dark font-bold px-8 py-3 rounded-xl shadow-[0_0_20px_rgba(232,176,88,0.3)] transition-all transform hover:scale-105 border-0"
+                            <Link
+                                to="/signup"
+                                className="w-full md:w-auto btn bg-amber text-charcoal hover:bg-amber-dark font-bold px-8 py-3 rounded-xl shadow-[0_0_20px_rgba(232,176,88,0.3)] transition-all transform motion-safe:hover:scale-105 border-0"
                             >
                                 Stofna ókeypis aðgang
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -487,8 +531,10 @@ export default function SandboxPage() {
 
             {/* Overlay for mobile sidebar */}
             {sidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                <button
+                    type="button"
+                    aria-label="Loka valmynd"
+                    className="fixed inset-0 bg-black/50 z-30 md:hidden cursor-default"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}

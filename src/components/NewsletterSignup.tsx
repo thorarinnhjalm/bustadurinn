@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { CheckCircle, ArrowRight, Loader2, Mail } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface NewsletterSignupProps {
     variant?: 'compact' | 'full';
@@ -32,7 +33,7 @@ export default function NewsletterSignup({ variant = 'full' }: NewsletterSignupP
             setStatus('success');
             setEmail('');
         } catch (err: any) {
-            console.error('Newsletter Error:', err);
+            logger.error('Newsletter Error:', err);
             setError('Eitthvað fór úrskeiðis. Vinsamlegast reyndu aftur.');
             setStatus('error');
         }
@@ -40,9 +41,9 @@ export default function NewsletterSignup({ variant = 'full' }: NewsletterSignupP
 
     if (status === 'success') {
         return (
-            <div className="flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-                <CheckCircle className="w-12 h-12 text-green-500 mb-4" />
-                <h4 className="text-xl font-bold text-charcoal mb-2">Takk fyrir!</h4>
+            <div role="status" className="flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+                <CheckCircle aria-hidden="true" className="w-12 h-12 text-green-500 mb-4" />
+                <h3 className="text-xl font-bold text-charcoal mb-2">Takk fyrir!</h3>
                 <p className="text-stone-500">Við höfum móttekið skráninguna þína.</p>
             </div>
         );
@@ -50,25 +51,31 @@ export default function NewsletterSignup({ variant = 'full' }: NewsletterSignupP
 
     if (variant === 'compact') {
         return (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" aria-busy={status === 'loading'}>
                 <div className="relative group">
                     <input
                         type="email"
                         required
+                        aria-label="Netfang"
+                        autoComplete="email"
+                        inputMode="email"
                         placeholder="Netfangið þitt"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3.5 text-white placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber/50 focus:bg-white/15 transition-all duration-300"
                     />
                     <button
+                        type="submit"
                         disabled={status === 'loading'}
                         className="absolute right-2 top-2 p-2 bg-amber text-charcoal rounded-lg hover:bg-amber-dark transition-all duration-300 disabled:opacity-50 shadow-lg active:scale-95"
                         aria-label="Skrá mig"
                     >
-                        {status === 'loading' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+                        {status === 'loading' ? <Loader2 aria-hidden="true" className="w-5 h-5 animate-spin" /> : <ArrowRight aria-hidden="true" className="w-5 h-5" />}
                     </button>
                 </div>
-                {error && <p className="text-red-300 text-xs font-medium animate-shake text-center">{error}</p>}
+                <div role="alert">
+                    {error && <p className="text-red-300 text-xs font-medium motion-safe:animate-shake text-center">{error}</p>}
+                </div>
                 <p className="text-[10px] text-stone-300 text-center opacity-70 tracking-wide font-medium">
                     Enginn ruslpóstur. Hægt er að afskrá sig hvenær sem er.
                 </p>
@@ -82,7 +89,7 @@ export default function NewsletterSignup({ variant = 'full' }: NewsletterSignupP
 
             <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
                 <div className="w-16 h-16 bg-amber/10 rounded-2xl flex items-center justify-center shrink-0">
-                    <Mail className="w-8 h-8 text-amber" />
+                    <Mail aria-hidden="true" className="w-8 h-8 text-amber-ink" />
                 </div>
 
                 <div className="flex-1 text-center md:text-left">
@@ -91,24 +98,30 @@ export default function NewsletterSignup({ variant = 'full' }: NewsletterSignupP
                         Fáðu hagnýt ráð um rekstur sumarhúsa og tilkynningar þegar við bætum við nýjum eiginleikum.
                     </p>
 
-                    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+                    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3" aria-busy={status === 'loading'}>
                         <input
                             type="email"
                             required
+                            aria-label="Netfang"
+                            autoComplete="email"
+                            inputMode="email"
                             placeholder="Netfangið þitt"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="input flex-1"
                         />
                         <button
+                            type="submit"
                             disabled={status === 'loading'}
                             className="btn btn-primary whitespace-nowrap px-8"
                         >
-                            {status === 'loading' ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
+                            {status === 'loading' ? <Loader2 aria-hidden="true" className="w-5 h-5 animate-spin mr-2" /> : null}
                             Skrá mig
                         </button>
                     </form>
-                    {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
+                    <div role="alert">
+                        {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
+                    </div>
                 </div>
             </div>
         </div>

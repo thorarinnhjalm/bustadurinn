@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Star, X, Loader2 } from 'lucide-react';
+import React, { useId, useState } from 'react';
+import { Star, Loader2 } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { logger } from '@/utils/logger';
@@ -18,12 +19,21 @@ export default function ReviewModal({ provider, onClose, onReviewSubmitted }: Re
     const [hoverRating, setHoverRating] = useState(0);
     const [comment, setComment] = useState('');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const formId = useId();
+    const commentId = useId();
+    const ratingLabelId = useId();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (rating === 0) return;
+        if (loading) return;
+        if (rating === 0) {
+            setError('Veldu einkunn með því að smella á stjörnu.');
+            return;
+        }
         if (!currentUser) return;
 
+        setError('');
         setLoading(true);
 
         try {
@@ -33,7 +43,7 @@ export default function ReviewModal({ provider, onClose, onReviewSubmitted }: Re
             const reviewRef = doc(db, 'service_reviews', `${provider.id}_${currentUser.uid}`);
             const existing = await getDoc(reviewRef);
             if (existing.exists()) {
-                alert('Þú hefur þegar gefið þessum þjónustuaðila umsögn.');
+                setError('Þú hefur þegar gefið þessum þjónustuaðila umsögn.');
                 return;
             }
             await setDoc(reviewRef, {
@@ -49,67 +59,80 @@ export default function ReviewModal({ provider, onClose, onReviewSubmitted }: Re
             onClose();
         } catch (error) {
             logger.error('Error submitting review:', error);
-            alert('Villa kom upp við að senda inn umsögn.');
+            setError('Villa kom upp við að senda inn umsögn.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
+        <Modal
+            open
+            onClose={onClose}
+            title="Gefðu einkunn"
+            size="md"
+            footer={
                 <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-stone-400 hover:text-charcoal transition-colors"
+                    type="submit"
+                    form={formId}
+                    aria-busy={loading}
+                    className="btn btn-primary w-full py-3"
                 >
-                    <X size={24} />
+                    {loading ? (
+                        <span role="status">
+                            <Loader2 aria-hidden="true" className="w-5 h-5 animate-spin mx-auto" />
+                            <span className="sr-only">Hleð…</span>
+                        </span>
+                    ) : 'Senda umsögn'}
                 </button>
+            }
+        >
+            <p className="text-grey-mid mb-6">Hvernig var þjónustan hjá {provider.name}?</p>
 
-                <h3 className="text-2xl font-serif font-bold text-charcoal mb-2">Gefðu einkunn</h3>
-                <p className="text-grey-mid mb-6">Hvernig var þjónustan hjá {provider.name}?</p>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="flex justify-center gap-2">
+            <form id={formId} onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                    <p id={ratingLabelId} className="sr-only">Einkunn</p>
+                    <div role="group" aria-labelledby={ratingLabelId} className="flex justify-center gap-2">
                         {[1, 2, 3, 4, 5].map((star) => (
                             <button
                                 key={star}
                                 type="button"
+                                aria-label={`${star} af 5 stjörnum`}
+                                aria-pressed={rating === star}
                                 onClick={() => setRating(star)}
                                 onMouseEnter={() => setHoverRating(star)}
                                 onMouseLeave={() => setHoverRating(0)}
-                                className="p-1 transition-transform hover:scale-110 focus:outline-none"
+                                className="p-1 transition-transform motion-safe:hover:scale-110"
                             >
                                 <Star
                                     size={32}
+                                    aria-hidden="true"
                                     className={`${star <= (hoverRating || rating)
-                                        ? 'fill-amber text-amber'
+                                        ? 'fill-amber text-amber-ink'
                                         : 'text-stone-300'
                                         } transition-colors`}
                                 />
                             </button>
                         ))}
                     </div>
+                </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-charcoal">Umsögn (valfrjálst)</label>
-                        <textarea
-                            className="input w-full min-h-[100px]"
-                            placeholder="Segðu okkur frá upplifun þinni..."
-                            value={comment}
-                            maxLength={1000}
-                            onChange={(e) => setComment(e.target.value)}
-                        />
-                    </div>
+                <div className="space-y-2">
+                    <label htmlFor={commentId} className="text-sm font-medium text-charcoal">Umsögn (valfrjálst)</label>
+                    <textarea
+                        id={commentId}
+                        className="input w-full min-h-[100px]"
+                        placeholder="Segðu okkur frá upplifun þinni..."
+                        value={comment}
+                        maxLength={1000}
+                        onChange={(e) => setComment(e.target.value)}
+                    />
+                </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading || rating === 0}
-                        className="btn btn-primary w-full py-3"
-                    >
-                        {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Senda umsögn'}
-                    </button>
-                </form>
-            </div>
-        </div>
+                <div role="alert">
+                    {error && <p className="text-sm text-red-700">{error}</p>}
+                </div>
+            </form>
+        </Modal>
     );
 }

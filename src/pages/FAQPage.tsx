@@ -109,19 +109,29 @@ export default function FAQPage() {
                     <div className="space-y-4">
                         {faqs.map((faq, index) => (
                             <div key={index} className="border border-grey-warm rounded-lg overflow-hidden">
-                                <button
-                                    onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                                    className="w-full flex justify-between items-center p-6 text-left hover:bg-bone transition-colors"
-                                >
-                                    <span className="font-medium text-lg text-charcoal pr-8">{faq.q}</span>
-                                    {openIndex === index ? (
-                                        <Minus className="w-5 h-5 text-amber flex-shrink-0" />
-                                    ) : (
-                                        <Plus className="w-5 h-5 text-grey-mid flex-shrink-0" />
-                                    )}
-                                </button>
+                                <h2 className="mb-0 text-base font-sans font-normal tracking-normal">
+                                    <button
+                                        type="button"
+                                        id={`faq-q-${index}`}
+                                        aria-expanded={openIndex === index}
+                                        aria-controls={`faq-a-${index}`}
+                                        onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                                        className="w-full flex justify-between items-center p-6 text-left hover:bg-bone transition-colors"
+                                    >
+                                        <span className="font-medium text-lg text-charcoal pr-8">{faq.q}</span>
+                                        {openIndex === index ? (
+                                            <Minus aria-hidden="true" className="w-5 h-5 text-amber-ink flex-shrink-0" />
+                                        ) : (
+                                            <Plus aria-hidden="true" className="w-5 h-5 text-grey-mid flex-shrink-0" />
+                                        )}
+                                    </button>
+                                </h2>
 
                                 <div
+                                    id={`faq-a-${index}`}
+                                    role="region"
+                                    aria-labelledby={`faq-q-${index}`}
+                                    inert={openIndex !== index}
                                     className={`overflow-hidden transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                                         }`}
                                 >
@@ -134,9 +144,9 @@ export default function FAQPage() {
                     </div>
 
                     <div className="mt-16 text-center bg-bone p-8 rounded-xl">
-                        <h3 className="text-xl font-serif mb-2">Fannstu ekki svarið?</h3>
+                        <h2 className="text-xl font-serif mb-2">Fannstu ekki svarið?</h2>
                         <p className="text-grey-dark mb-4">Sendu okkur línu og við svörum um hæl.</p>
-                        <a href="mailto:hall@bustadurinn.is" className="text-amber hover:text-amber-dark font-medium underline underline-offset-4">
+                        <a href="mailto:hall@bustadurinn.is" className="text-amber-ink hover:text-amber-dark font-medium underline underline-offset-4">
                             hafa samband
                         </a>
                     </div>
@@ -156,7 +166,7 @@ export default function FAQPage() {
                             className="btn btn-primary bg-amber text-charcoal hover:bg-amber/90 px-8 py-4 text-lg inline-flex items-center gap-2"
                         >
                             Skoða handbók
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                         </Link>

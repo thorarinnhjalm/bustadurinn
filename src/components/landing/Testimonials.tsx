@@ -17,7 +17,7 @@ export default function Testimonials({ loading = false }: TestimonialsProps) {
         <section className="hidden md:block py-24 bg-charcoal border-b border-stone-800 relative overflow-hidden">
             {/* Decor */}
             <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
-                <Quote size={200} color="white" />
+                <Quote size={200} color="white" aria-hidden="true" />
             </div>
 
             <div className="container mx-auto px-6 relative z-10">
@@ -34,7 +34,8 @@ export default function Testimonials({ loading = false }: TestimonialsProps) {
                         width="100%" 
                         height="280px" 
                         style={{ border: 'none', overflow: 'hidden' }}
-                        title="Umsagnir"
+                        title="Umsagnir notenda"
+                        loading="lazy"
                     ></iframe>
                 </div>
             </div>

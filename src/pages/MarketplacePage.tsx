@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useId, useState, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import MarketingLayout from '@/components/MarketingLayout';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -11,6 +11,7 @@ import ReviewModal from '@/components/marketplace/ReviewModal';
 import ProviderContactActions from '@/components/marketplace/ProviderContactActions';
 import { useAppStore } from '@/store/appStore';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import Modal from '@/components/ui/Modal';
 import { logger } from '@/utils/logger';
 
 const CATEGORIES = [
@@ -32,6 +33,7 @@ export default function MarketplacePage() {
     const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
     const [searchArea, setSearchArea] = useState(searchParams.get('area') || '');
     const [reviewingProvider, setReviewingProvider] = useState<ServiceProvider | null>(null);
+    const areaInputId = useId();
 
     useEffect(() => {
         const fetchProviders = async () => {
@@ -161,10 +163,11 @@ export default function MarketplacePage() {
                 <div className="max-w-6xl mx-auto">
                     {isAuthenticated && (
                         <button
+                            type="button"
                             onClick={() => navigate('/')}
                             className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors mb-6 text-sm font-bold"
                         >
-                            <ArrowLeft size={16} />
+                            <ArrowLeft size={16} aria-hidden="true" />
                             Til baka á yfirlit
                         </button>
                     )}
@@ -180,8 +183,10 @@ export default function MarketplacePage() {
 
                     <div className="flex flex-col md:flex-row gap-4 bg-white/10 p-4 rounded-xl border border-white/10 backdrop-blur-md">
                         <div className="flex-1 relative">
-                            <MapPin className="absolute left-3 top-3 text-stone-400 w-5 h-5" />
+                            <MapPin aria-hidden="true" className="absolute left-3 top-3 text-stone-400 w-5 h-5" />
+                            <label htmlFor={areaInputId} className="sr-only">Staðsetning bústaðarins</label>
                             <input
+                                id={areaInputId}
                                 type="text"
                                 placeholder="Hvar er bústaðurinn? (t.d. Grímsnes)"
                                 className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-black/20 border border-white/20 text-white placeholder-stone-400 focus:outline-none focus:border-amber/50 focus:bg-black/40 transition-all"
@@ -190,17 +195,19 @@ export default function MarketplacePage() {
                             />
                         </div>
 
-                        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+                        <div role="group" aria-label="Flokkar þjónustu" className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
                             {CATEGORIES.map(cat => (
                                 <button
                                     key={cat.id}
+                                    type="button"
+                                    aria-pressed={selectedCategory === cat.id}
                                     onClick={() => setSelectedCategory(cat.id)}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all border ${selectedCategory === cat.id
                                         ? 'bg-amber text-charcoal border-amber font-bold shadow-lg shadow-amber/20'
                                         : 'bg-black/20 text-stone-300 border-white/10 hover:bg-white/10'
                                         }`}
                                 >
-                                    <cat.icon className="w-4 h-4" />
+                                    <cat.icon aria-hidden="true" className="w-4 h-4" />
                                     {cat.label}
                                 </button>
                             ))}
@@ -213,17 +220,18 @@ export default function MarketplacePage() {
             <div className="bg-bone min-h-[600px] py-12 px-6">
                 <div className="max-w-6xl mx-auto">
                     {loading ? (
-                        <div className="text-center py-20 text-grey-mid">Hleð þjónustuaðilum...</div>
+                        <div role="status" className="text-center py-20 text-grey-mid">Hleð þjónustuaðilum...</div>
                     ) : filteredProviders.length === 0 ? (
                         <div className="text-center py-20">
                             <div className="w-16 h-16 bg-stone-200 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-400">
-                                <Search className="w-8 h-8" />
+                                <Search aria-hidden="true" className="w-8 h-8" />
                             </div>
-                            <h3 className="text-xl font-bold text-charcoal mb-2">Engir aðilar fundust</h3>
+                            <h2 className="text-xl font-bold text-charcoal mb-2">Engir aðilar fundust</h2>
                             <p className="text-grey-mid">Prófaðu að víkka leitina eða velja annan flokk.</p>
                             <button
+                                type="button"
                                 onClick={() => { setSearchArea(''); setSelectedCategory('all'); }}
-                                className="mt-6 text-amber hover:underline font-medium"
+                                className="mt-6 text-amber-ink hover:underline font-medium"
                             >
                                 Hreinsa síu
                             </button>
@@ -234,19 +242,21 @@ export default function MarketplacePage() {
                                 <div key={provider.id} className="card hover:shadow-xl transition-all duration-300 group">
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <h3 className="text-xl font-bold text-charcoal group-hover:text-amber-700 transition-colors">
+                                            <h2 className="text-xl font-bold text-charcoal group-hover:text-amber-700 transition-colors">
                                                 {provider.name}
-                                            </h3>
-                                            <div className="flex items-center gap-1 text-sm text-amber mt-1">
-                                                <Star className="w-4 h-4 fill-current" />
+                                            </h2>
+                                            <div className="flex items-center gap-1 text-sm text-amber-ink mt-1">
+                                                <Star aria-hidden="true" className="w-4 h-4 fill-current" />
+                                                <span className="sr-only">Einkunn:</span>
                                                 <span className="font-bold">{(provider.rating_avg || 0).toFixed(1)}</span>
                                                 <span className="text-grey-mid font-normal">({provider.rating_count} umsagnir)</span>
                                             </div>
                                         </div>
                                         <div className="p-2 bg-stone-100 rounded-lg text-stone-500">
                                             {CATEGORIES.find(c => c.id === provider.category)?.icon &&
-                                                React.createElement(CATEGORIES.find(c => c.id === provider.category)!.icon, { size: 20 })
+                                                React.createElement(CATEGORIES.find(c => c.id === provider.category)!.icon, { size: 20, 'aria-hidden': true })
                                             }
+                                            <span className="sr-only">{CATEGORIES.find(c => c.id === provider.category)?.label}</span>
                                         </div>
                                     </div>
 
@@ -257,7 +267,7 @@ export default function MarketplacePage() {
                                     <div className="flex flex-wrap gap-2 mb-6">
                                         {provider.service_areas.slice(0, 3).map((area, i) => (
                                             <span key={i} className="text-xs bg-bg-bone px-2 py-1 rounded text-stone-600 flex items-center gap-1">
-                                                <MapPin className="w-3 h-3" /> {area}
+                                                <MapPin aria-hidden="true" className="w-3 h-3" /> {area}
                                             </span>
                                         ))}
                                         {provider.service_areas.length > 3 && (
@@ -270,8 +280,9 @@ export default function MarketplacePage() {
                                             <div className="flex gap-3">
                                                 <ProviderContactActions provider={provider} />
                                                 <button
+                                                    type="button"
                                                     onClick={() => setReviewingProvider(provider)}
-                                                    className="px-3 py-2 text-sm font-medium text-amber hover:bg-amber/10 rounded-lg transition-colors"
+                                                    className="px-3 py-2 text-sm font-medium text-amber-ink hover:bg-amber/10 rounded-lg transition-colors"
                                                 >
                                                     Gefðu einkunn
                                                 </button>
@@ -280,6 +291,7 @@ export default function MarketplacePage() {
                                             <div className="text-center">
                                                 <p className="text-sm text-grey-mid mb-2">Skráðu þig inn til að sjá upplýsingar</p>
                                                 <button
+                                                    type="button"
                                                     onClick={() => navigate('/login')}
                                                     className="btn btn-outline w-full py-2 text-sm"
                                                 >
@@ -297,22 +309,23 @@ export default function MarketplacePage() {
 
             {reviewingProvider && (
                 <ErrorBoundary fallback={
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setReviewingProvider(null)} />
-                        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-                            <div className="text-center">
-                                <div className="text-4xl mb-4">⚠️</div>
-                                <h3 className="font-serif font-bold text-xl mb-2">Villa kom upp</h3>
-                                <p className="text-stone-600 mb-4">Ekki tókst að hlaða umsagnarglugga</p>
-                                <button
-                                    onClick={() => setReviewingProvider(null)}
-                                    className="btn btn-primary"
-                                >
-                                    Loka
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <Modal
+                        open
+                        onClose={() => setReviewingProvider(null)}
+                        title="Villa kom upp"
+                        size="md"
+                        footer={
+                            <button
+                                type="button"
+                                onClick={() => setReviewingProvider(null)}
+                                className="btn btn-primary"
+                            >
+                                Loka
+                            </button>
+                        }
+                    >
+                        <p className="text-stone-600">Ekki tókst að hlaða umsagnarglugga</p>
+                    </Modal>
                 }>
                     <ReviewModal
                         provider={reviewingProvider}
