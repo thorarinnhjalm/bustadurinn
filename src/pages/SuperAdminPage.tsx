@@ -6,13 +6,13 @@
 import { Fragment, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    LayoutDashboard, Home, Users, BarChart2, Mail, Tag, FileSearch, Settings, Send,
+    LayoutDashboard, Home, Users, BarChart2, Mail, FileSearch, Settings, Send,
     Database, LogOut, Trash2, CheckCircle, AlertTriangle,
     XCircle, RefreshCw, Loader2, Shield, Activity, Reply, Star,
     Edit, MapPin, UserCog, Zap, Building2, Eye, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { db, auth } from '@/lib/firebase';
-import { collection, getDocs, getDoc, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, setDoc, query, where, limit } from 'firebase/firestore';
+import { collection, collectionGroup, getCountFromServer, getDocs, getDoc, deleteDoc, doc, updateDoc, setDoc, query, where, limit } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
@@ -27,7 +27,7 @@ import { logger } from '@/utils/logger';
 import { feedbackService } from '@/services/feedbackService';
 import { getAllOrganizations } from '@/services/organizationService';
 
-import type { House, User, Coupon, ContactSubmission, Feedback, ServiceProvider, Organization } from '@/types/models';
+import type { House, User, ContactSubmission, Feedback, ServiceProvider, Organization } from '@/types/models';
 
 interface EmailTemplate {
     id: string; // 'welcome', 'inactive_engagement'
@@ -58,7 +58,6 @@ interface Stats {
     allUsers: User[];
     allBookings: any[]; // Booking data for BI dashboard
     allContacts: ContactSubmission[];
-    allCoupons: Coupon[];
     allSubscribers: NewsletterSubscriber[];
     allFeedback: Feedback[];
     allProviders: ServiceProvider[];
@@ -77,7 +76,7 @@ export default function SuperAdminPage() {
     const [dataSubTab, setDataSubTab] = useState<'houses' | 'users' | 'organizations' | 'providers'>('houses');
     const [communicationsSubTab, setCommunicationsSubTab] = useState<'contacts' | 'emails' | 'newsletter' | 'feedback'>('contacts');
     const [analyticsSubTab, setAnalyticsSubTab] = useState<'bi' | 'analytics'>('bi');
-    const [systemSubTab, setSystemSubTab] = useState<'audit' | 'integrations' | 'coupons'>('audit');
+    const [systemSubTab, setSystemSubTab] = useState<'audit' | 'integrations'>('audit');
 
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
@@ -99,14 +98,6 @@ export default function SuperAdminPage() {
         setCurrentHouse(house);
         navigate('/dashboard');
     };
-
-    const [newCoupon, setNewCoupon] = useState({
-        code: '',
-        discount_type: 'percent',
-        discount_value: 0,
-        description: '',
-        max_uses: 0
-    });
 
     const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
     const [addressSearchTimer, setAddressSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
@@ -131,7 +122,6 @@ export default function SuperAdminPage() {
         allUsers: [],
         allBookings: [],
         allContacts: [],
-        allCoupons: [],
         allSubscribers: [],
         allFeedback: [],
         allProviders: [],
@@ -145,7 +135,7 @@ export default function SuperAdminPage() {
             const list = snap.docs.map(d => ({ id: d.id, ...d.data() })) as EmailTemplate[];
             setTemplates(list);
         } catch (e) {
-            console.error("Fetch templates error:", e);
+            logger.error('Fetch templates error:', e);
         }
     };
 
@@ -168,31 +158,52 @@ export default function SuperAdminPage() {
                     const snap = await getDocs(query(collection(db, collName), limit(maxDocs)));
                     return snap;
                 } catch (e: any) {
-                    console.error(`Error fetching ${collName}:`, e);
-                    warnings.push(`Gat ekki sótt gögn fyrir "${collName}": ${e.message || 'Óþekkt villa'}`);
+                    logger.error(`Error fetching ${collName}:`, e);
+                    warnings.push(`Gat ekki sótt gögn fyrir "${collName}"`);
                     return null;
                 }
             };
 
-            const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, couponsSnap, subSnap, feedbackSnap, providersSnap, organizationsData, sandboxVisitsSnap] = await Promise.all([
+            // Bookings and tasks live in houses/{id}/bookings|tasks, so they are read with
+            // collection-group queries (super-admin-only rules).
+            const safeFetchGroup = async (groupName: string, maxDocs: number) => {
+                try {
+                    return await getDocs(query(collectionGroup(db, groupName), limit(maxDocs)));
+                } catch (e: any) {
+                    logger.error(`Error fetching collection group ${groupName}:`, e);
+                    warnings.push(`Gat ekki sótt gögn fyrir "${groupName}"`);
+                    return null;
+                }
+            };
+            const bookingsCount = getCountFromServer(collectionGroup(db, 'bookings'))
+                .then((c) => c.data().count)
+                .catch((e) => {
+                    logger.error('Error counting bookings:', e);
+                    warnings.push('Gat ekki talið bókanir');
+                    return null;
+                });
+
+            const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, subSnap, feedbackSnap, providersSnap, organizationsData, sandboxVisitsSnap] = await Promise.all([
                 safeFetch('houses'),
                 safeFetch('users'),
-                safeFetch('bookings', 500),
-                safeFetch('tasks', 500),
+                safeFetchGroup('bookings', 500),
+                safeFetchGroup('tasks', 2000),
                 safeFetch('contact_submissions', 500),
-                safeFetch('coupons', 200),
                 safeFetch('newsletter_subscribers', 2000),
                 safeFetch('feedback', 500),
                 safeFetch('service_providers', 500),
                 getAllOrganizations().catch((e) => {
-                    warnings.push(`Gat ekki sótt gögn fyrir "organizations": ${e.message}`);
+                    logger.error('Error fetching organizations:', e);
+                    warnings.push('Gat ekki sótt gögn fyrir "organizations"');
                     return [];
                 }),
                 getDocs(query(collection(db, 'funnel_events'), where('event_name', '==', 'sandbox_visited'), limit(1000))).catch((e) => {
-                    warnings.push(`Gat ekki sótt funnel_events: ${e.message}`);
+                    logger.error('Error fetching funnel_events:', e);
+                    warnings.push('Gat ekki sótt funnel_events');
                     return null;
                 })
             ]);
+            const totalBookingsCount = await bookingsCount;
 
             const users = usersSnap?.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User)) || [];
             const activeTasks = tasksSnap?.docs.filter(doc => doc.data().status !== 'completed').length || 0;
@@ -202,12 +213,6 @@ export default function SuperAdminPage() {
                 ...doc.data(),
                 created_at: doc.data().created_at?.toDate() || new Date()
             } as ContactSubmission)) || [];
-            const coupons = couponsSnap?.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                created_at: (doc.data().created_at as any)?.toDate() || new Date(),
-                valid_until: (doc.data().valid_until as any)?.toDate() || undefined
-            } as Coupon)) || [];
             const subscribers = subSnap?.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
@@ -229,7 +234,7 @@ export default function SuperAdminPage() {
             const newStats: Stats = {
                 totalHouses: houses.length,
                 totalUsers: users.length,
-                totalBookings: bookingsSnap?.size || 0,
+                totalBookings: totalBookingsCount ?? bookingsSnap?.size ?? 0,
                 totalSubscribers: subSnap?.size || 0,
                 totalProviders: providersSnap?.size || 0,
                 totalOrganizations: organizationsData.length || 0,
@@ -239,7 +244,6 @@ export default function SuperAdminPage() {
                 allUsers: users,
                 allBookings: bookings,
                 allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
-                allCoupons: coupons,
                 allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
                 allFeedback: feedback.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
                 allProviders: providersSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceProvider)) || [],
@@ -250,11 +254,11 @@ export default function SuperAdminPage() {
 
             if (warnings.length > 0) setFetchWarnings(warnings);
             if (!housesSnap && !usersSnap && warnings.length > 0) {
-                console.warn("Critical core collections failed to load.");
+                logger.warn('Critical core collections failed to load.');
             }
         } catch (error: any) {
-            console.error('Global fetch stats error:', error);
-            setError(error.message || 'Failed to load data');
+            logger.error('Global fetch stats error:', error);
+            setError('Ekki tókst að sækja gögn. Reyndu aftur.');
         } finally {
             setLoading(false);
         }
@@ -303,7 +307,7 @@ export default function SuperAdminPage() {
         const house = stats.allHouses.find(h => h.id === houseId);
         if (!house) return;
 
-        const confirmText = `EYÐA "${house.name}"?\n\nÞETTA EYÐIR:\n- Húsinu\n- Öllum bókunum\n- Öllum verkefnum\n- Innkaupalistanum\n- Öllum log færslum\n\nÞetta er ÓAFTURKRÆFT!\n\nSkrifaðu nafn hússins til að sta staðfesta:`;
+        const confirmText = `EYÐA "${house.name}"?\n\nÞETTA EYÐIR:\n- Húsinu\n- Öllum bókunum, verkefnum, fjármálum og innkaupalistanum\n- Gestatenglum, boðum, gestabók og tilkynningum\n- Húsinu af notendum\n\nÞetta er ÓAFTURKRÆFT!\n\nSkrifaðu nafn hússins til að sta staðfesta:`;
         const userInput = prompt(confirmText);
 
         if (userInput !== house.name) {
@@ -313,18 +317,19 @@ export default function SuperAdminPage() {
 
         setActionLoading(houseId);
         try {
-            // Delete all related data
-            const collections = ['bookings', 'tasks', 'shopping_list', 'internal_logs', 'finance_entries'];
+            const token = await auth.currentUser?.getIdToken();
+            if (!token) throw new Error('Not authenticated');
 
-            for (const collectionName of collections) {
-                const q = query(collection(db, collectionName), where('house_id', '==', houseId));
-                const snapshot = await getDocs(q);
-                const deletePromises = snapshot.docs.map(docSnap => deleteDoc(doc(db, collectionName, docSnap.id)));
-                await Promise.all(deletePromises);
-            }
-
-            // Delete the house itself
-            await deleteDoc(doc(db, 'houses', houseId));
+            const res = await fetch('/api/admin-delete-house', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ houseId })
+            });
+            if (!res.ok) throw new Error(`Delete house failed (${res.status})`);
+            const result = await res.json().catch(() => ({}));
 
             // Update local state
             setStats(prev => ({
@@ -332,11 +337,12 @@ export default function SuperAdminPage() {
                 totalHouses: prev.totalHouses - 1,
                 allHouses: prev.allHouses.filter(h => h.id !== houseId)
             }));
+            statsCache = null;
 
-            alert('✅ Húsinu og öllum gögnum eytt!');
+            alert(`✅ Húsinu og tengdum gögnum var eytt (bókanir, verkefni, fjármál, innkaupalisti, gestatenglar, boð o.fl.).${result?.note ? `\n\n${result.note}` : ''}`);
         } catch (error: any) {
-            console.error('Error deleting house:', error);
-            alert(`❌ Villa: ${error.message}`);
+            logger.error('Error deleting house:', error);
+            alert('❌ Ekki tókst að eyða húsinu. Sumum gögnum gæti hafa verið eytt að hluta. Athugaðu stöðuna og reyndu aftur.');
         } finally {
             setActionLoading(null);
         }
@@ -350,8 +356,7 @@ export default function SuperAdminPage() {
                 name: houseData.name,
                 address: houseData.address,
                 location: houseData.location || { lat: 0, lng: 0 },
-                manager_id: houseData.manager_id,
-                subscription_status: houseData.subscription_status
+                manager_id: houseData.manager_id
             });
             setStats(prev => ({
                 ...prev,
@@ -360,8 +365,8 @@ export default function SuperAdminPage() {
             setEditingHouse(null);
             alert('Hús uppfært!');
         } catch (e: any) {
-            console.error(e);
-            alert('Villa við að uppfæra hús: ' + e.message);
+            logger.error('Error updating house:', e);
+            alert('Villa við að uppfæra hús. Reyndu aftur.');
         } finally {
             setActionLoading(null);
         }
@@ -383,7 +388,7 @@ export default function SuperAdminPage() {
                 const results = await searchHMSAddresses(val);
                 setAddressSuggestions(results);
             } catch (e) {
-                console.error(e);
+                logger.error(e);
             }
         }, 300);
         setAddressSearchTimer(timer);
@@ -484,7 +489,7 @@ export default function SuperAdminPage() {
             await fetchTemplates();
             alert('Templates seeded!');
         } catch (e) {
-            console.error(e);
+            logger.error(e);
             alert('Error seeding');
         } finally {
             setLoading(false);
@@ -545,7 +550,7 @@ export default function SuperAdminPage() {
                 throw new Error(errorMsg);
             }
         } catch (error: any) {
-            console.error('Test email error:', error);
+            logger.error('Test email error:', error);
             alert(`❌ Villa: ${error.message}`);
         } finally {
             setActionLoading(null);
@@ -574,10 +579,10 @@ export default function SuperAdminPage() {
                         userHouse = { id: houseSnap.id, ...houseSnap.data() } as House;
                         logger.debug('Loaded user house:', userHouse.name);
                     } else {
-                        console.warn('House not found:', houseId);
+                        logger.warn('House not found:', houseId);
                     }
                 } catch (fetchError) {
-                    console.error('Error fetching user house:', fetchError);
+                    logger.error('Error fetching user house:', fetchError);
                     // Continue anyway - user might not have a house
                 }
             }
@@ -609,7 +614,7 @@ export default function SuperAdminPage() {
             // Navigate to their dashboard
             navigate('/dashboard');
         } catch (error: any) {
-            console.error('Impersonation error:', error);
+            logger.error('Impersonation error:', error);
             alert('Failed to impersonate user: ' + error.message);
         } finally {
             setActionLoading(null);
@@ -663,7 +668,7 @@ export default function SuperAdminPage() {
 
             alert('✅ Notanda eytt!');
         } catch (error: any) {
-            console.error('Error deleting user:', error);
+            logger.error('Error deleting user:', error);
             alert(`❌ Villa: ${error.message}`);
         } finally {
             setActionLoading(null);
@@ -678,7 +683,7 @@ export default function SuperAdminPage() {
             await updateUserNameInAllCollections(user.uid, user.name, user.house_ids || []);
             alert('✅ User name synced successfully across all collections.');
         } catch (error: any) {
-            console.error('Error syncing name:', error);
+            logger.error('Error syncing name:', error);
             alert(`❌ Error: ${error.message}`);
         } finally {
             setActionLoading(null);
@@ -695,18 +700,24 @@ export default function SuperAdminPage() {
             // Assuming /api/send-email handles a 'html' property if provided, or we use a generic 'reply_template'.
             // For now, let's assume valid implementation or generic handling.
 
+            const token = await auth.currentUser?.getIdToken();
+            if (!token) throw new Error('Not authenticated');
+
             const res = await fetch('/api/admin-send-reply', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     to: replyingTo.email,
                     subject: `Sv: Erindi frá Bústaðurinn.is`,
                     text: replyText,
-                    originalMessage: replyingTo.message
+                    submissionId: replyingTo.id
                 })
             });
 
-            if (!res.ok) throw new Error('Failed to send email via API');
+            if (!res.ok) throw new Error(`Send reply failed (${res.status})`);
 
             // 2. Update Firestore
             const reply = {
@@ -755,8 +766,8 @@ export default function SuperAdminPage() {
             alert('✅ Svar sent!');
 
         } catch (error: any) {
-            console.error('Reply error:', error);
-            alert('Mistókst að senda svar: ' + error.message);
+            logger.error('Reply error:', error);
+            alert('Mistókst að senda svar. Pósturinn var ekki sendur eða svarið vistaðist ekki. Reyndu aftur.');
         } finally {
             setActionLoading(null);
         }
@@ -766,7 +777,7 @@ export default function SuperAdminPage() {
         if (!confirm(`Senda 'Finish Setup' póst á ${user.email}?`)) return;
         setActionLoading(`recovery-${user.uid}`);
         try {
-            await fetch('/api/send-email', {
+            const res = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -780,9 +791,10 @@ export default function SuperAdminPage() {
                     }
                 })
             });
+            if (!res.ok) throw new Error(`send-email failed (${res.status})`);
             alert('Póstur sendur!');
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             alert('Mistókst að senda póst.');
         } finally {
             setActionLoading(null);
@@ -800,7 +812,7 @@ export default function SuperAdminPage() {
 
         for (const user of stuckUsers) {
             try {
-                await fetch('/api/send-email', {
+                const res = await fetch('/api/send-email', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -814,9 +826,10 @@ export default function SuperAdminPage() {
                         }
                     })
                 });
+                if (!res.ok) throw new Error(`send-email failed (${res.status})`);
                 successCount++;
             } catch (error) {
-                console.error(`Failed to send to ${user.email}:`, error);
+                logger.error(`Failed to send to ${user.email}:`, error);
                 failCount++;
             }
         }
@@ -834,7 +847,7 @@ export default function SuperAdminPage() {
                 allFeedback: prev.allFeedback.map(f => f.id === feedback.id ? { ...f, featured: !f.featured } : f)
             }));
         } catch (error: any) {
-            console.error('Error toggling featured status:', error);
+            logger.error('Error toggling featured status:', error);
             alert('Error: ' + error.message);
         } finally {
             setActionLoading(null);
@@ -851,7 +864,7 @@ export default function SuperAdminPage() {
                 allFeedback: prev.allFeedback.filter(f => f.id !== id)
             }));
         } catch (error: any) {
-            console.error('Error deleting feedback:', error);
+            logger.error('Error deleting feedback:', error);
             alert('Error: ' + error.message);
         } finally {
             setActionLoading(null);
@@ -877,7 +890,7 @@ export default function SuperAdminPage() {
             }));
             alert(`✅ Staða uppfærð: ${newStatus}`);
         } catch (error: any) {
-            console.error('Error updating provider:', error);
+            logger.error('Error updating provider:', error);
             alert('Villa: ' + error.message);
         } finally {
             setActionLoading(null);
@@ -895,7 +908,7 @@ export default function SuperAdminPage() {
             }));
             alert('✅ Verktaka eytt!');
         } catch (error: any) {
-            console.error('Error deleting provider:', error);
+            logger.error('Error deleting provider:', error);
             alert('Villa: ' + error.message);
         } finally {
             setActionLoading(null);
@@ -990,76 +1003,6 @@ export default function SuperAdminPage() {
             fetchOrphans();
         }
     }, [activeTab, systemSubTab]);
-
-    const handleCreateCoupon = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            setActionLoading('create-coupon');
-            const docRef = await addDoc(collection(db, 'coupons'), {
-                code: newCoupon.code.toUpperCase(),
-                discount_type: newCoupon.discount_type,
-                discount_value: Number(newCoupon.discount_value),
-                description: newCoupon.description,
-                max_uses: Number(newCoupon.max_uses) || null,
-                used_count: 0,
-                active: true,
-                created_at: serverTimestamp(),
-                valid_until: null
-            });
-
-            // Add to local state
-            const createdCoupon: Coupon = {
-                id: docRef.id,
-                code: newCoupon.code.toUpperCase(),
-                discount_type: newCoupon.discount_type as 'percent' | 'fixed',
-                discount_value: Number(newCoupon.discount_value),
-                description: newCoupon.description,
-                max_uses: Number(newCoupon.max_uses) || undefined,
-                used_count: 0,
-                active: true,
-                created_at: new Date()
-            };
-
-            setStats(prev => ({
-                ...prev,
-                allCoupons: [...prev.allCoupons, createdCoupon]
-            }));
-
-            // Reset form
-            setNewCoupon({
-                code: '',
-                discount_type: 'percent',
-                discount_value: 0,
-                description: '',
-                max_uses: 0
-            });
-
-            alert('✅ Coupon created successfully!');
-        } catch (error: any) {
-            console.error('Error creating coupon:', error);
-            alert(`❌ Error creating coupon: ${error.message}`);
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    const handleDeleteCoupon = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this coupon?')) return;
-
-        try {
-            await deleteDoc(doc(db, 'coupons', id));
-
-            setStats(prev => ({
-                ...prev,
-                allCoupons: prev.allCoupons.filter(c => c.id !== id)
-            }));
-
-            alert('✅ Coupon deleted.');
-        } catch (error: any) {
-            console.error('Error deleting coupon:', error);
-            alert(`❌ Error: ${error.message}`);
-        }
-    };
 
     if (loading) {
         return (
@@ -1539,18 +1482,6 @@ export default function SuperAdminPage() {
                                     Audit
                                 </div>
                             </button>
-                            <button
-                                onClick={() => setSystemSubTab('coupons')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${systemSubTab === 'coupons'
-                                    ? 'text-charcoal border-b-2 border-amber'
-                                    : 'text-stone-500 hover:text-stone-700'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Tag className="w-4 h-4" />
-                                    Afslættir
-                                </div>
-                            </button>
                         </div>
 
                         {/* Sub-tab Content - will be populated below by changing conditions */}
@@ -1830,15 +1761,9 @@ export default function SuperAdminPage() {
                                         <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Félög</p>
                                     </div>
                                     <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalOrganizations}</p>
-                                    <div className="flex items-center gap-2 text-[10px] md:text-xs text-stone-400">
-                                        <span className="text-green-600 font-medium">
-                                            {stats.allOrganizations.filter(org => org.subscription_status === 'active').length} virk
-                                        </span>
-                                        <span className="w-1 h-1 bg-stone-300 rounded-full"></span>
-                                        <span>
-                                            {stats.allOrganizations.filter(org => org.subscription_status === 'trial').length} prufa
-                                        </span>
-                                    </div>
+                                    <p className="text-[10px] md:text-xs text-stone-400">
+                                        Skráð félög og fyrirtæki
+                                    </p>
                                 </div>
                             </div>
 
@@ -1942,15 +1867,6 @@ export default function SuperAdminPage() {
                                                                             ? org.created_at.toLocaleDateString('is-IS', { month: 'short', day: 'numeric' })
                                                                             : 'Óþekkt dagsetning'}
                                                                     </span>
-                                                                    <span className="w-1 h-1 bg-stone-300 rounded-full"></span>
-                                                                    <span className={`font-medium ${org.subscription_status === 'active' ? 'text-green-600' :
-                                                                        org.subscription_status === 'trial' ? 'text-amber' :
-                                                                            'text-stone-500'
-                                                                        }`}>
-                                                                        {org.subscription_status === 'active' ? 'Virkt' :
-                                                                            org.subscription_status === 'trial' ? 'Prufa' :
-                                                                                'Óvirkt'}
-                                                                    </span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -2040,23 +1956,6 @@ export default function SuperAdminPage() {
                                     )
                                 },
                                 {
-                                    key: 'subscription_status', label: 'Staða', render: (row) => {
-                                        const status = row.subscription_status || 'trial';
-                                        const statusLabels = { active: 'Virkt', trial: 'Prufa', expired: 'Útrunnið', cancelled: 'Hætt' };
-                                        const colors = {
-                                            active: 'bg-green-100 text-green-700',
-                                            trial: 'bg-amber-100 text-amber-700',
-                                            expired: 'bg-red-100 text-red-700',
-                                            cancelled: 'bg-stone-100 text-stone-700'
-                                        };
-                                        return (
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${colors[status] || colors.trial}`}>
-                                                {statusLabels[status] || statusLabels.trial}
-                                            </span>
-                                        );
-                                    }
-                                },
-                                {
                                     key: 'stats', label: 'Hús', render: (row) => (
                                         <span className="text-sm font-medium">
                                             {row.stats?.total_properties || 0}
@@ -2092,7 +1991,7 @@ export default function SuperAdminPage() {
                                     <button
                                         onClick={() => {
                                             // Navigate to organization dashboard or show details
-                                            window.open(`/organizations/${row.id}`, '_blank');
+                                            window.open(`/organizations/${row.id}/admin`, '_blank');
                                         }}
                                         className="p-2 text-stone-400 hover:text-charcoal hover:bg-stone-50 rounded transition-colors"
                                         title="Skoða félag"
@@ -2110,7 +2009,7 @@ export default function SuperAdminPage() {
                                                         totalOrganizations: prev.totalOrganizations - 1
                                                     }));
                                                 } catch (error) {
-                                                    console.error('Error deleting organization:', error);
+                                                    logger.error('Error deleting organization:', error);
                                                     alert('Villa kom upp við að eyða félagi');
                                                 }
                                             }
@@ -2293,127 +2192,6 @@ export default function SuperAdminPage() {
                         </div>
                     )
                 }
-
-                {/* Coupons Tab */}
-                {
-                    activeTab === 'system' && systemSubTab === 'coupons' && (
-                        <div className="space-y-8">
-                            {/* Create Coupon Form */}
-                            <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
-                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                    <Tag className="w-5 h-5 text-amber" />
-                                    Búa til nýjan afsláttarkóða
-                                </h3>
-                                <form onSubmit={handleCreateCoupon} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                                    <div className="md:col-span-1">
-                                        <label className="block text-xs font-bold text-stone-500 mb-1">Kóði</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            className="input uppercase"
-                                            placeholder="SUMAR2025"
-                                            value={newCoupon.code}
-                                            onChange={e => setNewCoupon({ ...newCoupon, code: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="md:col-span-1">
-                                        <label className="block text-xs font-bold text-stone-500 mb-1">Tegund</label>
-                                        <select
-                                            className="input"
-                                            value={newCoupon.discount_type}
-                                            onChange={e => setNewCoupon({ ...newCoupon, discount_type: e.target.value as 'percent' | 'fixed' })}
-                                        >
-                                            <option value="percent">Prósenta (%)</option>
-                                            <option value="fixed">Fast upphæð (kr)</option>
-                                        </select>
-                                    </div>
-                                    <div className="md:col-span-1">
-                                        <label className="block text-xs font-bold text-stone-500 mb-1">Gildi</label>
-                                        <input
-                                            type="number"
-                                            required
-                                            className="input"
-                                            placeholder="20"
-                                            value={newCoupon.discount_value || ''}
-                                            onChange={e => setNewCoupon({ ...newCoupon, discount_value: parseInt(e.target.value) })}
-                                        />
-                                    </div>
-                                    <div className="md:col-span-1">
-                                        <label className="block text-xs font-bold text-stone-500 mb-1">Hámarks notkun (0 = ótakmarkað)</label>
-                                        <input
-                                            type="number"
-                                            className="input"
-                                            placeholder="0"
-                                            value={newCoupon.max_uses || ''}
-                                            onChange={e => setNewCoupon({ ...newCoupon, max_uses: parseInt(e.target.value) })}
-                                        />
-                                    </div>
-                                    <div className="md:col-span-1">
-                                        <button
-                                            type="submit"
-                                            className="btn btn-primary w-full h-[42px] flex items-center justify-center gap-2"
-                                            disabled={actionLoading === 'create-coupon'}
-                                        >
-                                            {actionLoading === 'create-coupon' ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Búa til'}
-                                        </button>
-                                    </div>
-                                    <div className="md:col-span-5">
-                                        <label className="block text-xs font-bold text-stone-500 mb-1">Lýsing (innri)</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            className="input"
-                                            placeholder="Summer campaign for Facebook ads"
-                                            value={newCoupon.description}
-                                            onChange={e => setNewCoupon({ ...newCoupon, description: e.target.value })}
-                                        />
-                                    </div>
-                                </form>
-                            </div>
-
-                            {/* Coupons Table */}
-                            <div>
-                                <h2 className="text-2xl font-serif mb-6">Virkir afsláttarkóðar</h2>
-                                <DataTable
-                                    columns={[
-                                        { key: 'code', label: 'Kóði', render: r => <span className="font-mono font-bold">{r.code}</span> },
-                                        {
-                                            key: 'discount',
-                                            label: 'Afsláttur',
-                                            render: r => r.discount_type === 'percent' ? `${r.discount_value}%` : `${r.discount_value} kr`
-                                        },
-                                        { key: 'description', label: 'Lýsing' },
-                                        {
-                                            key: 'usage',
-                                            label: 'Notkun',
-                                            render: r => `${r.used_count} / ${r.max_uses || '∞'}`
-                                        },
-                                        {
-                                            key: 'created_at',
-                                            label: 'Búið til',
-                                            render: (row) => {
-                                                if (!row.created_at) return '—';
-                                                const date = row.created_at instanceof Date ? row.created_at : new Date(row.created_at);
-                                                return date.toLocaleDateString('is-IS');
-                                            }
-                                        }
-                                    ]}
-                                    data={stats.allCoupons}
-                                    searchKeys={['code', 'description']}
-                                    actions={(row) => (
-                                        <button
-                                            onClick={() => handleDeleteCoupon(row.id)}
-                                            className="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 rounded hover:bg-red-50"
-                                        >
-                                            Eyða
-                                        </button>
-                                    )}
-                                />
-                            </div>
-                        </div>
-                    )
-                }
-
 
                 {/* Users Tab */}
                 {

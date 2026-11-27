@@ -5,19 +5,12 @@
 
 import { useMemo } from 'react';
 import {
-    TrendingUp, TrendingDown, Users, Home, DollarSign, Activity,
+    TrendingDown, Users, Home, Activity,
     AlertCircle, CheckCircle, Calendar, Target, Zap, ArrowUp, ArrowDown
 } from 'lucide-react';
 import type { House, User } from '@/types/models';
 
 interface BIMetrics {
-    // Revenue Metrics
-    mrr: number;
-    mrrGrowth: number;
-    arr: number;
-    potentialMrr: number; // Future MRR from launch offer houses
-    averageRevenuePerHouse: number;
-
     // User Metrics
     totalUsers: number;
     activeUsers: number; // Logged in within 30 days
@@ -28,7 +21,6 @@ interface BIMetrics {
     activeHouses: number; // Activity within 30 days
     houseGrowth: number;
     averageHouseAge: number;
-    launchOfferHouses: number; // Houses in 1-year free period
 
     // Engagement Metrics
     averageBookingsPerHouse: number;
@@ -52,6 +44,99 @@ interface Props {
     sandboxVisits?: number;
 }
 
+const MetricCard = ({
+    title,
+    value,
+    change,
+    icon: Icon,
+    format = 'number',
+    trend = 'neutral'
+}: {
+    title: string;
+    value: number;
+    change?: number;
+    icon: any;
+    format?: 'number' | 'percentage' | 'days';
+    trend?: 'up' | 'down' | 'neutral';
+}) => {
+    const formatValue = () => {
+        switch (format) {
+            case 'percentage':
+                return `${value.toFixed(1)}%`;
+            case 'days':
+                return `${Math.round(value)} dagar`;
+            default:
+                return Math.round(value).toLocaleString('is-IS');
+        }
+    };
+
+    const getTrendColor = () => {
+        if (trend === 'neutral') return 'text-stone-500';
+        return trend === 'up' ? 'text-green-600' : 'text-red-600';
+    };
+
+    const TrendIcon = change && change > 0 ? ArrowUp : ArrowDown;
+
+    return (
+        <div className="bg-white rounded-xl p-6 border border-stone-200 hover:shadow-lg transition-shadow">
+            <div className="flex items-start justify-between mb-4">
+                <div className="w-10 h-10 rounded-lg bg-amber/10 flex items-center justify-center">
+                    <Icon size={20} className="text-amber" />
+                </div>
+                {change !== undefined && (
+                    <div className={`flex items-center gap-1 text-sm font-bold ${getTrendColor()}`}>
+                        <TrendIcon size={14} />
+                        <span>{Math.abs(change).toFixed(1)}%</span>
+                    </div>
+                )}
+            </div>
+            <div className="space-y-1">
+                <p className="text-stone-500 text-xs font-medium uppercase tracking-wider">{title}</p>
+                <p className="text-3xl font-serif font-bold text-charcoal">{formatValue()}</p>
+            </div>
+        </div>
+    );
+};
+
+const HealthScoreCard = ({
+    label,
+    count,
+    total,
+    color,
+    icon: Icon
+}: {
+    label: string;
+    count: number;
+    total: number;
+    color: string;
+    icon: any;
+}) => {
+    const percentage = total > 0 ? (count / total) * 100 : 0;
+
+    return (
+        <div className="bg-white rounded-xl p-6 border border-stone-200">
+            <div className="flex items-center justify-between mb-4">
+                <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center`}>
+                    <Icon size={20} className="text-white" />
+                </div>
+                <span className="text-2xl font-serif font-bold text-charcoal">{count}</span>
+            </div>
+            <div className="space-y-2">
+                <p className="text-stone-700 font-medium">{label}</p>
+                <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-stone-100 rounded-full h-2 overflow-hidden">
+                        <div
+                            className={`h-full ${color} transition-all duration-500`}
+                            style={{ width: `${percentage}%` }}
+                        />
+                    </div>
+                    <span className="text-xs font-bold text-stone-500">{percentage.toFixed(0)}%</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function BusinessIntelligenceDashboard({ allHouses, allUsers, allBookings = [], sandboxVisits = 0 }: Props) {
 
     const metrics = useMemo((): BIMetrics => {
@@ -61,54 +146,6 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
 
         // Filter out demo houses
         const realHouses = allHouses.filter(h => !h.name.toLowerCase().includes('demo') && !h.name.toLowerCase().includes('prufa'));
-
-        // === REVENUE CALCULATIONS ===
-        const MONTHLY_PRICE = 2990; // ISK per month
-
-        // Categorize houses with detailed tracking
-        const launchOfferHousesList: House[] = [];
-        const paidHousesList: House[] = [];
-        const freeHousesList: House[] = [];
-
-        realHouses.forEach(h => {
-            // Explicitly marked as permanently free
-            if (h.subscription_status === 'free') {
-                freeHousesList.push(h);
-                return;
-            }
-
-            const createdAt = h.created_at instanceof Date ? h.created_at : new Date(h.created_at);
-            const launchOfferEnds = new Date(createdAt.getTime() + 365 * 24 * 60 * 60 * 1000);
-
-            // Still in 1-year free launch period
-            if (now < launchOfferEnds) {
-                launchOfferHousesList.push(h);
-            } else {
-                // After launch offer = should be paying
-                paidHousesList.push(h);
-            }
-        });
-
-        const launchOfferHouses = launchOfferHousesList;
-        const paidHouses = paidHousesList;
-
-        const mrr = paidHouses.length * MONTHLY_PRICE;
-        const potentialMrr = (paidHouses.length + launchOfferHouses.length) * MONTHLY_PRICE;
-        const arr = mrr * 12;
-        const averageRevenuePerHouse = realHouses.length > 0 ? mrr / realHouses.length : 0;
-
-        // MRR Growth (compare to 30 days ago)
-        const paidHousesThirtyDaysAgo = realHouses.filter(h => {
-            if (h.subscription_status === 'free') return false;
-
-            const created = h.created_at instanceof Date ? h.created_at : new Date(h.created_at);
-            if (created >= thirtyDaysAgo) return false; // House didn't exist 30 days ago
-
-            const launchOfferEnds = new Date(created.getTime() + 365 * 24 * 60 * 60 * 1000);
-            return thirtyDaysAgo >= launchOfferEnds; // Was it paying 30 days ago?
-        }).length;
-        const mrrThirtyDaysAgo = paidHousesThirtyDaysAgo * MONTHLY_PRICE;
-        const mrrGrowth = mrrThirtyDaysAgo > 0 ? ((mrr - mrrThirtyDaysAgo) / mrrThirtyDaysAgo) * 100 : 0;
 
         // === USER METRICS ===
         const activeUsers = allUsers.filter(u => {
@@ -164,11 +201,6 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
         const signupRate = sandboxVisits > 0 ? (allUsers.length / sandboxVisits) * 100 : 0;
 
         return {
-            mrr,
-            mrrGrowth,
-            arr,
-            potentialMrr,
-            averageRevenuePerHouse,
             totalUsers: allUsers.length,
             activeUsers,
             userGrowth,
@@ -176,7 +208,6 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
             activeHouses,
             houseGrowth,
             averageHouseAge,
-            launchOfferHouses: launchOfferHouses.length,
             averageBookingsPerHouse,
             averageTasksPerHouse: 0, // TODO: Calculate from tasks
             averageLoginsPerUser: activeUsers / (allUsers.length || 1),
@@ -187,101 +218,6 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
             signupRate
         };
     }, [allHouses, allUsers, allBookings, sandboxVisits]);
-
-    const MetricCard = ({
-        title,
-        value,
-        change,
-        icon: Icon,
-        format = 'number',
-        trend = 'neutral'
-    }: {
-        title: string;
-        value: number;
-        change?: number;
-        icon: any;
-        format?: 'number' | 'currency' | 'percentage' | 'days';
-        trend?: 'up' | 'down' | 'neutral';
-    }) => {
-        const formatValue = () => {
-            switch (format) {
-                case 'currency':
-                    return `${Math.round(value).toLocaleString('is-IS')} kr`;
-                case 'percentage':
-                    return `${value.toFixed(1)}%`;
-                case 'days':
-                    return `${Math.round(value)} dagar`;
-                default:
-                    return Math.round(value).toLocaleString('is-IS');
-            }
-        };
-
-        const getTrendColor = () => {
-            if (trend === 'neutral') return 'text-stone-500';
-            return trend === 'up' ? 'text-green-600' : 'text-red-600';
-        };
-
-        const TrendIcon = change && change > 0 ? ArrowUp : ArrowDown;
-
-        return (
-            <div className="bg-white rounded-xl p-6 border border-stone-200 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-amber/10 flex items-center justify-center">
-                        <Icon size={20} className="text-amber" />
-                    </div>
-                    {change !== undefined && (
-                        <div className={`flex items-center gap-1 text-sm font-bold ${getTrendColor()}`}>
-                            <TrendIcon size={14} />
-                            <span>{Math.abs(change).toFixed(1)}%</span>
-                        </div>
-                    )}
-                </div>
-                <div className="space-y-1">
-                    <p className="text-stone-500 text-xs font-medium uppercase tracking-wider">{title}</p>
-                    <p className="text-3xl font-serif font-bold text-charcoal">{formatValue()}</p>
-                </div>
-            </div>
-        );
-    };
-
-    const HealthScoreCard = ({
-        label,
-        count,
-        total,
-        color,
-        icon: Icon
-    }: {
-        label: string;
-        count: number;
-        total: number;
-        color: string;
-        icon: any;
-    }) => {
-        const percentage = total > 0 ? (count / total) * 100 : 0;
-
-        return (
-            <div className="bg-white rounded-xl p-6 border border-stone-200">
-                <div className="flex items-center justify-between mb-4">
-                    <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center`}>
-                        <Icon size={20} className="text-white" />
-                    </div>
-                    <span className="text-2xl font-serif font-bold text-charcoal">{count}</span>
-                </div>
-                <div className="space-y-2">
-                    <p className="text-stone-700 font-medium">{label}</p>
-                    <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-stone-100 rounded-full h-2 overflow-hidden">
-                            <div
-                                className={`h-full ${color} transition-all duration-500`}
-                                style={{ width: `${percentage}%` }}
-                            />
-                        </div>
-                        <span className="text-xs font-bold text-stone-500">{percentage.toFixed(0)}%</span>
-                    </div>
-                </div>
-            </div>
-        );
-    };
 
     return (
         <div className="space-y-8">
@@ -296,38 +232,6 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
                     <span className="text-sm font-bold text-green-700">Live Data</span>
                 </div>
             </div>
-
-            {/* Revenue Metrics */}
-            <section>
-                <h3 className="text-sm font-bold text-stone-500 uppercase tracking-wider mb-4">💰 Tekjumælingar</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <MetricCard
-                        title="Mánaðarlegar endurteknar tekjur"
-                        value={metrics.mrr}
-                        change={metrics.mrrGrowth}
-                        icon={DollarSign}
-                        format="currency"
-                        trend={metrics.mrrGrowth > 0 ? 'up' : metrics.mrrGrowth < 0 ? 'down' : 'neutral'}
-                    />
-                    <MetricCard
-                        title="Áætlaðar framtíðartekjur (MRR)"
-                        value={metrics.potentialMrr}
-                        icon={TrendingUp}
-                        format="currency"
-                    />
-                    <MetricCard
-                        title="Ársendurteknar tekjur (ARR)"
-                        value={metrics.arr}
-                        icon={TrendingUp}
-                        format="currency"
-                    />
-                    <MetricCard
-                        title="Hús í 1 árs fríi"
-                        value={metrics.launchOfferHouses}
-                        icon={Home}
-                    />
-                </div>
-            </section>
 
             {/* Growth Metrics */}
             <section>
@@ -418,39 +322,6 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
                 </div>
             </section>
 
-            {/* Breakdown Detail */}
-            <section className="bg-blue-50 rounded-2xl p-6 border border-blue-200">
-                <h3 className="text-lg font-serif font-bold text-charcoal mb-4">🔍 Sundurliðun húsa</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-xl p-4 border border-stone-200">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                            <p className="text-sm font-bold text-stone-700 uppercase tracking-wider">Greiðandi hús</p>
-                        </div>
-                        <p className="text-3xl font-serif font-bold text-charcoal mb-1">{(metrics.mrr / 2990).toFixed(0)}</p>
-                        <p className="text-xs text-stone-500">Hús sem hafa lokið 1 árs launch offer</p>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-4 border border-stone-200">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-3 h-3 rounded-full bg-amber"></div>
-                            <p className="text-sm font-bold text-stone-700 uppercase tracking-wider">Launch Offer</p>
-                        </div>
-                        <p className="text-3xl font-serif font-bold text-charcoal mb-1">{metrics.launchOfferHouses}</p>
-                        <p className="text-xs text-stone-500">Hús í 1 árs fríi (verða greiðendur)</p>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-4 border border-stone-200">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-3 h-3 rounded-full bg-stone-400"></div>
-                            <p className="text-sm font-bold text-stone-700 uppercase tracking-wider">Hús alls</p>
-                        </div>
-                        <p className="text-3xl font-serif font-bold text-charcoal mb-1">{metrics.totalHouses}</p>
-                        <p className="text-xs text-stone-500">Demo og prufa hús eru útilokuð</p>
-                    </div>
-                </div>
-            </section>
-
             {/* Key Insights */}
             <section className="bg-gradient-to-br from-amber/5 to-stone-100 rounded-2xl p-8 border border-stone-200">
                 <h3 className="text-xl font-serif font-bold text-charcoal mb-4">🔍 Lykilupplýsingar</h3>
@@ -484,9 +355,9 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2"></div>
                             <div>
                                 <p className="font-bold text-charcoal">
-                                    MRR vöxtur: {metrics.mrrGrowth > 0 ? '+' : ''}{metrics.mrrGrowth.toFixed(1)}%
+                                    Fjölgun húsa: {metrics.houseGrowth > 0 ? '+' : ''}{metrics.houseGrowth.toFixed(1)}%
                                 </p>
-                                <p className="text-sm text-stone-600">Mánaðarlegur samanburður</p>
+                                <p className="text-sm text-stone-600">Samanburður við síðustu 30 daga</p>
                             </div>
                         </div>
                     </div>
