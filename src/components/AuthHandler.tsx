@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp, onSnapshot, type DocumentSnapshot } from 'firebase/firestore';
+import { doc, getDoc, getDocFromServer, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { useAppStore } from '@/store/appStore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { logger } from '@/utils/logger';
 import { trackFunnel, flushFunnelBuffer, resetFunnelSession, describeError } from '@/utils/funnel';
 import type { House, User } from '@/types/models';
+import { accountDeletionState, collectSettledHouses, shouldAttemptProfileRepair } from './authHandlerHelpers';
 
 export default function AuthHandler() {
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
@@ -69,24 +70,37 @@ export default function AuthHandler() {
                         updatedUser = { ...updatedUser, ...userSnap.data() };
                         logger.debug('AuthHandler: User profile synchronized:', updatedUser.email);
                     } else {
-                        // SELF-REPAIR: Missing profile but authenticated
-                        // Check if user was JUST created (e.g. within last 15 seconds)
+                        // SELF-REPAIR: Missing profile but authenticated.
+                        // Only trust a "does not exist" answer that came from the
+                        // server (a cold local cache also reports "missing"), and
+                        // skip accounts created in the last 15 seconds: SignupPage
+                        // is still writing the profile.
                         const creationTime = firebaseUser.metadata.creationTime ? new Date(firebaseUser.metadata.creationTime).getTime() : 0;
-                        const isBrandNew = (Date.now() - creationTime) < 15000;
+                        const shouldRepair = shouldAttemptProfileRepair({
+                            exists: false,
+                            fromCache: userSnap.metadata.fromCache,
+                            creationTimeMs: creationTime,
+                            nowMs: Date.now(),
+                        });
 
-                        if (!isBrandNew) {
-                            logger.warn("AuthHandler: Orphan user detected, triggering self-repair for:", firebaseUser.email);
-                            void trackFunnel('profile_self_repair');
+                        if (shouldRepair && !accountDeletionState.inProgress) {
                             try {
-                                await setDoc(userDocRef, {
-                                    uid: baseUser.uid,
-                                    email: baseUser.email,
-                                    name: baseUser.name || baseUser.email.split('@')[0],
-                                    house_ids: [],
-                                    created_at: serverTimestamp(),
-                                    last_login: serverTimestamp(),
-                                    repaired_auto: true
-                                }, { merge: true });
+                                // Authoritative check right before writing: if this read
+                                // fails we do not know the doc is new, so we do not write.
+                                const serverSnap = await getDocFromServer(userDocRef);
+                                if (!serverSnap.exists()) {
+                                    logger.warn("AuthHandler: Orphan user detected, triggering self-repair for:", firebaseUser.email);
+                                    void trackFunnel('profile_self_repair');
+                                    await setDoc(userDocRef, {
+                                        uid: baseUser.uid,
+                                        email: baseUser.email,
+                                        name: baseUser.name || baseUser.email.split('@')[0],
+                                        house_ids: [], // safe: the server just confirmed there is no profile
+                                        created_at: serverTimestamp(),
+                                        last_login: serverTimestamp(),
+                                        repaired_auto: true
+                                    }, { merge: true });
+                                }
                             } catch (repairErr) {
                                 logger.error("AuthHandler: Self-repair failed:", repairErr);
                                 void trackFunnel('profile_self_repair_error', describeError(repairErr));
@@ -98,7 +112,7 @@ export default function AuthHandler() {
                     setAuthenticated(true);
                     setInitialLoadDone(true);
                 }, (err) => {
-                    console.error("Error listening to user profile:", err);
+                    logger.error("Error listening to user profile:", err);
                     void trackFunnel('profile_listen_error', describeError(err));
                     setRealUser(baseUser);
                     setAuthenticated(true);
@@ -151,11 +165,20 @@ export default function AuthHandler() {
 
             if (effectiveUser.house_ids && effectiveUser.house_ids.length > 0) {
                 try {
-                    const housesPromises = effectiveUser.house_ids.map((id: string) => getDoc(doc(db, 'houses', id)));
-                    const houseSnaps = await Promise.all(housesPromises);
-                    const houses = houseSnaps
-                        .filter((snap: DocumentSnapshot) => snap.exists())
-                        .map((snap: DocumentSnapshot) => ({ id: snap.id, ...snap.data() } as House));
+                    const houseIds = effectiveUser.house_ids as string[];
+                    // allSettled: one deleted house / stale id (permission-denied)
+                    // must not hide the houses that did load.
+                    const settled = await Promise.allSettled(
+                        houseIds.map((id: string) => getDoc(doc(db, 'houses', id)))
+                    );
+                    const { houses, failures } = collectSettledHouses(houseIds, settled);
+                    failures.forEach(({ houseId, reason }) =>
+                        logger.warn(`AuthHandler: Could not load house ${houseId}:`, reason)
+                    );
+                    if (failures.length > 0 && houses.length === 0) {
+                        // Nothing loaded: same handling as a failed fetch
+                        throw failures[0].reason;
+                    }
 
                     setUserHouses(houses);
 
@@ -179,7 +202,7 @@ export default function AuthHandler() {
                         setCurrentHouse(lastHouse || houses[0] || null);
                     }
                 } catch (e) {
-                    console.error("Error fetching houses:", e);
+                    logger.error("Error fetching houses:", e);
                     void trackFunnel('houses_fetch_error', describeError(e));
                     setUserHouses([]);
                     setCurrentHouse(null);

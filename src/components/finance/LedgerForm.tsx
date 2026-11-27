@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Plus, X, Calendar } from 'lucide-react';
 import type { LedgerEntry, LedgerType } from '@/types/models';
+import { toDateInputValue, fromDateInputValue } from '@/components/finance/dateInput';
+import { validateAmount, parseAmountInput } from '@/components/finance/ledgerUtils';
 
 interface LedgerFormProps {
     onSave: (entry: Partial<LedgerEntry>) => void;
@@ -18,12 +20,26 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
     const [amount, setAmount] = useState(initialValues?.amount?.toString() || '');
     const [category, setCategory] = useState(initialValues?.category || '');
     const [description, setDescription] = useState(initialValues?.description || '');
-    const [date, setDate] = useState(initialValues?.date ? new Date(initialValues.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(toDateInputValue(initialValues?.date ? new Date(initialValues.date) : new Date()));
+    const [error, setError] = useState<string | null>(null);
     const [splitUsers, setSplitUsers] = useState<string[]>(initialValues?.split_between?.map(u => u.uid) || []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!amount || !category || !date) return;
+
+        const parsedAmount = Math.round(parseAmountInput(amount));
+        const amountError = validateAmount(parsedAmount);
+        if (amountError) {
+            setError(amountError);
+            return;
+        }
+        const parsedDate = fromDateInputValue(date);
+        if (Number.isNaN(parsedDate.getTime())) {
+            setError('Dagsetning er ógild.');
+            return;
+        }
+        setError(null);
 
         // Simplify legacy logic: if splitUsers has entries, we use that.
         // The parent determines paid_by based on context, but here we can define the split.
@@ -34,10 +50,10 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
         onSave({
             ...(initialValues?.id ? { id: initialValues.id } : {}),
             type,
-            amount: parseInt(amount),
+            amount: parsedAmount,
             category,
             description,
-            date: new Date(date),
+            date: parsedDate,
             split_between: splitData,
             created_at: initialValues?.created_at || new Date()
         });
@@ -52,8 +68,8 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
     return (
         <form onSubmit={handleSubmit} className="bg-bone p-4 rounded-lg border border-grey-warm mb-6">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="font-serif text-charcoal">Ný færsla</h3>
-                <button type="button" onClick={onCancel} className="text-grey-mid hover:text-charcoal">
+                <h3 className="font-serif text-charcoal">{initialValues?.id ? 'Breyta færslu' : 'Ný færsla'}</h3>
+                <button type="button" onClick={onCancel} aria-label="Loka" className="text-grey-mid hover:text-charcoal">
                     <X className="w-5 h-5" />
                 </button>
             </div>
@@ -159,10 +175,14 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
                     </div>
                     {splitUsers.length === 0 && (
                         <p className="text-xs text-stone-400 mt-1 italic">
-                            Ef enginn er valinn skráist þetta á þig ({houseMembers.find(m => m.name)?.name || 'Notandi'}).
+                            Ef enginn er valinn skráist þetta á þig ({'núverandi notandi'}).
                         </p>
                     )}
                 </div>
+            )}
+
+            {error && (
+                <p role="alert" className="text-sm text-red-600 mb-3">{error}</p>
             )}
 
             <div className="flex justify-end">

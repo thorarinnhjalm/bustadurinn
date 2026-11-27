@@ -15,6 +15,7 @@ import {
     getDocs
 } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { logger } from '@/utils/logger';
 
 // Demo Users
 const DEMO_USERS = [
@@ -173,7 +174,7 @@ const createDemoFinance = (houseId: string, userIds: string[]) => {
 };
 
 export async function seedDemoData() {
-    console.log('🌱 Starting demo data seeding...');
+    logger.debug('🌱 Starting demo data seeding...');
 
     try {
         // Create demo users
@@ -190,7 +191,7 @@ export async function seedDemoData() {
                     // User already exists, use their ID
                     const existingUserId = existingUsers.docs[0].id;
                     userIds.push(existingUserId);
-                    console.log(`ℹ️  User ${demoUser.email} already exists, reusing ID`);
+                    logger.debug(`ℹ️  User ${demoUser.email} already exists, reusing ID`);
                 } else {
                     // Create new user
                     const userCred = await createUserWithEmailAndPassword(
@@ -210,11 +211,11 @@ export async function seedDemoData() {
                         created_at: serverTimestamp()
                     });
 
-                    console.log(`✅ Created user: ${demoUser.name}`);
+                    logger.debug(`✅ Created user: ${demoUser.name}`);
                 }
             } catch (error: any) {
                 if (error.code === 'auth/email-already-in-use') {
-                    console.log(`⚠️ User ${demoUser.email} already exists in Auth but not Firestore - manual cleanup needed`);
+                    logger.debug(`⚠️ User ${demoUser.email} already exists in Auth but not Firestore - manual cleanup needed`);
                     throw new Error(`User ${demoUser.email} exists in Auth but not Firestore. Please clean up manually.`);
                 } else {
                     throw error;
@@ -237,7 +238,7 @@ export async function seedDemoData() {
             manager_id: userIds[0] // Jón is the manager
         });
 
-        console.log(`✅ Created demo house: ${DEMO_HOUSE.name}`);
+        logger.debug(`✅ Created demo house: ${DEMO_HOUSE.name}`);
 
         // Update users with house_id
         for (const userId of userIds) {
@@ -246,33 +247,33 @@ export async function seedDemoData() {
             }, { merge: true });
         }
 
-        // Create bookings
+        // Create bookings (real data lives in houses/{id}/ subcollections)
         const bookings = createDemoBookings(houseId, userIds);
         for (let i = 0; i < bookings.length; i++) {
-            await setDoc(doc(collection(db, 'bookings')), bookings[i]);
+            await setDoc(doc(collection(db, 'houses', houseId, 'bookings')), bookings[i]);
         }
-        console.log(`✅ Created ${bookings.length} demo bookings`);
+        logger.debug(`✅ Created ${bookings.length} demo bookings`);
 
         // Create tasks
         const tasks = createDemoTasks(houseId, userIds);
         for (let i = 0; i < tasks.length; i++) {
-            await setDoc(doc(collection(db, 'tasks')), tasks[i]);
+            await setDoc(doc(collection(db, 'houses', houseId, 'tasks')), tasks[i]);
         }
-        console.log(`✅ Created ${tasks.length} demo tasks`);
+        logger.debug(`✅ Created ${tasks.length} demo tasks`);
 
         // Create finance entries
         const financeEntries = createDemoFinance(houseId, userIds);
         for (let i = 0; i < financeEntries.length; i++) {
-            await setDoc(doc(collection(db, 'finance_entries')), financeEntries[i]);
+            await setDoc(doc(collection(db, 'houses', houseId, 'finance_entries')), financeEntries[i]);
         }
-        console.log(`✅ Created ${financeEntries.length} demo finance entries`);
+        logger.debug(`✅ Created ${financeEntries.length} demo finance entries`);
 
-        console.log('\n🎉 Demo data seeding complete!');
-        console.log('\n📧 Demo User Credentials:');
+        logger.debug('\n🎉 Demo data seeding complete!');
+        logger.debug('\n📧 Demo User Credentials:');
         DEMO_USERS.forEach(user => {
-            console.log(`   ${user.name} (${user.role})`);
-            console.log(`   Email: ${user.email}`);
-            console.log(`   Password: ${user.password}\n`);
+            logger.debug(`   ${user.name} (${user.role})`);
+            logger.debug(`   Email: ${user.email}`);
+            logger.debug(`   Password: ${user.password}\n`);
         });
 
         return {
@@ -283,7 +284,7 @@ export async function seedDemoData() {
         };
 
     } catch (error) {
-        console.error('❌ Error seeding demo data:', error);
+        logger.error('❌ Error seeding demo data:', error);
         throw error;
     }
 }

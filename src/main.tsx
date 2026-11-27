@@ -7,6 +7,7 @@ import { installFunnelErrorCapture } from './utils/funnel';
 import { onForegroundMessage } from './utils/pushNotifications';
 import './index.css'
 import App from './App.tsx'
+import UpdateBanner from './components/UpdateBanner'
 
 // Initialize Sentry
 // Initialize Sentry only if DSN is present
@@ -112,12 +113,41 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   const hadController = !!navigator.serviceWorker.controller;
   let reloading = false;
 
+  // Set once the user has typed into / changed any form control in this page
+  // load, so an update never wipes a half-filled booking, finance or settings form.
+  let formTouched = false;
+  document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t instanceof HTMLElement && t.matches('input, textarea, select')) formTouched = true;
+  }, true);
+
+  const reloadNow = () => window.location.reload();
+
+  const showUpdateBanner = () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    createRoot(host).render(<UpdateBanner onReload={reloadNow} />);
+    // The banner only appears because a form is in progress, so never reload
+    // behind the user's back (e.g. when they switch apps to copy a number):
+    // the page reloads only when they press "Endurhlaða".
+  };
+
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!hadController || reloading) return;
     // A newer worker just took over: the page is still running the previous
-    // build's JS, so reload once to pick up the deployed version.
+    // build's JS, so reload once to pick up the deployed version — unless the
+    // user is in the middle of a form, in which case ask first.
     reloading = true;
-    window.location.reload();
+    const active = document.activeElement;
+    const formFocused = !!active && active.matches('input, textarea, select');
+    // A hidden tab with no typed input has nothing to lose; one with typed
+    // input keeps its form and shows the banner for when the user returns.
+    const formInProgress = formTouched || (!document.hidden && formFocused);
+    if (!formInProgress) {
+      reloadNow();
+    } else {
+      showUpdateBanner();
+    }
   });
 
   window.addEventListener('load', () => {

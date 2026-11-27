@@ -8,6 +8,7 @@ import {
     Tv, Droplets, Flame, ArrowRight, Loader2, Navigation, X
 } from 'lucide-react';
 import { fetchWeather } from '@/utils/weather';
+import { logger } from '@/utils/logger';
 
 // A-Frame Logo
 const CabinLogo = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
@@ -25,6 +26,8 @@ export default function GuestPage() {
     const [copied, setCopied] = useState('');
     const [weather, setWeather] = useState<{ temp: number | string, condition: string }>({ temp: '—', condition: 'Hleður...' });
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [sending, setSending] = useState(false);
+    const [formStatus, setFormStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     useEffect(() => {
         const fetchView = async () => {
@@ -61,7 +64,7 @@ export default function GuestPage() {
                                 setWeather({ temp: `${wData.temp}°C`, condition: wData.condition });
                             }
                         } catch (e) {
-                            console.error('Weather fetch error:', e);
+                            logger.error('Weather fetch error:', e);
                         }
                     } else {
                         setWeather({ temp: '?', condition: 'Vantar staðsetningu' });
@@ -69,9 +72,13 @@ export default function GuestPage() {
                 } else {
                     setError('Hlekkurinn er útrunninn eða ógildur.');
                 }
-            } catch (err) {
-                console.error(err);
-                setError('Villa kom upp. Gakktu úr skugga um að hlekkurinn sé réttur.');
+            } catch (err: any) {
+                if (err?.code === 'permission-denied') {
+                    setError('Þessi hlekkur er útrunninn.');
+                } else {
+                    logger.error('Error loading guest view:', err);
+                    setError('Villa kom upp. Gakktu úr skugga um að hlekkurinn sé réttur.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -85,7 +92,7 @@ export default function GuestPage() {
             setCopied(label);
             setTimeout(() => setCopied(''), 2000);
         } catch (err) {
-            console.error('Failed to copy:', err);
+            logger.error('Failed to copy:', err);
         }
     };
 
@@ -138,7 +145,7 @@ export default function GuestPage() {
     if (!data) return null;
 
 
-    const houseName = data.house_name || 'Sumarhús';
+    const houseName = data.house_name ?? data.name ?? 'Sumarhús';
 
     return (
         <div className="min-h-screen bg-[#FDFCF8] text-[#1a1a1a] font-sans pb-10">
@@ -150,7 +157,7 @@ export default function GuestPage() {
                 <div className="absolute inset-0 z-0">
                     <img
                         src={data.image_url || "https://images.unsplash.com/photo-1542718610-a1d656d1884c?q=80&w=2670&auto=format&fit=crop"}
-                        alt="Cabin Background"
+                        alt="Mynd af sumarhúsinu"
                         className="w-full h-full object-cover"
                     />
                     {/* Gradient Overlay - Darkened top for visibility */}
@@ -173,7 +180,7 @@ export default function GuestPage() {
                                     });
                                 }
                             }}
-                            className="bg-black/30 backdrop-blur-md p-2 rounded-full hover:bg-black/40 transition-colors text-white border border-white/10"
+                            aria-label="Deila síðunni" className="bg-black/30 backdrop-blur-md p-2 rounded-full hover:bg-black/40 transition-colors text-white border border-white/10"
                         >
                             <Share2 size={18} />
                         </button>
@@ -294,7 +301,8 @@ export default function GuestPage() {
                                 <div key={i} className={`relative overflow-hidden ${i === 0 && data.gallery_urls.length % 2 !== 0 ? 'col-span-2 aspect-video' : 'aspect-square'}`}>
                                     <img
                                         src={url}
-                                        alt={`House view ${i + 1}`}
+                                        alt={`Mynd ${i + 1} af húsinu`}
+                                        loading="lazy"
                                         className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-500"
                                         onClick={() => setSelectedImage(url)}
                                     />
@@ -387,54 +395,32 @@ export default function GuestPage() {
 
                         <form onSubmit={async (e) => {
                             e.preventDefault();
-                            const formData = new FormData(e.currentTarget);
-                            const author = formData.get('author') as string;
-                            const message = formData.get('message') as string;
+                            const form = e.currentTarget;
+                            if (sending || !token) return;
+                            const formData = new FormData(form);
+                            const author = String(formData.get('author') ?? '').trim();
+                            const message = String(formData.get('message') ?? '').trim();
 
                             if (!author || !message) return;
 
+                            setSending(true);
+                            setFormStatus(null);
                             try {
-                                const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
-                                const { db } = await import('@/lib/firebase');
-
-                                await addDoc(collection(db, 'guestbook'), {
-                                    house_id: data.houseId,
-                                    author,
-                                    message,
-                                    created_at: serverTimestamp()
+                                const response = await fetch('/api/guestbook-entry', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ token, name: author, message })
                                 });
-
-                                // Notify owners
-                                const houseDoc = await getDoc(doc(db, 'houses', data.houseId));
-                                const houseData = houseDoc.data();
-                                if (houseData && houseData.owner_ids) {
-                                    for (const ownerId of houseData.owner_ids) {
-                                        const userDoc = await getDoc(doc(db, 'users', ownerId));
-                                        const userData = userDoc.data();
-                                        if (!userData) continue;
-
-                                        // Respect in-app notification settings
-                                        if (userData.notification_settings?.in_app?.guestbook_entries !== false) {
-                                            await addDoc(collection(db, 'notifications'), {
-                                                user_id: ownerId,
-                                                house_id: data.houseId,
-                                                title: 'Ný gestabókarfærsla',
-                                                message: `${author} skráði í gestabókina í ${houseName}`,
-                                                type: 'guestbook',
-                                                read: false,
-                                                created_at: serverTimestamp()
-                                            });
-
-                                            // Push: guest notifications need a server-side trigger (guests are unauthenticated).
-                                        }
-                                    }
+                                if (!response.ok) {
+                                    throw new Error(`Guestbook request failed: ${response.status}`);
                                 }
-
-                                alert('Takk fyrir að skrifa í gestabókina! 🙏');
-                                e.currentTarget.reset();
+                                setFormStatus({ type: 'success', text: 'Takk fyrir að skrifa í gestabókina!' });
+                                form.reset();
                             } catch (error) {
-                                console.error('Error saving guestbook entry:', error);
-                                alert('Villa kom upp. Reyndu aftur.');
+                                logger.error('Error saving guestbook entry:', error);
+                                setFormStatus({ type: 'error', text: 'Villa kom upp. Reyndu aftur.' });
+                            } finally {
+                                setSending(false);
                             }
                         }} className="space-y-3">
                             <input
@@ -442,6 +428,7 @@ export default function GuestPage() {
                                 name="author"
                                 placeholder="Nafn þitt"
                                 required
+                                maxLength={80}
                                 className="w-full px-4 py-2 rounded-lg border border-stone-200 focus:border-[#e8b058] focus:outline-none text-sm"
                             />
                             <textarea
@@ -449,11 +436,17 @@ export default function GuestPage() {
                                 placeholder="Skrifaðu hér..."
                                 required
                                 rows={4}
+                                maxLength={2000}
                                 className="w-full px-4 py-2 rounded-lg border border-stone-200 focus:border-[#e8b058] focus:outline-none text-sm resize-none"
                             />
-                            <button type="submit" className="bg-[#1a1a1a] text-white w-full py-3 rounded-lg font-bold text-sm hover:bg-[#333] transition-colors">
-                                Senda inn
+                            <button type="submit" disabled={sending} className="bg-[#1a1a1a] text-white w-full py-3 rounded-lg font-bold text-sm hover:bg-[#333] transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                                {sending ? 'Sendi...' : 'Senda inn'}
                             </button>
+                            {formStatus && (
+                                <p role="status" className={`text-sm text-center ${formStatus.type === 'success' ? 'text-emerald-700' : 'text-red-600'}`}>
+                                    {formStatus.text}
+                                </p>
+                            )}
                         </form>
                     </div>
                 </div>
@@ -466,12 +459,12 @@ export default function GuestPage() {
                     className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
                     onClick={() => setSelectedImage(null)}
                 >
-                    <button className="absolute top-6 right-6 text-white p-2">
+                    <button className="absolute top-6 right-6 text-white p-2" aria-label="Loka mynd">
                         <X size={28} />
                     </button>
                     <img
                         src={selectedImage}
-                        alt="Full Screen View"
+                        alt="Mynd í fullri stærð"
                         className="max-w-full max-h-full rounded-lg shadow-2xl object-contain"
                     />
                 </div>

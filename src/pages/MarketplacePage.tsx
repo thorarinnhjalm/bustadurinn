@@ -33,11 +33,6 @@ export default function MarketplacePage() {
     const [reviewingProvider, setReviewingProvider] = useState<ServiceProvider | null>(null);
 
     useEffect(() => {
-        if (!isAuthenticated) {
-            setLoading(false);
-            return;
-        }
-
         const fetchProviders = async () => {
             setLoading(true);
             try {
@@ -49,6 +44,32 @@ export default function MarketplacePage() {
 
                 const snapshot = await getDocs(q);
                 const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ServiceProvider[];
+
+                // rating_avg / rating_count on the provider doc cannot be written by regular
+                // users, so the displayed rating is computed from the public service_reviews.
+                try {
+                    const reviewsSnap = await getDocs(collection(db, 'service_reviews'));
+                    const totals = new Map<string, { sum: number; count: number }>();
+                    reviewsSnap.docs.forEach(r => {
+                        const { provider_id, rating } = r.data();
+                        if (typeof provider_id !== 'string' || typeof rating !== 'number') return;
+                        const t = totals.get(provider_id) || { sum: 0, count: 0 };
+                        t.sum += rating;
+                        t.count += 1;
+                        totals.set(provider_id, t);
+                    });
+                    data.forEach(p => {
+                        const t = totals.get(p.id);
+                        if (t) {
+                            p.rating_count = t.count;
+                            p.rating_avg = t.sum / t.count;
+                        }
+                    });
+                    data.sort((a, b) => (b.rating_avg || 0) - (a.rating_avg || 0));
+                } catch (reviewError) {
+                    logger.error('Error fetching provider reviews:', reviewError);
+                }
+
                 setProviders(data);
             } catch (error) {
                 logger.error('Error fetching providers:', error);
@@ -58,7 +79,7 @@ export default function MarketplacePage() {
         };
 
         fetchProviders();
-    }, [isAuthenticated]);
+    }, []);
 
     // Auto-fill area from currentHouse
     useEffect(() => {
@@ -224,7 +245,7 @@ export default function MarketplacePage() {
                                             </h3>
                                             <div className="flex items-center gap-1 text-sm text-amber mt-1">
                                                 <Star className="w-4 h-4 fill-current" />
-                                                <span className="font-bold">{provider.rating_avg.toFixed(1)}</span>
+                                                <span className="font-bold">{(provider.rating_avg || 0).toFixed(1)}</span>
                                                 <span className="text-grey-mid font-normal">({provider.rating_count} umsagnir)</span>
                                             </div>
                                         </div>

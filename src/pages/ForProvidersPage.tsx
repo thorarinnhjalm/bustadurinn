@@ -5,6 +5,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Check, Star, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
+import { logger } from '@/utils/logger';
 
 
 export default function ForProvidersPage() {
@@ -32,10 +33,21 @@ export default function ForProvidersPage() {
             // Parse service areas
             const areas = formData.service_areas.split(',').map(s => s.trim()).filter(Boolean);
 
+            // Keep in sync with the limits in firestore.rules (service_providers create).
+            if (
+                formData.name.length > 100 || formData.description.length > 2000 ||
+                formData.contact_email.length > 200 || formData.contact_phone.length > 50 ||
+                formData.website.length > 300 || formData.address.length > 300 ||
+                areas.length > 20 || areas.some(a => a.length > 100)
+            ) {
+                alert('Einn eða fleiri reitir eru of langir. Vinsamlegast styttu textann og reyndu aftur.');
+                return;
+            }
+
             await addDoc(collection(db, 'service_providers'), {
                 ...formData,
                 service_areas: areas,
-                status: 'active', // Open registration
+                status: 'pending', // Applications are reviewed by an admin before they appear on Torgið
                 rating_avg: 0,
                 rating_count: 0,
                 created_at: serverTimestamp(),
@@ -43,9 +55,8 @@ export default function ForProvidersPage() {
             });
 
             setSuccess(true);
-            // Optional: navigate to the marketplace itself after a delay?
         } catch (error) {
-            console.error('Error registering provider:', error);
+            logger.error('Error registering provider:', error);
             alert('Villa kom upp við skráningu. Vinsamlegast reyndu aftur.');
         } finally {
             setLoading(false);
@@ -116,16 +127,16 @@ export default function ForProvidersPage() {
                                 <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <Check className="w-8 h-8" />
                                 </div>
-                                <h2 className="text-2xl font-serif font-bold text-charcoal mb-4">Skráning tókst!</h2>
+                                <h2 className="text-2xl font-serif font-bold text-charcoal mb-4">Umsókn móttekin!</h2>
                                 <p className="text-grey-mid mb-8 max-w-md mx-auto">
-                                    Takk fyrir að skrá þig. Þú ert nú sýnilegur á Torginu.
-                                    Við mælum með að þú farir og skoðir skráninguna þína.
+                                    Takk fyrir að skrá þig. Við förum yfir umsóknina og þú birtist á Torginu
+                                    um leið og hún hefur verið samþykkt.
                                 </p>
                                 <button
                                     onClick={() => navigate('/torgid')}
                                     className="btn btn-primary"
                                 >
-                                    Fara á Torgið
+                                    Skoða Torgið
                                 </button>
                             </div>
                         ) : (

@@ -1,44 +1,48 @@
 rules_version = '2';
+
+// Firebase Storage Security Rules for Bústaðurinn.is
+//
+// Every condition for an operation lives in ONE allow statement. Separate
+// allow statements are OR-ed together, so a second "allow write: if <size ok>"
+// would let anyone, signed in or not, write to the path.
+//
+// House membership is read from Firestore with firestore.get(); plain get()
+// does not exist in Storage rules.
+
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Organization logos
-    match /organizations/{orgId}/logo/{fileName} {
-      // Anyone can read logos
-      allow read: if true;
-
-      // Only org admins can upload/update logos
-      allow write: if request.auth != null &&
-                      (isOrgAdmin(orgId) || isSuperAdmin());
-    }
-
-    // House images
-    match /houses/{houseId}/images/{fileName} {
-      // Anyone can read house images
-      allow read: if true;
-
-      // Only admins can upload house images
-      allow write: if request.auth != null && isSuperAdmin();
-    }
-
-    // User profile pictures
-    match /users/{userId}/profile/{fileName} {
-      // Anyone can read profile pictures
-      allow read: if true;
-
-      // Users can upload their own profile picture
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Helper functions
-    function isSuperAdmin() {
+    function isHouseMember(houseId) {
       return request.auth != null &&
-             firestore.get(/databases/(default)/documents/user_roles/$(request.auth.uid)).data.is_super_admin == true;
+             request.auth.uid in firestore.get(/databases/(default)/documents/houses/$(houseId)).data.owner_ids;
     }
 
-    function isOrgAdmin(orgId) {
-      return request.auth != null &&
-             firestore.get(/databases/(default)/documents/user_roles/$(request.auth.uid)).data.organization_roles[orgId].role == 'org_admin';
+    function isImageUnder(maxBytes) {
+      return request.resource.size < maxBytes &&
+             request.resource.contentType.matches('image/.*');
+    }
+
+    // House images (main image and gallery). The app uploads to
+    // houses/{houseId}/image.jpg and houses/{houseId}/gallery_<timestamp>.jpg.
+    match /houses/{houseId}/{imageFile} {
+      // Public read: guest pages and shared links show these images.
+      allow read: if true;
+      allow create, update: if isHouseMember(houseId) && isImageUnder(5 * 1024 * 1024);
+      allow delete: if isHouseMember(houseId);
+    }
+
+    // User profile images
+    match /users/{userId}/{imageFile} {
+      allow read: if true;
+      allow create, update: if request.auth != null &&
+                               request.auth.uid == userId &&
+                               isImageUnder(2 * 1024 * 1024);
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Everything else is denied.
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }

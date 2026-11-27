@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { auth } from '@/lib/firebase';
+import { logger } from '@/utils/logger';
 import { analyticsService, type AnalyticsData } from '@/services/analyticsService';
 import { BarChart2, TrendingUp, Users, MousePointer, Eye, Globe, Search } from 'lucide-react';
 
@@ -25,15 +27,18 @@ export default function AnalyticsDashboard() {
         const loadData = async () => {
             setLoading(true);
             try {
+                const token = await auth.currentUser?.getIdToken();
                 // Parallel fetch
                 const [analyticsRes, searchRes] = await Promise.all([
                     analyticsService.getWebAnalytics(period),
-                    fetch(`/api/search-console?period=${period}`).then(r => r.json())
+                    fetch(`/api/search-console?period=${period}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }).then(r => r.json())
                 ]);
                 setData(analyticsRes);
                 setSearchData(searchRes);
             } catch (error) {
-                console.error('Error loading analytics:', error);
+                logger.error('Error loading analytics:', error);
             } finally {
                 setLoading(false);
             }

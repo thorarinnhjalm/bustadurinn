@@ -1,14 +1,14 @@
 /**
  * useAdminStats Hook
  * Centralized data fetching for Super Admin dashboard
- * Fetches houses, users, bookings, contacts, coupons, and newsletter subscribers
+ * Fetches houses, users, bookings, contacts, and newsletter subscribers
  */
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
+import { collection, collectionGroup, getDocs, getDoc, doc } from 'firebase/firestore';
 import { logger } from '@/utils/logger';
-import type { House, User, Coupon, ContactSubmission } from '@/types/models';
+import type { House, User, ContactSubmission } from '@/types/models';
 
 interface NewsletterSubscriber {
     id: string;
@@ -27,7 +27,6 @@ export interface AdminStats {
     allHouses: House[];
     allUsers: User[];
     allContacts: ContactSubmission[];
-    allCoupons: Coupon[];
     allSubscribers: NewsletterSubscriber[];
     launchOfferCount: number;
 }
@@ -42,7 +41,6 @@ export function useAdminStats() {
         allHouses: [],
         allUsers: [],
         allContacts: [],
-        allCoupons: [],
         allSubscribers: [],
         launchOfferCount: 0,
     });
@@ -65,22 +63,30 @@ export function useAdminStats() {
                     }
                 };
 
+                // Bookings and tasks live in houses/{id}/bookings|tasks.
+                const safeFetchGroup = async (groupName: string) => {
+                    try {
+                        return await getDocs(collectionGroup(db, groupName));
+                    } catch (e) {
+                        logger.error(`Error fetching collection group ${groupName}:`, e);
+                        return null;
+                    }
+                };
+
                 const [
                     housesSnap,
                     usersSnap,
                     bookingsSnap,
                     tasksSnap,
                     contactsSnap,
-                    couponsSnap,
                     subSnap,
                     promoSnapResult,
                 ] = await Promise.all([
                     safeFetch('houses'),
                     safeFetch('users'),
-                    safeFetch('bookings'),
-                    safeFetch('tasks'),
+                    safeFetchGroup('bookings'),
+                    safeFetchGroup('tasks'),
                     safeFetch('contact_submissions'),
-                    safeFetch('coupons'),
                     safeFetch('newsletter_subscribers'),
                     getDoc(doc(db, 'system', 'promotions')),
                 ]);
@@ -99,14 +105,6 @@ export function useAdminStats() {
                         created_at: doc.data().created_at?.toDate() || new Date(),
                     } as ContactSubmission)) || [];
 
-                const coupons =
-                    couponsSnap?.docs.map((doc) => ({
-                        id: doc.id,
-                        ...doc.data(),
-                        created_at: (doc.data().created_at as any)?.toDate() || new Date(),
-                        valid_until: (doc.data().valid_until as any)?.toDate() || undefined,
-                    } as Coupon)) || [];
-
                 const subscribers =
                     subSnap?.docs.map((doc) => ({
                         id: doc.id,
@@ -123,7 +121,6 @@ export function useAdminStats() {
                     allHouses: houses,
                     allUsers: users,
                     allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
-                    allCoupons: coupons,
                     allSubscribers: subscribers.sort(
                         (a, b) => b.created_at.getTime() - a.created_at.getTime()
                     ),

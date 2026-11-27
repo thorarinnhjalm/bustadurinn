@@ -40,11 +40,17 @@ export default function DataDeletionPage() {
                     <h3>Aðferð 1: Eyða í gegnum stillingarnar (ef þú ert innskráð/ur)</h3>
                     <ol>
                         <li>Skráðu þig inn á <a href="/login">Bústaðurinn.is</a></li>
-                        <li>Farðu í <strong>Stillingar</strong> í valmyndinni</li>
-                        <li>Skrunaðu niður að "Hættusvæði" (Danger Zone)</li>
-                        <li>Smelltu á <strong>"Eyða aðgangi"</strong> takkann</li>
-                        <li>Staðfestu eyðinguna</li>
+                        <li>Farðu í <strong>Stillingar</strong> (á símanum: <strong>Meira</strong> neðst á skjánum) eða opnaðu <a href="/settings?tab=profile">bustadurinn.is/settings?tab=profile</a></li>
+                        <li>Veldu flipann <strong>"Mínar stillingar"</strong></li>
+                        <li>Skrunaðu neðst á síðuna að hlutanum <strong>"Eyða aðgangi"</strong> og smelltu á <strong>"Eyða aðgangi"</strong> takkann</li>
+                        <li>Skrifaðu <strong>EYÐA</strong> í staðfestingarreitinn og smelltu á <strong>"Eyða aðgangi varanlega"</strong></li>
                     </ol>
+                    <p>
+                        Af öryggisástæðum þarftu að hafa skráð þig inn á síðustu 10 mínútum. Ef kerfið biður þig um það,
+                        skráðu þig út og inn aftur og reyndu svo aftur. Hús þar sem þú ert eini eigandinn eyðast með öllum
+                        gögnum (bókanir, fjármál, verkefni og gestahlekkir). Í öðrum húsum ert þú fjarlægð(ur) og næsti
+                        meðeigandi tekur við sem umsjónarmaður ef þú varst það.
+                    </p>
 
                     <h3>Aðferð 2: Hafa samband við okkur</h3>
                     <p>

@@ -19,20 +19,19 @@ import {
     where,
     orderBy,
     getDocs,
-    doc,
-    getDoc,
 } from 'firebase/firestore';
 import { subMonths, format, differenceInCalendarDays, getYear } from 'date-fns';
 import { is } from 'date-fns/locale';
 import { db } from '@/lib/firebase';
 import { logger } from '@/utils/logger';
 import { rangesOverlap } from '@/services/bookingService';
+import { getHouseMembers, getHouseMemberName } from '@/services/houseMembersService';
 import {
     getContestedHolidayWindows,
     CONTESTED_HOLIDAY_KEYS,
 } from '@/utils/icelandicHolidays';
 import type { ContestedHolidayKey, ContestedHolidayWindow } from '@/utils/icelandicHolidays';
-import type { Booking, House, User } from '@/types/models';
+import type { Booking, House } from '@/types/models';
 
 /** How long before a contested window's start it opens up to every member. */
 export const PRIORITY_WINDOW_MONTHS = 3;
@@ -236,13 +235,12 @@ export async function getHolidayPriority(
 
 /** Best-effort display-name lookup for a user, used only when the caller
  * doesn't supply a preloaded `ownerNames` map to checkFairnessForBooking. */
-async function resolveUserName(userId: string): Promise<string> {
+async function resolveUserName(houseId: string, userId: string): Promise<string> {
     try {
-        const userSnap = await getDoc(doc(db, 'users', userId));
-        const data = userSnap.data() as User | undefined;
-        return data?.name ?? 'öðrum meðlim';
+        const members = await getHouseMembers(houseId);
+        return getHouseMemberName(members, userId, 'öðrum meðlim');
     } catch (err) {
-        logger.error('fairnessService: failed to resolve user name', userId, err);
+        logger.warn('fairnessService: failed to resolve user name', userId, err);
         return 'öðrum meðlim';
     }
 }
@@ -286,7 +284,7 @@ function findOverlappingContestedWindows(
  *
  * Name resolution for the "whose turn is it" message: pass a preloaded
  * `ownerNames` map (userId -> display name) via `options` to avoid an extra
- * read; if omitted, the top-priority user's name is fetched from the `users`
+ * read; if omitted, the top-priority user's name is looked up via the house-members API
  * collection on demand.
  */
 export async function checkFairnessForBooking(
@@ -328,7 +326,7 @@ export async function checkFairnessForBooking(
         if (priority.topUserId === null || priority.topUserId === userId) continue;
 
         const topUserName =
-            options.ownerNames?.[priority.topUserId] ?? (await resolveUserName(priority.topUserId));
+            options.ownerNames?.[priority.topUserId] ?? (await resolveUserName(houseId, priority.topUserId));
 
         return {
             allowed: false,

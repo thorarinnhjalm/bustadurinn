@@ -2,22 +2,21 @@
  * Booking Service
  * Handles creation, deletion, and conflict-checking for house bookings.
  *
- * Booking date semantics (verified against CalendarPage.tsx):
- * - The "Ný bókun" form uses `<input type="date">`. Reading its value with
- *   `new Date('YYYY-MM-DD')` parses it as UTC midnight; writing it back uses
- *   `toISOString().split('T')[0]`, which round-trips losslessly. Iceland does
- *   not observe DST and sits at UTC+0 year-round, so UTC midnight and Reykjavík
- *   local midnight coincide — there is no cross-timezone drift to worry about.
- * - When a range is selected by dragging on the month calendar
- *   (react-big-calendar `onSelectSlot`), the library already returns `end` as
- *   midnight of the day AFTER the last selected day (an exclusive "checkout
- *   day" convention), matching the manual date-input case above.
- * - The pre-existing `checkConflicts` in CalendarPage encodes this: it treats
- *   `end` as an exclusive boundary (`start < booking.end && end > booking.start`),
- *   i.e. a booking that checks out on day X and another that checks in on day X
- *   do NOT conflict. `rangesOverlap` below preserves that exact boundary
- *   behavior so conflict detection doesn't change semantics during the
- *   extraction.
+ * DATE CONVENTION (whole-day ranges, `end` is EXCLUSIVE):
+ * - A booking is stored as [start, end) where both are LOCAL midnights and
+ *   `end` is the check-out day (react-big-calendar all-day events and
+ *   `onSelectSlot` use the same convention: dragging 10th-14th gives
+ *   end = 15th 00:00). The booking occupies the nights of start .. end-1.
+ * - A booking that checks out on day X and one that checks in on day X do NOT
+ *   conflict (back-to-back stays are allowed).
+ * - A same-day pick (first day == last day in the form) means a ONE-DAY
+ *   booking, not an empty one. It is normalised to [d, d+1 day) on save
+ *   (`normalizeBookingRange`), and `rangesOverlap` applies the same rule to
+ *   any range shorter than one day, so such a booking occupies that day and
+ *   conflicts with anything covering it. Multi-day ranges are unchanged.
+ * - Only a reversed range (end < start) is treated as empty / invalid.
+ * - Date inputs must use `@/utils/localDate` (local midnight), never
+ *   toISOString()/new Date('yyyy-MM-dd') (UTC).
  */
 
 import {
@@ -35,19 +34,38 @@ import { db, auth } from '@/lib/firebase';
 import { logger } from '@/utils/logger';
 import type { Booking, BookingType } from '@/types/models';
 
+/** Returns `start` plus one calendar day (local time). */
+function addOneDay(start: Date): Date {
+    const d = new Date(start.getTime());
+    d.setDate(d.getDate() + 1);
+    return d;
+}
+
 /**
- * Pure overlap test for two date ranges. `end` is treated as an EXCLUSIVE
- * boundary (checkout day) on both ranges: a range ending on day X and a range
- * starting on day X do NOT overlap. Strict inequalities on both sides achieve
- * this. A degenerate/invalid range (`end <= start`, e.g. a same-day or
- * reversed range) covers zero time and is explicitly treated as empty, so it
- * never overlaps anything — without this guard the two inequalities alone
- * can accidentally evaluate to true for a reversed range depending on where
- * its (swapped) endpoints happen to fall relative to the other range.
+ * Applies the one-day minimum: a range shorter than one day (including a
+ * same-day pick where end == start) is widened to [start, start + 1 day).
+ * Ranges of a day or longer, and reversed ranges (end < start), are returned
+ * unchanged.
+ */
+export function normalizeBookingRange(start: Date, end: Date): { start: Date; end: Date } {
+    if (end >= start && end < addOneDay(start)) {
+        return { start, end: addOneDay(start) };
+    }
+    return { start, end };
+}
+
+/**
+ * Pure overlap test for two date ranges. `end` is an EXCLUSIVE boundary
+ * (checkout day) on both ranges: a range ending on day X and a range starting
+ * on day X do NOT overlap. A range shorter than one day (e.g. a same-day,
+ * one-day booking) is treated as occupying one full day. A reversed range
+ * (`end < start`) is empty and never overlaps anything.
  */
 export function rangesOverlap(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): boolean {
-    if (aEnd <= aStart || bEnd <= bStart) return false;
-    return aStart < bEnd && aEnd > bStart;
+    if (aEnd < aStart || bEnd < bStart) return false;
+    const a = normalizeBookingRange(aStart, aEnd);
+    const b = normalizeBookingRange(bStart, bEnd);
+    return a.start < b.end && a.end > b.start;
 }
 
 /**
@@ -55,11 +73,10 @@ export function rangesOverlap(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date
  * fresh Firestore read at call time (not cached component state).
  *
  * IMPORTANT: The Firestore Web SDK cannot run queries inside a transaction,
- * so this is a race-window-narrowing check, not a transactional guarantee.
- * Two users can still race between this check and the write. True atomicity
- * would require either an Admin SDK API route that does the check-and-write
- * server-side, or a dedicated bookings-index document with transactional
- * writes — both are future work, not implemented here.
+ * so this alone is not a transactional guarantee. createBooking narrows the
+ * race by re-running this query AFTER the write and rolling back the loser
+ * (see createBooking). True atomicity would require an Admin SDK API route or
+ * a dedicated bookings-index document with transactional writes (future work).
  */
 export async function findConflictingBookings(
     houseId: string,
@@ -68,7 +85,9 @@ export async function findConflictingBookings(
 ): Promise<Booking[]> {
     const q = query(
         collection(db, 'houses', houseId, 'bookings'),
-        where('end', '>', start),
+        // '>=' so a legacy zero-length booking (end == start) is still fetched;
+        // rangesOverlap does the exact filtering.
+        where('end', '>=', start),
         orderBy('end')
     );
 
@@ -127,6 +146,10 @@ export interface CreateBookingParams {
 export async function createBooking(params: CreateBookingParams): Promise<string> {
     const { houseId, userId, userName, start, end, type, notes, allowConflicts } = params;
 
+    if (end < start) {
+        throw new Error('Invalid booking range: end is before start');
+    }
+
     if (!allowConflicts) {
         const conflicts = await findConflictingBookings(houseId, start, end);
         if (conflicts.length > 0) {
@@ -134,18 +157,51 @@ export async function createBooking(params: CreateBookingParams): Promise<string
         }
     }
 
+    // One-day minimum (same-day pick => [d, d+1 day)), see convention above.
+    const range = normalizeBookingRange(start, end);
+
     const docRef = await addDoc(collection(db, 'houses', houseId, 'bookings'), {
         house_id: houseId,
         user_id: userId,
         user_name: userName,
-        start,
-        end,
+        start: range.start,
+        end: range.end,
         type,
         notes: notes || '',
         created_at: serverTimestamp(),
     });
 
     const bookingId = docRef.id;
+
+    // Post-write race check (check-then-write is not atomic). If an overlapping
+    // booking was created in the meantime, exactly one of the racing writers
+    // rolls back: the one with the later created_at, ties broken by the greater
+    // doc id. Skipped when the user explicitly chose "Bóka samt".
+    if (!allowConflicts) {
+        let losingTo: Booking[] = [];
+        try {
+            const after = await findConflictingBookings(houseId, range.start, range.end);
+            const self = after.find((b) => b.id === bookingId);
+            const others = after.filter((b) => b.id !== bookingId);
+            const selfCreated = self?.created_at ?? new Date();
+            losingTo = others.filter((o) => {
+                const diff = selfCreated.getTime() - o.created_at.getTime();
+                return diff > 0 || (diff === 0 && bookingId > o.id);
+            });
+        } catch (raceCheckError) {
+            logger.warn('Post-write booking conflict check failed:', raceCheckError);
+        }
+
+        if (losingTo.length > 0) {
+            try {
+                await deleteDoc(doc(db, 'houses', houseId, 'bookings', bookingId));
+            } catch (rollbackError) {
+                logger.error('Failed to roll back conflicting booking:', rollbackError);
+                return bookingId;
+            }
+            throw new BookingConflictError(losingTo);
+        }
+    }
 
     // Ask the server to notify co-owners (in-app, email, push). The server
     // resolves recipients and honours their notification settings. Failures are

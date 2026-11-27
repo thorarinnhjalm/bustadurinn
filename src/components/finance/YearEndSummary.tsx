@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { ClipboardList } from 'lucide-react';
 import type { LedgerEntry } from '@/types/models';
-import { computeMemberShares, computeMemberSharePercentages } from '@/utils/financeShares';
+import { computeSettlement } from '@/components/finance/settlement';
 
 interface YearEndSummaryProps {
     year: number;
@@ -9,15 +9,6 @@ interface YearEndSummaryProps {
     ownerIds: string[];
     members: { uid: string; name: string }[];
     memberShares?: { [uid: string]: number };
-}
-
-interface MemberRow {
-    uid: string;
-    name: string;
-    sharePercent: number;
-    shareAmount: number;
-    paidAmount: number;
-    difference: number; // paidAmount - shareAmount
 }
 
 const formatKr = (n: number) => `${Math.round(n).toLocaleString('is-IS')} kr.`;
@@ -31,50 +22,13 @@ const formatKr = (n: number) => `${Math.round(n).toLocaleString('is-IS')} kr.`;
  * entry's amount evenly among the listed payers.
  */
 export default function YearEndSummary({ year, entries, ownerIds, members, memberShares }: YearEndSummaryProps) {
-    const nameFor = (uid: string) => members.find((m) => m.uid === uid)?.name || uid;
+    const nameFor = (uid: string) => members.find((m) => m.uid === uid)?.name || 'Meðeigandi';
 
-    const { totalExpenses, totalIncome, net, rows } = useMemo(() => {
-        const expenseEntries = entries.filter((e) => e.type === 'expense');
-        const incomeEntries = entries.filter((e) => e.type === 'income');
-
-        const totalExpenses = expenseEntries.reduce((sum, e) => sum + e.amount, 0);
-        const totalIncome = incomeEntries.reduce((sum, e) => sum + e.amount, 0);
-
-        // How much each owner actually paid, based on expense entries only
-        // (compared against their share of expenses below).
-        const paidByMember: Record<string, number> = {};
-        ownerIds.forEach((uid) => { paidByMember[uid] = 0; });
-
-        expenseEntries.forEach((entry) => {
-            const payerUids = entry.split_between && entry.split_between.length > 0
-                ? entry.split_between.map((p) => p.uid)
-                : [entry.paid_by_user_id];
-
-            const perPayer = entry.amount / payerUids.length;
-            payerUids.forEach((uid) => {
-                paidByMember[uid] = (paidByMember[uid] ?? 0) + perPayer;
-            });
-        });
-
-        const shareAmounts = computeMemberShares(totalExpenses, ownerIds, memberShares);
-        const sharePercentages = computeMemberSharePercentages(ownerIds, memberShares);
-
-        const rows: MemberRow[] = ownerIds.map((uid) => {
-            const shareAmount = shareAmounts[uid] ?? 0;
-            const paidAmount = paidByMember[uid] ?? 0;
-            return {
-                uid,
-                name: nameFor(uid),
-                sharePercent: sharePercentages[uid] ?? 0,
-                shareAmount,
-                paidAmount,
-                difference: paidAmount - shareAmount
-            };
-        });
-
-        return { totalExpenses, totalIncome, net: totalIncome - totalExpenses, rows };
+    const { totalExpenses, totalIncome, net, rows } = useMemo(
+        () => computeSettlement(entries, ownerIds, memberShares, nameFor),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [entries, ownerIds, memberShares, members]);
+        [entries, ownerIds, memberShares, members]
+    );
 
     return (
         <div className="space-y-6">
@@ -101,7 +55,7 @@ export default function YearEndSummary({ year, entries, ownerIds, members, membe
                     </div>
                 </div>
 
-                {ownerIds.length === 0 ? (
+                {ownerIds.length === 0 && rows.length === 0 ? (
                     <p className="text-sm text-grey-mid">Engir eigendur skráðir.</p>
                 ) : (
                     <div className="overflow-x-auto">

@@ -25,6 +25,8 @@ npm run test:e2e     # Playwright E2E tests (requires dev server running)
 npm run test:e2e:ui  # Playwright with interactive UI
 ```
 
+There is no CI. Before pushing run `npm run lint`, `npx tsc -p tsconfig.app.json --noEmit` and `npm run test`. `api/` is outside every tsconfig and must be type-checked explicitly: `npx tsc --noEmit --skipLibCheck --module nodenext --moduleResolution nodenext --target es2022 --types node api/<file>.ts`.
+
 Utility scripts in `scripts/`:
 ```bash
 npm run seed-email-templates  # Seed email templates to Firestore
@@ -34,7 +36,7 @@ npm run migrate-admin-rbac    # Migrate admin to RBAC system
 
 ## Architecture
 
-**React 19 SPA** with TypeScript 5.9, Vite 7, deployed on Vercel Pro. Backend is Firebase (Firestore, Auth, Storage). Serverless API routes live in `/api/` (Vercel Functions). Node.js 20.x required.
+**React 19 SPA** with TypeScript 5.9, Vite 7, deployed on Vercel Pro. Backend is Firebase (Firestore, Auth, Storage). Serverless API routes live in `/api/` (Vercel Functions). Node.js 24.x required.
 
 ### Key Layers
 
@@ -79,7 +81,7 @@ Super admin can impersonate users. State managed via `ImpersonationContext` (`sr
 
 ### Sandbox / Demo Mode
 
-`SandboxContext` (`src/contexts/SandboxContext.tsx`) provides a demo mode with mock data from `src/utils/sandboxMockData.ts` and `sandboxStorage.ts`. `SandboxProvider` is scoped to `SandboxPage` only — it is not in `App.tsx`.
+`src/pages/SandboxPage.tsx` (`/prufa`) is a self-contained demo with its own inline mock data; it does not use `SandboxContext`. `SandboxContext` (`src/contexts/SandboxContext.tsx`), `src/utils/sandboxMockData.ts` and `sandboxStorage.ts` are currently not imported by any page or component, and no `SandboxProvider` is mounted anywhere.
 
 ### Organizations
 
@@ -87,7 +89,6 @@ B2B feature for companies/unions, with its own Firestore subcollection hierarchy
 
 ### External Integrations
 
-- **Askell** — Icelandic subscription billing. Webhook at `/api/askell-webhook.ts` verifies HMAC signatures and updates house subscription status. Env: `ASKELL_WEBHOOK_SECRET`.
 - **Payday.is** — Icelandic invoicing service. `/api/payday-create-invoice.ts` is admin-only and uses OAuth2 client credentials. Env: `VITE_PAYDAY_CLIENT_ID`, `PAYDAY_SECRET_KEY`, `PAYDAY_TOKEN_URL`.
 - **FCM Push Notifications** — Firebase Cloud Messaging via `/api/push-notification.ts`. Client-side token registration in `src/utils/pushNotifications.ts`.
 - **Open-Meteo** — Weather data, no auth required. Service: `src/services/weatherService.ts`.
@@ -99,12 +100,14 @@ Sentry is configured for error tracking and performance monitoring (`@sentry/rea
 
 ## API Routes
 
-Routes are grouped by auth requirement:
+Routes are grouped by what the code requires today (check the file's own auth call before relying on this list):
 
-- **No auth:** `contact.ts` (rate-limited 5/hr via Upstash), `road-conditions.ts`, `booking-notification.ts`, `askell-webhook.ts`
-- **Any authenticated user:** `send-email.ts`, `invite-member.ts`, `join-house.ts`, `push-notification.ts`
-- **Admin only:** `payday-create-invoice.ts`, `admin-audit-users.ts`, `admin-delete-user.ts`, `admin-repair-user.ts`, `analytics.ts` (GA4), `search-console.ts`
-- **Cron (Bearer token):** `cron/trial-reminders.ts`, `cron/recover-orphans.ts`
+- **No auth:** `contact.ts` (rate-limited via Upstash), `road-conditions.ts`, `weather.ts`, `invite-info.ts`, `guestbook-entry.ts` (the guest-link token is the credential), `account/data-deletion-callback.ts` (verifies Facebook's `signed_request` signature), `search-console.ts` (currently has NO auth check although it should be admin-only)
+- **Any signed-in user** (Firebase ID token): `send-email.ts` (own address only unless super admin), `invite-member.ts`, `join-house.ts`, `booking-notification.ts`, `push-notification.ts`, `house-members.ts`, `house-notification.ts`, `leave-house.ts`, `remove-member.ts` and `transfer-manager.ts` (house-manager checks inside), `delete-account.ts` (needs a sign-in less than 10 minutes old)
+- **Admin only:** `payday-create-invoice.ts`, `admin-delete-house.ts`, `admin-send-reply.ts`, `admin-audit-users.ts`, `admin-delete-user.ts`, `admin-repair-user.ts`, `analytics.ts` (GA4)
+- **Cron (Bearer `CRON_SECRET`):** `cron/recover-orphans.ts`, `cron/weather-alerts.ts`. Cron routes fail closed: they return 500 and do nothing when `CRON_SECRET` is unset.
+
+`api/utils/ratelimit.ts` `checkRateLimit` fails closed by default (503 if the Upstash backend errors). Authenticated routes pass `{ failOpen: true }` so a Redis outage does not take the feature down.
 
 ### Two Admin Auth Middleware Systems
 
@@ -116,7 +119,7 @@ There are two auth helpers in `api/utils/` with **different contracts** — do n
 
 ### Firebase Admin in API Routes
 
-`api/utils/firebaseAdmin.ts` exports factory functions `getDb()` and `getAuth()` — **not** `db` or `admin` as named exports. Some older routes incorrectly `import { admin, db }` (these resolve to `undefined`). When writing or editing API routes, always use:
+`api/utils/firebaseAdmin.ts` exports factory functions `getDb()` and `getAuth()` plus the `admin` namespace (`import { admin }` works, e.g. for `admin.firestore.FieldValue`). It does **not** export `db` or `auth` — `import { db }` resolves to `undefined`. When writing or editing API routes, always use:
 
 ```ts
 import { initializeFirebaseAdmin, getDb, getAuth } from '../utils/firebaseAdmin';
@@ -170,7 +173,7 @@ E2E tests use Playwright (Chromium only). Tests live in `tests/e2e/`. The dev se
 Vercel Pro, auto-deploys from `main` branch. SPA fallback configured — all non-`/api` routes rewrite to `index.html`. Security headers (HSTS, CSP, X-Frame-Options) set in `vercel.json`.
 
 Cron jobs (configured in `vercel.json`):
-- `/api/cron/trial-reminders` — daily at 10:00
+- `/api/cron/weather-alerts` — daily at 07:00 (scans upcoming bookings and sends an in-app + push warning to the booking's user when severe weather is forecast for the stay; sets `weather_alert_sent` on the booking)
 - `/api/cron/recover-orphans` — daily at 12:00 (repairs houses with missing owner records)
 
 ## Environment Variables
@@ -183,21 +186,20 @@ Client-side vars (prefixed `VITE_`) are documented in `.env.example`. Server-sid
 | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Firebase Admin SDK (alternative) |
 | `RESEND_API_KEY` | All email routes |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Rate limiting; if absent, rate-limited routes return 503 |
-| `ASKELL_WEBHOOK_SECRET` | Subscription webhook HMAC verification |
 | `PAYDAY_SECRET_KEY`, `PAYDAY_TOKEN_URL` | Payday.is invoicing OAuth2 |
-| `CRON_SECRET` | Cron job Bearer token auth |
+| `CRON_SECRET` | Cron job Bearer token auth (required; cron routes refuse to run without it) |
 | `FACEBOOK_APP_SECRET` | Facebook OAuth data-deletion callback |
 
 ## Firestore Collections
 
-**Core:** `users/{uid}`, `user_roles/{uid}`, `houses/{houseId}`, `houses/{houseId}/bookings`, `invitations` (pending member invites with `token` + `status: 'pending'`), `notifications`, `fcm_tokens`
+**Core:** `users/{uid}`, `user_roles/{uid}`, `houses/{houseId}`, `invitations` (pending member invites with `token` + `status: 'pending'`), `notifications`, `fcm_tokens`
 
-**House features:** `tasks`, `shopping_list`, `finance_entries`, `budget_plans`, `guestbook_entries`
+**House features** (subcollections of `houses/{houseId}`, not top-level): `bookings`, `tasks`, `shopping_list`, `finance_entries`, `budget_plans`, `inventory`, `internal_logs`. The guestbook is the top-level `guestbook` collection; guest links use `guest_views/{token}`.
 
 **B2B:** `organizations/{orgId}/` with subcollections: `members`, `access_requests`, `booking_requests`, `admin_actions`
 
-**Platform:** `contact_submissions`, `email_templates`, `coupons`, `feedback`, `internal_logs`
+**Platform:** `contact_submissions`, `email_templates`, `coupons`, `feedback`, `funnel_events`
 
-Security rules in `firestore.rules`, storage rules in `storage.rules`. `admin_actions` is immutable — updates and deletes are blocked at the rules level. Composite indexes defined in `firestore.indexes.json`.
+Security rules in `firestore.rules`, storage rules in `storage.rules`. `admin_actions` is immutable — updates and deletes are blocked at the rules level. Composite indexes defined in `firestore.indexes.json`. **`firestore.rules` and `storage.rules` are NOT deployed by Vercel** — publish them manually (Firebase console, or `firebase deploy --only firestore:rules,storage`), together with the code that depends on them.
 
 Firebase emulators available: Auth (:9099), Firestore (:8080), Storage (:9199), UI (:4000).

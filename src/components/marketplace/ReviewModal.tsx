@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Star, X, Loader2 } from 'lucide-react';
-import { db, auth } from '@/lib/firebase';
-import { collection, doc, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store/appStore';
 import type { ServiceProvider } from '@/types/models';
 
@@ -26,77 +27,31 @@ export default function ReviewModal({ provider, onClose, onReviewSubmitted }: Re
         setLoading(true);
 
         try {
-            await runTransaction(db, async (transaction) => {
-                // 1. Create review doc ref
-                const reviewRef = doc(collection(db, 'service_reviews'));
-
-                // 2. Read provider doc to get latest stats (locking it)
-                const providerRef = doc(db, 'service_providers', provider.id);
-                const providerDoc = await transaction.get(providerRef);
-
-                if (!providerDoc.exists()) {
-                    throw new Error("Provider does not exist!");
-                }
-
-                const currentData = providerDoc.data();
-                const currentCount = currentData.rating_count || 0;
-                const currentAvg = currentData.rating_avg || 0;
-
-                // 3. Calculate new average
-                // (OldAvg * OldCount + NewRating) / (OldCount + 1)
-                const newCount = currentCount + 1;
-                const newAvg = ((currentAvg * currentCount) + rating) / newCount;
-
-                // 4. Write review
-                transaction.set(reviewRef, {
-                    provider_id: provider.id,
-                    user_id: currentUser.uid,
-                    user_name: currentUser.name || 'Notandi',
-                    rating: rating,
-                    comment: comment,
-                    created_at: serverTimestamp()
-                });
-
-                // 5. Update provider stats
-                transaction.update(providerRef, {
-                    rating_count: newCount,
-                    rating_avg: newAvg
-                });
+            // One review per user and provider (deterministic id; rules allow create only).
+            // rating_avg / rating_count on the provider doc are computed from the
+            // reviews when the marketplace loads, because users cannot write provider docs.
+            const reviewRef = doc(db, 'service_reviews', `${provider.id}_${currentUser.uid}`);
+            const existing = await getDoc(reviewRef);
+            if (existing.exists()) {
+                alert('Þú hefur þegar gefið þessum þjónustuaðila umsögn.');
+                return;
+            }
+            await setDoc(reviewRef, {
+                provider_id: provider.id,
+                user_id: currentUser.uid,
+                user_name: (currentUser.name || 'Notandi').slice(0, 100),
+                rating: rating,
+                comment: comment.trim().slice(0, 1000),
+                created_at: serverTimestamp()
             });
 
             onReviewSubmitted();
             onClose();
         } catch (error) {
-            console.error('Error submitting review:', error);
+            logger.error('Error submitting review:', error);
             alert('Villa kom upp við að senda inn umsögn.');
         } finally {
             setLoading(false);
-        }
-
-        // Send notification email (fire and forget)
-        if (provider.contact_email) {
-            (async () => {
-                const idToken = await auth.currentUser?.getIdToken();
-                // NOTE: /api/send-email only lets non-admin users mail their own address,
-                // so this notification to the provider is rejected (403) for regular users.
-                // It needs a dedicated server-side trigger.
-                await fetch('/api/send-email', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
-                    },
-                    body: JSON.stringify({
-                        templateId: 'general_notification',
-                        to: provider.contact_email,
-                        variables: {
-                            title: 'Ný umsögn á Torginu! ⭐',
-                            message: `Þú hefur fengið nýja ${rating} stjörnu umsögn frá ${currentUser.name || 'notanda'}. Kíktu á Torgið til að sjá hvað viðskiptavinir eru að segja.`,
-                            actionUrl: 'https://www.bustadurinn.is/torgid'
-                        }
-                    })
-                });
-            })().catch(console.error); // Log error but don't block UI
         }
     };
 
@@ -141,6 +96,7 @@ export default function ReviewModal({ provider, onClose, onReviewSubmitted }: Re
                             className="input w-full min-h-[100px]"
                             placeholder="Segðu okkur frá upplifun þinni..."
                             value={comment}
+                            maxLength={1000}
                             onChange={(e) => setComment(e.target.value)}
                         />
                     </div>

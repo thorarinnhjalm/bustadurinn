@@ -216,3 +216,73 @@ export function getJoinHouseRateLimit(): Ratelimit {
     }
     return _joinHouseRateLimit;
 }
+
+/**
+ * Rate limiter for unauthenticated guest-link guestbook entries (api/guestbook-entry.ts)
+ * Limit: 10 requests per hour per IP
+ */
+let _guestbookRateLimit: Ratelimit | null = null;
+export function getGuestbookRateLimit(): Ratelimit {
+    if (!_guestbookRateLimit) {
+        _guestbookRateLimit = new Ratelimit({
+            redis: getRedis(),
+            limiter: Ratelimit.slidingWindow(10, '1 h'),
+            analytics: true,
+            prefix: 'ratelimit:guestbook-entry',
+        });
+    }
+    return _guestbookRateLimit;
+}
+
+/**
+ * Rate limiter for house member lookups (api/house-members.ts)
+ * Limit: 120 requests per hour per user
+ */
+let _houseMembersRateLimit: Ratelimit | null = null;
+export function getHouseMembersRateLimit(): Ratelimit {
+    if (!_houseMembersRateLimit) {
+        _houseMembersRateLimit = new Ratelimit({
+            redis: getRedis(),
+            limiter: Ratelimit.slidingWindow(120, '1 h'),
+            analytics: true,
+            prefix: 'ratelimit:house-members',
+        });
+    }
+    return _houseMembersRateLimit;
+}
+
+/**
+ * Rate limiter for in-app/push house notifications (api/house-notification.ts)
+ * Limit: 60 requests per hour per user
+ */
+let _houseNotificationRateLimit: Ratelimit | null = null;
+export function getHouseNotificationRateLimit(): Ratelimit {
+    if (!_houseNotificationRateLimit) {
+        _houseNotificationRateLimit = new Ratelimit({
+            redis: getRedis(),
+            limiter: Ratelimit.slidingWindow(60, '1 h'),
+            analytics: true,
+            prefix: 'ratelimit:house-notification',
+        });
+    }
+    return _houseNotificationRateLimit;
+}
+
+/**
+ * Rate limiter for membership changes and account deletion
+ * (api/leave-house.ts, api/remove-member.ts, api/transfer-manager.ts,
+ * api/delete-account.ts). One shared bucket per user.
+ * Limit: 10 requests per hour per user
+ */
+let _membershipChangeRateLimit: Ratelimit | null = null;
+export function getMembershipChangeRateLimit(): Ratelimit {
+    if (!_membershipChangeRateLimit) {
+        _membershipChangeRateLimit = new Ratelimit({
+            redis: getRedis(),
+            limiter: Ratelimit.slidingWindow(10, '1 h'),
+            analytics: true,
+            prefix: 'ratelimit:membership-change',
+        });
+    }
+    return _membershipChangeRateLimit;
+}

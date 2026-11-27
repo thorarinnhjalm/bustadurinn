@@ -8,7 +8,7 @@ import {
     Image as ImageIcon, MapPin, Camera,
     ShoppingCart, CheckSquare, Coffee, Check
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { format } from 'date-fns';
@@ -132,6 +132,9 @@ const UserDashboard = () => {
                         const newData = { id: snap.id, ...snap.data() } as House;
                         useAppStore.getState().setCurrentHouse(newData);
                     }
+                }, (error) => {
+                    logger.error('House listener error:', error);
+                    setDashboardLoading(false);
                 }));
 
                 // 1. Bookings & Occupancy (Subcollection)
@@ -157,7 +160,10 @@ const UserDashboard = () => {
                     // Check Occupancy
                     const active = bookingsData.find(b => b.start <= new Date() && b.end >= new Date());
                     setIsOccupied(!!active);
-                }, (error) => console.error("Bookings listener error:", error)));
+                }, (error) => {
+                    logger.error("Bookings listener error:", error);
+                    setDashboardLoading(false);
+                }));
 
                 // 2. Tasks (Subcollection)
                 const qTasks = query(
@@ -181,7 +187,10 @@ const UserDashboard = () => {
                         .slice(0, 5);
 
                     setTasks(activeTasks);
-                }, (error) => console.error("Tasks listener error:", error)));
+                }, (error) => {
+                    logger.error("Tasks listener error:", error);
+                    setDashboardLoading(false);
+                }));
 
                 // 3. Shopping List (Subcollection)
                 const qShopping = query(
@@ -202,7 +211,10 @@ const UserDashboard = () => {
                         .slice(0, 5);
 
                     setShoppingItems(unchecked);
-                }, (error) => console.error("Shopping listener error:", error)));
+                }, (error) => {
+                    logger.error("Shopping listener error:", error);
+                    setDashboardLoading(false);
+                }));
 
                 // 4. Internal Logs (Subcollection - for Check-in status)
                 // Limit raised from 5 to 30 so this same listener can also answer
@@ -260,12 +272,16 @@ const UserDashboard = () => {
                         log => log.kind === 'seasonal_autumn' && log.created_at?.getFullYear() === currentYear
                     );
                     setSeasonalLogged({ spring: springLogged, autumn: autumnLogged });
-                }, (error) => console.error("Logs listener error:", error)));
+                }, (error) => {
+                    logger.error("Logs listener error:", error);
+                    setDashboardLoading(false);
+                }));
 
-                // 5. Finances (Subcollection - Optimized with Start of Year filter)
+                // 5. Finances (Subcollection)
+                // All entries are loaded (small collection) so the fund balance is
+                // the true balance; the this-year figure is derived from them.
                 const qFinance = query(
                     collection(db, 'houses', currentHouse.id, 'finance_entries'),
-                    where('date', '>=', startOfYear),
                     orderBy('date', 'desc')
                 );
 
@@ -282,6 +298,9 @@ const UserDashboard = () => {
                     } else {
                         setBudgetPlan(null);
                     }
+                }, (error) => {
+                    logger.error('Budget listener error:', error);
+                    setDashboardLoading(false);
                 }));
 
                 unsubscribes.push(onSnapshot(qFinance, (snapshot) => {
@@ -295,6 +314,9 @@ const UserDashboard = () => {
                     const income = entries.filter(e => e.type !== 'expense').reduce((s, e) => s + e.amount, 0);
                     const expense = entries.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
                     const bal = income - expense;
+                    const expenseThisYear = entries
+                        .filter(e => e.type === 'expense' && e.date && e.date >= startOfYear)
+                        .reduce((s, e) => s + e.amount, 0);
 
                     let action = "Ekkert að frétta";
                     if (entries.length > 0) {
@@ -309,9 +331,12 @@ const UserDashboard = () => {
                         ...prev,
                         balance: bal,
                         lastAction: action,
-                        actualYTD: expense
+                        actualYTD: expenseThisYear
                     }));
-                }, (error) => console.error("Finance listener error:", error)));
+                }, (error) => {
+                    logger.error("Finance listener error:", error);
+                    setDashboardLoading(false);
+                }));
 
                 // 6. Inventory Subcollection ("Hvað er til")
                 const qInventory = query(
@@ -325,7 +350,10 @@ const UserDashboard = () => {
                         updated_at: docSnap.data().updated_at?.toDate()
                     })) as InventoryItem[];
                     setInventoryItems(items);
-                }, (error) => console.error("Inventory listener error:", error)));
+                }, (error) => {
+                    logger.error("Inventory listener error:", error);
+                    setDashboardLoading(false);
+                }));
 
                 // 6. Weather (Async - One time)
                 if (currentHouse.location?.lat && currentHouse.location?.lng) {
@@ -333,13 +361,13 @@ const UserDashboard = () => {
                         .then(wData => {
                             if (wData) setWeather({ temp: wData.temp, wind: wData.windSpeed, condition: wData.condition });
                         })
-                        .catch(e => console.error("Weather fetch error:", e));
+                        .catch(e => logger.error("Weather fetch error:", e));
                 } else {
                     setWeather({ temp: "?", wind: 0, condition: "Vantar staðsetningu" });
                 }
 
             } catch (err) {
-                console.error("Setup listeners error:", err);
+                logger.error("Setup listeners error:", err);
                 setDashboardLoading(false);
             }
         };
@@ -378,20 +406,17 @@ const UserDashboard = () => {
                 <div className="card max-w-md text-center">
                     <h2 className="text-2xl font-serif mb-4">Engin hús fundust</h2>
                     <p className="text-grey-dark mb-6">
-                        Þessi notandi hefur ekki lokið við að setja upp hús.
+                        Ekki tókst að hlaða húsinu þínu. Reyndu aftur eða hafðu samband ef vandinn heldur áfram.
                     </p>
                     <button
-                        onClick={() => window.location.href = '/onboarding'}
+                        onClick={() => window.location.reload()}
                         className="btn btn-primary"
                     >
-                        Fara í uppsetningu
+                        Reyna aftur
                     </button>
-                    <button
-                        onClick={() => window.history.back()}
-                        className="btn btn-ghost mt-2"
-                    >
-                        Til baka
-                    </button>
+                    <Link to="/hafa-samband" className="btn btn-ghost mt-2 inline-block">
+                        Hafa samband
+                    </Link>
                 </div>
             </div>
         );
@@ -429,6 +454,8 @@ const UserDashboard = () => {
                 await addDoc(collection(db, 'guestbook'), {
                     house_id: currentHouse.id,
                     author: currentUser.name || currentUser.email || 'Óþekktur',
+                    author_id: currentUser.uid,
+                    user_id: currentUser.uid,
                     message: checkoutMessage.trim(),
                     created_at: serverTimestamp()
                 });
@@ -502,7 +529,7 @@ const UserDashboard = () => {
             setIsCheckedIn(false);
 
         } catch (error) {
-            console.error('Error during checkout:', error);
+            logger.error('Error during checkout:', error);
         } finally {
             setCheckoutLoading(false);
         }
@@ -530,7 +557,7 @@ const UserDashboard = () => {
             setShowCheckInModal(false);
             setIsCheckedIn(true);
         } catch (error) {
-            console.error('Error during check-in:', error);
+            logger.error('Error during check-in:', error);
         } finally {
             setCheckInLoading(false);
         }
@@ -552,7 +579,7 @@ const UserDashboard = () => {
                 created_at: serverTimestamp()
             });
         } catch (error) {
-            console.error('Error logging seasonal checklist:', error);
+            logger.error('Error logging seasonal checklist:', error);
             throw error;
         }
     };
@@ -744,12 +771,13 @@ const UserDashboard = () => {
             await batch.commit();
 
             // Clear legacy supply_checklist from house doc
-            await updateDoc(doc(db, 'houses', currentHouse.id), {
-                supply_checklist: [],
-                supplies_out: []
-            });
+            // Only the manager may change supply_checklist (firestore.rules);
+            // other members may only reset supplies_out.
+            await updateDoc(doc(db, 'houses', currentHouse.id), currentHouse.manager_id === currentUser.uid
+                ? { supply_checklist: [], supplies_out: [] }
+                : { supplies_out: [] });
         } catch (error) {
-            console.error('Error initializing inventory:', error);
+            logger.error('Error initializing inventory:', error);
         }
     };
 
@@ -780,7 +808,7 @@ const UserDashboard = () => {
                 }
             }
         } catch (err) {
-            console.error("Error checking shopping item on dashboard:", err);
+            logger.error("Error checking shopping item on dashboard:", err);
         }
     };
 
@@ -799,8 +827,6 @@ const UserDashboard = () => {
                         decoding="async"
                         width="800"
                         height="600"
-                        sizes="(max-width: 768px) 100vw, 800px"
-                        srcSet={`${currentHouse?.image_url || "/hero_summer_house.jpg"}?w=400 400w, ${currentHouse?.image_url || "/hero_summer_house.jpg"}?w=800 800w`}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/20 to-transparent opacity-90"></div>
 
@@ -985,7 +1011,7 @@ const UserDashboard = () => {
                                 await addDoc(collection(db, 'houses', currentHouse.id, 'internal_logs'), newLog);
                                 setIsCheckedIn(true);
                             } catch (error) {
-                                console.error('Error logging check-in:', error);
+                                logger.error('Error logging check-in:', error);
                             }
                         }}
                         className={`flex-1 py-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 border ${isCheckedIn
@@ -1108,7 +1134,7 @@ const UserDashboard = () => {
                                                         </p>
                                                     </div>
                                                     <div className="flex-1 bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
-                                                        <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mb-1">Raun eyðsla</p>
+                                                        <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mb-1">Raun eyðsla í ár</p>
                                                         <p className="text-white font-serif text-lg leading-none">
                                                             {finances.actualYTD.toLocaleString('is-IS')} <span className="text-[10px] font-sans font-normal text-stone-500">kr.</span>
                                                         </p>
@@ -1216,12 +1242,16 @@ const UserDashboard = () => {
                     </section>
 
                     {/* SHOPPING LIST */}
-                    <section onClick={() => navigate('/settings?tab=shopping')} className="group cursor-pointer">
+                    <section className="group">
                         <div className="flex justify-between items-center mb-4 px-1">
                             <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Innkaupalistinn</h3>
-                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-amber group-hover:text-white transition-colors">
+                            <Link
+                                to="/settings?tab=shopping"
+                                aria-label="Opna innkaupalistann"
+                                className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-amber group-hover:text-white transition-colors"
+                            >
                                 <ChevronRight size={18} />
-                            </div>
+                            </Link>
                         </div>
                         <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300 min-h-[200px]">
                             {shoppingItems.length === 0 ? (

@@ -2,11 +2,49 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react-swc'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
+import type { Plugin } from 'vite'
+
+/**
+ * Emits the pristine Vite-built index.html a second time as `app-shell.html`.
+ *
+ * Why: scripts/prerender.js (postbuild) overwrites dist/index.html with the
+ * prerendered landing page. index.html is therefore NOT a neutral SPA shell
+ * any more, so everything that means "the empty shell" (the Vercel catch-all
+ * rewrite in vercel.json, the service worker's navigation fallback, the
+ * prerenderer's own local server) points at app-shell.html instead.
+ *
+ * Ordering: `generateBundle` with order 'post' runs after Vite's own HTML
+ * plugin has emitted index.html, and well before vite-plugin-pwa builds the
+ * service worker in closeBundle. So app-shell.html exists in dist/ when the
+ * injectManifest globbing runs and is precached with a revision hash of its
+ * real (final) content. It is never touched by the prerenderer.
+ */
+function appShellPlugin(): Plugin {
+  return {
+    name: 'bustadurinn:app-shell',
+    apply: 'build',
+    generateBundle: {
+      order: 'post',
+      handler(_options, bundle) {
+        const index = bundle['index.html']
+        if (!index || index.type !== 'asset') {
+          this.error('app-shell: index.html was not emitted, cannot copy the shell')
+        }
+        this.emitFile({
+          type: 'asset',
+          fileName: 'app-shell.html',
+          source: index.source,
+        })
+      },
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    appShellPlugin(),
     VitePWA({
       // We already manage public/manifest.json + <link rel="manifest"> by
       // hand (see index.html) — don't let the plugin generate/inject its own.
@@ -25,6 +63,14 @@ export default defineConfig({
         // source at `srcDir/filename`, so the source file must share the
         // exact output filename below.
         injectionPoint: 'self.__WB_MANIFEST',
+        // The manifest is generated during the Vite build, BEFORE the
+        // postbuild prerender replaces dist/index.html with the prerendered
+        // landing page. A precache entry for index.html would carry the
+        // revision of the pre-prerender file while the server later serves
+        // different bytes, so it is left out; navigations are bound to
+        // app-shell.html instead (see src/firebase-messaging-sw.js), which is
+        // never rewritten after the manifest is built.
+        globIgnores: ['index.html'],
       },
       // We register the SW manually in src/main.tsx (kept close to the
       // existing FCM registration code) rather than via the plugin's

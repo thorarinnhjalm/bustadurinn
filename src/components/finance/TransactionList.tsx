@@ -73,26 +73,30 @@ export default function TransactionList({ entries, onDelete, onEdit, currentUser
                                     {isExpense ? '- ' : '+ '}
                                     {entry.amount.toLocaleString()} kr.
                                 </td>
-                                <td className="py-3 text-right flex items-center justify-end gap-2">
+                                <td className="py-3 text-right flex items-center justify-end gap-3">
                                     {canEdit && (
                                         <>
                                             <button
                                                 onClick={() => onEdit(entry)}
-                                                className="text-grey-mid hover:text-amber opacity-0 group-hover:opacity-100 transition-all"
+                                                type="button"
+                                                className="p-1.5 -m-1 text-grey-mid hover:text-amber focus-visible:opacity-100 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-all"
+                                                aria-label="Breyta færslu"
                                                 title="Breyta færslu"
                                             >
-                                                <Edit2 className="w-4 h-4" />
+                                                <Edit2 className="w-4 h-4" aria-hidden="true" />
                                             </button>
-                                            <div className="w-px h-4 bg-grey-warm/50 opacity-0 group-hover:opacity-100"></div>
+                                            <div className="w-px h-4 bg-grey-warm/50 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100" aria-hidden="true"></div>
                                         </>
                                     )}
                                     {canDelete && (
                                         <button
                                             onClick={() => onDelete(entry)}
-                                            className="text-grey-mid hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                            type="button"
+                                            className="p-1.5 -m-1 text-grey-mid hover:text-red-500 focus-visible:opacity-100 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-all"
+                                            aria-label="Eyða færslu"
                                             title="Eyða færslu"
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Trash2 className="w-4 h-4" aria-hidden="true" />
                                         </button>
                                     )}
                                 </td>

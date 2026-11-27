@@ -49,6 +49,9 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
             })) as Task[];
             setTasks(taskList);
             setLoading(false);
+        }, (error) => {
+            logger.error('Error listening to tasks:', error);
+            setLoading(false);
         });
 
         return () => unsubscribe();
@@ -70,7 +73,7 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
                 created_by_name: currentUser.name,
                 assigned_to: formData.assigned_to.length > 0 ? formData.assigned_to : undefined,
                 assigned_to_names: formData.assigned_to.map(uid =>
-                    members.find(m => m.uid === uid)?.name || 'Unknown'
+                    members.find(m => m.uid === uid)?.name || 'Óþekktur'
                 ),
                 due_date: formData.due_date ? Timestamp.fromDate(new Date(formData.due_date)) as any : undefined,
                 estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : undefined,
@@ -105,7 +108,7 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
             });
             setShowCreateForm(false);
         } catch (error) {
-            console.error('Error creating task:', error);
+            logger.error('Error creating task:', error);
         }
     };
 
@@ -124,7 +127,7 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
 
             await updateDoc(doc(db, 'houses', house.id, 'tasks', task.id), updates as any);
         } catch (error) {
-            console.error('Error updating task:', error);
+            logger.error('Error updating task:', error);
         }
     };
 
@@ -134,7 +137,7 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
         try {
             await deleteDoc(doc(db, 'houses', house.id, 'tasks', taskId));
         } catch (error) {
-            console.error('Error deleting task:', error);
+            logger.error('Error deleting task:', error);
         }
     };
 

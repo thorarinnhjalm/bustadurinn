@@ -5,6 +5,7 @@ import { BookOpen, Heart, Loader2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
 import type { GuestbookEntry } from '@/types/models';
+import { logger } from '@/utils/logger';
 
 interface GuestbookViewerProps {
     houseId: string;
@@ -32,7 +33,7 @@ export default function GuestbookViewer({ houseId, isManager, onDeleteEntry }: G
                 })) as GuestbookEntry[];
                 setEntries(data);
             } catch (error) {
-                console.error('Error fetching guestbook:', error);
+                logger.error('Error fetching guestbook:', error);
             } finally {
                 setLoading(false);
             }

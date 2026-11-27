@@ -41,14 +41,36 @@ service cloud.firestore {
              get(/databases/$(database)/documents/houses/$(houseId)).data.manager_id == getUserId();
     }
 
+    // Org admins are listed in organizations/{orgId}.admin_user_ids.
     function isOrgAdmin(orgId) {
-      return isAuthenticated() && 
-             get(/databases/$(database)/documents/organizations/$(orgId)).data.admin_uid == getUserId();
+      return isAuthenticated() &&
+             'admin_user_ids' in get(/databases/$(database)/documents/organizations/$(orgId)).data &&
+             getUserId() in get(/databases/$(database)/documents/organizations/$(orgId)).data.admin_user_ids;
     }
 
+    // Same check against the state after the current write/batch commits; used
+    // when the org doc is created in the same batch as the creator's member doc.
+    function isOrgAdminAfter(orgId) {
+      return isAuthenticated() &&
+             'admin_user_ids' in getAfter(/databases/$(database)/documents/organizations/$(orgId)).data &&
+             getUserId() in getAfter(/databases/$(database)/documents/organizations/$(orgId)).data.admin_user_ids;
+    }
+
+    // Org members have a member doc whose ID is their uid.
     function isOrgMember(orgId) {
       return isAuthenticated() &&
              exists(/databases/$(database)/documents/organizations/$(orgId)/members/$(getUserId()));
+    }
+
+    function isActiveOrgMember(orgId) {
+      return isOrgMember(orgId) &&
+             get(/databases/$(database)/documents/organizations/$(orgId)/members/$(getUserId())).data.status == 'active';
+    }
+
+    // The organization a house belongs to, or null. Callers must check
+    // `houseOrgId(houseId) is string` before passing the result to an org helper.
+    function houseOrgId(houseId) {
+      return get(/databases/$(database)/documents/houses/$(houseId)).data.get('organization_id', null);
     }
 
     // ============================================
@@ -82,7 +104,8 @@ service cloud.firestore {
 
     match /houses/{houseId} {
       allow read: if isAuthenticated() && (
-        (getUserId() in resource.data.owner_ids) || isSuperAdmin()
+        (getUserId() in resource.data.owner_ids) || isSuperAdmin() ||
+        ('organization_id' in resource.data && resource.data.organization_id is string && (isActiveOrgMember(resource.data.organization_id) || isOrgAdmin(resource.data.organization_id)))
       );
 
       allow create: if isAuthenticated() && 
@@ -131,10 +154,16 @@ service cloud.firestore {
       }
 
       // Bookings live in this subcollection (CalendarPage, bookingService,
-      // fairnessService, arbokService all read/write here). There was no rule
-      // for it, so every query fell through to the default deny.
+      // fairnessService, arbokService all read/write here). House members and
+      // super admins have full access. For houses that belong to an
+      // organization, active org members may read (availability) and org
+      // admins may also create/update/delete (approving booking requests).
       match /bookings/{bookingId} {
-        allow read, write: if isHouseMember(houseId) || isSuperAdmin();
+        allow read: if isHouseMember(houseId) || isSuperAdmin() ||
+                       (houseOrgId(houseId) is string &&
+                        (isActiveOrgMember(houseOrgId(houseId)) || isOrgAdmin(houseOrgId(houseId))));
+        allow create, update, delete: if isHouseMember(houseId) || isSuperAdmin() ||
+                       (houseOrgId(houseId) is string && isOrgAdmin(houseOrgId(houseId)));
       }
     }
 
@@ -143,27 +172,48 @@ service cloud.firestore {
     // ============================================
 
     match /organizations/{orgId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isOrgAdmin(orgId) || isSuperAdmin();
+      // Single-document reads for any signed-in user (the request-access page
+      // needs the org name); listing organizations is super admin only.
+      allow get: if isAuthenticated();
+      allow list: if isSuperAdmin();
+      allow create: if isAuthenticated() &&
+                      request.resource.data.created_by == getUserId() &&
+                      getUserId() in request.resource.data.admin_user_ids;
+      allow update: if (isOrgAdmin(orgId) || isSuperAdmin()) &&
+                      (!('admin_user_ids' in request.resource.data) || request.resource.data.admin_user_ids.size() > 0);
+      allow delete: if isSuperAdmin();
 
       match /members/{memberId} {
-        allow read: if isAuthenticated() && (isOrgMember(orgId) || isOrgAdmin(orgId) || isSuperAdmin());
-        allow write: if isOrgAdmin(orgId) || isSuperAdmin();
-      }
-
-      match /access_requests/{requestId} {
-        allow create: if isAuthenticated();
-        allow read, update, delete: if isOrgAdmin(orgId) || isSuperAdmin();
-      }
-
-      match /booking_requests/{requestId} {
-        allow create, read: if isAuthenticated();
+        allow read: if isOrgAdmin(orgId) || isSuperAdmin() ||
+                       (isAuthenticated() && memberId == getUserId());
+        allow create: if isOrgAdmin(orgId) || isSuperAdmin() ||
+                         (isAuthenticated() && memberId == getUserId() && isOrgAdminAfter(orgId));
         allow update, delete: if isOrgAdmin(orgId) || isSuperAdmin();
       }
 
+      match /access_requests/{requestId} {
+        allow create: if isAuthenticated() &&
+                        request.resource.data.user_id == getUserId() &&
+                        request.resource.data.status == 'pending';
+        allow read: if isOrgAdmin(orgId) || isSuperAdmin() ||
+                       (isAuthenticated() && resource.data.user_id == getUserId());
+        allow update, delete: if isOrgAdmin(orgId) || isSuperAdmin();
+      }
+
+      match /booking_requests/{requestId} {
+        allow create: if isAuthenticated() &&
+                        request.resource.data.user_id == getUserId() &&
+                        request.resource.data.status == 'pending' &&
+                        (isActiveOrgMember(orgId) || isOrgAdmin(orgId));
+        allow read: if isOrgAdmin(orgId) || isSuperAdmin() ||
+                       (isAuthenticated() && resource.data.user_id == getUserId());
+        allow update, delete: if isOrgAdmin(orgId) || isSuperAdmin();
+      }
+
+      // Audit log: append-only.
       match /admin_actions/{actionId} {
-        allow read, write: if isOrgAdmin(orgId) || isSuperAdmin();
+        allow read, create: if isOrgAdmin(orgId) || isSuperAdmin();
+        allow update, delete: if false;
       }
     }
 
@@ -203,7 +253,11 @@ service cloud.firestore {
 
     match /notifications/{notifId} {
       allow read, update: if isAuthenticated() && resource.data.user_id == getUserId();
-      allow create: if isAuthenticated();
+      // Notifications are written by the API with the Admin SDK
+      // (booking-notification, house-notification, guestbook-entry, cron).
+      // Clients never create them, so nobody can push text into another
+      // user's notification list.
+      allow create: if false;
       allow delete: if isAuthenticated() && resource.data.user_id == getUserId();
     }
 
@@ -226,8 +280,7 @@ service cloud.firestore {
     }
 
     match /coupons/{couponId} {
-      allow read: if isAuthenticated();
-      allow write: if isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
 
     match /funnel_events/{eventId} {
@@ -236,9 +289,10 @@ service cloud.firestore {
     }
 
     match /guestbook/{entryId} {
-      allow create: if isAuthenticated();
-      allow read: if isAuthenticated() && (resource.data.user_id == getUserId() || isSuperAdmin());
-      allow update, delete: if isSuperAdmin();
+      // Guest-link entries are written server-side (api/guestbook-entry.ts, Admin SDK).
+      allow read, delete: if isAuthenticated() && (isHouseMember(resource.data.house_id) || isSuperAdmin());
+      allow create: if isAuthenticated() && (isHouseMember(request.resource.data.house_id) || isSuperAdmin());
+      allow update: if isSuperAdmin();
     }
 
     match /internal_logs/{logId} {
@@ -256,9 +310,62 @@ service cloud.firestore {
       allow read, update, delete: if isSuperAdmin();
     }
 
+    // Public marketplace (Torgið): only approved ('active') providers are readable
+    // by everyone; the list query must filter on status == 'active'.
+    // Anyone may submit an application, but only as a pending, unrated entry.
+    // Approval, rating changes, edits and deletes are super-admin only.
     match /service_providers/{id} {
-      allow read: if isAuthenticated();
-      allow write: if isSuperAdmin();
+      allow read: if isSuperAdmin() || resource.data.status == 'active' ||
+                     (isAuthenticated() && resource.data.owner_uid == getUserId());
+      allow create: if isSuperAdmin() || (
+        request.resource.data.keys().hasOnly([
+          'name', 'category', 'service_areas', 'contact_email', 'contact_phone',
+          'website', 'description', 'address', 'status', 'rating_avg',
+          'rating_count', 'created_at', 'owner_uid'
+        ]) &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.rating_avg == 0 &&
+        request.resource.data.rating_count == 0 &&
+        request.resource.data.created_at == request.time &&
+        (request.resource.data.owner_uid == null ||
+         (isAuthenticated() && request.resource.data.owner_uid == getUserId())) &&
+        request.resource.data.name is string && request.resource.data.name.size() <= 100 &&
+        request.resource.data.category is string && request.resource.data.category.size() <= 50 &&
+        request.resource.data.description is string && request.resource.data.description.size() <= 2000 &&
+        request.resource.data.contact_email is string && request.resource.data.contact_email.size() <= 200 &&
+        request.resource.data.contact_phone is string && request.resource.data.contact_phone.size() <= 50 &&
+        request.resource.data.website is string && request.resource.data.website.size() <= 300 &&
+        request.resource.data.address is string && request.resource.data.address.size() <= 300 &&
+        request.resource.data.service_areas is list && request.resource.data.service_areas.size() <= 20
+      );
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Provider reviews (Torgið). Public read (the marketplace computes each
+    // provider's average from these). One review per user and provider: the
+    // document id is `${providerId}_${uid}` and reviews cannot be edited.
+    match /service_reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly([
+          'provider_id', 'user_id', 'user_name', 'rating', 'comment', 'created_at'
+        ]) &&
+        request.resource.data.user_id == getUserId() &&
+        request.resource.data.provider_id is string &&
+        reviewId == request.resource.data.provider_id + '_' + getUserId() &&
+        exists(/databases/$(database)/documents/service_providers/$(request.resource.data.provider_id)) &&
+        request.resource.data.rating is int &&
+        request.resource.data.rating >= 1 && request.resource.data.rating <= 5 &&
+        request.resource.data.comment is string && request.resource.data.comment.size() <= 1000 &&
+        request.resource.data.user_name is string && request.resource.data.user_name.size() <= 100 &&
+        request.resource.data.created_at == request.time;
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Email templates are edited from the super admin page and read server-side
+    // (Admin SDK) by api/send-email.ts.
+    match /email_templates/{id} {
+      allow read, write: if isSuperAdmin();
     }
 
     // Legacy top-level bookings: real bookings live in houses/{id}/bookings.
@@ -269,6 +376,12 @@ service cloud.firestore {
     // Top-level or collectionGroup tasks query for SuperAdmin
     match /{path=**}/tasks/{taskId} {
       allow read, write: if isSuperAdmin();
+    }
+
+    // Collection-group bookings query (admin stats). Read-only; rules are OR-ed
+    // across matching blocks, so this grants nothing to anyone but super admins.
+    match /{path=**}/bookings/{bookingId} {
+      allow read: if isSuperAdmin();
     }
 
   }

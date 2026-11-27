@@ -3,18 +3,19 @@
  * For organization members to browse houses and request bookings
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Building2, Home, Calendar, User, MapPin } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import {
     getOrganization,
-    getBookingRequests,
+    getMyBookingRequests,
+    getOrganizationHouses,
     submitBookingRequest,
     isOrgMember,
 } from '@/services/organizationService';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { logger } from '@/utils/logger';
+import { toLocalDateInputValue, parseLocalDateInput } from './localDate';
 import type { Organization, BookingRequest, House } from '@/types/models';
 import SEO from '@/components/SEO';
 
@@ -38,11 +39,7 @@ export default function MemberDashboardPage() {
         notes: '',
     });
 
-    useEffect(() => {
-        loadData();
-    }, [orgId, currentUser]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         if (!orgId || !currentUser) return;
 
         try {
@@ -65,31 +62,25 @@ export default function MemberDashboardPage() {
             }
             setOrganization(org);
 
-            // Load organization houses
-            const housesQuery = query(
-                collection(db, 'houses'),
-                where('organization_id', '==', orgId)
-            );
-            const housesSnapshot = await getDocs(housesQuery);
-            const housesData = housesSnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-                created_at: doc.data().created_at?.toDate(),
-                updated_at: doc.data().updated_at?.toDate(),
-            })) as House[];
+            // Houses of the organization (readable for org members) and my own
+            // booking requests (the user_id filter is what the rules require).
+            const [housesData, myRequests] = await Promise.all([
+                getOrganizationHouses(orgId),
+                getMyBookingRequests(orgId, currentUser.uid),
+            ]);
             setHouses(housesData);
-
-            // Load my booking requests
-            const allRequests = await getBookingRequests(orgId);
-            const myRequests = allRequests.filter((r) => r.user_id === currentUser.uid);
             setMyBookingRequests(myRequests);
         } catch (err) {
-            console.error('Error loading member dashboard:', err);
+            logger.error('Error loading member dashboard:', err);
             setError('Villa kom upp við að sækja gögn');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [orgId, currentUser]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     const handleRequestBooking = (house: House) => {
         setSelectedHouse(house);
@@ -107,8 +98,13 @@ export default function MemberDashboardPage() {
             return;
         }
 
-        const startDate = new Date(bookingFormData.start_date);
-        const endDate = new Date(bookingFormData.end_date);
+        const startDate = parseLocalDateInput(bookingFormData.start_date);
+        const endDate = parseLocalDateInput(bookingFormData.end_date);
+
+        if (!startDate || !endDate) {
+            alert('Vinsamlegast veldu dagsetningar');
+            return;
+        }
 
         if (startDate >= endDate) {
             alert('Brottfarardagur verður að vera eftir komudags');
@@ -145,7 +141,7 @@ export default function MemberDashboardPage() {
 
             alert('Bókunarbeiðni send!');
         } catch (err: any) {
-            console.error('Error submitting booking request:', err);
+            logger.error('Error submitting booking request:', err);
             alert(err.message || 'Villa kom upp við að senda bókunarbeiðni');
         }
     };
@@ -374,7 +370,7 @@ export default function MemberDashboardPage() {
                                         }
                                         className="input w-full"
                                         required
-                                        min={new Date().toISOString().split('T')[0]}
+                                        min={toLocalDateInputValue(new Date())}
                                     />
                                 </div>
                                 <div>
@@ -394,7 +390,7 @@ export default function MemberDashboardPage() {
                                         required
                                         min={
                                             bookingFormData.start_date ||
-                                            new Date().toISOString().split('T')[0]
+                                            toLocalDateInputValue(new Date())
                                         }
                                     />
                                 </div>

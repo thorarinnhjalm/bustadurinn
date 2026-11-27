@@ -14,6 +14,7 @@ import {
     createBooking,
     deleteBooking,
     BookingConflictError,
+    normalizeBookingRange,
 } from './bookingService';
 
 vi.mock('@/lib/firebase', () => ({
@@ -107,6 +108,46 @@ describe('rangesOverlap', () => {
             invalidStart, invalidEnd,
             new Date('2026-07-01'), new Date('2026-07-20')
         )).toBe(false);
+    });
+});
+
+describe('rangesOverlap - same-day (one-day) bookings', () => {
+    const d = (day: number) => new Date(2026, 6, day);
+
+    it('same-day vs same-day on the same day conflicts', () => {
+        expect(rangesOverlap(d(10), d(10), d(10), d(10))).toBe(true);
+    });
+
+    it('same-day vs a different same-day does not conflict', () => {
+        expect(rangesOverlap(d(10), d(10), d(11), d(11))).toBe(false);
+    });
+
+    it('same-day inside a longer stay conflicts (both directions)', () => {
+        expect(rangesOverlap(d(12), d(12), d(10), d(15))).toBe(true);
+        expect(rangesOverlap(d(10), d(15), d(12), d(12))).toBe(true);
+    });
+
+    it('same-day on the check-in day of a stay conflicts, on the checkout day does not', () => {
+        expect(rangesOverlap(d(10), d(10), d(10), d(15))).toBe(true);
+        expect(rangesOverlap(d(15), d(15), d(10), d(15))).toBe(false);
+    });
+
+    it('back-to-back multi-day stays do not conflict', () => {
+        expect(rangesOverlap(d(10), d(15), d(15), d(20))).toBe(false);
+    });
+
+    it('a stored one-day booking [d, d+1) conflicts with a same-day pick', () => {
+        expect(rangesOverlap(d(10), d(10), d(10), d(11))).toBe(true);
+        expect(rangesOverlap(d(11), d(11), d(10), d(11))).toBe(false);
+    });
+});
+
+describe('normalizeBookingRange', () => {
+    it('widens a same-day range to one day and leaves longer/reversed ranges alone', () => {
+        const s = new Date(2026, 6, 10);
+        expect(normalizeBookingRange(s, new Date(2026, 6, 10)).end).toEqual(new Date(2026, 6, 11));
+        expect(normalizeBookingRange(s, new Date(2026, 6, 15)).end).toEqual(new Date(2026, 6, 15));
+        expect(normalizeBookingRange(s, new Date(2026, 6, 9)).end).toEqual(new Date(2026, 6, 9));
     });
 });
 
@@ -221,6 +262,7 @@ describe('createBooking', () => {
 
     it('writes the booking and returns its id when there are no conflicts', async () => {
         mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([])); // conflict check: none
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([])); // post-write re-check: none
         mockedAddDoc.mockResolvedValueOnce({ id: 'new-booking-id' } as any);
 
         const id = await createBooking({
@@ -237,6 +279,7 @@ describe('createBooking', () => {
     });
 
     it('calls /api/booking-notification with the ID token and only { houseId, bookingId }', async () => {
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([]));
         mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([]));
         mockedAddDoc.mockResolvedValueOnce({ id: 'new-booking-id' } as any);
 
@@ -290,6 +333,126 @@ describe('createBooking', () => {
         });
 
         expect(mockedFetch).not.toHaveBeenCalled();
+    });
+});
+
+describe('createBooking - post-write race check', () => {
+    const params = {
+        houseId: 'house-1',
+        userId: 'me',
+        userName: 'Me',
+        start: new Date(2026, 6, 10),
+        end: new Date(2026, 6, 15),
+        type: 'personal' as const,
+    };
+    const other = (id: string, createdAt: Date) =>
+        bookingSnapshotDoc(id, {
+            house_id: 'house-1',
+            user_id: 'other',
+            user_name: 'Other',
+            start: fakeTimestamp(new Date(2026, 6, 12)),
+            end: fakeTimestamp(new Date(2026, 6, 18)),
+            type: 'personal',
+            created_at: fakeTimestamp(createdAt),
+        });
+    const mine = (id: string, createdAt: Date) =>
+        bookingSnapshotDoc(id, {
+            house_id: 'house-1',
+            user_id: 'me',
+            user_name: 'Me',
+            start: fakeTimestamp(params.start),
+            end: fakeTimestamp(params.end),
+            type: 'personal',
+            created_at: fakeTimestamp(createdAt),
+        });
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockedGetDocs.mockReset();
+        mockedAddDoc.mockReset();
+        mockedDeleteDoc.mockReset();
+        mockedFetch.mockReset();
+        mockedFetch.mockResolvedValue({ ok: true, status: 200 });
+        vi.stubGlobal('fetch', mockedFetch);
+    });
+
+    it('rolls back and throws BookingConflictError when a competing booking was created earlier', async () => {
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([]));
+        mockedAddDoc.mockResolvedValueOnce({ id: 'mine-1' } as any);
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([
+            other('theirs-1', new Date(2026, 0, 1, 10, 0, 0)),
+            mine('mine-1', new Date(2026, 0, 1, 10, 0, 1)),
+        ]));
+        mockedDeleteDoc.mockResolvedValueOnce(undefined);
+
+        let caught: unknown;
+        try { await createBooking(params); } catch (e) { caught = e; }
+
+        expect(caught).toBeInstanceOf(BookingConflictError);
+        expect((caught as BookingConflictError).conflicts.map((c) => c.id)).toEqual(['theirs-1']);
+        expect(mockedDeleteDoc).toHaveBeenCalledTimes(1);
+        expect(mockedFetch).not.toHaveBeenCalled();
+    });
+
+    it('keeps its booking (and notifies) when the competing booking is later', async () => {
+        const t = new Date(2026, 0, 1, 10, 0, 0);
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([]));
+        mockedAddDoc.mockResolvedValueOnce({ id: 'mine-1' } as any);
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([
+            mine('mine-1', t),
+            other('theirs-1', new Date(t.getTime() + 1000)),
+        ]));
+
+        await expect(createBooking(params)).resolves.toBe('mine-1');
+        expect(mockedDeleteDoc).not.toHaveBeenCalled();
+        expect(mockedFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('breaks created_at ties by doc id: greater id loses, lesser id wins', async () => {
+        const t = new Date(2026, 0, 1, 10, 0, 0);
+        // Greater id loses
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([]));
+        mockedAddDoc.mockResolvedValueOnce({ id: 'b' } as any);
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([mine('b', t), other('a', t)]));
+        mockedDeleteDoc.mockResolvedValueOnce(undefined);
+        await expect(createBooking(params)).rejects.toBeInstanceOf(BookingConflictError);
+        expect(mockedDeleteDoc).toHaveBeenCalledTimes(1);
+
+        // Lesser id wins
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([]));
+        mockedAddDoc.mockResolvedValueOnce({ id: 'a' } as any);
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([mine('a', t), other('b', t)]));
+        await expect(createBooking(params)).resolves.toBe('a');
+        expect(mockedDeleteDoc).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not run the post-write check when allowConflicts is true', async () => {
+        mockedAddDoc.mockResolvedValueOnce({ id: 'x' } as any);
+        await createBooking({ ...params, allowConflicts: true });
+        expect(mockedGetDocs).not.toHaveBeenCalled();
+        expect(mockedDeleteDoc).not.toHaveBeenCalled();
+    });
+
+    it('keeps the booking if the post-write check itself fails', async () => {
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([]));
+        mockedAddDoc.mockResolvedValueOnce({ id: 'x' } as any);
+        mockedGetDocs.mockRejectedValueOnce(new Error('offline'));
+        await expect(createBooking(params)).resolves.toBe('x');
+        expect(mockedDeleteDoc).not.toHaveBeenCalled();
+    });
+
+    it('stores a same-day pick as a one-day booking and rejects reversed ranges', async () => {
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([]));
+        mockedAddDoc.mockResolvedValueOnce({ id: 'x' } as any);
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([]));
+        const day = new Date(2026, 6, 10);
+        await createBooking({ ...params, start: day, end: new Date(2026, 6, 10) });
+        const written = mockedAddDoc.mock.calls[0][1] as any;
+        expect(written.end).toEqual(new Date(2026, 6, 11));
+
+        await expect(
+            createBooking({ ...params, start: new Date(2026, 6, 10), end: new Date(2026, 6, 9) })
+        ).rejects.toThrow();
     });
 });
 

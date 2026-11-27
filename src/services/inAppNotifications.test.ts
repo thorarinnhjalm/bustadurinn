@@ -1,143 +1,89 @@
 /**
- * inAppNotifications tests.
- * Covers the settings-gating logic (task_assignments / shopping_list_updates)
- * using the mocked firestore SDK (see bookingService.test.ts for the pattern).
+ * inAppNotifications tests. The functions POST to /api/house-notification and
+ * never throw.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getDoc, addDoc } from 'firebase/firestore';
-import { notifyTaskAssignment, notifyShoppingListAdded } from './inAppNotifications';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('@/lib/firebase', () => ({
-    db: {},
+    auth: { currentUser: { getIdToken: vi.fn(() => Promise.resolve('tok')) } },
 }));
 
-vi.mock('firebase/firestore', () => ({
-    collection: vi.fn(),
-    doc: vi.fn(),
-    getDoc: vi.fn(),
-    addDoc: vi.fn(() => Promise.resolve()),
-    serverTimestamp: vi.fn(() => 'server-timestamp'),
-}));
+import { notifyTaskAssignment, notifyShoppingListAdded } from './inAppNotifications';
 
-const mockedGetDoc = vi.mocked(getDoc);
-const mockedAddDoc = vi.mocked(addDoc);
+const fetchMock = vi.fn();
 
-function userSnap(data: Record<string, any> | undefined) {
-    return { data: () => data } as unknown as Awaited<ReturnType<typeof getDoc>>;
-}
+beforeEach(() => {
+    fetchMock.mockReset();
+    fetchMock.mockResolvedValue({ ok: true, status: 200 });
+    vi.stubGlobal('fetch', fetchMock);
+});
+
+afterEach(() => {
+    vi.unstubAllGlobals();
+});
 
 describe('notifyTaskAssignment', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
-    it('writes a notification for each assignee other than the actor', async () => {
-        mockedGetDoc.mockResolvedValue(userSnap({ notification_settings: undefined }));
-
+    it('posts the assignees other than the actor', async () => {
         await notifyTaskAssignment({
-            houseId: 'house-1',
-            taskId: 'task-1',
-            taskTitle: 'Mála pallinn',
-            assigneeUids: ['user-a', 'user-b', 'actor-1'],
-            actorUid: 'actor-1',
-            actorName: 'Jón',
+            houseId: 'h1',
+            taskId: 't1',
+            taskTitle: 'Slá grasið',
+            assigneeUids: ['actor', 'u2', 'u2', 'u3'],
+            actorUid: 'actor',
+            actorName: 'Anna',
         });
-
-        expect(mockedAddDoc).toHaveBeenCalledTimes(2);
-        expect(mockedAddDoc).toHaveBeenCalledWith(
-            undefined,
-            expect.objectContaining({ user_id: 'user-a', type: 'task', house_id: 'house-1' })
-        );
-        expect(mockedAddDoc).toHaveBeenCalledWith(
-            undefined,
-            expect.objectContaining({ user_id: 'user-b', type: 'task' })
-        );
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        const [url, init] = fetchMock.mock.calls[0];
+        expect(url).toBe('/api/house-notification');
+        expect(init.headers.Authorization).toBe('Bearer tok');
+        expect(JSON.parse(init.body)).toEqual({
+            houseId: 'h1',
+            kind: 'task_assigned',
+            taskId: 't1',
+            taskTitle: 'Slá grasið',
+            assigneeUids: ['u2', 'u3'],
+        });
     });
 
-    it('skips a user who disabled task_assignments in-app notifications', async () => {
-        mockedGetDoc.mockResolvedValue(
-            userSnap({ notification_settings: { in_app: { task_assignments: false } } })
-        );
-
+    it('does nothing when the actor is the only assignee', async () => {
         await notifyTaskAssignment({
-            houseId: 'house-1',
-            taskId: 'task-1',
-            taskTitle: 'Mála pallinn',
-            assigneeUids: ['user-a'],
-            actorUid: 'actor-1',
-            actorName: 'Jón',
+            houseId: 'h1', taskId: 't1', taskTitle: 'x',
+            assigneeUids: ['actor'], actorUid: 'actor', actorName: 'Anna',
         });
-
-        expect(mockedAddDoc).not.toHaveBeenCalled();
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('does nothing when the only assignee is the actor themself', async () => {
-        await notifyTaskAssignment({
-            houseId: 'house-1',
-            taskId: 'task-1',
-            taskTitle: 'Mála pallinn',
-            assigneeUids: ['actor-1'],
-            actorUid: 'actor-1',
-            actorName: 'Jón',
-        });
-
-        expect(mockedGetDoc).not.toHaveBeenCalled();
-        expect(mockedAddDoc).not.toHaveBeenCalled();
-    });
-
-    it('never throws even if getDoc rejects', async () => {
-        mockedGetDoc.mockRejectedValue(new Error('firestore down'));
-
-        await expect(
-            notifyTaskAssignment({
-                houseId: 'house-1',
-                taskId: 'task-1',
-                taskTitle: 'Mála pallinn',
-                assigneeUids: ['user-a'],
-                actorUid: 'actor-1',
-                actorName: 'Jón',
-            })
-        ).resolves.toBeUndefined();
+    it('never throws when the request fails', async () => {
+        fetchMock.mockRejectedValue(new Error('network'));
+        await expect(notifyTaskAssignment({
+            houseId: 'h1', taskId: 't1', taskTitle: 'x',
+            assigneeUids: ['u2'], actorUid: 'actor', actorName: 'Anna',
+        })).resolves.toBeUndefined();
     });
 });
 
 describe('notifyShoppingListAdded', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
+    it('posts the item when there are other members', async () => {
+        await notifyShoppingListAdded({
+            houseId: 'h1', itemName: 'Mjólk', ownerIds: ['actor', 'u2'], actorUid: 'actor', actorName: 'Anna',
+        });
+        expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+            houseId: 'h1', kind: 'shopping_added', itemName: 'Mjólk',
+        });
     });
 
-    it('notifies other house members but not the actor', async () => {
-        mockedGetDoc.mockResolvedValue(userSnap({}));
-
+    it('does nothing when there are no other members', async () => {
         await notifyShoppingListAdded({
-            houseId: 'house-1',
-            itemName: 'Klósettpappír',
-            ownerIds: ['actor-1', 'member-a', 'member-b'],
-            actorUid: 'actor-1',
-            actorName: 'Anna',
+            houseId: 'h1', itemName: 'Mjólk', ownerIds: ['actor'], actorUid: 'actor', actorName: 'Anna',
         });
-
-        expect(mockedAddDoc).toHaveBeenCalledTimes(2);
-        expect(mockedAddDoc).toHaveBeenCalledWith(
-            undefined,
-            expect.objectContaining({ user_id: 'member-a', type: 'shopping' })
-        );
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('skips a member who disabled shopping_list_updates', async () => {
-        mockedGetDoc.mockResolvedValue(
-            userSnap({ notification_settings: { in_app: { shopping_list_updates: false } } })
-        );
-
-        await notifyShoppingListAdded({
-            houseId: 'house-1',
-            itemName: 'Klósettpappír',
-            ownerIds: ['member-a'],
-            actorUid: 'actor-1',
-            actorName: 'Anna',
-        });
-
-        expect(mockedAddDoc).not.toHaveBeenCalled();
+    it('never throws on a non-ok response', async () => {
+        fetchMock.mockResolvedValue({ ok: false, status: 500 });
+        await expect(notifyShoppingListAdded({
+            houseId: 'h1', itemName: 'Mjólk', ownerIds: ['u2'], actorUid: 'actor', actorName: 'Anna',
+        })).resolves.toBeUndefined();
     });
 });

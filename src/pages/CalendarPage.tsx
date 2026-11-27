@@ -23,6 +23,7 @@ import { analytics } from '@/utils/analytics';
 import { rangesOverlap, createBooking, deleteBooking, BookingConflictError } from '@/services/bookingService';
 import { checkFairnessForBooking } from '@/services/fairnessService';
 import { logger } from '@/utils/logger';
+import { toDateInputValue, fromDateInputValue } from '@/utils/localDate';
 import MobileNav from '@/components/MobileNav';
 import EmptyState from '@/components/EmptyState';
 import HolidayFairnessPanel from '@/components/calendar/HolidayFairnessPanel';
@@ -52,14 +53,14 @@ const CustomToolbar = ({ label, onNavigate }: CustomToolbarProps) => {
                     <button
                         className="p-2 h-10 w-10 rounded-full flex items-center justify-center border border-stone-300 hover:bg-stone-100 bg-white shadow-md active:scale-95 transition-all"
                         onClick={() => onNavigate('PREV')}
-                        aria-label="Previous"
+                        aria-label="Fyrri"
                     >
                         <ChevronLeft className="w-6 h-6 text-stone-800" />
                     </button>
                     <button
                         className="p-2 h-10 w-10 rounded-full flex items-center justify-center border border-stone-300 hover:bg-stone-100 bg-white shadow-md active:scale-95 transition-all"
                         onClick={() => onNavigate('NEXT')}
-                        aria-label="Next"
+                        aria-label="Næsti"
                     >
                         <ChevronRight className="w-6 h-6 text-stone-800" />
                     </button>
@@ -120,9 +121,10 @@ const BookingCard = ({ booking, onClick, getTypeLabel }: {
     const colors = typeColors[booking.type] || typeColors.personal;
 
     return (
-        <div
+        <button
+            type="button"
             onClick={() => onClick(booking)}
-            className={`bg-white rounded-lg border border-stone-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all border-l-4 ${colors.border}`}
+            className={`block w-full text-left bg-white rounded-lg border border-stone-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all border-l-4 ${colors.border}`}
         >
             <div className="flex items-start justify-between mb-3">
                 <div>
@@ -158,7 +160,7 @@ const BookingCard = ({ booking, onClick, getTypeLabel }: {
                     Bókað: {booking.created_at.toLocaleDateString('is-IS', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </div>
             )}
-        </div>
+        </button>
     );
 };
 
@@ -252,6 +254,12 @@ interface BookingEvent {
     resource?: any;
 }
 
+/** Today at local midnight (bookings are whole-day ranges). */
+const startOfToday = (): Date => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+};
+
 export default function CalendarPage() {
     const navigate = useNavigate();
     const { user: currentUser } = useEffectiveUser();
@@ -317,7 +325,7 @@ export default function CalendarPage() {
                 }
 
             } catch (e) {
-                console.error("Error fetching house settings", e);
+                logger.error("Error fetching house settings", e);
             }
         };
         fetchSettings();
@@ -325,8 +333,8 @@ export default function CalendarPage() {
 
     // New booking form state
     const [newBooking, setNewBooking] = useState({
-        start: new Date(),
-        end: new Date(),
+        start: startOfToday(),
+        end: startOfToday(),
         type: 'personal' as BookingType,
         notes: ''
     });
@@ -366,7 +374,7 @@ export default function CalendarPage() {
 
                 // Sanitize dates: If end is before start, fix it for display
                 if (end < start) {
-                    console.warn(`Booking ${doc.id} has invalid dates (end < start). Fixing for display.`);
+                    logger.warn(`Booking ${doc.id} has invalid dates (end < start). Fixing for display.`);
                     // Swap them or just set end to start + 1 hour as fallback, 
                     // but usually swapping is what happened (wrong order picked)
                     // or just user error. Let's force end to be at least start.
@@ -396,7 +404,7 @@ export default function CalendarPage() {
 
             setEvents(calendarEvents);
         } catch (err) {
-            console.error('Error loading bookings:', err);
+            logger.error('Error loading bookings:', err);
         }
     }, [houseId, getBookingTypeLabel]);
 
@@ -429,7 +437,8 @@ export default function CalendarPage() {
             return;
         }
 
-        // Validate dates
+        // Validate dates. Same first and last day is a valid one-day booking
+        // (normalised to [d, d+1) by bookingService); only a reversed range is rejected.
         if (newBooking.end < newBooking.start) {
             setError('Lokadagur getur ekki verið á undan upphafsdegi.');
             return;
@@ -448,29 +457,33 @@ export default function CalendarPage() {
         setLoading(true);
         setError('');
 
-        // Check Fairness (Sanngirnisregla) - this remains a hard block, even on the
-        // conflict-override path (overrideConflicts only skips the local conflict
-        // pre-check above, not this). Self-guards internally: zero reads unless the
-        // house is in 'fairness' mode, has 2+ owners, and the dates hit a contested
-        // window that hasn't opened to everyone yet.
-        const fairnessHouse = currentHouse ?? (houseSettings as House | null);
-        if (fairnessHouse) {
-            const fairness = await checkFairnessForBooking(
-                houseId,
-                currentUser.uid,
-                newBooking.start,
-                newBooking.end,
-                fairnessHouse.owner_ids || [],
-                fairnessHouse
-            );
-            if (!fairness.allowed) {
-                setError(fairness.reason);
-                setLoading(false);
-                return;
-            }
-        }
-
         try {
+            // Check Fairness (Sanngirnisregla) - a hard block when it returns
+            // not-allowed, even on the conflict-override path. Self-guards
+            // internally: zero reads unless the house is in 'fairness' mode, has
+            // 2+ owners, and the dates hit a contested window that hasn't opened
+            // to everyone yet. The check itself is advisory: if it fails (network
+            // etc.) we log it and carry on with the booking.
+            const fairnessHouse = currentHouse ?? (houseSettings as House | null);
+            if (fairnessHouse) {
+                try {
+                    const fairness = await checkFairnessForBooking(
+                        houseId,
+                        currentUser.uid,
+                        newBooking.start,
+                        newBooking.end,
+                        fairnessHouse.owner_ids || [],
+                        fairnessHouse
+                    );
+                    if (!fairness.allowed) {
+                        setError(fairness.reason);
+                        return;
+                    }
+                } catch (fairnessError) {
+                    logger.warn('Fairness check failed, continuing with booking:', fairnessError);
+                }
+            }
+
             await createBooking({
                 houseId,
                 userId: currentUser.uid,
@@ -508,8 +521,8 @@ export default function CalendarPage() {
             });
 
             setNewBooking({
-                start: new Date(),
-                end: new Date(),
+                start: startOfToday(),
+                end: startOfToday(),
                 type: 'personal',
                 notes: ''
             });
@@ -520,7 +533,7 @@ export default function CalendarPage() {
                 setConflictWarning(err.conflicts);
             } else {
                 logger.error('Error creating booking:', err);
-                setError('Villa kom upp við að búa til bókun: ' + err.message);
+                setError('Villa kom upp við að búa til bókun. Reyndu aftur.');
             }
         } finally {
             setLoading(false);
@@ -536,10 +549,14 @@ export default function CalendarPage() {
         const { start, end } = slotInfo;
         if (!start || !end) return;
 
+        // Whole-day booking: snap both to local midnight (end stays the
+        // exclusive checkout day react-big-calendar reports).
+        const s0 = new Date(start);
+        const e0 = new Date(end);
         setNewBooking(prev => ({
             ...prev,
-            start: new Date(start),
-            end: new Date(end)
+            start: new Date(s0.getFullYear(), s0.getMonth(), s0.getDate()),
+            end: new Date(e0.getFullYear(), e0.getMonth(), e0.getDate())
         }));
         setShowModal(true);
     }, []);
@@ -570,19 +587,7 @@ export default function CalendarPage() {
         setShowDeleteConfirm(false); // Hide confirmation buttons
 
         try {
-            console.log('🗑️ Attempting to delete booking:', {
-                bookingId: selectedBooking.id,
-                bookingUserId: selectedBooking.user_id,
-                currentUserId: currentUser?.uid,
-                houseId: houseId,
-                isOwner: currentUser?.uid === selectedBooking.user_id,
-                currentHouseManagerId: currentHouse?.manager_id,
-                isManager: currentHouse?.manager_id === currentUser?.uid
-            });
-
             await deleteBooking(houseId, selectedBooking.id);
-
-            console.log('✅ Booking deleted successfully');
 
             // Reload bookings
             await loadBookings();
@@ -591,16 +596,13 @@ export default function CalendarPage() {
             // Track analytics
             // analytics.bookingDeleted(); 
         } catch (err: any) {
-            console.error("❌ Error deleting booking:", err);
-            console.error("Error code:", err.code);
-            console.error("Error message:", err.message);
+            logger.error('Error deleting booking:', err);
 
             // Provide user-friendly error messages based on error code
             let userMessage = "Gat ekki eytt bókun.";
 
             if (err.code === 'permission-denied') {
                 userMessage = "Þú hefur ekki réttindi til að eyða þessari bókun. Aðeins sá sem bjó til bókun eða stjórnandi sumarhússins getur eytt henni.";
-                console.error("🔒 Permission denied. Current user:", currentUser?.uid, "Booking owner:", selectedBooking.user_id);
             } else if (err.code === 'not-found') {
                 userMessage = "Bókun fannst ekki. Hún kann að hafa verið eytt nú þegar.";
             } else if (err.code === 'unavailable') {
@@ -851,11 +853,10 @@ export default function CalendarPage() {
                                     <input
                                         type="date"
                                         className="input"
-                                        value={newBooking.start.toISOString().split('T')[0]}
+                                        value={toDateInputValue(newBooking.start)}
                                         onChange={(e) => {
-                                            if (!e.target.value) return;
-                                            const newStart = new Date(e.target.value);
-                                            if (isNaN(newStart.getTime())) return;
+                                            const newStart = fromDateInputValue(e.target.value);
+                                            if (!newStart) return;
 
                                             // If new start is after current end, update end to match start
                                             let newEnd = newBooking.end;
@@ -873,8 +874,13 @@ export default function CalendarPage() {
                                     <input
                                         type="date"
                                         className="input"
-                                        value={newBooking.end.toISOString().split('T')[0]}
-                                        onChange={(e) => setNewBooking({ ...newBooking, end: new Date(e.target.value) })}
+                                        value={toDateInputValue(newBooking.end)}
+                                        onChange={(e) => {
+                                            const newEnd = fromDateInputValue(e.target.value);
+                                            // Cleared/invalid input: keep the previous value
+                                            if (!newEnd) return;
+                                            setNewBooking({ ...newBooking, end: newEnd });
+                                        }}
                                         required
                                     />
                                 </div>

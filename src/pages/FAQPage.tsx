@@ -19,7 +19,7 @@ export default function FAQPage() {
         },
         {
             q: "Get ég hætt að nota kerfið?",
-            a: "Já, hvenær sem er. Bústaðurinn.is er ókeypis og engin binding fylgir — það er engin áskrift til að segja upp. Ef þú vilt hætta alveg getur þú eytt aðgangnum þínum úr stillingum, eða haft samband við okkur og við eyðum gögnunum þínum."
+            a: "Já, hvenær sem er. Bústaðurinn.is er ókeypis og engin binding fylgir — það er engin áskrift til að segja upp. Ef þú vilt hætta alveg getur þú eytt aðgangnum þínum sjálf(ur): farðu í Stillingar (Meira í símanum), veldu flipann „Mínar stillingar“ og smelltu á „Eyða aðgangi“ neðst á síðunni. Þú þarft að skrifa EYÐA til að staðfesta. Þú getur líka haft samband við okkur og við eyðum gögnunum þínum. Athugaðu að hús þar sem þú ert eini eigandinn eyðast með öllum gögnum."
         },
         {
             q: "Er appið til fyrir iPhone og Android?",

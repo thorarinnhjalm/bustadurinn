@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { signOut, sendPasswordResetEmail } from 'firebase/auth';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import {
+    signOut,
+    sendPasswordResetEmail,
+    reauthenticateWithPopup,
+    reauthenticateWithCredential,
+    EmailAuthProvider,
+    GoogleAuthProvider,
+    FacebookAuthProvider,
+} from 'firebase/auth';
 import { db, storage, auth } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import {
@@ -56,6 +64,17 @@ import { logger } from '@/utils/logger'; // Ensure imports
 
 type Tab = 'house' | 'members' | 'profile' | 'guests' | 'guestbook' | 'shopping' | 'logs';
 
+const TAB_IDS: readonly Tab[] = ['house', 'members', 'profile', 'guests', 'guestbook', 'shopping', 'logs'];
+// Alternative names accepted in /settings?tab=...
+const TAB_ALIASES: Record<string, Tab> = { tasks: 'logs', verkefni: 'logs' };
+
+/** Resolve a ?tab= value (or router state) to a known tab id, or null. */
+function parseTab(value: unknown): Tab | null {
+    if (typeof value !== 'string') return null;
+    if ((TAB_IDS as readonly string[]).includes(value)) return value as Tab;
+    return TAB_ALIASES[value] ?? null;
+}
+
 
 // ... other imports
 import MobileNav from '@/components/MobileNav';
@@ -68,6 +87,10 @@ import { updateUserNameInAllCollections } from '@/services/userService';
 import FeedbackModal from '@/components/feedback/FeedbackModal';
 import { notifyShoppingListAdded } from '@/services/inAppNotifications';
 import { generateSecureToken, generateInviteCode } from '@/utils/secureToken';
+import Toggle from '@/components/settings/Toggle';
+import { getHouseMembers, clearHouseMembersCache } from '@/services/houseMembersService';
+import { callMembershipApi, membershipErrorMessage } from '@/services/membershipService';
+import { accountDeletionState } from '@/components/authHandlerHelpers';
 
 export default function SettingsPage() {
     const navigate = useNavigate();
@@ -76,11 +99,29 @@ export default function SettingsPage() {
     const { startImpersonation } = useImpersonation();
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
     const setCurrentHouse = useAppStore((state) => state.setCurrentHouse);
+    const setUserHouses = useAppStore((state) => state.setUserHouses);
 
-    const [activeTab, setActiveTab] = useState<Tab>(() => {
-        const state = location.state as { initialTab?: Tab };
-        return state?.initialTab || 'house';
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [activeTab, setActiveTabState] = useState<Tab>(() => {
+        const state = location.state as { initialTab?: Tab } | null;
+        return parseTab(searchParams.get('tab')) || parseTab(state?.initialTab) || 'house';
     });
+
+    // Switching tabs keeps the URL in sync (replace, so Back does not step through tabs)
+    const setActiveTab = (tab: Tab) => {
+        setActiveTabState(tab);
+        if (searchParams.get('tab') !== tab) {
+            const next = new URLSearchParams(searchParams);
+            next.set('tab', tab);
+            setSearchParams(next, { replace: true });
+        }
+    };
+
+    // Follow the URL when it changes from outside (e.g. a notification link while already on this page)
+    const urlTab = parseTab(searchParams.get('tab'));
+    useEffect(() => {
+        if (urlTab) setActiveTabState(urlTab);
+    }, [urlTab]);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
@@ -128,6 +169,22 @@ export default function SettingsPage() {
 
     // Ownership Transfer State
     const [memberToTransfer, setMemberToTransfer] = useState<User | null>(null);
+
+    // Membership actions (leave / remove member / delete house / delete account)
+    type MembershipAction =
+        | { type: 'leave' }
+        | { type: 'remove'; member: User }
+        | { type: 'delete_house' }
+        | { type: 'delete_account' };
+    const [membershipAction, setMembershipAction] = useState<MembershipAction | null>(null);
+    const [membershipText, setMembershipText] = useState('');
+    const [newManagerChoice, setNewManagerChoice] = useState('');
+    const [membershipBusy, setMembershipBusy] = useState(false);
+    const [membershipModalError, setMembershipModalError] = useState('');
+    const [membersReloadKey, setMembersReloadKey] = useState(0);
+    // Account deletion re-authentication (password accounts)
+    const [reauthPasswordNeeded, setReauthPasswordNeeded] = useState(false);
+    const [reauthPassword, setReauthPassword] = useState('');
     const [transferConfirmation, setTransferConfirmation] = useState('');
     const [imageFile, setImageFile] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
@@ -182,7 +239,7 @@ export default function SettingsPage() {
                     }
                 }
             } catch (err) {
-                console.error("Error syncing inventory from shopping list check:", err);
+                logger.error("Error syncing inventory from shopping list check:", err);
             }
         }
     };
@@ -238,7 +295,7 @@ export default function SettingsPage() {
             // But let's look at how GuestbookViewer is implemented. 
             // It fetches data in useEffect.
         } catch (e) {
-            console.error('Error deleting guestbook entry:', e);
+            logger.error('Error deleting guestbook entry:', e);
             setError('Gat ekki eytt færslu');
         }
     };
@@ -246,6 +303,7 @@ export default function SettingsPage() {
     // Invite State
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteLoading, setInviteLoading] = useState(false);
+    const [invitationsReloadKey, setInvitationsReloadKey] = useState(0);
 
     const handleRevokeInvite = async (inviteId: string) => {
         if (!confirm('Ertu viss um að þú viljir afturkalla þetta boð?')) return;
@@ -255,7 +313,7 @@ export default function SettingsPage() {
             setSuccess('Boð afturkallað.');
             setTimeout(() => setSuccess(''), 3000);
         } catch (e) {
-            console.error('Error revoking invite:', e);
+            logger.error('Error revoking invite:', e);
             setError('Gat ekki afturkallað boð.');
         }
     };
@@ -286,15 +344,25 @@ export default function SettingsPage() {
                 })
             });
 
-            const data = await resp.json();
-            if (!resp.ok) throw new Error(data.error || 'Failed to send invite');
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                logger.warn('Invite request rejected:', resp.status, data?.error);
+                const serverError = typeof data?.error === 'string' ? data.error : '';
+                if (resp.status === 429) setError('Of mörg boð send. Reyndu aftur síðar.');
+                else if (/already a member/i.test(serverError)) setError('Þessi aðili er þegar í húsinu.');
+                else if (/already pending/i.test(serverError)) setError('Boð hefur þegar verið sent á þetta netfang.');
+                else if (resp.status === 403) setError('Þú hefur ekki heimild til að bjóða í þetta hús.');
+                else setError('Gat ekki sent boð. Athugaðu netfangið og reyndu aftur.');
+                return;
+            }
 
-            setSuccess(data.message || 'Boð sent!');
+            setSuccess('Boð sent!');
             setInviteEmail('');
             setTimeout(() => setSuccess(''), 3000);
-        } catch (err: any) {
-            console.error('Invite error:', err);
-            setError(err.message || 'Gat ekki sent boð.');
+            if (house) setInvitationsReloadKey((k) => k + 1);
+        } catch (err) {
+            logger.error('Invite error:', err);
+            setError('Gat ekki sent boð. Reyndu aftur.');
         } finally {
             setInviteLoading(false);
         }
@@ -336,8 +404,8 @@ export default function SettingsPage() {
                 name: userName.trim()
             });
 
-            // Update name globally in all collections
-            await updateUserNameInAllCollections(currentUser.uid, userName.trim(), currentUser.house_ids || []);
+            // Update the denormalised name copies in every house
+            const nameResult = await updateUserNameInAllCollections(currentUser.uid, userName.trim(), currentUser.house_ids || []);
 
             const updatedUser = { ...currentUser, name: userName.trim() };
 
@@ -347,10 +415,17 @@ export default function SettingsPage() {
                 setCurrentUser(updatedUser);
             }
 
-            setSuccess('Nafni breytt!');
-            setTimeout(() => setSuccess(''), 3000);
+            if (nameResult.ok) {
+                setSuccess('Nafni breytt!');
+                setTimeout(() => setSuccess(''), 3000);
+            } else {
+                setError(
+                    `Nafninu var breytt, en það tókst ekki að uppfæra það á eldri færslum í ${nameResult.failedHouseIds.length} húsi. ` +
+                    'Eldri færslur geta enn sýnt gamla nafnið. Reyndu að vista aftur síðar.'
+                );
+            }
         } catch (err) {
-            console.error('Error updating profile:', err);
+            logger.error('Error updating profile:', err);
             setError('Gat ekki vistað nafn.');
         } finally {
             setLoading(false);
@@ -362,7 +437,7 @@ export default function SettingsPage() {
             await signOut(auth);
             navigate('/login');
         } catch (err) {
-            console.error('Logout error:', err);
+            logger.error('Logout error:', err);
         }
     };
 
@@ -372,7 +447,7 @@ export default function SettingsPage() {
             await sendPasswordResetEmail(auth, currentUser.email);
             setSuccess(`Tölvupóstur sendur á ${currentUser.email}. Athugaðu ruslpóstinn ef hann berst ekki.`);
         } catch (err) {
-            console.error('Error sending password reset:', err);
+            logger.error('Error sending password reset:', err);
             setError('Gat ekki sent tölvupóst. Reyndu aftur síðar.');
         }
     };
@@ -392,7 +467,7 @@ export default function SettingsPage() {
             setSuccess('Tungumál uppfært');
             setTimeout(() => setSuccess(''), 2000);
         } catch (e) {
-            console.error('Error updating language', e);
+            logger.error('Error updating language', e);
             setError('Gat ekki uppfært tungumál');
         }
     };
@@ -425,45 +500,12 @@ export default function SettingsPage() {
                 notification_settings: newSettings
             });
         } catch (err) {
-            console.error('Error updating notification settings:', err);
+            logger.error('Error updating notification settings:', err);
             setError('Gat ekki uppfært tilkynningastillingar.');
             // Revert on error
             setNotificationSettings(notificationSettings);
         }
     };
-
-    const Toggle = ({ label, description, checked, onChange, disabled }: {
-        label: string,
-        description: string,
-        checked: boolean,
-        onChange: (val: boolean) => void,
-        disabled?: boolean
-    }) => (
-        <div className={`flex items-start justify-between py-2 ${disabled ? 'opacity-50' : ''}`}>
-            <div className="flex-1 mr-4">
-                <p className="text-sm font-bold text-charcoal">{label}</p>
-                <p className="text-xs text-stone-500">{description}</p>
-            </div>
-            <button
-                type="button"
-                disabled={disabled}
-                onClick={() => onChange(!checked)}
-                className={`
-                    relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
-                    transition-colors duration-200 ease-in-out focus:outline-none 
-                    ${checked ? 'bg-amber' : 'bg-stone-200'}
-                `}
-            >
-                <span
-                    className={`
-                        pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 
-                        transition duration-200 ease-in-out
-                        ${checked ? 'translate-x-5' : 'translate-x-0'}
-                    `}
-                />
-            </button>
-        </div>
-    );
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>, mode: 'main' | 'gallery' = 'main') => {
         const file = e.target.files?.[0];
@@ -495,7 +537,12 @@ export default function SettingsPage() {
 
     const handleCroppedImage = async (blob: Blob) => {
         if (!house) {
-            console.error("No house object found in handleCroppedImage");
+            logger.error("No house object found in handleCroppedImage");
+            return;
+        }
+        // Only the manager may write the house document (avatars are the user's own)
+        if (cropMode !== 'avatar' && !isManager) {
+            setError('Aðeins umsjónarmaður hússins getur breytt myndum hússins.');
             return;
         }
         try {
@@ -518,8 +565,7 @@ export default function SettingsPage() {
                     setUploadProgress(Math.round(progress));
                 },
                 (error) => {
-                    console.error('Upload error:', error);
-                    throw error;
+                    logger.error('Upload error:', error);
                 }
             );
 
@@ -591,12 +637,12 @@ export default function SettingsPage() {
                         updated_at: serverTimestamp()
                     }, { merge: true });
                 } catch (guestErr) {
-                    console.error("Error syncing with guest view:", guestErr);
+                    logger.error("Error syncing with guest view:", guestErr);
                 }
             }
         } catch (error: any) {
-            console.error('Error uploading image:', error);
-            setError(`Villa við að vista mynd: ${error.message}`);
+            logger.error('Error uploading image:', error);
+            setError('Villa kom upp við að vista mynd. Reyndu aftur.');
         } finally {
             setUploadingImage(false);
             setUploadProgress(0);
@@ -604,7 +650,7 @@ export default function SettingsPage() {
     };
 
     const handleRemoveGalleryImage = async (url: string) => {
-        if (!house || !house.gallery_urls) return;
+        if (!house || !house.gallery_urls || !isManager) return;
         if (!confirm('Ertu viss um að þú viljir eyða þessari mynd úr galleríinu?')) return;
 
         try {
@@ -628,33 +674,225 @@ export default function SettingsPage() {
                         updated_at: serverTimestamp()
                     });
                 } catch (guestErr) {
-                    console.error("Error syncing gallery deletion with guest view:", guestErr);
+                    logger.error("Error syncing gallery deletion with guest view:", guestErr);
                 }
             }
         } catch (error) {
-            console.error("Error removing gallery image", error);
+            logger.error("Error removing gallery image", error);
             setError('Gat ekki eytt mynd.');
         } finally {
             setLoading(false);
         }
     };
 
+    // Re-read the house after a membership change and refresh local + store state
+    const refreshHouseAfterChange = async () => {
+        if (!house) return;
+        clearHouseMembersCache(house.id);
+        try {
+            const snap = await getDoc(doc(db, 'houses', house.id));
+            if (snap.exists()) {
+                const fresh = { id: snap.id, ...snap.data() } as House;
+                setHouse(fresh);
+                setCurrentHouse(fresh);
+                setUserHouses(useAppStore.getState().userHouses.map((h) => (h.id === fresh.id ? fresh : h)));
+            }
+        } catch (e) {
+            logger.warn('Could not refresh house after membership change:', e);
+        }
+        setMembersReloadKey((k) => k + 1);
+    };
+
+    // The user is no longer in the house (left or deleted it): drop it everywhere locally
+    const handleHouseGone = (houseId: string) => {
+        clearHouseMembersCache(houseId);
+        const remaining = useAppStore.getState().userHouses.filter((h) => h.id !== houseId);
+        setUserHouses(remaining);
+        setCurrentHouse(remaining[0] || null);
+        try {
+            if (localStorage.getItem('last_house_id') === houseId) localStorage.removeItem('last_house_id');
+        } catch {
+            // storage unavailable: nothing to clean up
+        }
+        if (currentUser) {
+            setCurrentUser({ ...currentUser, house_ids: (currentUser.house_ids || []).filter((id) => id !== houseId) });
+        }
+        setHouse(null);
+        setMembers([]);
+        navigate('/dashboard');
+    };
+
     const handleTransferOwnership = async () => {
         if (!house || !currentUser || !memberToTransfer) return;
 
-        try {
-            await updateDoc(doc(db, 'houses', house.id), {
-                manager_id: memberToTransfer.uid,
-                updated_at: serverTimestamp()
-            });
-
-            setHouse({ ...house, manager_id: memberToTransfer.uid });
-            setSuccess(`Eignarhaldi flutt yfir á ${memberToTransfer.name || memberToTransfer.email}`);
+        const result = await callMembershipApi('transfer-manager', {
+            houseId: house.id,
+            newManagerId: memberToTransfer.uid,
+        });
+        if (!result.ok) {
             setMemberToTransfer(null);
             setTransferConfirmation('');
+            setError(membershipErrorMessage(result));
+            return;
+        }
+
+        setSuccess(`Umsjón flutt yfir á ${memberToTransfer.name || memberToTransfer.email}`);
+        setMemberToTransfer(null);
+        setTransferConfirmation('');
+        await refreshHouseAfterChange();
+    };
+
+    const openMembershipAction = (action: MembershipAction) => {
+        setMembershipAction(action);
+        setMembershipText('');
+        setNewManagerChoice('');
+        setMembershipModalError('');
+        setReauthPasswordNeeded(false);
+        setReauthPassword('');
+    };
+
+    const closeMembershipAction = () => {
+        if (membershipBusy) return;
+        setMembershipAction(null);
+        setMembershipText('');
+        setNewManagerChoice('');
+        setMembershipModalError('');
+        setReauthPasswordNeeded(false);
+        setReauthPassword('');
+    };
+
+    // Re-authenticate the signed-in user in place so account deletion can
+    // proceed without signing out. Returns null on success, 'need_password'
+    // when a password account must type its password first, or an Icelandic
+    // error message.
+    const reauthenticateInPlace = async (): Promise<string | null> => {
+        const user = auth.currentUser;
+        if (!user) return membershipErrorMessage({ ok: false, status: 401, code: 'reauth_required' });
+        const providers = user.providerData.map((p) => p.providerId);
+        try {
+            if (providers.includes('google.com')) {
+                await reauthenticateWithPopup(user, new GoogleAuthProvider());
+            } else if (providers.includes('facebook.com')) {
+                await reauthenticateWithPopup(user, new FacebookAuthProvider());
+            } else if (providers.includes('password') && user.email) {
+                if (!reauthPassword) return 'need_password';
+                await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, reauthPassword));
+            } else {
+                return membershipErrorMessage({ ok: false, status: 401, code: 'reauth_required' });
+            }
+            await user.getIdToken(true);
+            return null;
         } catch (e) {
-            console.error('Error transferring ownership:', e);
-            setError('Villa kom upp við að færa eignarhald.');
+            const code = (e as { code?: string })?.code;
+            logger.warn('Re-authentication failed:', code);
+            if (code === 'auth/wrong-password' || code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials') {
+                return 'Rangt lykilorð. Reyndu aftur.';
+            }
+            if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+                return 'Innskráningarglugganum var lokað áður en auðkenningu lauk. Reyndu aftur.';
+            }
+            return membershipErrorMessage({ ok: false, status: 401, code: 'reauth_required' });
+        }
+    };
+
+    // The house has no manager who is still an owner (legacy data or a deleted
+    // manager): any owner may take the role.
+    const handleClaimManager = async () => {
+        if (!house || !currentUser) return;
+        const result = await callMembershipApi('transfer-manager', {
+            houseId: house.id,
+            newManagerId: currentUser.uid,
+        });
+        if (!result.ok) {
+            setError(membershipErrorMessage(result));
+            return;
+        }
+        setSuccess('Þú ert nú umsjónarmaður hússins');
+        await refreshHouseAfterChange();
+    };
+
+    const handleConfirmMembershipAction = async () => {
+        if (!membershipAction || membershipBusy) return;
+        setMembershipBusy(true);
+        setMembershipModalError('');
+        try {
+            if (membershipAction.type === 'delete_account') {
+                // Keep AuthHandler from re-creating the profile the server is about to delete
+                accountDeletionState.inProgress = true;
+                let result = await callMembershipApi('delete-account', { confirm: 'EYÐA' });
+                if (!result.ok && result.code === 'reauth_required') {
+                    const reauthError = await reauthenticateInPlace();
+                    if (reauthError === 'need_password') {
+                        accountDeletionState.inProgress = false;
+                        setReauthPasswordNeeded(true);
+                        setMembershipModalError('Sláðu inn lykilorðið þitt til að staðfesta auðkenni þitt.');
+                        return;
+                    }
+                    if (reauthError) {
+                        accountDeletionState.inProgress = false;
+                        setMembershipModalError(reauthError);
+                        return;
+                    }
+                    result = await callMembershipApi('delete-account', { confirm: 'EYÐA' });
+                }
+                if (!result.ok) {
+                    accountDeletionState.inProgress = false;
+                    setMembershipModalError(membershipErrorMessage(result));
+                    return;
+                }
+                try {
+                    await signOut(auth);
+                } catch (e) {
+                    logger.warn('Sign-out after account deletion failed:', e);
+                }
+                useAppStore.getState().logout();
+                accountDeletionState.inProgress = false;
+                navigate('/');
+                return;
+            }
+
+            if (!house) return;
+
+            if (membershipAction.type === 'remove') {
+                const result = await callMembershipApi('remove-member', {
+                    houseId: house.id,
+                    memberId: membershipAction.member.uid,
+                });
+                if (!result.ok) {
+                    setMembershipModalError(membershipErrorMessage(result));
+                    return;
+                }
+                setMembershipAction(null);
+                setSuccess(`${membershipAction.member.name || membershipAction.member.email} var fjarlægð(ur) úr húsinu.`);
+                await refreshHouseAfterChange();
+                return;
+            }
+
+            if (membershipAction.type === 'delete_house') {
+                const result = await callMembershipApi('leave-house', { houseId: house.id, deleteHouse: true });
+                if (!result.ok) {
+                    setMembershipModalError(membershipErrorMessage(result));
+                    return;
+                }
+                setMembershipAction(null);
+                handleHouseGone(house.id);
+                return;
+            }
+
+            // leave
+            const needsNewManager = isManager && house.owner_ids.length > 1;
+            const result = await callMembershipApi('leave-house', {
+                houseId: house.id,
+                ...(needsNewManager ? { newManagerId: newManagerChoice } : {}),
+            });
+            if (!result.ok) {
+                setMembershipModalError(membershipErrorMessage(result));
+                return;
+            }
+            setMembershipAction(null);
+            handleHouseGone(house.id);
+        } finally {
+            setMembershipBusy(false);
         }
     };
 
@@ -688,15 +926,10 @@ export default function SettingsPage() {
                                 invite_code: newCode
                             });
                             houseData.invite_code = newCode;
-                            logger.info('Invite code generated:', newCode);
+                            logger.info('Invite code generated for house:', houseId);
                         } catch (err) {
-                            console.error('Failed to generate invite code:', err);
+                            logger.error('Failed to generate invite code:', err);
                         }
-                    } else {
-                        console.log('Invite code status:', {
-                            hasCode: !!houseData.invite_code,
-                            isManager: houseData.manager_id === currentUserId
-                        });
                     }
 
                     setHouse(houseData);
@@ -730,7 +963,7 @@ export default function SettingsPage() {
                     }));
                 }
             } catch (err) {
-                console.error('Error loading house:', err);
+                logger.error('Error loading house:', err);
                 setError('Gat ekki sótt upplýsingar um sumarhúsið.');
             } finally {
                 setLoading(false);
@@ -740,45 +973,61 @@ export default function SettingsPage() {
         loadHouse();
     }, [userHouseIds, currentStoredHouseId, currentUserId]);
 
-    // Allow any owner to edit house settings, not just the designated manager
-    const isManager = house && currentUser && (house.owner_ids?.includes(currentUser.uid) || house.manager_id === currentUser.uid);
+    // Only the manager (manager_id) may write the house document (see firestore.rules);
+    // other owners can still invite, manage guest links and their own profile.
+    const isManager = !!(house && currentUser && house.manager_id === currentUser.uid);
+    // Membership actions call the API with the real Firebase user's token, so they
+    // must not be offered while impersonating someone else.
+    const canChangeMembership = !isImpersonating;
 
 
-    // Fetch Members
+    // Fetch members (via /api/house-members: users may only read their own user doc)
     useEffect(() => {
-        if ((activeTab === 'members' || activeTab === 'house') && house?.owner_ids?.length) {
+        if ((activeTab === 'members' || activeTab === 'house' || activeTab === 'logs') && house?.id) {
+            let cancelled = false;
+            const houseId = house.id;
             const fetchMembers = async () => {
                 setLoadingMembers(true);
                 setMembersError('');
                 try {
-                    // Note: Firestore 'in' query supports max 10. Using Promise.all for robustness.
-                    const promises = house.owner_ids.map(uid => getDoc(doc(db, 'users', uid)));
-                    const docs = await Promise.all(promises);
-                    const users = docs.map(d => {
-                        if (d.exists()) {
-                            return { uid: d.id, ...d.data() } as User;
-                        }
-                        return null;
-                    }).filter((u): u is User => u !== null);
-
-                    setMembers(users);
-
-                    // Also fetch invitations
-                    const qInvites = query(collection(db, 'invitations'), where('house_id', '==', house.id));
-                    const inviteSnap = await getDocs(qInvites);
-                    const invites = inviteSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    setInvitations(invites);
-
+                    const list = await getHouseMembers(houseId, membersReloadKey > 0 ? { force: true } : undefined);
+                    if (cancelled) return;
+                    setMembers(list.map((m) => ({
+                        uid: m.uid,
+                        name: m.name,
+                        email: m.email,
+                        avatar: m.avatar_url ?? undefined,
+                        house_ids: [],
+                        created_at: new Date(),
+                    } as User)));
                 } catch (err) {
-                    console.error("Error fetching members", err);
-                    setMembersError('Gat ekki sótt lista yfir meðeigendur.');
+                    logger.error('Error fetching members', err);
+                    if (!cancelled) setMembersError('Gat ekki sótt lista yfir meðeigendur.');
                 } finally {
-                    setLoadingMembers(false);
+                    if (!cancelled) setLoadingMembers(false);
                 }
             };
             fetchMembers();
+            return () => { cancelled = true; };
         }
-    }, [activeTab, house?.owner_ids, house?.id]);
+    }, [activeTab, house?.owner_ids, house?.id, membersReloadKey]);
+
+    // Pending invitations load on their own so a failure in one list never hides the other
+    useEffect(() => {
+        if (activeTab !== 'members' || !house?.id) return;
+        let cancelled = false;
+        const loadInvitations = async () => {
+            try {
+                const qInvites = query(collection(db, 'invitations'), where('house_id', '==', house.id));
+                const inviteSnap = await getDocs(qInvites);
+                if (!cancelled) setInvitations(inviteSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+            } catch (err) {
+                logger.error('Error fetching invitations', err);
+            }
+        };
+        loadInvitations();
+        return () => { cancelled = true; };
+    }, [activeTab, house?.id, invitationsReloadKey]);
 
     const handleSaveHouse = async (formData: any) => {
         if (!house || !isManager) return;
@@ -883,7 +1132,7 @@ export default function SettingsPage() {
 
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            console.error('Error updating house:', err);
+            logger.error('Error updating house:', err);
             setError('Villa kom upp við að vista breytingar.');
         } finally {
             setIsSaving(false);
@@ -911,7 +1160,7 @@ export default function SettingsPage() {
     };
 
     const handleGenerateInvite = async () => {
-        if (!house) return;
+        if (!house || !isManager) return;
         const newCode = generateInviteCode();
         try {
             await updateDoc(doc(db, 'houses', house.id), {
@@ -920,7 +1169,8 @@ export default function SettingsPage() {
             setHouseForm(prev => ({ ...prev, invite_code: newCode }));
             setHouse(prev => prev ? { ...prev, invite_code: newCode } : null);
             setSuccess('Nýr boðshlekkur búinn til!');
-        } catch {
+        } catch (err) {
+            logger.error('Error generating invite code:', err);
             setError('Gat ekki búið til boðshlekk.');
         }
     };
@@ -942,7 +1192,7 @@ export default function SettingsPage() {
                         source: 'hms'
                     })));
                 } catch (e) {
-                    console.error("HMS search error in settings", e);
+                    logger.error("HMS search error in settings", e);
                 }
             }, 400);
             setDebounceTimer(timer);
@@ -962,8 +1212,10 @@ export default function SettingsPage() {
     };
 
     const handleGenerateGuestToken = async (replace = false) => {
+        // The fixed guest link is stored on the house document (guest_token), which only
+        // the manager may write, so only the manager creates/replaces/deletes it.
+        if (!house || !isManager) return;
         if (replace && !confirm('Ertu viss? Gamli hlekkurinn mun hætta að virka.')) return;
-        if (!house) return;
 
         // Check if we have enough info to make a useful guest page
         const hasInfo =
@@ -1024,7 +1276,7 @@ export default function SettingsPage() {
             setHouse({ ...house, guest_token: newToken });
             setSuccess('Nýr gestahlekkur búinn til! Gestir geta nú nálgast upplýsingar.');
         } catch (err) {
-            console.error(err);
+            logger.error('Error creating guest link:', err);
             setError('Villa við að búa til hlekk.');
         } finally {
             setLoading(false);
@@ -1198,7 +1450,27 @@ export default function SettingsPage() {
                             </div>
                         )}
 
+                        {house && currentUser && house.owner_ids?.includes(currentUser.uid) &&
+                            !(house.manager_id && house.owner_ids.includes(house.manager_id)) && (
+                            <div className="mb-4 bg-amber/10 border border-amber/30 text-charcoal px-4 py-3 rounded text-sm flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                                <span>Húsið er án umsjónarmanns</span>
+                                <button
+                                    type="button"
+                                    onClick={handleClaimManager}
+                                    disabled={!canChangeMembership}
+                                    className="btn-primary text-sm disabled:opacity-50"
+                                >
+                                    Gerast umsjónarmaður
+                                </button>
+                            </div>
+                        )}
+
                         {/* TAB: HOUSE INFO */}
+                        {activeTab === 'house' && house && !isManager && (
+                            <div className="mb-4 bg-amber/10 border border-amber/30 text-charcoal px-4 py-3 rounded text-sm">
+                                Aðeins umsjónarmaður hússins getur breytt húsupplýsingum. Þú getur skoðað þær hér.
+                            </div>
+                        )}
                         {activeTab === 'house' && house && (
                             <HouseSettings
                                 house={house}
@@ -1236,7 +1508,7 @@ export default function SettingsPage() {
                                         <div className="p-4 bg-red-50 text-red-600 rounded-lg text-center">
                                             {membersError}
                                             <button
-                                                onClick={() => window.location.reload()}
+                                                onClick={() => setMembersReloadKey((k) => k + 1)}
                                                 className="block mx-auto mt-2 text-sm underline hover:text-red-800"
                                             >
                                                 Reyna aftur
@@ -1257,20 +1529,28 @@ export default function SettingsPage() {
                                                             {member.uid === currentUser?.uid && <span className="text-xs bg-grey-light px-2 py-0.5 rounded text-charcoal">Þú</span>}
                                                         </div>
                                                         <div className="text-sm text-grey-mid">
-                                                            {house.manager_id === member.uid ? 'Bústaðastjóri (Manager)' : 'Meðeigandi (Member)'}
+                                                            {house.manager_id === member.uid ? 'Umsjónarmaður' : 'Meðeigandi'}
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Action Buttons */}
-                                                <div>
-                                                    {isManager && house.manager_id !== member.uid && (
-                                                        <button
-                                                            onClick={() => setMemberToTransfer(member)}
-                                                            className="text-xs text-amber hover:text-amber-dark font-medium"
-                                                        >
-                                                            Gera að stjórnanda
-                                                        </button>
+                                                <div className="flex items-center gap-3">
+                                                    {isManager && canChangeMembership && house.manager_id !== member.uid && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => setMemberToTransfer(member)}
+                                                                className="text-xs text-amber hover:text-amber-dark font-medium"
+                                                            >
+                                                                Gera að umsjónarmanni
+                                                            </button>
+                                                            <button
+                                                                onClick={() => openMembershipAction({ type: 'remove', member })}
+                                                                className="text-xs text-red-500 hover:text-red-700 font-medium hover:underline"
+                                                            >
+                                                                Fjarlægja
+                                                            </button>
+                                                        </>
                                                     )}
                                                 </div>
                                             </div>
@@ -1374,24 +1654,60 @@ export default function SettingsPage() {
                                                                 </button>
                                                             )}
                                                         </div>
-                                                        <div className="mt-4">
-                                                            <button
-                                                                onClick={handleGenerateInvite}
-                                                                className="text-xs text-grey-mid hover:underline"
-                                                            >
-                                                                Endurnýja hlekk (Gera gamlan ógildan)
-                                                            </button>
-                                                        </div>
+                                                        {isManager && (
+                                                            <div className="mt-4">
+                                                                <button
+                                                                    onClick={handleGenerateInvite}
+                                                                    className="text-xs text-grey-mid hover:underline"
+                                                                >
+                                                                    Endurnýja hlekk (Gera gamlan ógildan)
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                ) : (
+                                                ) : isManager ? (
                                                     <button
                                                         onClick={handleGenerateInvite}
                                                         className="btn btn-primary w-full md:w-auto self-start"
                                                     >
                                                         Búa til boðshlekk
                                                     </button>
+                                                ) : (
+                                                    <p className="text-sm text-grey-mid">
+                                                        Enginn boðshlekkur er til. Umsjónarmaður hússins getur búið hann til. Þú getur boðið með tölvupósti hér að ofan.
+                                                    </p>
                                                 )}
                                             </div>
+                                        </div>
+                                    )}
+
+                                    {/* Leave / delete house */}
+                                    {canChangeMembership && (
+                                        <div className="mt-8 pt-6 border-t border-grey-warm">
+                                            <h3 className="text-lg font-serif mb-2">Aðild að húsinu</h3>
+                                            <div className="flex flex-wrap gap-3">
+                                                {house.owner_ids.length > 1 && (
+                                                    <button
+                                                        onClick={() => openMembershipAction({ type: 'leave' })}
+                                                        className="btn btn-secondary text-red-600 border-red-200 hover:bg-red-50"
+                                                    >
+                                                        Yfirgefa hús
+                                                    </button>
+                                                )}
+                                                {isManager && (
+                                                    <button
+                                                        onClick={() => openMembershipAction({ type: 'delete_house' })}
+                                                        className="btn btn-secondary text-red-600 border-red-200 hover:bg-red-50"
+                                                    >
+                                                        Eyða húsi
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {house.owner_ids.length <= 1 && (
+                                                <p className="text-xs text-stone-500 mt-2">
+                                                    Þú ert eini eigandi hússins og getur því ekki yfirgefið það. Þú getur eytt húsinu í staðinn.
+                                                </p>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -1479,9 +1795,12 @@ export default function SettingsPage() {
 
                                                 <div className="flex justify-between items-center pt-4 border-t border-stone-100">
                                                     <p className="text-sm text-stone-500">
-                                                        Viltu endurnýja hlekkinn? Gamli hlekkurinn hættir að virka.
+                                                        {isManager
+                                                            ? 'Viltu endurnýja hlekkinn? Gamli hlekkurinn hættir að virka.'
+                                                            : 'Aðeins umsjónarmaður hússins getur breytt eða eytt fasta hlekknum.'}
                                                     </p>
                                                     <div className="mt-4 flex gap-2">
+                                                        {isManager && (
                                                         <button
                                                             onClick={() => {
                                                                 const input = document.querySelector('input[type="file"][data-upload-type="gallery"]') as HTMLInputElement;
@@ -1492,6 +1811,8 @@ export default function SettingsPage() {
                                                             <RefreshCw size={14} className="mr-2" />
                                                             Endurnýja
                                                         </button>
+                                                        )}
+                                                        {isManager && (
                                                         <button
                                                             onClick={async () => {
                                                                 if (!confirm('Ertu viss? Þetta lokar á aðganginn strax.')) return;
@@ -1502,7 +1823,7 @@ export default function SettingsPage() {
                                                                     setHouse({ ...house, guest_token: undefined });
                                                                     setSuccess('Gestasíðu eytt');
                                                                 } catch (e) {
-                                                                    console.error(e);
+                                                                    logger.error('Error deleting guest page:', e);
                                                                     setError('Gat ekki eytt síðu');
                                                                 } finally {
                                                                     setLoading(false);
@@ -1512,8 +1833,16 @@ export default function SettingsPage() {
                                                         >
                                                             Eyða
                                                         </button>
+                                                        )}
                                                     </div>
                                                 </div>
+                                            </div>
+                                        ) : !isManager ? (
+                                            <div className="text-center py-8">
+                                                <h3 className="text-lg font-bold text-charcoal mb-2">Enginn fastur gestahlekkur</h3>
+                                                <p className="text-stone-500 max-w-sm mx-auto">
+                                                    Aðeins umsjónarmaður hússins getur búið til fastan gestahlekk. Bókunarhlekkirnir hér að ofan virka fyrir alla meðeigendur.
+                                                </p>
                                             </div>
                                         ) : (
                                             <div className="text-center py-8">
@@ -1537,6 +1866,14 @@ export default function SettingsPage() {
                                 </section>
 
                                 <hr className="border-stone-200" />
+
+                                {!isManager && (
+                                    <div className="bg-amber/10 border border-amber/30 text-charcoal px-4 py-3 rounded text-sm">
+                                        Aðeins umsjónarmaður hússins getur breytt gestaupplýsingum. Þú getur skoðað þær hér.
+                                    </div>
+                                )}
+                                {/* House-document fields: disabled unless the user is the manager */}
+                                <fieldset disabled={!isManager} className="space-y-12 min-w-0 border-0 p-0 m-0">
 
                                 {/* Amenities Section */}
                                 <section>
@@ -1742,6 +2079,7 @@ export default function SettingsPage() {
                                         </form>
                                     </div>
                                 </section>
+                                </fieldset>
                             </div>
                         )}
 
@@ -1881,18 +2219,21 @@ export default function SettingsPage() {
                                                 </div>
 
                                                 <Toggle
+                                                    variant="row"
                                                     label="Nýjar bókanir"
                                                     description="Fá tölvupóst þegar húsfélagsmeðlimur bókar"
                                                     checked={notificationSettings.emails.new_bookings}
                                                     onChange={(val) => handleUpdateNotificationSettings('emails', 'new_bookings', val)}
                                                 />
                                                 <Toggle
+                                                    variant="row"
                                                     label="Verkefni"
                                                     description="Áminningar um verkefni sem eiga að klárast"
                                                     checked={notificationSettings.emails.task_reminders}
                                                     onChange={(val) => handleUpdateNotificationSettings('emails', 'task_reminders', val)}
                                                 />
                                                 <Toggle
+                                                    variant="row"
                                                     label="Veðurviðvaranir"
                                                     description="Fá sjarmerandi veðuráminningar fyrir dvalir"
                                                     checked={notificationSettings.emails.weather_alerts}
@@ -1908,18 +2249,21 @@ export default function SettingsPage() {
                                                 </div>
 
                                                 <Toggle
+                                                    variant="row"
                                                     label="Nýjar bókanir"
                                                     description="Tilkynning á stjórnborði þegar ný bókun kemur"
                                                     checked={notificationSettings.in_app.new_bookings}
                                                     onChange={(val) => handleUpdateNotificationSettings('in_app', 'new_bookings', val)}
                                                 />
                                                 <Toggle
+                                                    variant="row"
                                                     label="Gestabók"
                                                     description="Þegar gestir skrifa í gestabókina"
                                                     checked={notificationSettings.in_app.guestbook_entries}
                                                     onChange={(val) => handleUpdateNotificationSettings('in_app', 'guestbook_entries', val)}
                                                 />
                                                 <Toggle
+                                                    variant="row"
                                                     label="Veðurviðvaranir"
                                                     description="Veðurspá og aðstæður á stjórnborði"
                                                     checked={notificationSettings.in_app.weather_alerts}
@@ -1989,6 +2333,26 @@ export default function SettingsPage() {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {canChangeMembership && (
+                                        <div className="pt-8 border-t border-red-200">
+                                            <div className="flex items-center gap-2 mb-2 text-red-600">
+                                                <AlertTriangle className="w-5 h-5" />
+                                                <h3 className="font-serif text-lg font-bold">Eyða aðgangi</h3>
+                                            </div>
+                                            <p className="text-sm text-stone-600 mb-4 max-w-xl">
+                                                Aðgangnum þínum er eytt varanlega. Hús þar sem þú ert eini eigandinn eyðast með öllum bókunum,
+                                                fjármálum, verkefnum og gestahlekkjum. Í öðrum húsum ert þú fjarlægð(ur) og ef þú ert umsjónarmaður
+                                                tekur næsti meðeigandi við.
+                                            </p>
+                                            <button
+                                                onClick={() => openMembershipAction({ type: 'delete_account' })}
+                                                className="btn btn-secondary text-red-600 border-red-200 hover:bg-red-50"
+                                            >
+                                                Eyða aðgangi
+                                            </button>
+                                        </div>
+                                    )}
 
                                     <div className="pt-8 border-t border-grey-warm flex justify-end">
                                         <button
@@ -2085,6 +2449,139 @@ export default function SettingsPage() {
                 )
             }
 
+            {/* Membership action modal (leave / remove / delete house / delete account) */}
+            {
+                membershipAction && (() => {
+                    const type = membershipAction.type;
+                    const others = members.filter((m) => m.uid !== currentUser?.uid);
+                    const needsNewManager = type === 'leave' && isManager && (house?.owner_ids.length || 0) > 1;
+                    const needsTyped = type === 'delete_house' || type === 'delete_account';
+                    const title =
+                        type === 'leave' ? 'Yfirgefa hús?'
+                        : type === 'remove' ? 'Fjarlægja meðeiganda?'
+                        : type === 'delete_house' ? 'Eyða húsi?'
+                        : 'Eyða aðgangi?';
+                    const confirmLabel =
+                        type === 'leave' ? 'Yfirgefa hús'
+                        : type === 'remove' ? 'Fjarlægja'
+                        : type === 'delete_house' ? 'Eyða húsi varanlega'
+                        : 'Eyða aðgangi varanlega';
+                    const canConfirm =
+                        !membershipBusy &&
+                        (!needsNewManager || !!newManagerChoice) &&
+                        (!needsTyped || membershipText === 'EYÐA');
+                    return (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
+                            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                                <div className="flex items-center gap-3 text-red-600 mb-4">
+                                    <AlertTriangle className="w-8 h-8" />
+                                    <h3 className="text-xl font-bold font-serif">{title}</h3>
+                                </div>
+
+                                {type === 'leave' && (
+                                    <p className="text-stone-600 mb-4 text-sm leading-relaxed">
+                                        Þú missir aðgang að húsinu <strong>{house?.name}</strong>. Aðrir meðeigendur halda áfram að hafa aðgang.
+                                    </p>
+                                )}
+                                {type === 'remove' && (
+                                    <p className="text-stone-600 mb-4 text-sm leading-relaxed">
+                                        <strong>{membershipAction.member.name || membershipAction.member.email}</strong> missir aðgang að húsinu <strong>{house?.name}</strong>.
+                                    </p>
+                                )}
+                                {type === 'delete_house' && (
+                                    <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 text-sm text-red-800 leading-relaxed">
+                                        <strong>Aðvörun:</strong> Húsinu <strong>{house?.name}</strong> er eytt varanlega fyrir alla meðeigendur
+                                        ({house?.owner_ids.length || 1}). Allar bókanir, fjármál, verkefni, innkaupalistar, gestabók og gestahlekkir
+                                        eyðast og ekki er hægt að afturkalla það.
+                                    </div>
+                                )}
+                                {type === 'delete_account' && (
+                                    <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 text-sm text-red-800 leading-relaxed">
+                                        <strong>Aðvörun:</strong> Aðgangnum þínum er eytt varanlega og ekki er hægt að afturkalla það.
+                                        Hús þar sem þú ert eini eigandinn eyðast með öllum gögnum (bókanir, fjármál, verkefni og gestahlekkir).
+                                        Í öðrum húsum ert þú fjarlægð(ur).
+                                    </div>
+                                )}
+
+                                {needsNewManager && (
+                                    <div className="mb-4">
+                                        <label className="label text-xs uppercase text-grey-mid" htmlFor="new-manager-select">
+                                            Þú ert umsjónarmaður. Veldu nýjan umsjónarmann:
+                                        </label>
+                                        <select
+                                            id="new-manager-select"
+                                            className="input w-full"
+                                            value={newManagerChoice}
+                                            onChange={(e) => setNewManagerChoice(e.target.value)}
+                                        >
+                                            <option value="">Veldu meðeiganda...</option>
+                                            {others.map((m) => (
+                                                <option key={m.uid} value={m.uid}>{m.name || m.email}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {needsTyped && (
+                                    <>
+                                        <p className="text-xs text-stone-500 mb-2 uppercase font-bold tracking-wide">
+                                            Skrifaðu &quot;EYÐA&quot; til að staðfesta:
+                                        </p>
+                                        <input
+                                            type="text"
+                                            className="w-full border border-stone-300 rounded-md px-3 py-2 mb-4 font-mono text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 uppercase"
+                                            placeholder="EYÐA"
+                                            value={membershipText}
+                                            onChange={(e) => setMembershipText(e.target.value.toUpperCase())}
+                                            autoComplete="off"
+                                        />
+                                    </>
+                                )}
+
+                                {type === 'delete_account' && reauthPasswordNeeded && (
+                                    <div className="mb-4">
+                                        <label className="label text-xs uppercase text-grey-mid" htmlFor="reauth-password">
+                                            Lykilorð
+                                        </label>
+                                        <input
+                                            id="reauth-password"
+                                            type="password"
+                                            className="input w-full"
+                                            value={reauthPassword}
+                                            onChange={(e) => setReauthPassword(e.target.value)}
+                                            autoComplete="current-password"
+                                        />
+                                    </div>
+                                )}
+
+                                {membershipModalError && (
+                                    <div className="bg-red-100 border border-red-300 text-red-700 px-3 py-2 rounded mb-4 text-sm">
+                                        {membershipModalError}
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3 justify-end">
+                                    <button
+                                        onClick={closeMembershipAction}
+                                        disabled={membershipBusy}
+                                        className="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-md text-sm font-medium transition-colors"
+                                    >
+                                        Hætta við
+                                    </button>
+                                    <button
+                                        onClick={handleConfirmMembershipAction}
+                                        disabled={!canConfirm}
+                                        className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                                    >
+                                        {membershipBusy ? 'Augnablik...' : confirmLabel}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()
+            }
+
             {/* Ownership Transfer Modal */}
             {
                 memberToTransfer && (
@@ -2096,11 +2593,11 @@ export default function SettingsPage() {
                             </div>
 
                             <p className="text-stone-600 mb-4 text-sm leading-relaxed">
-                                Þú ert að fara að gera <strong>{memberToTransfer.name || memberToTransfer.email}</strong> að Bústaðastjóra.
+                                Þú ert að fara að gera <strong>{memberToTransfer.name || memberToTransfer.email}</strong> að umsjónarmanni hússins.
                             </p>
 
                             <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 text-sm text-red-800">
-                                <strong>Aðvörun:</strong> Þú munt missa öll stjórnendaréttindi (bókunarreglur, stillingar, o.fl.) og verður venjulegur meðeigandi.
+                                <strong>Aðvörun:</strong> Þú munt missa umsjónarréttindi (húsupplýsingar, stillingar, o.fl.) og verður venjulegur meðeigandi.
                             </div>
 
                             <p className="text-xs text-stone-500 mb-2 uppercase font-bold tracking-wide">
