@@ -5,7 +5,8 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { getHouseMembers } from '@/services/houseMembersService';
 import { logger } from '@/utils/logger';
 import type { User } from '@/types/models';
 
@@ -32,37 +33,37 @@ export function useMembers(houseId: string | undefined, ownerIds: string[] | und
             setLoading(true);
             setError('');
 
-            try {
-                // Fetch members (max 10 due to Firestore 'in' query limit)
-                const promises = ownerIds.map((uid) => getDoc(doc(db, 'users', uid)));
-                const docs = await Promise.all(promises);
-                const users = docs
-                    .map((d) => {
-                        if (d.exists()) {
-                            return { uid: d.id, ...d.data() } as User;
-                        }
-                        return null;
-                    })
-                    .filter((u): u is User => u !== null);
+            // Members and invitations load independently: one failure must not hide the other.
+            const [membersResult, invitationsResult] = await Promise.allSettled([
+                getHouseMembers(houseId),
+                getDocs(query(collection(db, 'invitations'), where('house_id', '==', houseId), limit(50))),
+            ]);
 
-                setMembers(users);
+            if (membersResult.status === 'fulfilled') {
+                setMembers(membersResult.value.map((m) => ({
+                    uid: m.uid,
+                    name: m.name,
+                    email: m.email,
+                    avatar: m.avatar_url ?? undefined,
+                    house_ids: [],
+                    created_at: new Date(),
+                } as User)));
+            } else {
+                logger.error('Error fetching members:', membersResult.reason);
+                setError('Gat ekki sótt meðlimi');
+            }
 
-                // Fetch pending invitations (limit to 50)
-                const invQ = query(collection(db, 'invitations'), where('house_id', '==', houseId), limit(50));
-                const invSnap = await getDocs(invQ);
-                const invs = invSnap.docs.map((d) => ({
+            if (invitationsResult.status === 'fulfilled') {
+                setInvitations(invitationsResult.value.docs.map((d) => ({
                     id: d.id,
                     ...d.data(),
                     created_at: d.data().created_at?.toDate() || new Date(),
-                })) as Invitation[];
-
-                setInvitations(invs);
-            } catch (err) {
-                logger.error('Error fetching members:', err);
-                setError('Gat ekki sótt meðlimi');
-            } finally {
-                setLoading(false);
+                })) as Invitation[]);
+            } else {
+                logger.error('Error fetching invitations:', invitationsResult.reason);
             }
+
+            setLoading(false);
         };
 
         fetchMembers();

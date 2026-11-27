@@ -1,159 +1,123 @@
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import {
+    collection,
+    getDocs,
+    query,
+    where,
+    writeBatch,
+    type DocumentReference,
+} from 'firebase/firestore';
 import { logger } from '@/utils/logger';
-import type { BudgetPlan } from '@/types/models';
+
+/** Max writes per batch (Firestore allows 500; keep headroom). */
+const BATCH_SIZE = 450;
+
+export interface NameUpdateResult {
+    /** True only if every house was processed and every write committed. */
+    ok: boolean;
+    /** Number of documents whose name copy was updated. */
+    updatedDocs: number;
+    /** Houses where at least one query or write failed. */
+    failedHouseIds: string[];
+}
+
+type PendingUpdate = { ref: DocumentReference; data: Record<string, unknown> };
 
 /**
- * Updates the user's name across all relevant collections in Firestore.
- * This ensures data consistency when a user changes their name.
+ * Updates the denormalised copies of a user's name in the house subcollections
+ * (houses/{id}/bookings, tasks, shopping_list, finance_entries, inventory,
+ * budget_plans). internal_logs are append-only under the security rules and
+ * are intentionally left alone.
+ *
+ * Never throws for per-house failures: the result says whether it fully
+ * succeeded so callers can show an honest message.
  */
-export const updateUserNameInAllCollections = async (userId: string, newName: string, houseIds: string[]) => {
-    logger.info(`Starting global name update for user ${userId} to "${newName}"...`);
+export async function updateUserNameInAllCollections(
+    userId: string,
+    newName: string,
+    houseIds: string[]
+): Promise<NameUpdateResult> {
+    const result: NameUpdateResult = { ok: true, updatedDocs: 0, failedHouseIds: [] };
+    const uniqueHouseIds = Array.from(new Set((houseIds || []).filter(Boolean)));
 
-    // We will use batches to perform updates. specific limit is 500 ops per batch.
-    // simpler approach: create a new batch for each collection or group of updates to avoid complexity of tracking size.
-
-    try {
-        const promises = [];
-
-        // 1. Bookings
-        promises.push(updateCollection(
-            'bookings',
-            'user_id',
-            userId,
-            { user_name: newName }
-        ));
-
-        // 2. Tasks
-        promises.push(updateCollection(
-            'tasks',
-            'assigned_to',
-            userId,
-            { assigned_to_name: newName }
-        ));
-
-        // 3. Shopping List (Added By)
-        promises.push(updateCollection(
-            'shopping_list',
-            'added_by',
-            userId,
-            { added_by_name: newName }
-        ));
-
-        // 4. Shopping List (Checked By)
-        promises.push(updateCollection(
-            'shopping_list',
-            'checked_by',
-            userId,
-            { checked_by_name: newName }
-        ));
-
-        // 5. Internal Logs
-        promises.push(updateCollection(
-            'internal_logs',
-            'user_id',
-            userId,
-            { user_name: newName }
-        ));
-
-        // 6. Finance Entries (Ledger)
-        promises.push(updateCollection(
-            'finance_entries',
-            'paid_by_user_id',
-            userId,
-            { paid_by_name: newName }
-        ));
-
-        // 7. Budget Plans (Complex Array Update)
-        if (houseIds && houseIds.length > 0) {
-            promises.push(updateBudgetPlans(houseIds, userId, newName));
+    for (const houseId of uniqueHouseIds) {
+        try {
+            const updates = await collectHouseUpdates(houseId, userId, newName);
+            result.updatedDocs += await commitInChunks(updates);
+        } catch (error) {
+            logger.error(`Name update failed for house ${houseId}:`, error);
+            result.ok = false;
+            result.failedHouseIds.push(houseId);
         }
-
-        await Promise.all(promises);
-        logger.info('Global name update complete.');
-        return true;
-    } catch (error) {
-        console.error('Error updating user name globally:', error);
-        throw error;
     }
-};
 
-const updateCollection = async (collectionName: string, whereField: string, userId: string, updateData: any) => {
-    try {
-        const q = query(
-            collection(db, collectionName),
-            where(whereField, '==', userId)
-        );
-        const snapshot = await getDocs(q);
+    logger.info(`Name update finished: ${result.updatedDocs} docs, ${result.failedHouseIds.length} failed houses`);
+    return result;
+}
 
-        if (snapshot.empty) return;
+/** Gather every update for one house, merged per document. */
+async function collectHouseUpdates(houseId: string, userId: string, newName: string): Promise<PendingUpdate[]> {
+    const pending = new Map<string, PendingUpdate>();
+    const add = (ref: DocumentReference, data: Record<string, unknown>) => {
+        const existing = pending.get(ref.path);
+        if (existing) Object.assign(existing.data, data);
+        else pending.set(ref.path, { ref, data: { ...data } });
+    };
+    const sub = (name: string) => collection(db, 'houses', houseId, name);
 
-        const batch = writeBatch(db);
-        let count = 0;
+    // Queries that map "field == user" to "name field"
+    const simple: Array<[string, string, string]> = [
+        ['bookings', 'user_id', 'user_name'],
+        ['tasks', 'created_by', 'created_by_name'],
+        ['shopping_list', 'added_by', 'added_by_name'],
+        ['shopping_list', 'checked_by', 'checked_by_name'],
+        ['finance_entries', 'paid_by_user_id', 'paid_by_name'],
+        ['inventory', 'updated_by', 'updated_by_name'],
+    ];
+    for (const [coll, whereField, nameField] of simple) {
+        const snap = await getDocs(query(sub(coll), where(whereField, '==', userId)));
+        snap.docs.forEach((d) => add(d.ref, { [nameField]: newName }));
+    }
 
-        snapshot.docs.forEach(doc => {
-            batch.update(doc.ref, updateData);
-            count++;
+    // Tasks: assigned_to is an array of uids with a parallel assigned_to_names array
+    const assigned = await getDocs(query(sub('tasks'), where('assigned_to', 'array-contains', userId)));
+    assigned.docs.forEach((d) => {
+        const data = d.data();
+        const uids: string[] = Array.isArray(data.assigned_to) ? data.assigned_to : [];
+        const names: string[] = Array.isArray(data.assigned_to_names) ? [...data.assigned_to_names] : [];
+        uids.forEach((uid, i) => {
+            if (uid === userId) names[i] = newName;
         });
+        add(d.ref, { assigned_to_names: names });
+    });
 
-        await batch.commit();
-        logger.debug(`Updated ${count} documents in ${collectionName} where ${whereField} matched.`);
-    } catch (error) {
-        console.error(`Error updating collection ${collectionName}:`, error);
-        // We don't throw here to ensure other collections proceed, but might want to rethink for strict consistency
-    }
-};
-
-const updateBudgetPlans = async (houseIds: string[], userId: string, newName: string) => {
-    try {
-        // Budget plans are disjoint by house_id.
-        // We need to check all plans for these houses.
-        // optimize: query 'budget_plans' where house_id in houseIds
-        // Note: 'in' query supports up to 10 values.
-
-        const chunks = [];
-        for (let i = 0; i < houseIds.length; i += 10) {
-            chunks.push(houseIds.slice(i, i + 10));
-        }
-
-        for (const chunk of chunks) {
-            const q = query(
-                collection(db, 'budget_plans'),
-                where('house_id', 'in', chunk)
-            );
-            const snapshot = await getDocs(q);
-
-            if (snapshot.empty) continue;
-
-            const batch = writeBatch(db);
-            let updatesCount = 0;
-
-            snapshot.docs.forEach((docSnap) => {
-                const data = docSnap.data() as BudgetPlan;
-                let changed = false;
-
-                if (!data.items) return;
-
-                const newItems = data.items.map(item => {
-                    if (item.assigned_owner_id === userId) {
-                        changed = true;
-                        return { ...item, assigned_owner_name: newName };
-                    }
-                    return item;
-                });
-
-                if (changed) {
-                    batch.update(docSnap.ref, { items: newItems });
-                    updatesCount++;
-                }
-            });
-
-            if (updatesCount > 0) {
-                await batch.commit();
-                logger.debug(`Updated ${updatesCount} budget plans.`);
+    // Budget plans: the name lives inside items[]
+    const plans = await getDocs(sub('budget_plans'));
+    plans.docs.forEach((d) => {
+        const items: any[] = Array.isArray(d.data().items) ? d.data().items : [];
+        let changed = false;
+        const next = items.map((item) => {
+            if (item?.assigned_owner_id === userId) {
+                changed = true;
+                return { ...item, assigned_owner_name: newName };
             }
-        }
-    } catch (error) {
-        console.error('Error updating budget plans:', error);
+            return item;
+        });
+        if (changed) add(d.ref, { items: next });
+    });
+
+    return Array.from(pending.values());
+}
+
+/** Commit updates in batches of at most BATCH_SIZE writes; returns how many were committed. */
+async function commitInChunks(updates: PendingUpdate[]): Promise<number> {
+    let committed = 0;
+    for (let i = 0; i < updates.length; i += BATCH_SIZE) {
+        const chunk = updates.slice(i, i + BATCH_SIZE);
+        const batch = writeBatch(db);
+        chunk.forEach(({ ref, data }) => batch.update(ref, data));
+        await batch.commit();
+        committed += chunk.length;
     }
-};
+    return committed;
+}

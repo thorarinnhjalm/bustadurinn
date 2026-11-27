@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { logger } from '@/utils/logger';
+import { generateInviteCode } from '@/utils/secureToken';
 import type { House } from '@/types/models';
 
 export function useHouseData(houseId: string | undefined, userId: string | undefined) {
@@ -30,14 +31,14 @@ export function useHouseData(houseId: string | undefined, userId: string | undef
                     // Auto-generate invite code if missing (for legacy houses)
                     if (!houseData.invite_code && houseData.manager_id === userId) {
                         logger.info('Auto-generating invite code for house:', houseId);
-                        const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                        const newCode = generateInviteCode();
 
                         try {
                             await updateDoc(doc(db, 'houses', houseId), {
                                 invite_code: newCode,
                             });
                             houseData.invite_code = newCode;
-                            logger.info('Invite code generated:', newCode);
+                            logger.info('Invite code generated for house:', houseId);
                         } catch (err) {
                             logger.error('Failed to generate invite code:', err);
                         }
