@@ -51,7 +51,7 @@ export default function ChecklistEditor({
     return (
         <div>
             <div className="flex items-center gap-2 mb-3">
-                <Icon className="w-5 h-5 text-amber" />
+                <Icon className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                 <h3 className="font-serif text-lg">{title}</h3>
             </div>
             <p className="text-sm text-stone-500 mb-4">{description}</p>
@@ -63,7 +63,7 @@ export default function ChecklistEditor({
                         <button
                             type="button"
                             onClick={handleInsertDefaults}
-                            className="text-xs font-bold text-amber hover:underline"
+                            className="text-xs font-bold text-amber-ink hover:underline"
                         >
                             Setja inn sjálfgefinn lista
                         </button>
@@ -81,10 +81,10 @@ export default function ChecklistEditor({
                                 <button
                                     type="button"
                                     onClick={() => handleRemove(idx)}
-                                    className="text-stone-400 hover:text-red-500 transition-colors"
+                                    className="inline-flex items-center justify-center min-w-6 min-h-6 text-stone-500 hover:text-red-500 transition-colors"
                                     aria-label={`Eyða ${item}`}
                                 >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={14} aria-hidden="true" />
                                 </button>
                             )}
                         </li>
@@ -96,6 +96,7 @@ export default function ChecklistEditor({
                 <div className="flex gap-2">
                     <input
                         type="text"
+                        aria-label={`Nýtt atriði: ${title}`}
                         className="input flex-1"
                         value={newItem}
                         onChange={(e) => setNewItem(e.target.value)}
@@ -112,7 +113,7 @@ export default function ChecklistEditor({
                         onClick={handleAdd}
                         className="btn btn-secondary flex items-center gap-2 px-4"
                     >
-                        <Plus className="w-4 h-4" /> Bæta við
+                        <Plus className="w-4 h-4" aria-hidden="true" /> Bæta við
                     </button>
                 </div>
             )}

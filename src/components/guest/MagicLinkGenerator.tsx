@@ -23,6 +23,7 @@ import {
 import { db } from '@/lib/firebase';
 import type { Booking, House } from '@/types/models';
 import { generateSecureToken } from '@/utils/secureToken';
+import { logger } from '@/utils/logger';
 
 interface MagicLinkGeneratorProps {
     house: House;
@@ -94,7 +95,7 @@ export default function MagicLinkGenerator({ house }: MagicLinkGeneratorProps) {
                 setActiveLinks(links);
 
             } catch (error) {
-                console.error("Error fetching guest links data:", error);
+                logger.error("Error fetching guest links data:", error);
             } finally {
                 setLoading(false);
             }
@@ -153,7 +154,7 @@ export default function MagicLinkGenerator({ house }: MagicLinkGeneratorProps) {
             setActiveLinks([...activeLinks, newLink]);
 
         } catch (error) {
-            console.error("Error creating link:", error);
+            logger.error("Error creating link:", error);
             alert("Villa við að búa til hlekk");
         } finally {
             setGenerating(null);
@@ -167,13 +168,13 @@ export default function MagicLinkGenerator({ house }: MagicLinkGeneratorProps) {
             await deleteDoc(doc(db, 'guest_views', token));
             setActiveLinks(activeLinks.filter(l => l.id !== token));
         } catch (error) {
-            console.error("Error deleting link:", error);
+            logger.error("Error deleting link:", error);
         }
     };
 
     const copyLink = (token: string) => {
         const url = `${window.location.origin}/guest/${token}`;
-        navigator.clipboard.writeText(url);
+        void navigator.clipboard.writeText(url).catch((err) => logger.error('Failed to copy link:', err));
         setCopied(token);
         setTimeout(() => setCopied(null), 2000);
     };
@@ -185,7 +186,7 @@ export default function MagicLinkGenerator({ house }: MagicLinkGeneratorProps) {
         return { lat: 0, lng: 0 };
     };
 
-    if (loading) return <div className="p-4 text-center text-grey-mid">Hleð bókunum...</div>;
+    if (loading) return <div role="status" className="p-4 text-center text-grey-mid">Hleð bókunum...</div>;
 
     return (
         <div className="space-y-8">
@@ -193,7 +194,7 @@ export default function MagicLinkGenerator({ house }: MagicLinkGeneratorProps) {
             {/* Intro */}
             <div className="bg-amber/10 p-6 rounded-lg border border-amber/20">
                 <h3 className="text-lg font-serif font-bold text-charcoal mb-2 flex items-center gap-2">
-                    <LinkIcon className="w-5 h-5 text-amber" />
+                    <LinkIcon className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                     Tímabundnir Gestahlekkir
                 </h3>
                 <p className="text-sm text-charcoal/80 leading-relaxed">
@@ -222,9 +223,9 @@ export default function MagicLinkGenerator({ house }: MagicLinkGeneratorProps) {
 
                                     {/* Booking Info */}
                                     <div className="flex items-start gap-4">
-                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${existingLink ? 'bg-green-100 text-green-600' : 'bg-stone-100 text-stone-400'
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${existingLink ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'
                                             }`}>
-                                            <Calendar className="w-6 h-6" />
+                                            <Calendar className="w-6 h-6" aria-hidden="true" />
                                         </div>
                                         <div>
                                             <h5 className="font-bold text-charcoal">
@@ -232,11 +233,11 @@ export default function MagicLinkGenerator({ house }: MagicLinkGeneratorProps) {
                                             </h5>
                                             <div className="text-sm text-stone-500 flex flex-wrap gap-x-4 gap-y-1 mt-1">
                                                 <span className="flex items-center gap-1">
-                                                    <Calendar className="w-3 h-3" />
+                                                    <Calendar className="w-3 h-3" aria-hidden="true" />
                                                     {format(booking.start, 'd. MMM', { locale: is })} - {format(booking.end, 'd. MMM', { locale: is })}
                                                 </span>
                                                 {isPastBooking && (
-                                                    <span className="text-amber-600 font-medium text-xs bg-amber/10 px-2 py-0.5 rounded-full">
+                                                    <span className="text-amber-ink font-medium text-xs bg-amber/10 px-2 py-0.5 rounded-full">
                                                         Liðin bókun
                                                     </span>
                                                 )}
@@ -249,39 +250,45 @@ export default function MagicLinkGenerator({ house }: MagicLinkGeneratorProps) {
                                         {existingLink ? (
                                             <div className="flex items-center gap-2">
                                                 <div className="flex flex-col items-end mr-2">
-                                                    <span className="text-xs font-medium text-green-600 flex items-center gap-1">
-                                                        <Check className="w-3 h-3" /> Hlekkur virkur
+                                                    <span className="text-xs font-medium text-green-700 flex items-center gap-1">
+                                                        <Check className="w-3 h-3" aria-hidden="true" /> Hlekkur virkur
                                                     </span>
-                                                    <span className="text-[10px] text-stone-400">
+                                                    <span className="text-[10px] text-stone-500">
                                                         Renner út: {existingLink.valid_until ? format(existingLink.valid_until, 'd. MMM HH:mm') : 'Aldrei'}
                                                     </span>
                                                 </div>
 
                                                 <button
+                                                    type="button"
                                                     onClick={() => copyLink(existingLink.id)}
                                                     className="btn btn-secondary p-2 h-10 w-10 flex items-center justify-center rounded-lg"
-                                                    title="Afrita hlekk"
+                                                    aria-label={`Afrita gestahlekk fyrir ${booking.user_name || 'óþekktan gest'}`}
                                                 >
-                                                    {copied === existingLink.id ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                                                    {copied === existingLink.id ? <Check className="w-4 h-4 text-green-700" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
                                                 </button>
+                                                <span role="status" className="sr-only">
+                                                    {copied === existingLink.id ? 'Hlekkur afritaður' : ''}
+                                                </span>
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleDeleteLink(existingLink.id)}
-                                                    className="btn btn-ghost p-2 h-10 w-10 flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50"
-                                                    title="Eyða hlekk"
+                                                    className="btn btn-ghost p-2 h-10 w-10 flex items-center justify-center rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    aria-label={`Eyða gestahlekk fyrir ${booking.user_name || 'óþekktan gest'}`}
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
+                                                    <Trash2 className="w-4 h-4" aria-hidden="true" />
                                                 </button>
                                             </div>
                                         ) : (
                                             <button
+                                                type="button"
                                                 onClick={() => handleCreateLink(booking)}
                                                 disabled={generating === booking.id}
                                                 className="btn btn-primary bg-stone-900 text-white w-full md:w-auto px-4 py-2 text-sm flex items-center justify-center gap-2"
                                             >
                                                 {generating === booking.id ? (
-                                                    <span className="animate-spin">⌛</span>
+                                                    <span className="motion-safe:animate-spin" aria-hidden="true">⌛</span>
                                                 ) : (
-                                                    <Plus className="w-4 h-4" />
+                                                    <Plus className="w-4 h-4" aria-hidden="true" />
                                                 )}
                                                 Búa til gestahlekk
                                             </button>

@@ -45,7 +45,8 @@ export default function GuestbookViewer({ houseId, isManager, onDeleteEntry }: G
     if (loading) {
         return (
             <div className="flex justify-center p-8">
-                <Loader2 className="w-6 h-6 animate-spin text-grey-mid" />
+                <Loader2 className="w-6 h-6 animate-spin text-grey-mid" aria-hidden="true" />
+                <span className="sr-only" role="status">Hleð…</span>
             </div>
         );
     }
@@ -53,9 +54,9 @@ export default function GuestbookViewer({ houseId, isManager, onDeleteEntry }: G
     if (entries.length === 0) {
         return (
             <div className="bg-white p-8 rounded-lg shadow-sm text-center">
-                <BookOpen className="w-12 h-12 text-stone-300 mx-auto mb-4" />
+                <BookOpen className="w-12 h-12 text-stone-300 mx-auto mb-4" aria-hidden="true" />
                 <p className="text-grey-mid">Engar færslur í gestabókinni ennþá.</p>
-                <p className="text-sm text-stone-400 mt-2">Gestir geta skrifað í gestabókina í gegnum gestahlekk.</p>
+                <p className="text-sm text-stone-500 mt-2">Gestir geta skrifað í gestabókina í gegnum gestahlekk.</p>
             </div>
         );
     }
@@ -67,17 +68,18 @@ export default function GuestbookViewer({ houseId, isManager, onDeleteEntry }: G
                     {/* Delete Button (Manager Only) */}
                     {isManager && onDeleteEntry && (
                         <button
+                            type="button"
                             onClick={() => onDeleteEntry(entry)}
-                            className="absolute top-4 right-4 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2"
-                            title="Eyða færslu"
+                            className="absolute top-4 right-4 text-stone-500 hover:text-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity p-2"
+                            aria-label={`Eyða færslu frá ${entry.author}`}
                         >
-                            <Trash2 size={16} />
+                            <Trash2 size={16} aria-hidden="true" />
                         </button>
                     )}
 
                     <div className="flex items-start gap-4">
                         <div className="w-10 h-10 bg-amber/10 rounded-full flex items-center justify-center flex-shrink-0">
-                            <Heart className="w-5 h-5 text-amber" />
+                            <Heart className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                         </div>
                         <div className="flex-1 pr-8">
                             <div className="flex items-baseline justify-between mb-2">

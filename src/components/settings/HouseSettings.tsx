@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import {
     Home,
     ImageIcon,
@@ -101,6 +101,7 @@ export default function HouseSettings({
     handleAddressChange,
     handleSelectPrediction
 }: HouseSettingsProps) {
+    const baseId = useId();
     const [houseForm, setHouseForm] = useState(() => buildHouseForm(house));
 
     // Sync form with house prop: when a new house object arrives, rebuild the
@@ -163,36 +164,36 @@ export default function HouseSettings({
             {/* House Image Upload */}
             <div className="bg-white p-6 rounded-lg shadow-sm">
                 <div className="flex items-center gap-2 mb-6">
-                    <ImageIcon className="w-6 h-6 text-amber" />
+                    <ImageIcon className="w-6 h-6 text-amber-ink" aria-hidden="true" />
                     <h2 className="text-xl font-serif">Myndir af húsinu</h2>
                 </div>
 
                 <div className="space-y-6">
                     {/* MAIN IMAGE */}
                     <div>
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 mb-3">Aðalmynd (Cover)</h3>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 mb-3">Aðalmynd</h3>
                         {house.image_url ? (
                             <div className="relative aspect-video rounded-lg overflow-hidden border border-stone-200 group">
-                                <img loading="lazy" src={house.image_url} alt={house.name} className="w-full h-full object-cover" />
-                                <label className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs font-bold text-stone-600 border border-stone-200 cursor-pointer hover:bg-white transition-all shadow-sm opacity-0 group-hover:opacity-100">
+                                <img loading="lazy" src={house.image_url} alt={`Mynd af ${house.name}`} className="w-full h-full object-cover" />
+                                <label htmlFor={`${baseId}-main-replace`} className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs font-bold text-stone-600 border border-stone-200 cursor-pointer hover:bg-white transition-all shadow-sm opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 focus-within:ring-2 focus-within:ring-charcoal">
                                     <span className="flex items-center gap-2">
-                                        <Upload className="w-3 h-3" /> Skipta um mynd
+                                        <Upload className="w-3 h-3" aria-hidden="true" /> Skipta um mynd
                                     </span>
-                                    <input type="file" accept="image/*" onChange={(e) => {
+                                    <input id={`${baseId}-main-replace`} type="file" accept="image/*" onChange={(e) => {
                                         setCropMode('main');
                                         onImageSelect(e, 'main');
-                                    }} className="hidden" />
+                                    }} className="sr-only" />
                                 </label>
                             </div>
                         ) : (
-                            <label className="border-2 border-dashed border-stone-300 rounded-lg p-12 flex flex-col items-center justify-center cursor-pointer hover:border-amber transition-colors bg-stone-50">
-                                <Upload className="w-8 h-8 text-stone-400 mb-3" />
+                            <label htmlFor={`${baseId}-main-upload`} className="relative border-2 border-dashed border-stone-300 rounded-lg p-12 flex flex-col items-center justify-center cursor-pointer hover:border-amber transition-colors bg-stone-50 focus-within:ring-2 focus-within:ring-charcoal">
+                                <Upload className="w-8 h-8 text-stone-400 mb-3" aria-hidden="true" />
                                 <p className="text-stone-600 font-medium mb-1">Hlaða upp aðalmynd</p>
-                                <p className="text-stone-400 text-xs text-center">Þessi mynd birtist á stjórnborði og gestasíðu.</p>
-                                <input type="file" accept="image/*" onChange={(e) => {
+                                <p className="text-stone-500 text-xs text-center">Þessi mynd birtist á stjórnborði og gestasíðu.</p>
+                                <input id={`${baseId}-main-upload`} type="file" accept="image/*" onChange={(e) => {
                                     setCropMode('main');
                                     onImageSelect(e, 'main');
-                                }} className="hidden" />
+                                }} className="sr-only" />
                             </label>
                         )}
                     </div>
@@ -201,37 +202,38 @@ export default function HouseSettings({
                     <div className="pt-6 border-t border-stone-100">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500">Gallerí</h3>
-                            <label className="text-xs font-bold text-amber hover:underline cursor-pointer flex items-center gap-1.5">
-                                <Plus className="w-3.5 h-3.5" /> Bæta við myndum
-                                <input type="file" accept="image/*" onChange={(e) => {
+                            <label htmlFor={`${baseId}-gallery-add`} className="relative text-xs font-bold text-amber-ink hover:underline cursor-pointer flex items-center gap-1.5 focus-within:ring-2 focus-within:ring-charcoal">
+                                <Plus className="w-3.5 h-3.5" aria-hidden="true" /> Bæta við myndum
+                                <input id={`${baseId}-gallery-add`} type="file" accept="image/*" onChange={(e) => {
                                     setCropMode('gallery');
                                     onImageSelect(e, 'gallery');
-                                }} className="hidden" />
+                                }} className="sr-only" />
                             </label>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                             {house.gallery_urls?.map((url, idx) => (
                                 <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-stone-100 group shadow-sm bg-stone-100">
-                                    <img loading="lazy" src={url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                                    <img loading="lazy" src={url} alt={`Mynd ${idx + 1} úr myndasafni`} className="w-full h-full object-cover" />
                                     <button
                                         type="button"
                                         onClick={() => onRemoveGalleryImage(url)}
-                                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                        aria-label={`Eyða mynd ${idx + 1} úr myndasafni`}
+                                        className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity shadow-lg"
                                     >
-                                        <Trash2 size={12} />
+                                        <Trash2 size={12} aria-hidden="true" />
                                     </button>
                                 </div>
                             ))}
 
                             {/* ADD BOX */}
-                            <label className="aspect-square border-2 border-dashed border-stone-200 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-amber hover:bg-amber-50/30 transition-all text-stone-400">
-                                <Plus size={20} />
+                            <label htmlFor={`${baseId}-gallery-box`} className="relative aspect-square border-2 border-dashed border-stone-200 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-amber hover:bg-amber-50/30 transition-all text-stone-500 focus-within:ring-2 focus-within:ring-charcoal">
+                                <Plus size={20} aria-hidden="true" />
                                 <span className="text-[10px] font-bold mt-1 uppercase tracking-tight">Ný mynd</span>
-                                <input type="file" accept="image/*" onChange={(e) => {
+                                <input id={`${baseId}-gallery-box`} type="file" accept="image/*" onChange={(e) => {
                                     setCropMode('gallery');
                                     onImageSelect(e, 'gallery');
-                                }} className="hidden" />
+                                }} className="sr-only" />
                             </label>
                         </div>
                     </div>
@@ -241,28 +243,30 @@ export default function HouseSettings({
             {/* General Info */}
             <div className="bg-white p-6 rounded-lg shadow-sm">
                 <div className="flex items-center gap-2 mb-6">
-                    <Home className="w-6 h-6 text-amber" />
+                    <Home className="w-6 h-6 text-amber-ink" aria-hidden="true" />
                     <h2 className="text-xl font-serif">Grunnupplýsingar</h2>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="label">Nafn sumarhúss</label>
+                        <label htmlFor={`${baseId}-name`} className="label">Nafn sumarhúss</label>
                         <input
+                            id={`${baseId}-name`}
                             type="text"
                             className="input"
                             value={houseForm.name}
                             onChange={(e) => setHouseForm({ ...houseForm, name: e.target.value })}
                             disabled={!isManager}
+                            aria-describedby={!isManager ? 'house-readonly-note' : undefined}
                         />
                     </div>
 
                     <div className="relative">
                         <div className="flex items-center justify-between mb-3">
-                            <label className="label">
+                            <label htmlFor={`${baseId}-address`} className="label">
                                 Heimilisfang & Staðsetning
                                 {houseForm.lat === 0 && (
-                                    <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-sans font-medium uppercase tracking-wide">
+                                    <span className="ml-2 text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-sans font-medium uppercase tracking-wide">
                                         Vantar GPS
                                     </span>
                                 )}
@@ -271,20 +275,23 @@ export default function HouseSettings({
                                 <button
                                     type="button"
                                     onClick={() => setIsEditingLocation(!isEditingLocation)}
+                                    aria-pressed={isEditingLocation}
+                                    aria-label={isEditingLocation ? 'Loka breytingu á staðsetningu' : 'Breyta staðsetningu'}
                                     className={`text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${isEditingLocation
-                                        ? 'bg-[#e8b058] text-white hover:bg-[#d4a04d]'
+                                        ? 'bg-[#e8b058] text-charcoal hover:bg-[#d4a04d]'
                                         : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                                         }`}
                                 >
                                     {isEditingLocation ? (
-                                        <><X size={14} /> Loka</>
+                                        <><X size={14} aria-hidden="true" /> Loka</>
                                     ) : (
-                                        <><Edit2 size={14} /> Breyta</>
+                                        <><Edit2 size={14} aria-hidden="true" /> Breyta</>
                                     )}
                                 </button>
                             )}
                         </div>
                         <input
+                            id={`${baseId}-address`}
                             type="text"
                             className={`input ${isEditingLocation ? 'border-[#e8b058] border-2' : ''}`}
                             value={houseForm.address}
@@ -294,6 +301,7 @@ export default function HouseSettings({
                                 handleAddressChange(e.target.value);
                             }}
                             disabled={!isManager || !isEditingLocation}
+                            aria-describedby={!isManager ? 'house-readonly-note' : undefined}
                             autoComplete="off"
                             placeholder={isEditingLocation ? "Leitaðu að heimilisfangi..." : houseForm.address || "Heimilisfang"}
                         />
@@ -302,28 +310,33 @@ export default function HouseSettings({
                                 {suggestions.map((suggestion) => (
                                     <li
                                         key={suggestion.id}
-                                        onClick={() => {
-                                            setHouseForm(prev => ({
-                                                ...prev,
-                                                address: suggestion.description,
-                                                lat: suggestion.location.lat,
-                                                lng: suggestion.location.lng
-                                            }));
-                                            handleSelectPrediction(suggestion);
-                                        }}
-                                        className="px-4 py-3 hover:bg-stone-50 cursor-pointer text-sm border-b last:border-0 border-stone-100 flex items-center justify-between"
+                                        className="border-b last:border-0 border-stone-100"
                                     >
-                                        <div className="flex items-center gap-3">
-                                            {suggestion.source === 'hms' ? (
-                                                <CheckCircle className="w-4 h-4 text-green-600" />
-                                            ) : (
-                                                <MapPin className="w-4 h-4 text-stone-400" />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setHouseForm(prev => ({
+                                                    ...prev,
+                                                    address: suggestion.description,
+                                                    lat: suggestion.location.lat,
+                                                    lng: suggestion.location.lng
+                                                }));
+                                                handleSelectPrediction(suggestion);
+                                            }}
+                                            className="w-full text-left px-4 py-3 hover:bg-stone-50 cursor-pointer text-sm flex items-center justify-between"
+                                        >
+                                            <span className="flex items-center gap-3">
+                                                {suggestion.source === 'hms' ? (
+                                                    <CheckCircle className="w-4 h-4 text-green-700" aria-hidden="true" />
+                                                ) : (
+                                                    <MapPin className="w-4 h-4 text-stone-500" aria-hidden="true" />
+                                                )}
+                                                <span className="font-medium">{suggestion.description}</span>
+                                            </span>
+                                            {suggestion.source === 'hms' && (
+                                                <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200 font-bold uppercase">HMS</span>
                                             )}
-                                            <span className="font-medium">{suggestion.description}</span>
-                                        </div>
-                                        {suggestion.source === 'hms' && (
-                                            <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200 font-bold uppercase">HMS</span>
-                                        )}
+                                        </button>
                                     </li>
                                 ))}
                             </ul>
@@ -332,26 +345,30 @@ export default function HouseSettings({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="label">Breiddargráða (Lat)</label>
+                            <label htmlFor={`${baseId}-lat`} className="label">Breiddargráða</label>
                             <input
+                                id={`${baseId}-lat`}
                                 type="number"
                                 step="0.000001"
                                 className="input"
                                 value={houseForm.lat}
                                 onChange={(e) => setHouseForm({ ...houseForm, lat: parseFloat(e.target.value) })}
                                 disabled={!isManager || !isEditingLocation}
+                                aria-describedby={!isManager ? 'house-readonly-note' : undefined}
                                 placeholder="64.123456"
                             />
                         </div>
                         <div>
-                            <label className="label">Lengdargráða (Lng)</label>
+                            <label htmlFor={`${baseId}-lng`} className="label">Lengdargráða</label>
                             <input
+                                id={`${baseId}-lng`}
                                 type="number"
                                 step="0.000001"
                                 className="input"
                                 value={houseForm.lng}
                                 onChange={(e) => setHouseForm({ ...houseForm, lng: parseFloat(e.target.value) })}
                                 disabled={!isManager || !isEditingLocation}
+                                aria-describedby={!isManager ? 'house-readonly-note' : undefined}
                                 placeholder="-21.123456"
                             />
                         </div>
@@ -359,38 +376,44 @@ export default function HouseSettings({
 
                     <div className="border-t border-grey-warm pt-4 mt-6">
                         <div className="flex items-center gap-2 mb-4">
-                            <Wifi className="w-5 h-5 text-amber" />
+                            <Wifi className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                             <h3 className="font-serif text-lg">Internet (Wi-Fi)</h3>
                         </div>
                         <div className="grid md:grid-cols-2 gap-4">
                             <div>
-                                <label className="label">Nafn nets (SSID)</label>
+                                <label htmlFor={`${baseId}-ssid`} className="label">Nafn nets (SSID)</label>
                                 <input
+                                    id={`${baseId}-ssid`}
                                     type="text"
                                     className="input"
                                     value={houseForm.wifi_ssid}
                                     onChange={(e) => setHouseForm({ ...houseForm, wifi_ssid: e.target.value })}
                                     disabled={!isManager}
+                                    aria-describedby={!isManager ? 'house-readonly-note' : undefined}
                                     placeholder="t.d. Sumarbústaður 5G"
                                 />
                             </div>
                             <div>
-                                <label className="label">Lykilorð (Password)</label>
+                                <label htmlFor={`${baseId}-wifipw`} className="label">Lykilorð</label>
                                 <input
+                                    id={`${baseId}-wifipw`}
                                     type="text"
                                     className="input"
                                     value={houseForm.wifi_password}
                                     onChange={(e) => setHouseForm({ ...houseForm, wifi_password: e.target.value })}
                                     disabled={!isManager}
+                                    aria-describedby={!isManager ? 'house-readonly-note' : undefined}
                                     placeholder="••••••••"
                                 />
                             </div>
-                            <label className="flex items-center gap-3 mt-4 cursor-pointer">
+                            <label htmlFor={`${baseId}-nowifi`} className="flex items-center gap-3 mt-4 cursor-pointer">
                                 <input
+                                    id={`${baseId}-nowifi`}
                                     type="checkbox"
                                     checked={houseForm.no_wifi}
                                     onChange={(e) => setHouseForm({ ...houseForm, no_wifi: e.target.checked })}
                                     disabled={!isManager}
+                                    aria-describedby={!isManager ? 'house-readonly-note' : undefined}
                                     className="w-5 h-5 rounded border-stone-300 text-amber focus:ring-amber"
                                 />
                                 <span className="text-sm text-stone-600">Ekkert WiFi í boði</span>
@@ -400,7 +423,7 @@ export default function HouseSettings({
 
                     <div className="border-t border-grey-warm pt-4 mt-6">
                         <div className="flex items-center gap-2 mb-4">
-                            <Shield className="w-5 h-5 text-amber" />
+                            <Shield className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                             <h3 className="font-serif text-lg">Aðgangsstýring</h3>
                         </div>
 
@@ -415,14 +438,14 @@ export default function HouseSettings({
 
                             {/* Viewer Selection */}
                             {houseForm.privacy_hide_finances && isManager && (
-                                <div className="bg-stone-50 rounded-xl p-4 border border-stone-200 animate-in fade-in slide-in-from-top-2">
-                                    <h5 className="text-sm font-bold text-charcoal mb-3 flex items-center gap-2">
-                                        <Users size={14} className="text-amber" />
+                                <div className="bg-stone-50 rounded-xl p-4 border border-stone-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2" role="group" aria-labelledby={`${baseId}-viewers-h`}>
+                                    <h5 id={`${baseId}-viewers-h`} className="text-sm font-bold text-charcoal mb-3 flex items-center gap-2">
+                                        <Users size={14} className="text-amber-ink" aria-hidden="true" />
                                         Hverjir mega sjá?
                                     </h5>
 
                                     {loadingMembers ? (
-                                        <div className="text-sm text-stone-400">Hleð notendum...</div>
+                                        <div role="status" className="text-sm text-stone-500">Hleð notendum...</div>
                                     ) : (
                                         <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                                             {members
@@ -430,33 +453,40 @@ export default function HouseSettings({
                                                 .map(member => {
                                                     const canView = houseForm.finance_viewer_ids?.includes(member.uid) || false;
                                                     return (
-                                                        <div
+                                                        <label
                                                             key={member.uid}
-                                                            className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer transition-all ${canView
+                                                            htmlFor={`${baseId}-viewer-${member.uid}`}
+                                                            className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer transition-all focus-within:ring-2 focus-within:ring-charcoal ${canView
                                                                 ? 'bg-white border-green-500 shadow-sm'
                                                                 : 'bg-transparent border-transparent hover:bg-stone-100 hover:border-stone-200'
                                                                 }`}
-                                                            onClick={() => {
-                                                                const currentViewers = houseForm.finance_viewer_ids || [];
-                                                                let newViewers;
-                                                                if (canView) {
-                                                                    newViewers = currentViewers.filter(id => id !== member.uid);
-                                                                } else {
-                                                                    newViewers = [...currentViewers, member.uid];
-                                                                }
-                                                                setHouseForm({ ...houseForm, finance_viewer_ids: newViewers });
-                                                            }}
                                                         >
+                                                            <input
+                                                                id={`${baseId}-viewer-${member.uid}`}
+                                                                type="checkbox"
+                                                                className="sr-only"
+                                                                checked={canView}
+                                                                onChange={() => {
+                                                                    const currentViewers = houseForm.finance_viewer_ids || [];
+                                                                    let newViewers;
+                                                                    if (canView) {
+                                                                        newViewers = currentViewers.filter(id => id !== member.uid);
+                                                                    } else {
+                                                                        newViewers = [...currentViewers, member.uid];
+                                                                    }
+                                                                    setHouseForm({ ...houseForm, finance_viewer_ids: newViewers });
+                                                                }}
+                                                            />
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-xs font-bold text-stone-500">
                                                                     {(member.name || member.email || '?').substring(0, 1).toUpperCase()}
                                                                 </div>
                                                                 <div className="text-sm font-medium text-stone-700">{member.name || member.email}</div>
                                                             </div>
-                                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${canView ? 'bg-green-500 border-green-500' : 'border-stone-300'}`}>
+                                                            <div aria-hidden="true" className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${canView ? 'bg-green-500 border-green-500' : 'border-stone-300'}`}>
                                                                 {canView && <CheckCircle size={12} className="text-white" />}
                                                             </div>
-                                                        </div>
+                                                        </label>
                                                     );
                                                 })}
                                         </div>
@@ -469,12 +499,12 @@ export default function HouseSettings({
                     {/* AMENITIES */}
                     <div className="bg-white p-6 rounded-lg shadow-sm">
                         <div className="flex items-center gap-2 mb-6">
-                            <Zap className="w-6 h-6 text-amber" />
-                            <h2 className="text-xl font-serif">Þægindi & Búnaður</h2>
+                            <Zap className="w-6 h-6 text-amber-ink" aria-hidden="true" />
+                            <h2 id={`${baseId}-amenities-h`} className="text-xl font-serif">Þægindi & Búnaður</h2>
                         </div>
                         <p className="text-sm text-stone-500 mb-6">Merktu við þau þægindi sem gestir geta búist við í húsinu.</p>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                        <div role="group" aria-labelledby={`${baseId}-amenities-h`} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                             {[
                                 { id: 'hot_tub', label: 'Heitur pottur', icon: Waves },
                                 { id: 'grill', label: 'Grill', icon: Utensils },
@@ -493,6 +523,7 @@ export default function HouseSettings({
                                     <button
                                         key={item.id}
                                         type="button"
+                                        aria-pressed={active}
                                         onClick={() => {
                                             const newAmenities = active
                                                 ? houseForm.amenities.filter(a => a !== item.id)
@@ -504,7 +535,7 @@ export default function HouseSettings({
                                                 : 'bg-stone-50 border-stone-100 text-stone-600 hover:border-stone-200'
                                             }`}
                                     >
-                                        <item.icon className={`w-4 h-4 ${active ? 'text-amber' : 'text-stone-400'}`} />
+                                        <item.icon aria-hidden="true" className={`w-4 h-4 ${active ? 'text-amber-ink' : 'text-stone-500'}`} />
                                         <span className="text-xs font-bold">{item.label}</span>
                                     </button>
                                 );
@@ -516,14 +547,16 @@ export default function HouseSettings({
                     <div className="bg-white p-6 rounded-lg shadow-sm">
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-2">
-                                <Globe className="w-6 h-6 text-amber" />
+                                <Globe className="w-6 h-6 text-amber-ink" aria-hidden="true" />
                                 <h2 className="text-xl font-serif">Upplýsingar & Reglur</h2>
                             </div>
 
-                            <div className="flex bg-stone-100 rounded-lg p-1">
+                            <div role="group" aria-label="Tungumál texta" className="flex bg-stone-100 rounded-lg p-1">
                                 <button
                                     type="button"
                                     onClick={() => setEditLang('is')}
+                                    aria-pressed={editLang === 'is'}
+                                    aria-label="Íslenska"
                                     className={`px-3 py-1.5 rounded text-xs font-bold transition-all ${editLang === 'is'
                                             ? 'bg-white text-charcoal shadow-sm'
                                             : 'text-stone-500 hover:text-stone-700'
@@ -534,6 +567,8 @@ export default function HouseSettings({
                                 <button
                                     type="button"
                                     onClick={() => setEditLang('en')}
+                                    aria-pressed={editLang === 'en'}
+                                    aria-label="Enska"
                                     className={`px-3 py-1.5 rounded text-xs font-bold transition-all ${editLang === 'en'
                                             ? 'bg-white text-charcoal shadow-sm'
                                             : 'text-stone-500 hover:text-stone-700'
@@ -546,11 +581,12 @@ export default function HouseSettings({
 
                         <div className="space-y-6">
                             <div>
-                                <label className="label flex items-center gap-2 mb-2">
+                                <label htmlFor={`${baseId}-guest-instr`} className="label flex items-center gap-2 mb-2">
                                     Almennar leiðbeiningar
                                     {editLang === 'en' && <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">Enska</span>}
                                 </label>
                                 <textarea
+                                    id={`${baseId}-guest-instr`}
                                     className="input min-h-[120px] text-sm"
                                     value={editLang === 'is' ? houseForm.guest_instructions : houseForm.guest_instructions_en}
                                     onChange={(e) => setHouseForm({
@@ -563,8 +599,9 @@ export default function HouseSettings({
 
                             <div className="grid md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="label mb-2">Innritun (kl.)</label>
+                                    <label htmlFor={`${baseId}-checkin`} className="label mb-2">Innritun (kl.)</label>
                                     <input
+                                        id={`${baseId}-checkin`}
                                         type="text"
                                         className="input"
                                         value={houseForm.check_in_time}
@@ -573,8 +610,9 @@ export default function HouseSettings({
                                     />
                                 </div>
                                 <div>
-                                    <label className="label mb-2">Útritun (kl.)</label>
+                                    <label htmlFor={`${baseId}-checkout`} className="label mb-2">Útritun (kl.)</label>
                                     <input
+                                        id={`${baseId}-checkout`}
                                         type="text"
                                         className="input"
                                         value={houseForm.check_out_time}
@@ -585,11 +623,12 @@ export default function HouseSettings({
                             </div>
 
                             <div>
-                                <label className="label flex items-center gap-2 mb-2">
+                                <label htmlFor={`${baseId}-rules`} className="label flex items-center gap-2 mb-2">
                                     Húsreglur
                                     {editLang === 'en' && <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">Enska</span>}
                                 </label>
                                 <textarea
+                                    id={`${baseId}-rules`}
                                     className="input min-h-[100px] text-sm"
                                     value={editLang === 'is' ? houseForm.house_rules : houseForm.house_rules_en}
                                     onChange={(e) => setHouseForm({
@@ -601,11 +640,12 @@ export default function HouseSettings({
                             </div>
 
                             <div>
-                                <label className="label flex items-center gap-2 mb-2">
+                                <label htmlFor={`${baseId}-directions`} className="label flex items-center gap-2 mb-2">
                                     Leiðarlýsing
                                     {editLang === 'en' && <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">Enska</span>}
                                 </label>
                                 <textarea
+                                    id={`${baseId}-directions`}
                                     className="input text-sm"
                                     value={editLang === 'is' ? houseForm.directions : houseForm.directions_en}
                                     onChange={(e) => setHouseForm({
@@ -617,11 +657,12 @@ export default function HouseSettings({
                             </div>
 
                             <div>
-                                <label className="label flex items-center gap-2 mb-2">
+                                <label htmlFor={`${baseId}-access`} className="label flex items-center gap-2 mb-2">
                                     Aðgangur (Lykilbox o.fl.)
                                     {editLang === 'en' && <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">Enska</span>}
                                 </label>
                                 <textarea
+                                    id={`${baseId}-access`}
                                     className="input text-sm"
                                     value={editLang === 'is' ? houseForm.access_instructions : houseForm.access_instructions_en}
                                     onChange={(e) => setHouseForm({
@@ -633,8 +674,9 @@ export default function HouseSettings({
                             </div>
 
                             <div>
-                                <label className="label mb-2">Neyðartengiliður / Sími</label>
+                                <label htmlFor={`${baseId}-emergency`} className="label mb-2">Neyðartengiliður / Sími</label>
                                 <input
+                                    id={`${baseId}-emergency`}
                                     type="text"
                                     className="input"
                                     value={houseForm.emergency_contact}
@@ -648,12 +690,12 @@ export default function HouseSettings({
                     {/* BOOKING MODES */}
                     <div className="bg-white p-6 rounded-lg shadow-sm">
                         <div className="flex items-center gap-2 mb-6">
-                            <ClipboardList className="w-6 h-6 text-amber" />
-                            <h2 className="text-xl font-serif">Bókunarreglur</h2>
+                            <ClipboardList className="w-6 h-6 text-amber-ink" aria-hidden="true" />
+                            <h2 id={`${baseId}-modes-h`} className="text-xl font-serif">Bókunarreglur</h2>
                         </div>
                         <p className="text-sm text-stone-500 mb-6">Veldu hvernig úthlutun á vinsælum dögum fer fram.</p>
 
-                        <div className="space-y-4">
+                        <div role="radiogroup" aria-labelledby={`${baseId}-modes-h`} className="space-y-4">
                             {[
                                 {
                                     id: 'fairness',
@@ -668,16 +710,20 @@ export default function HouseSettings({
                             ].map(mode => (
                                 <label
                                     key={mode.id}
+                                    htmlFor={`${baseId}-mode-${mode.id}`}
                                     className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${houseForm.holiday_mode === mode.id
                                             ? 'bg-amber/5 border-amber/30'
                                             : 'bg-stone-50 border-stone-100 hover:border-stone-200'
                                         }`}
                                 >
                                     <input
+                                        id={`${baseId}-mode-${mode.id}`}
                                         type="radio"
+                                        name={`${baseId}-holiday-mode`}
                                         checked={houseForm.holiday_mode === mode.id}
                                         onChange={() => setHouseForm({ ...houseForm, holiday_mode: mode.id as any })}
                                         disabled={!isManager}
+                                        aria-describedby={!isManager ? 'house-readonly-note' : undefined}
                                         className="mt-1 w-4 h-4 text-amber focus:ring-amber border-stone-300"
                                     />
                                     <div>
@@ -692,7 +738,7 @@ export default function HouseSettings({
                     {/* GAS CYLINDER */}
                     <div className="bg-white p-6 rounded-lg shadow-sm">
                         <div className="flex items-center gap-2 mb-6">
-                            <Flame className="w-6 h-6 text-amber" />
+                            <Flame className="w-6 h-6 text-amber-ink" aria-hidden="true" />
                             <h2 className="text-xl font-serif">Gaskútur</h2>
                         </div>
                         <p className="text-sm text-stone-500 mb-6">
@@ -701,12 +747,14 @@ export default function HouseSettings({
 
                         <div className="grid md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-bold text-stone-600 mb-2">Stærð</label>
+                                <label htmlFor={`${baseId}-gas-size`} className="block text-sm font-bold text-stone-600 mb-2">Stærð</label>
                                 <select
+                                    id={`${baseId}-gas-size`}
                                     className="input"
                                     value={houseForm.gas_cylinder_size}
                                     onChange={(e) => setHouseForm({ ...houseForm, gas_cylinder_size: e.target.value })}
                                     disabled={!isManager}
+                                    aria-describedby={!isManager ? 'house-readonly-note' : undefined}
                                 >
                                     <option value="">Ekki skráð</option>
                                     <option value="5l">5 lítra</option>
@@ -715,12 +763,14 @@ export default function HouseSettings({
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-stone-600 mb-2">Tengi</label>
+                                <label htmlFor={`${baseId}-gas-conn`} className="block text-sm font-bold text-stone-600 mb-2">Tengi</label>
                                 <select
+                                    id={`${baseId}-gas-conn`}
                                     className="input"
                                     value={houseForm.gas_cylinder_connection}
                                     onChange={(e) => setHouseForm({ ...houseForm, gas_cylinder_connection: e.target.value })}
                                     disabled={!isManager}
+                                    aria-describedby={!isManager ? 'house-readonly-note' : undefined}
                                 >
                                     <option value="">Ekki skráð</option>
                                     <option value="smellugas">Smellugas</option>
@@ -730,20 +780,22 @@ export default function HouseSettings({
                         </div>
 
                         <div className="mt-4">
-                            <label className="block text-sm font-bold text-stone-600 mb-2">
-                                Athugasemd <span className="font-normal text-stone-400">(valfrjálst)</span>
+                            <label htmlFor={`${baseId}-gas-notes`} className="block text-sm font-bold text-stone-600 mb-2">
+                                Athugasemd <span className="font-normal text-stone-500">(valfrjálst)</span>
                             </label>
                             <input
+                                id={`${baseId}-gas-notes`}
                                 type="text"
                                 className="input"
                                 placeholder="t.d. Varakútur er í geymslunni bakvið húsið"
                                 value={houseForm.gas_cylinder_notes}
                                 onChange={(e) => setHouseForm({ ...houseForm, gas_cylinder_notes: e.target.value })}
                                 disabled={!isManager}
+                                aria-describedby={!isManager ? 'house-readonly-note' : undefined}
                             />
                         </div>
 
-                        <p className="text-xs text-stone-400 mt-4">
+                        <p className="text-xs text-stone-500 mt-4">
                             Skráning á því hvenær skipt var um kút fer fram á stjórnborðinu — þá fylgir sjálfkrafa hver gerði það.
                         </p>
                     </div>
@@ -751,7 +803,7 @@ export default function HouseSettings({
                     {/* CHECKLISTS */}
                     <div className="bg-white p-6 rounded-lg shadow-sm">
                         <div className="flex items-center gap-2 mb-6">
-                            <ListChecks className="w-6 h-6 text-amber" />
+                            <ListChecks className="w-6 h-6 text-amber-ink" aria-hidden="true" />
                             <h2 className="text-xl font-serif">Gátlistar</h2>
                         </div>
                         <p className="text-sm text-stone-500 mb-6">
@@ -798,7 +850,7 @@ export default function HouseSettings({
 
                             <div className="border-t border-stone-100 pt-8">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <CalendarRange className="w-5 h-5 text-amber" />
+                                    <CalendarRange className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                                     <h3 className="font-serif text-lg">Árstíðalistar</h3>
                                 </div>
                                 <p className="text-sm text-stone-500 mb-4">
@@ -843,9 +895,9 @@ export default function HouseSettings({
                             disabled={!isManager || isSaving}
                         >
                             {isSaving ? (
-                                <><Loader2 className="w-5 h-5 animate-spin" /> Vistar...</>
+                                <><Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> Vistar...</>
                             ) : (
-                                <><Save className="w-5 h-5" /> Vista breytingar</>
+                                <><Save className="w-5 h-5" aria-hidden="true" /> Vista breytingar</>
                             )}
                         </button>
                     </div>

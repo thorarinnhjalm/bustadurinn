@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Task, TaskStatus, TaskPriority, TaskCategory, House, User } from '@/types/models';
@@ -16,6 +16,7 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const baseId = useId();
 
     // Form state
     const [formData, setFormData] = useState({
@@ -144,10 +145,17 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
     const getPriorityColor = (priority: TaskPriority) => {
         switch (priority) {
             case 'urgent': return 'text-red-600 bg-red-50 border-red-200';
-            case 'high': return 'text-orange-600 bg-orange-50 border-orange-200';
-            case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-            case 'low': return 'text-blue-600 bg-blue-50 border-blue-200';
+            case 'high': return 'text-orange-700 bg-orange-50 border-orange-200';
+            case 'medium': return 'text-yellow-800 bg-yellow-50 border-yellow-200';
+            case 'low': return 'text-blue-700 bg-blue-50 border-blue-200';
         }
+    };
+
+    const priorityLabels: Record<TaskPriority, string> = {
+        low: 'Lítill',
+        medium: 'Miðlungs',
+        high: 'Mikill',
+        urgent: 'Brýnt',
     };
 
     const getCategoryIcon = () => {
@@ -156,7 +164,7 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
     };
 
     if (loading) {
-        return <div className="text-center py-8 text-stone-500">Hleð verkefnum...</div>;
+        return <div role="status" className="text-center py-8 text-stone-500">Hleð verkefnum...</div>;
     }
 
     return (
@@ -168,10 +176,12 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
                     <p className="text-sm text-stone-500">{tasks.length} verkefni samtals</p>
                 </div>
                 <button
+                    type="button"
+                    aria-expanded={showCreateForm}
                     onClick={() => setShowCreateForm(!showCreateForm)}
                     className="btn btn-primary flex items-center gap-2"
                 >
-                    <Plus size={16} />
+                    <Plus size={16} aria-hidden="true" />
                     Nýtt verkefni
                 </button>
             </div>
@@ -182,8 +192,9 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
                     <h4 className="font-bold text-charcoal mb-4">Nýtt verkefni</h4>
 
                     <div>
-                        <label className="label">Titill *</label>
+                        <label htmlFor={`${baseId}-title`} className="label">Titill *</label>
                         <input
+                            id={`${baseId}-title`}
                             type="text"
                             className="input"
                             value={formData.title}
@@ -194,8 +205,9 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
                     </div>
 
                     <div>
-                        <label className="label">Lýsing</label>
+                        <label htmlFor={`${baseId}-description`} className="label">Lýsing</label>
                         <textarea
+                            id={`${baseId}-description`}
                             className="input"
                             rows={3}
                             value={formData.description}
@@ -206,8 +218,9 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="label">Flokkur</label>
+                            <label htmlFor={`${baseId}-category`} className="label">Flokkur</label>
                             <select
+                                id={`${baseId}-category`}
                                 className="input"
                                 value={formData.category}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value as TaskCategory })}
@@ -221,8 +234,9 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
                         </div>
 
                         <div>
-                            <label className="label">Forgangur</label>
+                            <label htmlFor={`${baseId}-priority`} className="label">Forgangur</label>
                             <select
+                                id={`${baseId}-priority`}
                                 className="input"
                                 value={formData.priority}
                                 onChange={(e) => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
@@ -237,8 +251,9 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="label">Tímasetning</label>
+                            <label htmlFor={`${baseId}-due`} className="label">Tímasetning</label>
                             <input
+                                id={`${baseId}-due`}
                                 type="date"
                                 className="input"
                                 value={formData.due_date}
@@ -247,8 +262,9 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
                         </div>
 
                         <div>
-                            <label className="label">Áætlaður kostnaður (kr.)</label>
+                            <label htmlFor={`${baseId}-cost`} className="label">Áætlaður kostnaður (kr.)</label>
                             <input
+                                id={`${baseId}-cost`}
                                 type="number"
                                 className="input"
                                 value={formData.estimated_cost}
@@ -276,7 +292,7 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
             {/* Task List */}
             <div className="space-y-3">
                 {tasks.length === 0 ? (
-                    <div className="text-center py-12 text-stone-400">
+                    <div className="text-center py-12 text-stone-500">
                         <p>Engin verkefni enn. Smelltu á "Nýtt verkefni" til að byrja!</p>
                     </div>
                 ) : (
@@ -288,10 +304,10 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-xl">{getCategoryIcon()}</span>
+                                        <span className="text-xl" aria-hidden="true">{getCategoryIcon()}</span>
                                         <h4 className="font-bold text-charcoal">{task.title}</h4>
                                         <span className={`text-xs px-2 py-0.5 rounded-full border ${getPriorityColor(task.priority)}`}>
-                                            {task.priority}
+                                            {priorityLabels[task.priority] ?? task.priority}
                                         </span>
                                     </div>
 
@@ -302,13 +318,13 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
                                     <div className="flex flex-wrap gap-3 text-xs text-stone-500">
                                         {task.due_date && (
                                             <div className="flex items-center gap-1">
-                                                <Calendar size={12} />
+                                                <Calendar size={12} aria-hidden="true" />
                                                 {new Date(task.due_date).toLocaleDateString('is-IS')}
                                             </div>
                                         )}
                                         {task.estimated_cost && (
                                             <div className="flex items-center gap-1">
-                                                <DollarSign size={12} />
+                                                <DollarSign size={12} aria-hidden="true" />
                                                 {task.estimated_cost.toLocaleString('is-IS')} kr.
                                             </div>
                                         )}
@@ -321,27 +337,29 @@ export default function TaskManager({ house, currentUser, members }: TaskManager
                                 <div className="flex gap-2">
                                     {task.status !== 'completed' && (
                                         <button
+                                            type="button"
                                             onClick={() => handleUpdateStatus(task, 'completed')}
                                             className="p-2 hover:bg-green-50 rounded-lg transition-colors"
-                                            title="Merkja sem lokið"
+                                            aria-label={`Merkja „${task.title}“ sem lokið`}
                                         >
-                                            <Check size={16} className="text-green-600" />
+                                            <Check size={16} aria-hidden="true" className="text-green-700" />
                                         </button>
                                     )}
                                     <button
+                                        type="button"
                                         onClick={() => handleDeleteTask(task.id)}
                                         className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Eyða"
+                                        aria-label={`Eyða verkefninu „${task.title}“`}
                                     >
-                                        <Trash2 size={16} className="text-red-600" />
+                                        <Trash2 size={16} aria-hidden="true" className="text-red-600" />
                                     </button>
                                 </div>
                             </div>
 
                             {task.status === 'completed' && (
                                 <div className="mt-3 pt-3 border-t border-stone-100">
-                                    <div className="flex items-center gap-2 text-sm text-green-600">
-                                        <Check size={14} />
+                                    <div className="flex items-center gap-2 text-sm text-green-700">
+                                        <Check size={14} aria-hidden="true" />
                                         <span>Lokið {task.completed_at && new Date(task.completed_at).toLocaleDateString('is-IS')}</span>
                                     </div>
                                 </div>
