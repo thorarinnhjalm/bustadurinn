@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck (app, node, api)
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      # scripts/prerender.js (postbuild) needs a Chromium. It reads
+      # PRERENDER_CHROMIUM_PATH, else falls back to @sparticuz/chromium, and it
+      # exits 0 on failure, so the verify-dist step below is what catches a
+      # build that silently shipped without prerendered pages.
+      - name: Install Chrome for prerendering
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Build (includes sitemap + prerender)
+        run: npm run build
+        env:
+          PRERENDER_CHROMIUM_PATH: ${{ steps.chrome.outputs.chrome-path }}
+
+      - name: Verify dist (prerendered content present)
+        run: node scripts/verify-dist.js
