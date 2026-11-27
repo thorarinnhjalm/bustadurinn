@@ -18,13 +18,7 @@ import SEO from '@/components/SEO';
 import { analytics } from '@/utils/analytics';
 import { trackFunnel, describeError } from '@/utils/funnel';
 import { logger } from '@/utils/logger';
-
-// Only allows relative paths — rejects absolute and protocol-relative URLs
-function safeRedirect(url: string | null): string | null {
-    if (!url) return null;
-    if (url.startsWith('/') && !url.startsWith('//')) return url;
-    return null;
-}
+import { safeRedirect } from '@/utils/safeRedirect';
 
 // Checks super_admin role in Firestore by UID (distinct from rbac.ts isSuperAdmin which takes a role string)
 async function checkIsSuperAdmin(uid: string): Promise<boolean> {

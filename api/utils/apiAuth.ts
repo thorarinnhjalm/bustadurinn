@@ -4,13 +4,22 @@
  */
 
 import type { VercelRequest } from '@vercel/node';
-import { admin } from './firebaseAdmin.js';
+import { admin, initializeFirebaseAdmin } from './firebaseAdmin.js';
+
+/**
+ * True if a user_roles document grants super admin. Accepts the legacy
+ * `is_super_admin` flag as well (firestore.rules treats both as super admin).
+ */
+export function isSuperAdminRole(roleData: FirebaseFirestore.DocumentData | undefined | null): boolean {
+    return roleData?.system_role === 'super_admin' || roleData?.is_super_admin === true;
+}
 
 /**
  * Verify Firebase ID token and check if user is a super admin via RBAC
  * @throws Error if unauthorized or forbidden
  */
 export async function requireAdmin(req: VercelRequest): Promise<admin.auth.DecodedIdToken> {
+    initializeFirebaseAdmin();
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -29,7 +38,7 @@ export async function requireAdmin(req: VercelRequest): Promise<admin.auth.Decod
             .doc(decodedToken.uid)
             .get();
 
-        if (!roleDoc.exists || roleDoc.data()?.system_role !== 'super_admin') {
+        if (!isSuperAdminRole(roleDoc.exists ? roleDoc.data() : undefined)) {
             throw new Error('FORBIDDEN: Admin access required');
         }
 
@@ -48,6 +57,7 @@ export async function requireAdmin(req: VercelRequest): Promise<admin.auth.Decod
  * @throws Error if unauthorized
  */
 export async function requireAuth(req: VercelRequest): Promise<admin.auth.DecodedIdToken> {
+    initializeFirebaseAdmin();
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

@@ -6,7 +6,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getDocs, addDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { getDocs, addDoc, deleteDoc } from 'firebase/firestore';
+import { auth } from '@/lib/firebase';
 import {
     rangesOverlap,
     findConflictingBookings,
@@ -17,6 +18,7 @@ import {
 
 vi.mock('@/lib/firebase', () => ({
     db: {},
+    auth: { currentUser: { getIdToken: vi.fn().mockResolvedValue('test-id-token') } },
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -28,14 +30,13 @@ vi.mock('firebase/firestore', () => ({
     addDoc: vi.fn(),
     deleteDoc: vi.fn(),
     doc: vi.fn(),
-    getDoc: vi.fn(),
     serverTimestamp: vi.fn(() => 'server-timestamp'),
 }));
 
 const mockedGetDocs = vi.mocked(getDocs);
 const mockedAddDoc = vi.mocked(addDoc);
 const mockedDeleteDoc = vi.mocked(deleteDoc);
-const mockedGetDoc = vi.mocked(getDoc);
+const mockedFetch = vi.fn();
 
 function fakeTimestamp(date: Date) {
     return { toDate: () => date };
@@ -160,6 +161,10 @@ describe('findConflictingBookings', () => {
 describe('createBooking', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockedFetch.mockReset();
+        mockedFetch.mockResolvedValue({ ok: true, status: 200 });
+        vi.stubGlobal('fetch', mockedFetch);
+        vi.mocked(auth.currentUser!.getIdToken).mockResolvedValue('test-id-token');
     });
 
     it('throws BookingConflictError carrying the conflicts instead of writing, when conflicts exist', async () => {
@@ -197,8 +202,6 @@ describe('createBooking', () => {
 
     it('skips the conflict check and writes when allowConflicts is true', async () => {
         mockedAddDoc.mockResolvedValueOnce({ id: 'new-booking-id' } as any);
-        // No house owners -> notification fan-out short-circuits immediately
-        mockedGetDoc.mockResolvedValueOnce({ data: () => ({ owner_ids: [] }) } as any);
 
         const id = await createBooking({
             houseId: 'house-1',
@@ -219,7 +222,6 @@ describe('createBooking', () => {
     it('writes the booking and returns its id when there are no conflicts', async () => {
         mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([])); // conflict check: none
         mockedAddDoc.mockResolvedValueOnce({ id: 'new-booking-id' } as any);
-        mockedGetDoc.mockResolvedValueOnce({ data: () => ({ owner_ids: [] }) } as any); // house fetch for notifications
 
         const id = await createBooking({
             houseId: 'house-1',
@@ -232,6 +234,62 @@ describe('createBooking', () => {
 
         expect(id).toBe('new-booking-id');
         expect(mockedAddDoc).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls /api/booking-notification with the ID token and only { houseId, bookingId }', async () => {
+        mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([]));
+        mockedAddDoc.mockResolvedValueOnce({ id: 'new-booking-id' } as any);
+
+        await createBooking({
+            houseId: 'house-1',
+            userId: 'me',
+            userName: 'Me',
+            start: new Date('2026-07-10'),
+            end: new Date('2026-07-15'),
+            type: 'personal',
+        });
+
+        expect(mockedFetch).toHaveBeenCalledTimes(1);
+        const [url, init] = mockedFetch.mock.calls[0];
+        expect(url).toBe('/api/booking-notification');
+        expect(init.headers.Authorization).toBe('Bearer test-id-token');
+        expect(JSON.parse(init.body)).toEqual({ houseId: 'house-1', bookingId: 'new-booking-id', language: 'is' });
+    });
+
+    it('still returns the booking id when the notification request fails or throws', async () => {
+        mockedAddDoc.mockResolvedValueOnce({ id: 'b1' } as any);
+        mockedFetch.mockRejectedValueOnce(new Error('network down'));
+        const params = {
+            houseId: 'house-1',
+            userId: 'me',
+            userName: 'Me',
+            start: new Date('2026-07-10'),
+            end: new Date('2026-07-15'),
+            type: 'personal' as const,
+            allowConflicts: true,
+        };
+        await expect(createBooking(params)).resolves.toBe('b1');
+
+        mockedAddDoc.mockResolvedValueOnce({ id: 'b2' } as any);
+        mockedFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+        await expect(createBooking(params)).resolves.toBe('b2');
+    });
+
+    it('skips the notification request when there is no signed-in user token', async () => {
+        mockedAddDoc.mockResolvedValueOnce({ id: 'b3' } as any);
+        vi.mocked(auth.currentUser!.getIdToken).mockResolvedValueOnce(undefined as any);
+
+        await createBooking({
+            houseId: 'house-1',
+            userId: 'me',
+            userName: 'Me',
+            start: new Date('2026-07-10'),
+            end: new Date('2026-07-15'),
+            type: 'personal',
+            allowConflicts: true,
+        });
+
+        expect(mockedFetch).not.toHaveBeenCalled();
     });
 });
 

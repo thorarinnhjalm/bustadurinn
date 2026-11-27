@@ -22,6 +22,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Booking, House } from '@/types/models';
+import { generateSecureToken } from '@/utils/secureToken';
 
 interface MagicLinkGeneratorProps {
     house: House;
@@ -51,10 +52,11 @@ export default function MagicLinkGenerator({ house }: MagicLinkGeneratorProps) {
 
             try {
                 // 1. Fetch upcoming bookings
-                const bookingsRef = collection(db, 'bookings');
+                // Bookings live in houses/{id}/bookings (the top-level
+                // 'bookings' collection is legacy and locked down by the rules).
+                const bookingsRef = collection(db, 'houses', house.id, 'bookings');
                 const qBookings = query(
                     bookingsRef,
-                    where('house_id', '==', house.id),
                     // We ideally want only future/recent bookings.
                     // Firestore limitation: cannot filter by 'end' > now AND sort by 'start' easily without index
                     // So we fetch a reasonable amount and filter client side
@@ -105,7 +107,7 @@ export default function MagicLinkGenerator({ house }: MagicLinkGeneratorProps) {
         setGenerating(booking.id);
         try {
             // Generate distinct token
-            const token = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+            const token = generateSecureToken();
 
             // Logic: Valid from 24h before check-in until 24 hours after check-out
             const validFrom = subDays(booking.start, 1);

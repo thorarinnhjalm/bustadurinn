@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import admin from 'firebase-admin';
 import { getDb, initializeFirebaseAdmin } from './firebaseAdmin.js';
+import { isSuperAdminRole } from './apiAuth.js';
 
 const ADMIN_EMAILS = [
     'thorarinnhjalmarsson@gmail.com',
@@ -29,7 +30,10 @@ export async function verifyAdminToken(req: VercelRequest, res: VercelResponse):
         const decodedToken = await auth.verifyIdToken(token);
 
         // 1. Hardcoded Super Admin Check (Recovery/Master)
-        const isEmailAdmin = decodedToken.email && ADMIN_EMAILS.includes(decodedToken.email);
+        // Only honour the email allowlist when the email is verified
+        const isEmailAdmin = decodedToken.email_verified === true
+            && !!decodedToken.email
+            && ADMIN_EMAILS.includes(decodedToken.email.toLowerCase());
         const isUidAdmin = ADMIN_UIDS.includes(decodedToken.uid);
 
         if (isEmailAdmin || isUidAdmin) {
@@ -40,7 +44,7 @@ export async function verifyAdminToken(req: VercelRequest, res: VercelResponse):
         const db = getDb();
         if (db) {
             const roleDoc = await db.collection('user_roles').doc(decodedToken.uid).get();
-            if (roleDoc.exists && roleDoc.data()?.system_role === 'super_admin') {
+            if (roleDoc.exists && isSuperAdminRole(roleDoc.data())) {
                 return decodedToken;
             }
         }

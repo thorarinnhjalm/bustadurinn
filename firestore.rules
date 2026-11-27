@@ -23,7 +23,10 @@ service cloud.firestore {
              (exists(/databases/$(database)/documents/user_roles/$(getUserId())) &&
               (get(/databases/$(database)/documents/user_roles/$(getUserId())).data.system_role == 'super_admin' ||
                get(/databases/$(database)/documents/user_roles/$(getUserId())).data.is_super_admin == true)) ||
-             getUserEmail() == 'thorarinnhjalmarsson@gmail.com'
+             // Email fallback only counts when the address is verified, so
+             // nobody can claim it by registering the address unverified.
+             (getUserEmail() == 'thorarinnhjalmarsson@gmail.com' &&
+              request.auth.token.email_verified == true)
       );
     }
 
@@ -169,11 +172,33 @@ service cloud.firestore {
     // ============================================
 
     // Temporary Guest View Tokens
+    // Doc id is the bearer token; docs carry `houseId` (the owning house) and,
+    // for booking-bound magic links, `valid_until` (Timestamp).
     match /guest_views/{token} {
-      // Unauthenticated guests can fetch a specific guest view document via token URL
-      allow get: if true;
-      allow list: if isSuperAdmin();
-      allow create, update, delete: if isAuthenticated();
+      // Unauthenticated guests can fetch a specific guest view document via token URL.
+      // Links with a `valid_until` in the past are no longer served.
+      allow get: if resource == null ||
+                    !('valid_until' in resource.data) ||
+                    !(resource.data.valid_until is timestamp) ||
+                    resource.data.valid_until > request.time;
+      // Members may list their own house's links (query must filter by houseId).
+      allow list: if isSuperAdmin() ||
+                     (isAuthenticated() && isHouseMember(resource.data.houseId));
+      allow create: if isAuthenticated() && (
+                      isSuperAdmin() ||
+                      isHouseMember(request.resource.data.houseId)
+                    );
+      // The house must be a house the caller belongs to, and cannot be changed.
+      allow update: if isAuthenticated() && (
+                      isSuperAdmin() ||
+                      (isHouseMember(resource.data.houseId) &&
+                       request.resource.data.houseId == resource.data.houseId)
+                    );
+      allow delete: if isAuthenticated() && (
+                      resource == null ||
+                      isSuperAdmin() ||
+                      isHouseMember(resource.data.houseId)
+                    );
     }
 
     match /notifications/{notifId} {
@@ -182,12 +207,17 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && resource.data.user_id == getUserId();
     }
 
+    // Invitations are created by api/invite-member.ts (Admin SDK) and looked up
+    // by invitees through api/invite-info.ts / api/join-house.ts, so clients
+    // never create them and only house members (who can see the pending list
+    // in Settings and revoke) may read or delete them. List queries must
+    // filter by house_id.
     match /invitations/{invId} {
-      allow get: if true;
-      allow list: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() && 
-                             (resource.data.sender_uid == getUserId() || isSuperAdmin());
+      allow read: if isAuthenticated() &&
+                     (isHouseMember(resource.data.house_id) || isSuperAdmin());
+      allow create, update: if false;
+      allow delete: if isAuthenticated() &&
+                       (isHouseMember(resource.data.house_id) || isSuperAdmin());
     }
 
     match /feedback/{feedbackId} {
@@ -231,8 +261,9 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // Legacy top-level bookings: real bookings live in houses/{id}/bookings.
     match /bookings/{id} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if isSuperAdmin();
     }
 
     // Top-level or collectionGroup tasks query for SuperAdmin

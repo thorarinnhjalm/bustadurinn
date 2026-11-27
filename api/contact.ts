@@ -66,6 +66,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
+        // Input validation
+        if (
+            typeof name !== 'string' || typeof email !== 'string' || typeof message !== 'string' ||
+            name.length > 200 ||
+            email.length > 320 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+            message.length > 5000
+        ) {
+            return res.status(400).json({ error: 'Invalid input' });
+        }
+
         // Save to Firestore (don't block on this)
         saveToFirestore({ name, email, message }).catch(console.error);
 
@@ -81,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             html: `
                 <h2>Ný skilaboð frá bústaðurinn.is</h2>
                 <p><strong>Nafn:</strong> ${sanitizedName}</p>
-                <p><strong>Netfang:</strong> ${email}</p>
+                <p><strong>Netfang:</strong> ${escapeHtml(email)}</p>
                 <p><strong>Skilaboð:</strong></p>
                 <p>${sanitizedMessage.replace(/\n/g, '<br>')}</p>
             `,
@@ -90,6 +100,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ success: true, data });
     } catch (error: any) {
         console.error('Error sending contact email:', error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: 'Internal server error' });
     }
 }

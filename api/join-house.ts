@@ -1,10 +1,42 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { timingSafeEqual } from 'node:crypto';
 import { initializeFirebaseAdmin, admin, getDb } from './utils/firebaseAdmin.js';
 
 // Initialize Firebase Admin
 initializeFirebaseAdmin();
 const db = getDb()!;
+
+const INVITE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const MAX_TOKEN_LENGTH = 128;
+const MAX_CODE_LENGTH = 32;
+const MAX_HOUSE_ID_LENGTH = 64;
+
+/** Error that is safe to show the client: carries its own HTTP status and generic message. */
+class JoinError extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+        super(message);
+        this.status = status;
+    }
+}
+
+const INVALID_INVITATION = 'Invalid or expired invitation';
+
+function safeEqual(a: string, b: string): boolean {
+    const bufA = Buffer.from(a, 'utf8');
+    const bufB = Buffer.from(b, 'utf8');
+    if (bufA.length !== bufB.length) return false;
+    return timingSafeEqual(bufA, bufB);
+}
+
+/** Pending and not older than 30 days. */
+function isFreshInvitation(data: FirebaseFirestore.DocumentData | undefined): boolean {
+    if (!data || data.status !== 'pending') return false;
+    const createdAt = typeof data.created_at?.toMillis === 'function' ? data.created_at.toMillis() : NaN;
+    if (!Number.isFinite(createdAt)) return false;
+    return Date.now() - createdAt <= INVITE_MAX_AGE_MS;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'OPTIONS') {
@@ -16,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        // 🔒 SECURITY: Require authentication
+        // SECURITY: Require authentication
         let authenticatedUser;
         try {
             const { requireAuth } = await import('./utils/apiAuth.js');
@@ -27,71 +59,92 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(errorResponse.status).json(errorResponse.body);
         }
 
-        const { houseId, inviteCode, token } = req.body;
         const userId = authenticatedUser.uid;
 
-        if (!houseId) {
+        // Per-user rate limit. The route is authenticated, so if the limiter
+        // itself is unavailable we log and let the request through.
+        try {
+            const { checkRateLimit, getJoinHouseRateLimit, tryGetRateLimit } = await import('./utils/ratelimit.js');
+            const limiter = tryGetRateLimit(getJoinHouseRateLimit);
+            if (limiter) {
+                const rateLimitResult = await checkRateLimit(limiter, userId, { failOpen: true });
+                if (!rateLimitResult.allowed) {
+                    return res.status(rateLimitResult.error.status).json(rateLimitResult.error.body);
+                }
+            }
+        } catch (limiterError) {
+            console.warn('Rate limit check skipped:', limiterError);
+        }
+
+        const body = (req.body && typeof req.body === 'object') ? req.body : {};
+        const { houseId, inviteCode, token } = body as Record<string, unknown>;
+
+        if (typeof houseId !== 'string' || !houseId || houseId.length > MAX_HOUSE_ID_LENGTH) {
             return res.status(400).json({ error: 'Missing houseId' });
         }
 
-        if (!inviteCode && !token) {
+        const hasToken = typeof token === 'string' && token.length > 0;
+        const hasCode = typeof inviteCode === 'string' && inviteCode.length > 0;
+
+        if (!hasToken && !hasCode) {
             return res.status(400).json({ error: 'Missing invite code or token' });
         }
-
-        // If using token, query invitation document BEFORE transaction
-        let inviteRef: admin.firestore.DocumentReference | null = null;
-        if (token) {
-            const inviteQ = db.collection('invitations').where('token', '==', token).limit(1);
-            const inviteSnap = await inviteQ.get();
-
-            if (inviteSnap.empty) {
-                return res.status(404).json({ error: 'Invalid or expired token' });
-            }
-
-            const inviteDoc = inviteSnap.docs[0];
-            const inviteData = inviteDoc.data();
-
-            // Verify token matches house
-            if (inviteData.house_id !== houseId) {
-                return res.status(400).json({ error: 'Token does not match this house' });
-            }
-
-            inviteRef = inviteDoc.ref;
+        if ((hasToken && (token as string).length > MAX_TOKEN_LENGTH) ||
+            (hasCode && (inviteCode as string).length > MAX_CODE_LENGTH)) {
+            return res.status(400).json({ error: INVALID_INVITATION });
         }
 
-        // Now run transaction with document references only
-        await db.runTransaction(async (t: FirebaseFirestore.Transaction) => {
-            const houseRef = db!.collection('houses').doc(houseId);
-            const userRef = db!.collection('users').doc(userId);
-
-            const houseDoc = await t.get(houseRef);
-            if (!houseDoc.exists) {
-                throw new Error('House not found');
+        // Token path: locate the invitation doc reference BEFORE the transaction.
+        // Its contents are re-read and validated INSIDE the transaction.
+        let inviteRef: FirebaseFirestore.DocumentReference | null = null;
+        if (hasToken) {
+            const inviteSnap = await db.collection('invitations').where('token', '==', token as string).limit(1).get();
+            if (inviteSnap.empty) {
+                throw new JoinError(404, INVALID_INVITATION);
             }
+            inviteRef = inviteSnap.docs[0].ref;
+        }
 
+        await db.runTransaction(async (t: FirebaseFirestore.Transaction) => {
+            const houseRef = db.collection('houses').doc(houseId);
+            const userRef = db.collection('users').doc(userId);
+
+            // All reads first
+            const houseDoc = await t.get(houseRef);
+            const userDoc = await t.get(userRef);
+            const inviteDoc = inviteRef ? await t.get(inviteRef) : null;
+
+            if (!houseDoc.exists) {
+                throw new JoinError(400, INVALID_INVITATION);
+            }
             const houseData = houseDoc.data();
 
-            // Check Validation Logic
-            let isValid = false;
-
-            // Method A: Invite Code
-            if (inviteCode) {
-                if (houseData?.invite_code === inviteCode) {
-                    isValid = true;
-                } else {
-                    throw new Error('Invalid invite code');
+            if (hasToken) {
+                // Invitation must still exist (not consumed by a concurrent request),
+                // be pending, fresh, and belong to this house.
+                const inviteData = inviteDoc?.exists ? inviteDoc.data() : undefined;
+                if (!inviteDoc || !inviteData ||
+                    typeof inviteData.token !== 'string' ||
+                    !safeEqual(inviteData.token, token as string) ||
+                    !isFreshInvitation(inviteData) ||
+                    inviteData.house_id !== houseId) {
+                    throw new JoinError(400, INVALID_INVITATION);
+                }
+            } else {
+                const storedCode = houseData?.invite_code;
+                if (typeof storedCode !== 'string' || storedCode.length === 0 ||
+                    !safeEqual(storedCode, inviteCode as string)) {
+                    throw new JoinError(400, INVALID_INVITATION);
                 }
             }
 
-            // Method B: Token (already validated above, just mark as valid)
-            if (token && inviteRef) {
-                isValid = true;
-                // Cleanup invitation within transaction
-                t.delete(inviteRef);
+            if (!userDoc.exists) {
+                throw new JoinError(400, 'User profile not found');
             }
 
-            if (!isValid) {
-                throw new Error('Validation failed');
+            // Consume the invitation (token path)
+            if (hasToken && inviteRef) {
+                t.delete(inviteRef);
             }
 
             // Add user to house
@@ -108,11 +161,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ success: true, message: 'Joined house successfully' });
 
     } catch (error: any) {
-        console.error('❌ Error joining house:', error);
-
-        const errorMessage = error.message || 'Internal server error';
-        const statusCode = errorMessage.includes('Invalid') || errorMessage.includes('Missing') ? 400 : 500;
-
-        return res.status(statusCode).json({ error: errorMessage });
+        if (error instanceof JoinError) {
+            return res.status(error.status).json({ error: error.message });
+        }
+        console.error('Error joining house:', error);
+        return res.status(500).json({ error: 'Internal server error' });
     }
 }

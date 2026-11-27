@@ -14,6 +14,7 @@ import { logger } from '@/utils/logger';
 import { trackFunnel, describeError, markInOnboarding } from '@/utils/funnel';
 import AddToHomeScreenPrompt from '@/components/AddToHomeScreenPrompt';
 import type { AppNotification } from '@/types/models';
+import { generateInviteCode } from '@/utils/secureToken';
 
 type OnboardingStep = 'welcome' | 'house' | 'invite' | 'finish';
 
@@ -352,7 +353,7 @@ export default function OnboardingPage() {
                 }
 
                 // Prepare House Data
-                inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                inviteCode = generateInviteCode();
                 const houseRef = doc(collection(db, 'houses')); // Generate ID first
                 houseId = houseRef.id;
 

@@ -16,11 +16,12 @@ import SEO from '@/components/SEO';
 import { useSearchParams } from 'react-router-dom';
 import { analytics } from '@/utils/analytics';
 import { trackFunnel, describeError, redactPath } from '@/utils/funnel';
+import { safeRedirect } from '@/utils/safeRedirect';
 
 export default function SignupPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const returnUrl = searchParams.get('returnUrl');
+    const returnUrl = safeRedirect(searchParams.get('returnUrl'));
     const [formData, setFormData] = useState({
         name: '',
         email: '',

@@ -514,7 +514,10 @@ export default function SuperAdminPage() {
         try {
             const res = await fetch('/api/send-email', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`
+                },
                 body: JSON.stringify({
                     templateId: tpl.id,
                     to: currentUser.email,

@@ -11,6 +11,7 @@ declare global {
         gtag?: (...args: any[]) => void;
         dataLayer?: any[];
         fbq?: (...args: any[]) => void;
+        __analyticsSensitive?: () => boolean;
     }
 }
 
@@ -20,8 +21,9 @@ export const trackEvent = (eventName: string, eventParams?: Record<string, any>)
         window.gtag('event', eventName, eventParams);
     }
 
-    // Facebook Pixel
-    if (typeof window !== 'undefined' && window.fbq) {
+    // Facebook Pixel (skipped on secret-bearing URLs such as /guest/<token> and /join...,
+    // because the Pixel reports the real page URL; see the snippet in index.html)
+    if (typeof window !== 'undefined' && window.fbq && !window.__analyticsSensitive?.()) {
         // Map GA4 events to standard Facebook events where possible
         if (eventName === 'signup_completed') {
             window.fbq('track', 'CompleteRegistration');

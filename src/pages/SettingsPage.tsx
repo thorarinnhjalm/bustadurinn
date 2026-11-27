@@ -67,6 +67,7 @@ import GuestPreviewModal from '@/components/GuestPreviewModal';
 import { updateUserNameInAllCollections } from '@/services/userService';
 import FeedbackModal from '@/components/feedback/FeedbackModal';
 import { notifyShoppingListAdded } from '@/services/inAppNotifications';
+import { generateSecureToken, generateInviteCode } from '@/utils/secureToken';
 
 export default function SettingsPage() {
     const navigate = useNavigate();
@@ -584,6 +585,7 @@ export default function SettingsPage() {
                 logger.debug("Syncing image with guest view:", updatedHouse.guest_token);
                 try {
                     await setDoc(doc(db, 'guest_views', updatedHouse.guest_token), {
+                        houseId: updatedHouse.id,
                         image_url: updatedHouse.image_url || '',
                         gallery_urls: updatedHouse.gallery_urls || [],
                         updated_at: serverTimestamp()
@@ -680,7 +682,7 @@ export default function SettingsPage() {
                     // Auto-generate invite code if missing (for legacy houses)
                     if (currentUserId && !houseData.invite_code && houseData.manager_id === currentUserId) {
                         logger.info('Auto-generating invite code for house:', houseId);
-                        const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                        const newCode = generateInviteCode();
                         try {
                             await updateDoc(doc(db, 'houses', houseId), {
                                 invite_code: newCode
@@ -693,8 +695,7 @@ export default function SettingsPage() {
                     } else {
                         console.log('Invite code status:', {
                             hasCode: !!houseData.invite_code,
-                            isManager: houseData.manager_id === currentUserId,
-                            code: houseData.invite_code
+                            isManager: houseData.manager_id === currentUserId
                         });
                     }
 
@@ -911,7 +912,7 @@ export default function SettingsPage() {
 
     const handleGenerateInvite = async () => {
         if (!house) return;
-        const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const newCode = generateInviteCode();
         try {
             await updateDoc(doc(db, 'houses', house.id), {
                 invite_code: newCode
@@ -989,7 +990,7 @@ export default function SettingsPage() {
                 await deleteDoc(doc(db, 'guest_views', house.guest_token));
             }
 
-            const newToken = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+            const newToken = generateSecureToken();
 
             // Create new view
             await setDoc(doc(db, 'guest_views', newToken), {
