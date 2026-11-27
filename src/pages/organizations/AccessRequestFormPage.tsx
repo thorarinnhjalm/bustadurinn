@@ -3,16 +3,21 @@
  * For employees to request access to organization
  */
 
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { UserPlus, Mail, User, Briefcase, Phone, Building2, CheckCircle } from 'lucide-react';
 import { getOrganization, submitAccessRequest } from '@/services/organizationService';
 import type { Organization } from '@/types/models';
 import SEO from '@/components/SEO';
+import { useAppStore } from '@/store/appStore';
+import { logger } from '@/utils/logger';
 
 export default function AccessRequestFormPage() {
     const { orgId } = useParams<{ orgId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
+    const currentUser = useAppStore((state) => state.currentUser);
+    const isAuthLoading = useAppStore((state) => state.isLoading);
     const [organization, setOrganization] = useState<Organization | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,12 +33,15 @@ export default function AccessRequestFormPage() {
         reason: '',
     });
 
-    useEffect(() => {
-        loadOrganization();
-    }, [orgId]);
-
-    const loadOrganization = async () => {
+    const loadOrganization = useCallback(async () => {
         if (!orgId) return;
+
+        // Reading the organization requires a signed-in user; wait for auth and
+        // show the login prompt below for visitors who are not signed in.
+        if (!currentUser) {
+            setIsLoading(false);
+            return;
+        }
 
         try {
             const org = await getOrganization(orgId);
@@ -44,18 +52,23 @@ export default function AccessRequestFormPage() {
             }
             setOrganization(org);
         } catch (err) {
-            console.error('Error loading organization:', err);
+            logger.error('Error loading organization:', err);
             setError('Villa kom upp við að sækja upplýsingar um félag');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [orgId, currentUser]);
+
+    useEffect(() => {
+        if (isAuthLoading) return;
+        loadOrganization();
+    }, [isAuthLoading, loadOrganization]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        if (!orgId || !organization) {
+        if (!orgId || !organization || !currentUser) {
             setError('Félag fannst ekki');
             return;
         }
@@ -76,22 +89,48 @@ export default function AccessRequestFormPage() {
         setIsSubmitting(true);
 
         try {
-            await submitAccessRequest(orgId, formData);
+            await submitAccessRequest(orgId, { ...formData, user_id: currentUser.uid });
             setSubmitted(true);
         } catch (err: any) {
-            console.error('Error submitting access request:', err);
+            logger.error('Error submitting access request:', err);
             setError(err.message || 'Villa kom upp við að senda beiðni');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (isLoading) {
+    if (isLoading || isAuthLoading) {
         return (
             <div className="min-h-screen bg-bone flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
                     <p className="text-grey-mid">Hleð...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!currentUser) {
+        const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
+        return (
+            <div className="min-h-screen bg-bone flex items-center justify-center p-6">
+                <SEO title="Óska eftir aðgangi" description="Skráðu þig inn til að óska eftir aðgangi" />
+                <div className="card max-w-md text-center">
+                    <UserPlus className="w-16 h-16 mx-auto mb-4 text-charcoal" />
+                    <h2 className="text-2xl font-serif mb-4">Skráðu þig inn til að halda áfram</h2>
+                    <p className="text-grey-dark mb-6">
+                        Til að óska eftir aðgangi að sumarhúsum félagsins þarftu að vera skráð(ur) inn.
+                        Ef þú átt ekki aðgang getur þú stofnað hann á augabragði og kemur svo hingað
+                        aftur.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <Link to={`/login?returnUrl=${returnUrl}`} className="btn btn-primary">
+                            Skrá inn
+                        </Link>
+                        <Link to={`/signup?returnUrl=${returnUrl}`} className="btn btn-secondary">
+                            Stofna aðgang
+                        </Link>
+                    </div>
                 </div>
             </div>
         );
@@ -149,7 +188,8 @@ export default function AccessRequestFormPage() {
 
     // Check if email domain is in allowed list
     const emailDomain = formData.email.split('@')[1] || '';
-    const isAllowedDomain = organization.settings.allowed_email_domains.includes(emailDomain);
+    const allowedDomains = organization.settings?.allowed_email_domains ?? [];
+    const isAllowedDomain = allowedDomains.includes(emailDomain);
 
     return (
         <div className="min-h-screen bg-bone">
@@ -218,10 +258,10 @@ export default function AccessRequestFormPage() {
                                     Netfangslén er á leyfilegum lista - beiðni þín verður sjálfkrafa samþykkt
                                 </p>
                             )}
-                            {organization.settings.allowed_email_domains.length > 0 && (
+                            {allowedDomains.length > 0 && (
                                 <p className="text-sm text-grey-mid mt-1">
                                     Leyfileg netfangslén:{' '}
-                                    {organization.settings.allowed_email_domains.join(', ')}
+                                    {allowedDomains.join(', ')}
                                 </p>
                             )}
                         </div>
@@ -296,11 +336,11 @@ export default function AccessRequestFormPage() {
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <h3 className="font-semibold mb-2">Hvað gerist næst?</h3>
                             <ul className="text-sm text-grey-dark space-y-1 list-disc list-inside">
-                                {organization.settings.require_access_approval ? (
+                                {organization.settings?.require_access_approval ? (
                                     <>
                                         <li>Stjórnandi félags fer yfir beiðni þína</li>
                                         <li>Þú færð tölvupóst þegar beiðni hefur verið samþykkt eða hafnað</li>
-                                        {organization.settings.require_booking_approval ? (
+                                        {organization.settings?.require_booking_approval ? (
                                             <li>
                                                 Eftir samþykki getur þú skoðað laus hús og óskað eftir bókun
                                             </li>

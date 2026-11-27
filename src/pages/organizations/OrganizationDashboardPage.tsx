@@ -3,7 +3,7 @@
  * For organization admins to manage everything
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
     Building2,
@@ -18,6 +18,8 @@ import {
     Home,
 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
+import { useEffectiveUser } from '@/hooks/useEffectiveUser';
+import { logger } from '@/utils/logger';
 import {
     getOrganization,
     getAccessRequests,
@@ -58,16 +60,16 @@ export default function OrganizationDashboardPage() {
     const [error, setError] = useState('');
     const [showAddHouseModal, setShowAddHouseModal] = useState(false);
 
-    useEffect(() => {
-        loadData();
-    }, [orgId, currentUser]);
+    // Platform super admins may open any organization (the rules allow it).
+    const { isAdmin: isSuperAdmin } = useEffectiveUser();
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         if (!orgId || !currentUser) return;
 
         try {
+            setError('');
             // Check if user is admin
-            const adminStatus = await isOrgAdmin(currentUser.uid, orgId);
+            const adminStatus = isSuperAdmin || (await isOrgAdmin(currentUser.uid, orgId));
             setIsAdmin(adminStatus);
 
             if (!adminStatus) {
@@ -98,12 +100,16 @@ export default function OrganizationDashboardPage() {
             setBookingRequests(bookings);
             setHouses(orgHouses);
         } catch (err) {
-            console.error('Error loading organization data:', err);
+            logger.error('Error loading organization data:', err);
             setError('Villa kom upp við að sækja gögn');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [orgId, currentUser, isSuperAdmin]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     const handleApproveAccess = async (requestId: string) => {
         if (!orgId || !currentUser || !organization) return;
@@ -117,7 +123,7 @@ export default function OrganizationDashboardPage() {
             );
             await loadData(); // Reload data
         } catch (err) {
-            console.error('Error approving access:', err);
+            logger.error('Error approving access:', err);
             alert('Villa kom upp við að samþykkja aðgang');
         }
     };
@@ -138,7 +144,7 @@ export default function OrganizationDashboardPage() {
             );
             await loadData();
         } catch (err) {
-            console.error('Error denying access:', err);
+            logger.error('Error denying access:', err);
             alert('Villa kom upp við að hafna aðgangi');
         }
     };
@@ -155,8 +161,13 @@ export default function OrganizationDashboardPage() {
             );
             await loadData();
         } catch (err) {
-            console.error('Error approving booking:', err);
-            alert('Villa kom upp við að samþykkja bókun');
+            logger.error('Error approving booking:', err);
+            // The booking is written into the house, which only house owners may do.
+            alert(
+                (err as { code?: string })?.code === 'permission-denied'
+                    ? 'Þú þarft að vera skráður eigandi hússins til að samþykkja bókun'
+                    : 'Villa kom upp við að samþykkja bókun'
+            );
         }
     };
 
@@ -176,7 +187,7 @@ export default function OrganizationDashboardPage() {
             );
             await loadData();
         } catch (err) {
-            console.error('Error denying booking:', err);
+            logger.error('Error denying booking:', err);
             alert('Villa kom upp við að hafna bókun');
         }
     };
@@ -225,29 +236,6 @@ export default function OrganizationDashboardPage() {
                                 <h1 className="text-3xl font-serif">{organization.name}</h1>
                                 <p className="text-grey-mid">Stjórnborð</p>
                             </div>
-                        </div>
-                        <div className="text-right">
-                            <span
-                                className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                                    organization.subscription_status === 'trial'
-                                        ? 'bg-blue-100 text-blue-800'
-                                        : organization.subscription_status === 'active'
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'
-                                }`}
-                            >
-                                {organization.subscription_status === 'trial'
-                                    ? 'Prufutímabil'
-                                    : organization.subscription_status === 'active'
-                                    ? 'Virkt'
-                                    : 'Útrunnið'}
-                            </span>
-                            {organization.subscription_status === 'trial' && (
-                                <p className="text-sm text-grey-mid mt-1">
-                                    Rennur út:{' '}
-                                    {new Date(organization.subscription_end).toLocaleDateString('is-IS')}
-                                </p>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -817,7 +805,7 @@ export default function OrganizationDashboardPage() {
                                                             );
                                                             await loadData();
                                                         } catch (err) {
-                                                            console.error('Error removing house:', err);
+                                                            logger.error('Error removing house:', err);
                                                             alert('Villa kom upp við að fjarlægja hús');
                                                         }
                                                     }
@@ -870,7 +858,7 @@ export default function OrganizationDashboardPage() {
                                                     setShowAddHouseModal(false);
                                                     await loadData();
                                                 } catch (err) {
-                                                    console.error('Error creating house:', err);
+                                                    logger.error('Error creating house:', err);
                                                     alert('Villa kom upp við að búa til hús');
                                                 }
                                             }}
@@ -978,12 +966,11 @@ export default function OrganizationDashboardPage() {
                                     try {
                                         await updateOrganization(orgId!, {
                                             name: formData.get('name') as string,
-                                            billing_email: formData.get('billing_email') as string,
                                         });
                                         await loadData();
                                         alert('Upplýsingar uppfærðar');
                                     } catch (err) {
-                                        console.error('Error updating organization:', err);
+                                        logger.error('Error updating organization:', err);
                                         alert('Villa kom upp við að uppfæra');
                                     }
                                 }}
@@ -996,16 +983,6 @@ export default function OrganizationDashboardPage() {
                                             type="text"
                                             name="name"
                                             defaultValue={organization.name}
-                                            className="input w-full"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="label">Reikningsnetfang</label>
-                                        <input
-                                            type="email"
-                                            name="billing_email"
-                                            defaultValue={organization.billing_email}
                                             className="input w-full"
                                             required
                                         />
@@ -1049,7 +1026,7 @@ export default function OrganizationDashboardPage() {
                                         await loadData();
                                         alert('Stillingar uppfærðar');
                                     } catch (err) {
-                                        console.error('Error updating settings:', err);
+                                        logger.error('Error updating settings:', err);
                                         alert('Villa kom upp við að uppfæra');
                                     }
                                 }}
@@ -1177,7 +1154,7 @@ export default function OrganizationDashboardPage() {
                                         await loadData();
                                         e.currentTarget.reset();
                                     } catch (err) {
-                                        console.error('Error adding domain:', err);
+                                        logger.error('Error adding domain:', err);
                                         alert('Villa kom upp við að bæta við léni');
                                     }
                                 }}
@@ -1224,7 +1201,7 @@ export default function OrganizationDashboardPage() {
                                                             });
                                                             await loadData();
                                                         } catch (err) {
-                                                            console.error('Error removing domain:', err);
+                                                            logger.error('Error removing domain:', err);
                                                             alert('Villa kom upp við að fjarlægja lén');
                                                         }
                                                     }

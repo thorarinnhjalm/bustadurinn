@@ -1,6 +1,6 @@
 /**
  * Organization Inquiry Page
- * Companies, unions, and municipalities get in touch to receive a custom offer
+ * Companies, unions, and municipalities get in touch about using the platform
  */
 
 import { useState } from 'react';
@@ -55,7 +55,7 @@ export default function OrganizationSignupPage() {
             >
                 <SEO
                     title="Takk fyrir - Starfsmannafélag"
-                    description="Við höfum samband við þig fljótlega með tilboð"
+                    description="Við höfum samband við þig fljótlega"
                 />
                 <div className="min-h-[60vh] flex items-center justify-center px-6">
                     <div className="text-center max-w-md">
@@ -64,7 +64,7 @@ export default function OrganizationSignupPage() {
                         </div>
                         <h1 className="text-3xl font-serif mb-4">Takk fyrir!</h1>
                         <p className="text-grey-dark text-lg leading-relaxed">
-                            Við höfum tekið við fyrirspurninni og munum hafa samband við þig fljótlega með sérsniðið tilboð fyrir <strong>{formData.org_name}</strong>.
+                            Við höfum tekið við fyrirspurninni og munum hafa samband við þig fljótlega varðandi <strong>{formData.org_name}</strong>.
                         </p>
                         <p className="text-grey-mid mt-4 text-sm">
                             Við svörum venjulega innan 1-2 virkra daga.
@@ -77,23 +77,23 @@ export default function OrganizationSignupPage() {
 
     return (
         <MarketingLayout
-            title="Starfsmannafélag - Fá tilboð"
-            description="Bjóddu starfsmönnum þínum upp á sumarhús. Hafðu samband og fáðu sérsniðið tilboð."
+            title="Starfsmannafélag - Bústaðurinn.is"
+            description="Bjóddu starfsmönnum þínum upp á sumarhús. Bústaðurinn.is er alveg ókeypis. Sendu okkur fyrirspurn."
         >
             <SEO
-                title="Starfsmannafélag - Fá tilboð"
+                title="Starfsmannafélag"
                 description="Skráðu félag þitt og bjóddu starfsmönnum upp á sumarhús í gegnum Bústaðurinn.is"
                 keywords="starfsmannafélag, sumarbústaðir, bókunarkerfi starfsmenn, stéttarfélag sumarhús, fyrirtæki sumarbústaðir ísland"
                 structuredData={{
                     "@context": "https://schema.org",
                     "@type": "WebPage",
-                    "name": "Starfsmannafélag - Fá tilboð | Bústaðurinn.is",
-                    "description": "Bjóddu starfsmönnum þínum upp á sumarhús í gegnum Bústaðurinn.is. Fáðu sérsniðið tilboð fyrir félag þitt.",
+                    "name": "Starfsmannafélag | Bústaðurinn.is",
+                    "description": "Bjóddu starfsmönnum þínum upp á sumarhús í gegnum Bústaðurinn.is. Bústaðurinn.is er ókeypis.",
                     "url": "https://www.bustadurinn.is/organizations/signup",
                     "mainEntity": {
                         "@type": "ContactPage",
                         "name": "Fyrirspurn um starfsmannafélag",
-                        "description": "Sendu fyrirspurn og fáðu sérsniðið tilboð fyrir starfsmannafélag eða stéttarfélag"
+                        "description": "Sendu fyrirspurn fyrir starfsmannafélag eða stéttarfélag"
                     },
                     "breadcrumb": {
                         "@type": "BreadcrumbList",
@@ -114,7 +114,7 @@ export default function OrganizationSignupPage() {
                         <span className="text-amber">Við höfum lausnina.</span>
                     </h1>
                     <p className="text-lg text-stone-300 max-w-xl mx-auto leading-relaxed">
-                        Gefðu starfsmönnum þínum aðgang að sumarhúsum í gegnum einfalt og öruggt kerfi. Við búum til sérsniðna lausn fyrir þig.
+                        Gefðu starfsmönnum þínum aðgang að sumarhúsum í gegnum einfalt og öruggt kerfi. Kerfið er ókeypis og við aðstoðum þig við að koma félaginu af stað.
                     </p>
                 </div>
             </div>
@@ -140,7 +140,7 @@ export default function OrganizationSignupPage() {
                 {/* Form */}
                 <div className="max-w-2xl mx-auto">
                     <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8 md:p-10">
-                        <h2 className="text-2xl font-serif mb-2">Fáðu tilboð</h2>
+                        <h2 className="text-2xl font-serif mb-2">Hafðu samband</h2>
                         <p className="text-grey-dark mb-8">Fylltu út og við höfum samband innan 1-2 virkra daga.</p>
 
                         {status === 'error' && (
@@ -284,7 +284,7 @@ export default function OrganizationSignupPage() {
                             </button>
 
                             <p className="text-xs text-grey-mid text-center">
-                                Við svörum alltaf innan 1-2 virkra daga. Engar skuldbindingar.
+                                Við svörum alltaf innan 1-2 virkra daga. Kerfið er ókeypis.
                             </p>
                         </form>
                     </div>
