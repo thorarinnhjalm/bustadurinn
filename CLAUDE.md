@@ -170,6 +170,8 @@ Tailwind CSS 3.4 with a custom "Scandi-Minimalist" design system defined in `src
 
 Vitest + @testing-library/react with jsdom. Globals enabled (`describe`, `it`, `expect` don't need imports). Firebase is globally mocked in `src/test/setup.ts`. Test files are collocated next to source (e.g., `utils/rbac.test.ts`). Config is in `vite.config.ts` (no separate vitest config).
 
+Security rules (`firestore.rules`, `storage.rules`) have their own suite in `tests/rules/` (files are `*.rules.ts`, so `npm test` does not run them): `npm run test:rules` starts the Firestore and Storage emulators via `firebase emulators:exec` and runs `vitest.rules.config.ts`. It needs Java (JDK 11+) and downloads the emulator JARs to `~/.cache/firebase/emulators` on first run. The project id is `demo-bustadurinn`, so it can never reach the real Firebase project. When you change a rule, add allow and deny cases there, and copy the exact `where`/`orderBy` shape of the client query for list rules.
+
 E2E tests use Playwright (Chromium only). Tests live in `tests/e2e/`. The dev server must be running on `http://127.0.0.1:5173` before running E2E tests.
 
 ## Deployment

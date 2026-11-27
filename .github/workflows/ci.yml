@@ -50,3 +50,32 @@ jobs:
 
       - name: Verify dist (prerendered content present)
         run: node scripts/verify-dist.js
+
+  # Firestore + Storage security rules, executed against the emulators
+  # (demo- project id, never the real Firebase project).
+  rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Cache Firebase emulators
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - run: npm ci
+
+      - name: Security rules tests
+        run: npm run test:rules
