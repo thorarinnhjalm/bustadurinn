@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Repeat, Plus, X, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -95,6 +95,7 @@ async function removeBudgetItem(houseId: string, costId: string) {
 }
 
 export default function RecurringCosts({ houseId, currentUserId, recurringCosts, budgetCategories, onChanged }: RecurringCostsProps) {
+    const baseId = useId();
     const [expanded, setExpanded] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [name, setName] = useState('');
@@ -155,11 +156,14 @@ export default function RecurringCosts({ houseId, currentUserId, recurringCosts,
     return (
         <div className="card">
             <button
+                type="button"
                 onClick={() => setExpanded(!expanded)}
+                aria-expanded={expanded}
+                aria-controls={`${baseId}-panel`}
                 className="w-full flex justify-between items-center"
             >
                 <div className="flex items-center gap-2">
-                    <Repeat className="w-5 h-5 text-amber" />
+                    <Repeat className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                     <div className="text-left">
                         <h3 className="font-serif text-lg text-charcoal">Endurtekinn kostnaður</h3>
                         <p className="text-xs text-grey-mid mt-0.5">
@@ -168,14 +172,14 @@ export default function RecurringCosts({ houseId, currentUserId, recurringCosts,
                     </div>
                 </div>
                 {expanded ? (
-                    <ChevronUp className="w-5 h-5 text-grey-mid" />
+                    <ChevronUp className="w-5 h-5 text-grey-mid" aria-hidden="true" />
                 ) : (
-                    <ChevronDown className="w-5 h-5 text-grey-mid" />
+                    <ChevronDown className="w-5 h-5 text-grey-mid" aria-hidden="true" />
                 )}
             </button>
 
             {expanded && (
-                <div className="mt-6 space-y-4">
+                <div id={`${baseId}-panel`} className="mt-6 space-y-4">
                     {recurringCosts.length === 0 && !showForm && (
                         <p className="text-sm text-grey-mid">Enginn endurtekinn kostnaður skráður ennþá.</p>
                     )}
@@ -193,11 +197,12 @@ export default function RecurringCosts({ houseId, currentUserId, recurringCosts,
                                     <div className="flex items-center gap-3 flex-shrink-0">
                                         <span className="text-sm font-bold text-charcoal">{cost.estimated_amount.toLocaleString()} kr.</span>
                                         <button
+                                            type="button"
                                             onClick={() => handleDelete(cost)}
-                                            className="text-grey-mid hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            aria-label="Eyða"
+                                            className="p-1 text-grey-mid hover:text-red-500 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity"
+                                            aria-label={`Eyða ${cost.name}`}
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Trash2 className="w-4 h-4" aria-hidden="true" />
                                         </button>
                                     </div>
                                 </div>
@@ -209,14 +214,15 @@ export default function RecurringCosts({ houseId, currentUserId, recurringCosts,
                         <form onSubmit={handleSubmit} className="bg-bone p-4 rounded-lg border border-grey-warm space-y-4">
                             <div className="flex justify-between items-center">
                                 <h4 className="font-medium text-sm text-charcoal">Nýr endurtekinn kostnaður</h4>
-                                <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="text-grey-mid hover:text-charcoal">
-                                    <X className="w-4 h-4" />
+                                <button type="button" onClick={() => { setShowForm(false); resetForm(); }} aria-label="Loka" className="p-1 text-grey-mid hover:text-charcoal">
+                                    <X className="w-4 h-4" aria-hidden="true" />
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="label">Heiti</label>
+                                    <label htmlFor={`${baseId}-name`} className="label">Heiti</label>
                                     <input
+                                        id={`${baseId}-name`}
                                         type="text"
                                         className="input"
                                         placeholder="t.d. Húsatrygging - VÍS"
@@ -226,8 +232,9 @@ export default function RecurringCosts({ houseId, currentUserId, recurringCosts,
                                     />
                                 </div>
                                 <div>
-                                    <label className="label">Flokkur</label>
+                                    <label htmlFor={`${baseId}-category`} className="label">Flokkur</label>
                                     <input
+                                        id={`${baseId}-category`}
                                         type="text"
                                         className="input"
                                         list="recurring-category-list"
@@ -243,8 +250,9 @@ export default function RecurringCosts({ houseId, currentUserId, recurringCosts,
                                     </datalist>
                                 </div>
                                 <div>
-                                    <label className="label">Áætluð upphæð (kr.)</label>
+                                    <label htmlFor={`${baseId}-amount`} className="label">Áætluð upphæð (kr.)</label>
                                     <input
+                                        id={`${baseId}-amount`}
                                         type="number"
                                         className="input"
                                         placeholder="0"
@@ -254,8 +262,9 @@ export default function RecurringCosts({ houseId, currentUserId, recurringCosts,
                                     />
                                 </div>
                                 <div>
-                                    <label className="label">Tíðni</label>
+                                    <label htmlFor={`${baseId}-frequency`} className="label">Tíðni</label>
                                     <select
+                                        id={`${baseId}-frequency`}
                                         className="input"
                                         value={frequency}
                                         onChange={(e) => setFrequency(e.target.value as 'yearly' | 'monthly')}
@@ -265,8 +274,9 @@ export default function RecurringCosts({ houseId, currentUserId, recurringCosts,
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="label">{frequency === 'monthly' ? 'Fyrsti gjalddagi' : 'Gjalddagi (mánuður)'}</label>
+                                    <label htmlFor={`${baseId}-month`} className="label">{frequency === 'monthly' ? 'Fyrsti gjalddagi' : 'Gjalddagi (mánuður)'}</label>
                                     <select
+                                        id={`${baseId}-month`}
                                         className="input"
                                         value={dueMonth}
                                         onChange={(e) => setDueMonth(e.target.value)}
@@ -279,14 +289,14 @@ export default function RecurringCosts({ houseId, currentUserId, recurringCosts,
                             </div>
                             <div className="flex justify-end">
                                 <button type="submit" disabled={saving} className="btn btn-primary btn-sm">
-                                    <Plus className="w-4 h-4 mr-2" />
+                                    <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                                     {saving ? 'Vista...' : 'Vista kostnað'}
                                 </button>
                             </div>
                         </form>
                     ) : (
-                        <button onClick={() => setShowForm(true)} className="btn btn-secondary btn-sm">
-                            <Plus className="w-4 h-4 mr-2" />
+                        <button type="button" onClick={() => setShowForm(true)} className="btn btn-secondary btn-sm">
+                            <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                             Bæta við endurteknum kostnaði
                         </button>
                     )}

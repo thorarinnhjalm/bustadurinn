@@ -34,7 +34,7 @@ export default function YearEndSummary({ year, entries, ownerIds, members, membe
         <div className="space-y-6">
             <div className="card">
                 <div className="flex items-center gap-3 mb-6">
-                    <ClipboardList className="w-5 h-5 text-amber" />
+                    <ClipboardList className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                     <h2 className="text-xl font-serif text-charcoal">Ársyfirlit {year}</h2>
                 </div>
 
@@ -60,19 +60,20 @@ export default function YearEndSummary({ year, entries, ownerIds, members, membe
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
+                            <caption className="sr-only">Ársyfirlit {year} eftir eigendum</caption>
                             <thead className="text-xs text-grey-mid uppercase border-b border-grey-warm">
                                 <tr>
-                                    <th className="pb-3 pl-2">Eigandi</th>
-                                    <th className="pb-3 text-right">Eignarhlutur</th>
-                                    <th className="pb-3 text-right">Hlutdeild í gjöldum</th>
-                                    <th className="pb-3 text-right">Greitt af honum</th>
-                                    <th className="pb-3 text-right pr-2">Mismunur</th>
+                                    <th scope="col" className="pb-3 pl-2">Eigandi</th>
+                                    <th scope="col" className="pb-3 text-right">Eignarhlutur</th>
+                                    <th scope="col" className="pb-3 text-right">Hlutdeild í gjöldum</th>
+                                    <th scope="col" className="pb-3 text-right">Greitt af honum</th>
+                                    <th scope="col" className="pb-3 text-right pr-2">Mismunur</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-grey-warm/50">
                                 {rows.map((row) => (
                                     <tr key={row.uid}>
-                                        <td className="py-3 pl-2 font-medium text-charcoal">{row.name}</td>
+                                        <th scope="row" className="py-3 pl-2 font-medium text-charcoal">{row.name}</th>
                                         <td className="py-3 text-right text-grey-mid">{row.sharePercent.toFixed(0)}%</td>
                                         <td className="py-3 text-right text-grey-mid">{formatKr(row.shareAmount)}</td>
                                         <td className="py-3 text-right text-grey-mid">{formatKr(row.paidAmount)}</td>

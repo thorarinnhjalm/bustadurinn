@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
     CheckSquare,
     Plus,
@@ -30,7 +30,6 @@ import { logger } from '@/utils/logger';
 import { getHouseMembers } from '@/services/houseMembersService';
 
 export default function TasksPage() {
-    const navigate = useNavigate();
     const { user: currentUser } = useEffectiveUser();
     const currentHouse = useAppStore((state) => state.currentHouse);
     const [view, setView] = useState<'list' | 'board'>('list');
@@ -161,16 +160,16 @@ export default function TasksPage() {
         : currentUser ? [{ uid: currentUser.uid, name: currentUser.name }] : [];
 
     return (
-        <div className="min-h-screen bg-bone p-6 pb-24">
+        <main className="min-h-screen bg-bone p-6 pb-24">
             {/* Header */}
             <div className="max-w-5xl mx-auto mb-8">
-                <button
-                    onClick={() => navigate('/dashboard')}
-                    className="flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
+                <Link
+                    to="/dashboard"
+                    className="inline-flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
                 >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
                     Til baka
-                </button>
+                </Link>
 
                 <div className="flex justify-between items-end">
                     <div>
@@ -179,10 +178,11 @@ export default function TasksPage() {
                     </div>
                     {!showForm && (
                         <button
+                            type="button"
                             onClick={() => setShowForm(true)}
                             className="btn btn-primary"
                         >
-                            <Plus className="w-4 h-4 mr-2" />
+                            <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                             Nýtt verkefni
                         </button>
                     )}
@@ -191,8 +191,10 @@ export default function TasksPage() {
 
             {/* Controls */}
             <div className="max-w-5xl mx-auto mb-6 flex justify-between items-center bg-white p-2 rounded-lg border border-grey-warm">
-                <div className="flex gap-2">
+                <div role="group" aria-label="Sía verkefni" className="flex gap-2">
                     <button
+                        type="button"
+                        aria-pressed={filter === 'all'}
                         onClick={() => setFilter('all')}
                         className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${filter === 'all' ? 'bg-bone text-charcoal' : 'text-grey-mid hover:text-charcoal'
                             }`}
@@ -200,6 +202,8 @@ export default function TasksPage() {
                         Öll verkefni
                     </button>
                     <button
+                        type="button"
+                        aria-pressed={filter === 'mine'}
                         onClick={() => setFilter('mine')}
                         className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${filter === 'mine' ? 'bg-bone text-charcoal' : 'text-grey-mid hover:text-charcoal'
                             }`}
@@ -207,22 +211,26 @@ export default function TasksPage() {
                         Mín verkefni
                     </button>
                 </div>
-                <div className="flex gap-2 border-l border-grey-warm pl-2">
+                <div role="group" aria-label="Yfirlit" className="flex gap-2 border-l border-grey-warm pl-2">
                     <button
+                        type="button"
                         onClick={() => setView('list')}
-                        className={`p-1.5 rounded transition-colors ${view === 'list' ? 'bg-bone text-charcoal' : 'text-grey-mid'}`}
+                        aria-pressed={view === 'list'}
+                        className={`p-2 rounded transition-colors ${view === 'list' ? 'bg-bone text-charcoal' : 'text-grey-mid'}`}
                         title="Listayfirlit"
                         aria-label="Listayfirlit"
                     >
-                        <List className="w-4 h-4" />
+                        <List className="w-4 h-4" aria-hidden="true" />
                     </button>
                     <button
+                        type="button"
                         onClick={() => setView('board')}
-                        className={`p-1.5 rounded transition-colors ${view === 'board' ? 'bg-bone text-charcoal' : 'text-grey-mid'}`}
+                        aria-pressed={view === 'board'}
+                        className={`p-2 rounded transition-colors ${view === 'board' ? 'bg-bone text-charcoal' : 'text-grey-mid'}`}
                         title="Töfluyfirlit"
                         aria-label="Töfluyfirlit"
                     >
-                        <Layout className="w-4 h-4" />
+                        <Layout className="w-4 h-4" aria-hidden="true" />
                     </button>
                 </div>
             </div>
@@ -244,13 +252,13 @@ export default function TasksPage() {
                 ) : loadError ? (
                     <div role="alert" className="text-center py-12 text-red-700">{loadError}</div>
                 ) : loading ? (
-                    <div className="text-center py-12 text-grey-mid">Hleð verkefnum...</div>
+                    <div role="status" className="text-center py-12 text-grey-mid">Hleð verkefnum...</div>
                 ) : filteredTasks.length === 0 && !showForm ? (
                     <div className="text-center py-24 text-grey-mid border-2 border-dashed border-grey-warm rounded-xl">
-                        <CheckSquare className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                        <h3 className="text-lg font-medium text-charcoal mb-2">Engin verkefni fundust</h3>
+                        <CheckSquare className="w-12 h-12 mx-auto mb-4 opacity-20" aria-hidden="true" />
+                        <h2 className="text-lg font-medium text-charcoal mb-2">Engin verkefni fundust</h2>
                         <p className="mb-6">Búðu til nýtt verkefni til að byrja.</p>
-                        <button onClick={() => setShowForm(true)} className="btn btn-ghost text-primary">
+                        <button type="button" onClick={() => setShowForm(true)} className="btn btn-ghost text-primary">
                             Búa til verkefni
                         </button>
                     </div>
@@ -273,6 +281,6 @@ export default function TasksPage() {
                 )}
             </div>
             <MobileNav />
-        </div>
+        </main>
     );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Plus, X, TrendingDown, TrendingUp } from 'lucide-react';
 import type { BudgetItem, BudgetFrequency, BudgetItemType } from '@/types/models';
 import { validateAmount, parseAmountInput } from '@/components/finance/ledgerUtils';
@@ -10,6 +10,7 @@ interface BudgetFormProps {
 }
 
 export default function BudgetForm({ onSave, onCancel, members = [] }: BudgetFormProps) {
+    const baseId = useId();
     const [type, setType] = useState<BudgetItemType>('expense');
     const [category, setCategory] = useState('');
     const [amount, setAmount] = useState('');
@@ -63,41 +64,44 @@ export default function BudgetForm({ onSave, onCancel, members = [] }: BudgetFor
                 <h3 className="font-serif text-charcoal">
                     {type === 'expense' ? 'Nýr kostnaðarliður' : 'Nýjar tekjur'}
                 </h3>
-                <button type="button" onClick={onCancel} className="text-grey-mid hover:text-charcoal">
-                    <X className="w-5 h-5" />
+                <button type="button" onClick={onCancel} aria-label="Loka" className="p-1 text-grey-mid hover:text-charcoal">
+                    <X className="w-5 h-5" aria-hidden="true" />
                 </button>
             </div>
 
             {/* Type Toggle */}
-            <div className="flex gap-2 mb-4">
+            <div role="group" aria-label="Tegund liðar" className="flex gap-2 mb-4">
                 <button
                     type="button"
+                    aria-pressed={type === 'expense'}
                     onClick={() => setType('expense')}
                     className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${type === 'expense'
                         ? 'bg-red-500 text-white'
                         : 'bg-white text-grey-mid hover:bg-bone'
                         }`}
                 >
-                    <TrendingDown className="w-4 h-4" />
+                    <TrendingDown className="w-4 h-4" aria-hidden="true" />
                     Kostnaður
                 </button>
                 <button
                     type="button"
+                    aria-pressed={type === 'income'}
                     onClick={() => setType('income')}
                     className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${type === 'income'
                         ? 'bg-green-500 text-white'
                         : 'bg-white text-grey-mid hover:bg-bone'
                         }`}
                 >
-                    <TrendingUp className="w-4 h-4" />
+                    <TrendingUp className="w-4 h-4" aria-hidden="true" />
                     Tekjur
                 </button>
             </div>
 
             <div className="grid grid-cols-1 gap-4 mb-4">
                 <div>
-                    <label className="label">Flokkur</label>
+                    <label htmlFor={`${baseId}-category`} className="label">Flokkur</label>
                     <input
+                        id={`${baseId}-category`}
                         type="text"
                         className="input"
                         placeholder={type === 'expense' ? 't.d. Rafmagn' : 't.d. Mánaðargjöld'}
@@ -108,8 +112,9 @@ export default function BudgetForm({ onSave, onCancel, members = [] }: BudgetFor
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="label">Upphæð (kr.)</label>
+                        <label htmlFor={`${baseId}-amount`} className="label">Upphæð (kr.)</label>
                         <input
+                            id={`${baseId}-amount`}
                             type="number"
                             className="input"
                             placeholder="0"
@@ -119,8 +124,9 @@ export default function BudgetForm({ onSave, onCancel, members = [] }: BudgetFor
                         />
                     </div>
                     <div>
-                        <label className="label">Tíðni</label>
+                        <label htmlFor={`${baseId}-frequency`} className="label">Tíðni</label>
                         <select
+                            id={`${baseId}-frequency`}
                             className="input"
                             value={frequency}
                             onChange={(e) => setFrequency(e.target.value as BudgetFrequency)}
@@ -136,8 +142,9 @@ export default function BudgetForm({ onSave, onCancel, members = [] }: BudgetFor
             {/* Co-owner selection for income */}
             {type === 'income' && owners.length > 0 && (
                 <div className="mb-4">
-                    <label className="label">Meðeigandi (valfrjálst)</label>
+                    <label htmlFor={`${baseId}-owner`} className="label">Meðeigandi (valfrjálst)</label>
                     <select
+                        id={`${baseId}-owner`}
                         className="input"
                         value={assignedOwnerId}
                         onChange={(e) => setAssignedOwnerId(e.target.value)}
@@ -161,7 +168,7 @@ export default function BudgetForm({ onSave, onCancel, members = [] }: BudgetFor
 
             <div className="flex justify-end">
                 <button type="submit" className="btn btn-primary">
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                     Bæta við
                 </button>
             </div>

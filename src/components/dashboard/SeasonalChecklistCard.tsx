@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Sparkles, Snowflake, X, ChevronRight } from 'lucide-react';
+import { Loader2, Sparkles, Snowflake, ChevronRight } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
 import type { House } from '@/types/models';
 
 // Stable default: an inline `= []` default parameter would create a new array
@@ -90,40 +91,53 @@ export default function SeasonalChecklistCard({ house, seasonalLogged, onConfirm
                 className="w-full text-left bg-amber/10 border border-amber/20 rounded-2xl p-5 flex items-center gap-4 hover:bg-amber/15 transition-colors"
             >
                 <div className="w-10 h-10 rounded-full bg-amber/20 flex items-center justify-center text-amber-900 flex-shrink-0">
-                    <Icon size={20} />
+                    <Icon size={20} aria-hidden="true" />
                 </div>
                 <div className="flex-1">
                     <h3 className="font-serif font-bold text-[#1a1a1a]">{title}</h3>
                     <p className="text-sm text-stone-600">{description}</p>
                 </div>
-                <ChevronRight size={18} className="text-amber-900 flex-shrink-0" />
+                <ChevronRight size={18} className="text-amber-900 flex-shrink-0" aria-hidden="true" />
             </button>
 
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-6">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center text-amber">
-                                        <Icon size={20} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-serif font-bold text-xl text-[#1a1a1a]">{title}</h3>
-                                        <p className="text-sm text-stone-500">{description}</p>
-                                    </div>
-                                </div>
-                                <button onClick={() => setShowModal(false)} className="text-stone-400 hover:text-[#1a1a1a]">
-                                    <X size={20} />
-                                </button>
-                            </div>
+            <Modal
+                open={showModal}
+                onClose={() => setShowModal(false)}
+                title={title}
+                size="md"
+                dismissible={!loading}
+                footer={
+                    <div className="flex gap-3 w-full">
+                        <button
+                            type="button"
+                            onClick={() => setShowModal(false)}
+                            disabled={loading}
+                            className="flex-1 px-4 py-3 rounded-xl font-bold text-sm text-stone-600 hover:bg-stone-100 transition-colors"
+                        >
+                            Hætta við
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleConfirm}
+                            disabled={loading}
+                            className="flex-1 bg-[#1a1a1a] text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
+                        >
+                            {loading ? <Loader2 size={16} className="motion-safe:animate-spin" aria-hidden="true" /> : <Icon size={16} aria-hidden="true" />}
+                            {cta}
+                        </button>
+                    </div>
+                }
+            >
+                <div>
+                    <div>
+                        <div>
+                            <p className="text-sm text-stone-500 mb-4">{description}</p>
 
                             <div className="space-y-4">
-                                <div className="bg-stone-50 p-4 rounded-xl">
-                                    <p className="text-xs font-bold text-stone-500 uppercase tracking-wide mb-3">
+                                <fieldset className="bg-stone-50 p-4 rounded-xl border-0 m-0 min-w-0">
+                                    <legend className="text-xs font-bold text-stone-500 uppercase tracking-wide p-0 mb-3">
                                         Gátlisti (valfrjálst)
-                                    </p>
+                                    </legend>
                                     <div className="space-y-2">
                                         {items.map((item) => (
                                             <label
@@ -140,30 +154,12 @@ export default function SeasonalChecklistCard({ house, seasonalLogged, onConfirm
                                             </label>
                                         ))}
                                     </div>
-                                </div>
-
-                                <div className="flex gap-3 pt-2">
-                                    <button
-                                        onClick={() => setShowModal(false)}
-                                        disabled={loading}
-                                        className="flex-1 px-4 py-3 rounded-xl font-bold text-sm text-stone-600 hover:bg-stone-100 transition-colors"
-                                    >
-                                        Hætta við
-                                    </button>
-                                    <button
-                                        onClick={handleConfirm}
-                                        disabled={loading}
-                                        className="flex-1 bg-[#1a1a1a] text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        {loading ? <Loader2 size={16} className="animate-spin" /> : <Icon size={16} />}
-                                        {cta}
-                                    </button>
-                                </div>
+                                </fieldset>
                             </div>
                         </div>
                     </div>
                 </div>
-            )}
+            </Modal>
         </>
     );
 }

@@ -44,7 +44,6 @@ export default function PushOptInPrompt({ currentUser }: PushOptInPromptProps) {
         if (Notification.permission !== 'default') return;
         if (visits < MIN_VISITS_BEFORE_PROMPT) return;
 
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setVisible(true);
     }, [currentUser]);
 
@@ -75,11 +74,13 @@ export default function PushOptInPrompt({ currentUser }: PushOptInPromptProps) {
 
     return (
         <div
+            role="region"
+            aria-label="Tilkynningar í símann"
             data-testid="push-opt-in-prompt"
             className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 mb-6 flex items-start gap-4"
         >
-            <div className="w-10 h-10 rounded-full bg-amber/20 text-amber flex items-center justify-center flex-shrink-0">
-                <Bell size={18} />
+            <div className="w-10 h-10 rounded-full bg-amber/20 text-amber-ink flex items-center justify-center flex-shrink-0">
+                <Bell size={18} aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm text-charcoal">Fá tilkynningar í símann?</p>
@@ -88,6 +89,7 @@ export default function PushOptInPrompt({ currentUser }: PushOptInPromptProps) {
                     slæmu veðri fyrir ferðina þína — ekkert spam, bara það sem skiptir máli.
                 </p>
                 <button
+                    type="button"
                     onClick={handleEnable}
                     disabled={requesting}
                     className="btn btn-primary btn-sm mt-3 disabled:opacity-60"
@@ -96,12 +98,13 @@ export default function PushOptInPrompt({ currentUser }: PushOptInPromptProps) {
                 </button>
             </div>
             <button
+                type="button"
                 onClick={handleDismiss}
-                className="text-stone-300 hover:text-stone-500 transition-colors flex-shrink-0"
+                className="p-1 text-stone-500 hover:text-charcoal transition-colors flex-shrink-0"
                 title="Loka"
                 aria-label="Loka"
             >
-                <X size={16} />
+                <X size={16} aria-hidden="true" />
             </button>
         </div>
     );

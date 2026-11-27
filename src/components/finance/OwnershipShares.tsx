@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Percent, Save, ChevronDown, ChevronUp } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -19,6 +19,7 @@ interface OwnershipSharesProps {
  * Never used for usage/nights-based splitting; ownership share only.
  */
 export default function OwnershipShares({ houseId, ownerIds, members, memberShares, onSaved }: OwnershipSharesProps) {
+    const baseId = useId();
     const [expanded, setExpanded] = useState(false);
     const [weights, setWeights] = useState<{ [uid: string]: string }>(() => {
         const initial: { [uid: string]: string } = {};
@@ -71,11 +72,14 @@ export default function OwnershipShares({ houseId, ownerIds, members, memberShar
     return (
         <div className="card">
             <button
+                type="button"
                 onClick={() => setExpanded(!expanded)}
+                aria-expanded={expanded}
+                aria-controls={`${baseId}-panel`}
                 className="w-full flex justify-between items-center"
             >
                 <div className="flex items-center gap-2">
-                    <Percent className="w-5 h-5 text-amber" />
+                    <Percent className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                     <div className="text-left">
                         <h3 className="font-serif text-lg text-charcoal">Eignarhlutir</h3>
                         <p className="text-xs text-grey-mid mt-0.5">
@@ -84,14 +88,14 @@ export default function OwnershipShares({ houseId, ownerIds, members, memberShar
                     </div>
                 </div>
                 {expanded ? (
-                    <ChevronUp className="w-5 h-5 text-grey-mid" />
+                    <ChevronUp className="w-5 h-5 text-grey-mid" aria-hidden="true" />
                 ) : (
-                    <ChevronDown className="w-5 h-5 text-grey-mid" />
+                    <ChevronDown className="w-5 h-5 text-grey-mid" aria-hidden="true" />
                 )}
             </button>
 
             {expanded && (
-                <div className="mt-6 space-y-4">
+                <div id={`${baseId}-panel`} className="mt-6 space-y-4">
                     <p className="text-sm text-grey-mid">
                         Notað til að reikna hlutdeild hvers eiganda í sameiginlegum kostnaði.
                         Sjálfgefið er jöfn skipting (allir með vægi 1).
@@ -100,9 +104,10 @@ export default function OwnershipShares({ houseId, ownerIds, members, memberShar
                     <div className="space-y-3">
                         {ownerIds.map((uid) => (
                             <div key={uid} className="flex items-center justify-between gap-4">
-                                <span className="text-sm font-medium text-charcoal truncate">{nameFor(uid)}</span>
+                                <label htmlFor={`${baseId}-${uid}`} className="text-sm font-medium text-charcoal truncate">{nameFor(uid)}</label>
                                 <div className="flex items-center gap-3 flex-shrink-0">
                                     <input
+                                        id={`${baseId}-${uid}`}
                                         type="number"
                                         min="0"
                                         step="0.1"
@@ -119,13 +124,14 @@ export default function OwnershipShares({ houseId, ownerIds, members, memberShar
                     </div>
 
                     <div className="flex items-center justify-end gap-3 pt-2 border-t border-grey-warm">
-                        {saved && <span className="text-xs text-green-600">Vistað</span>}
+                        {saved && <span role="status" className="text-xs text-green-700">Vistað</span>}
                         <button
+                            type="button"
                             onClick={handleSave}
                             disabled={saving}
                             className="btn btn-primary btn-sm"
                         >
-                            <Save className="w-4 h-4 mr-2" />
+                            <Save className="w-4 h-4 mr-2" aria-hidden="true" />
                             {saving ? 'Vista...' : 'Vista eignarhluti'}
                         </button>
                     </div>

@@ -35,6 +35,17 @@ export default function AddToHomeScreenPrompt({ houseName, onDismiss }: AddToHom
         onDismiss();
     };
 
+    // Escape dismisses the prompt (the notification step first, if open)
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key !== 'Escape') return;
+            if (showNotificationPrompt) setShowNotificationPrompt(false);
+            else onDismiss();
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [showNotificationPrompt, onDismiss]);
+
     // Don't show on desktop
     if (platform === 'desktop' || !platform) {
         return null;
@@ -43,18 +54,20 @@ export default function AddToHomeScreenPrompt({ houseName, onDismiss }: AddToHom
     return (
         <>
             {/* Main Prompt */}
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div role="region" aria-label="Setja á heimaskjá" className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
                 <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
                     <button
+                        type="button"
                         onClick={onDismiss}
-                        className="absolute top-4 right-4 text-grey-mid hover:text-charcoal transition-colors"
+                        aria-label="Loka"
+                        className="absolute top-4 right-4 p-1 text-grey-mid hover:text-charcoal transition-colors"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-5 h-5" aria-hidden="true" />
                     </button>
 
                     <div className="text-center">
                         <div className="w-16 h-16 bg-amber/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Home className="w-10 h-10 text-amber" />
+                            <Home className="w-10 h-10 text-amber-ink" aria-hidden="true" />
                         </div>
                         <h2 className="text-2xl font-serif mb-2">Setja {houseName} á heimaskjá?</h2>
                         <p className="text-grey-mid mb-6">
@@ -124,13 +137,15 @@ export default function AddToHomeScreenPrompt({ houseName, onDismiss }: AddToHom
 
                     <div className="flex flex-col gap-3">
                         <button
+                            type="button"
                             onClick={() => setShowNotificationPrompt(true)}
                             className="btn btn-primary w-full flex items-center justify-center gap-2"
                         >
-                            <Bell className="w-4 h-4" />
+                            <Bell className="w-4 h-4" aria-hidden="true" />
                             Virkja tilkynningar líka
                         </button>
                         <button
+                            type="button"
                             onClick={onDismiss}
                             className="btn btn-ghost w-full"
                         >
@@ -142,18 +157,20 @@ export default function AddToHomeScreenPrompt({ houseName, onDismiss }: AddToHom
 
             {/* Notification Permission Prompt */}
             {showNotificationPrompt && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in">
+                <div role="region" aria-label="Tilkynningar" className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in">
                     <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
                         <button
+                            type="button"
                             onClick={() => setShowNotificationPrompt(false)}
-                            className="absolute top-4 right-4 text-grey-mid hover:text-charcoal transition-colors"
+                            aria-label="Loka"
+                            className="absolute top-4 right-4 p-1 text-grey-mid hover:text-charcoal transition-colors"
                         >
-                            <X className="w-5 h-5" />
+                            <X className="w-5 h-5" aria-hidden="true" />
                         </button>
 
                         <div className="text-center">
                             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Bell className="w-10 h-10 text-blue-600" />
+                                <Bell className="w-10 h-10 text-blue-600" aria-hidden="true" />
                             </div>
                             <h2 className="text-2xl font-serif mb-2">Fá tilkynningar?</h2>
                             <p className="text-grey-mid mb-6">
@@ -163,12 +180,14 @@ export default function AddToHomeScreenPrompt({ houseName, onDismiss }: AddToHom
 
                         <div className="flex flex-col gap-3">
                             <button
+                                type="button"
                                 onClick={handleRequestNotifications}
                                 className="btn btn-primary w-full"
                             >
                                 Virkja tilkynningar
                             </button>
                             <button
+                                type="button"
                                 onClick={() => {
                                     setShowNotificationPrompt(false);
                                     onDismiss();

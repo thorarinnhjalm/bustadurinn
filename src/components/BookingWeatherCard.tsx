@@ -11,6 +11,7 @@ import { getWeatherForecast, shouldShowWeather, getForecastReliability } from '@
 import { WEATHER_ICONS, WEATHER_LABELS_IS } from '@/types/weather';
 import type { WeatherForecast } from '@/types/weather';
 import { getRoadConditions, type RoadCondition } from '@/services/roadService';
+import { logger } from '@/utils/logger';
 
 interface BookingWeatherCardProps {
     bookingId: string;
@@ -50,7 +51,7 @@ export default function BookingWeatherCard({
                 setRoadConditions(roadData);
 
             } catch (err) {
-                console.error('Failed to fetch weather:', err);
+                logger.error('Failed to fetch weather:', err);
                 setError('Gat ekki sótt veðurspá');
             } finally {
                 setLoading(false);
@@ -87,9 +88,9 @@ export default function BookingWeatherCard({
 
     if (loading) {
         return (
-            <div className="relative overflow-hidden rounded-2xl border border-stone-200 bg-gradient-to-br from-stone-50 to-white p-6 shadow-sm">
-                <div className="flex items-center justify-center gap-3 text-stone-400">
-                    <Loader2 className="w-5 h-5 animate-spin" />
+            <div role="status" className="relative overflow-hidden rounded-2xl border border-stone-200 bg-gradient-to-br from-stone-50 to-white p-6 shadow-sm">
+                <div className="flex items-center justify-center gap-3 text-stone-500">
+                    <Loader2 className="w-5 h-5 motion-safe:animate-spin" aria-hidden="true" />
                     <span className="text-sm font-medium">Sæki veðurspá...</span>
                 </div>
             </div>
@@ -118,7 +119,7 @@ export default function BookingWeatherCard({
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <Cloud className="w-5 h-5 text-charcoal/70" />
+                            <Cloud className="w-5 h-5 text-charcoal/70" aria-hidden="true" />
                             <h3 className="text-base font-bold text-charcoal">
                                 Veðurspá {houseName ? `við ${houseName}` : 'fyrir ferðina'}
                             </h3>
@@ -127,7 +128,7 @@ export default function BookingWeatherCard({
                     </div>
                     <div className="text-right">
                         <p className="text-xs text-stone-500 mb-1">
-                            <Calendar className="w-3 h-3 inline mr-1" />
+                            <Calendar className="w-3 h-3 inline mr-1" aria-hidden="true" />
                             {bookingDays} {bookingDays === 1 ? 'dagur' : 'dagar'}
                         </p>
                     </div>
@@ -142,7 +143,7 @@ export default function BookingWeatherCard({
                 {roadConditions.length > 0 && (
                     <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/50 shadow-sm">
                         <h4 className="text-xs font-bold text-stone-600 uppercase tracking-wider mb-2 flex items-center gap-1">
-                            🚗 Vegaastand
+                            <span aria-hidden="true">🚗</span> Vegaastand
                         </h4>
                         <div className="space-y-2">
                             {roadConditions.map((road, idx) => (
@@ -178,27 +179,27 @@ export default function BookingWeatherCard({
                         return (
                             <div
                                 key={idx}
-                                className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-white/60 transition-all duration-300 hover:scale-105"
+                                className="bg-white/70 backdrop-blur-sm rounded-xl p-3 text-center border border-white/60 transition-all duration-300 motion-safe:hover:scale-105"
                             >
                                 <p className="text-xs font-bold text-stone-600 mb-2 capitalize">
                                     {label}
                                 </p>
-                                <div className="text-3xl mb-2">{(WEATHER_ICONS as any)[day.condition]}</div>
+                                <div className="text-3xl mb-2" aria-hidden="true">{(WEATHER_ICONS as any)[day.condition]}</div>
                                 <p className="text-xs text-stone-500 mb-1">{(WEATHER_LABELS_IS as any)[day.condition]}</p>
                                 <div className="flex items-center justify-center gap-1 text-xs font-bold">
                                     <span className="text-stone-700">{Math.round(day.tempHigh)}°</span>
-                                    <span className="text-stone-400">/</span>
+                                    <span className="text-stone-500">/</span>
                                     <span className="text-stone-500">{Math.round(day.tempLow)}°</span>
                                 </div>
                                 {day.precipitation > 0 && (
                                     <div className="flex items-center justify-center gap-1 mt-1 text-xs text-blue-600">
-                                        <Droplets className="w-3 h-3" />
+                                        <Droplets className="w-3 h-3" aria-hidden="true" />
                                         <span>{Math.round(day.precipitation)}mm</span>
                                     </div>
                                 )}
                                 {day.windSpeed > 10 && (
                                     <div className="flex items-center justify-center gap-1 mt-1 text-xs text-slate-600">
-                                        <Wind className="w-3 h-3" />
+                                        <Wind className="w-3 h-3" aria-hidden="true" />
                                         <span>{Math.round(day.windSpeed)} m/s</span>
                                     </div>
                                 )}
@@ -208,7 +209,7 @@ export default function BookingWeatherCard({
                 </div>
 
                 {/* Data source attribution */}
-                <p className="text-[10px] text-stone-400 text-center mt-3">
+                <p className="text-[10px] text-stone-500 text-center mt-3">
                     Gögn frá {forecast.source === 'met.no' ? 'MET Norway' : 'Veður.is'} • Uppfært {new Date(forecast.fetchedAt).toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}
                 </p>
             </div>

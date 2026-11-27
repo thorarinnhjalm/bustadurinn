@@ -34,6 +34,7 @@ import { trackFunnel, consumeOnboardingMark } from '@/utils/funnel';
 import InventoryCard from '@/components/dashboard/InventoryCard';
 import Walkthrough from '@/components/Walkthrough';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import Modal from '@/components/ui/Modal';
 
 // InternalLog does not (yet) declare a structured `kind` field in src/types/models.ts.
 // We add it locally here rather than editing the shared model file (owned by another
@@ -392,8 +393,9 @@ const UserDashboard = () => {
 
     if (appLoading) {
         return (
-            <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+            <div role="status" className="min-h-screen bg-[#FDFCF8] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 motion-safe:animate-spin text-stone-500" aria-hidden="true" />
+                <span className="sr-only">Hleð…</span>
             </div>
         );
     }
@@ -409,6 +411,7 @@ const UserDashboard = () => {
                         Ekki tókst að hlaða húsinu þínu. Reyndu aftur eða hafðu samband ef vandinn heldur áfram.
                     </p>
                     <button
+                        type="button"
                         onClick={() => window.location.reload()}
                         className="btn btn-primary"
                     >
@@ -424,8 +427,9 @@ const UserDashboard = () => {
 
     if (dashboardLoading) {
         return (
-            <div className="min-h-screen bg-[#FDFCF8] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+            <div role="status" className="min-h-screen bg-[#FDFCF8] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 motion-safe:animate-spin text-stone-500" aria-hidden="true" />
+                <span className="sr-only">Hleð…</span>
             </div>
         );
     }
@@ -608,7 +612,7 @@ const UserDashboard = () => {
                 created_at: serverTimestamp()
             });
         } catch (error) {
-            // console.* is stripped from production builds, so a failure here
+            // Production builds drop raw console output, so a failure here
             // was previously invisible — the button simply did nothing. Rethrow
             // so the card can tell the user something went wrong.
             logger.error('Error recording gas cylinder change:', error);
@@ -820,8 +824,8 @@ const UserDashboard = () => {
                 <div className="relative h-64 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50" style={{ minHeight: '256px' }}>
                     <img
                         src={currentHouse?.image_url || "/hero_summer_house.jpg"}
-                        alt={currentHouse?.name || "Cabin"}
-                        className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-1000"
+                        alt={currentHouse?.name ? `Mynd af ${currentHouse.name}` : "Mynd af bústaðnum"}
+                        className="w-full h-full object-cover transform motion-safe:hover:scale-105 transition-transform duration-1000"
                         fetchPriority="high"
                         loading="eager"
                         decoding="async"
@@ -833,21 +837,24 @@ const UserDashboard = () => {
                     {/* Gallery Preview Button */}
                     <div className="absolute top-6 right-6 flex flex-col gap-2 items-end">
                         {currentUser && (currentUser.uid === currentHouse?.manager_id || currentHouse?.owner_ids?.includes(currentUser.uid)) && (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); navigate('/settings?tab=house'); }}
+                            <Link
+                                to="/settings?tab=house"
+                                aria-label="Breyta mynd"
                                 className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/20 transition-all flex items-center gap-2"
                             >
-                                <Camera size={14} />
+                                <Camera size={14} aria-hidden="true" />
                                 <span className="hidden sm:inline">Breyta mynd</span>
-                            </button>
+                            </Link>
                         )}
 
                         {currentHouse?.gallery_urls && currentHouse.gallery_urls.length > 0 && (
                             <button
+                                type="button"
                                 onClick={() => setSelectedGalleryImage(currentHouse.image_url || currentHouse.gallery_urls![0])}
+                                aria-label={`Skoða myndasafn (${currentHouse.gallery_urls.length + (currentHouse.image_url ? 1 : 0)})`}
                                 className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/20 transition-all flex items-center gap-2"
                             >
-                                <ImageIcon size={14} />
+                                <ImageIcon size={14} aria-hidden="true" />
                                 <span className="hidden sm:inline">Skoða myndasafn ({currentHouse.gallery_urls.length + (currentHouse.image_url ? 1 : 0)})</span>
                             </button>
                         )}
@@ -865,17 +872,17 @@ const UserDashboard = () => {
                                     return 'Góða kvöldið';
                                 })()}
                             </p>
-                            <h2 className="text-4xl md:text-5xl font-serif font-bold mb-2 text-white/95">
+                            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-2 text-white/95">
                                 {currentUser?.name?.split(' ')[0] || 'Gestur'}
-                            </h2>
+                            </h1>
                             <div className="flex items-center gap-4 text-stone-300 text-sm font-medium">
                                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-                                    <Sun size={16} className="text-amber" />
+                                    <Sun size={16} className="text-amber" aria-hidden="true" />
                                     <span>{weather.temp}°</span>
-                                    <span className="text-stone-400">|</span>
+                                    <span className="text-stone-400" aria-hidden="true">|</span>
                                     <span>{weather.wind} m/s</span>
                                 </div>
-                                <span className="hidden md:inline text-stone-400">•</span>
+                                <span className="hidden md:inline text-stone-400" aria-hidden="true">•</span>
                                 <span className="hidden md:inline capitalize">{weather.condition}</span>
                             </div>
                         </div>
@@ -884,15 +891,15 @@ const UserDashboard = () => {
                         <div className="self-start md:self-end mb-1">
                             {isOccupied ? (
                                 <div className="bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 text-emerald-100 px-4 py-2 rounded-xl flex items-center gap-2.5 shadow-lg">
-                                    <div className="relative flex h-2.5 w-2.5">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <div className="relative flex h-2.5 w-2.5" aria-hidden="true">
+                                        <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                                     </div>
                                     <span className="text-xs font-bold uppercase tracking-widest leading-none">Húsið er í notkun</span>
                                 </div>
                             ) : (
                                 <div className="bg-white/10 backdrop-blur-md border border-white/20 text-stone-200 px-4 py-2 rounded-xl flex items-center gap-2.5 shadow-lg">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-stone-400"></div>
+                                    <div className="w-2.5 h-2.5 rounded-full bg-stone-400" aria-hidden="true"></div>
                                     <span className="text-xs font-bold uppercase tracking-widest leading-none">Laust núna</span>
                                 </div>
                             )}
@@ -926,18 +933,19 @@ const UserDashboard = () => {
 
                 {/* Quick Actions Bar */}
                 <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-100 flex p-1.5 gap-2">
-                    <button
-                        onClick={() => navigate('/calendar')}
+                    <Link
+                        to="/calendar"
                         className="flex-1 bg-[#1a1a1a] text-white py-4 rounded-xl font-bold text-sm hover:bg-stone-800 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 group relative overflow-hidden"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-r from-stone-800 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="w-8 h-8 md:w-6 md:h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-amber group-hover:text-[#1a1a1a] transition-colors relative z-10">
+                        <div className="absolute inset-0 bg-gradient-to-r from-stone-800 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true"></div>
+                        <div className="w-8 h-8 md:w-6 md:h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-amber group-hover:text-[#1a1a1a] transition-colors relative z-10" aria-hidden="true">
                             <Plus size={16} />
                         </div>
                         <span className="relative z-10">Bóka helgi</span>
-                    </button>
+                    </Link>
 
                     <button
+                        type="button"
                         onClick={async () => {
                             if (!currentHouse || !currentUser) return;
                             if (isCheckedIn) {
@@ -977,7 +985,7 @@ const UserDashboard = () => {
                             : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50 hover:border-stone-300'
                             } `}
                     >
-                        <div className={`w-8 h-8 md:w-6 md:h-6 rounded-full flex items-center justify-center transition-colors ${isCheckedIn ? 'bg-black/10' : 'bg-stone-100'} `}>
+                        <div aria-hidden="true" className={`w-8 h-8 md:w-6 md:h-6 rounded-full flex items-center justify-center transition-colors ${isCheckedIn ? 'bg-black/10' : 'bg-stone-100'} `}>
                             {isCheckedIn ? <LogOut size={16} /> : <Home size={16} />}
                         </div>
                         <span>{isCheckedIn ? 'Skrá brottför' : 'Skrá komu'}</span>
@@ -1000,8 +1008,8 @@ const UserDashboard = () => {
                 {/* Last Checkout Checklist Strip */}
                 {lastCheckoutChecklist && (
                     lastCheckoutChecklist.allChecked ? (
-                        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2.5 rounded-xl text-xs font-medium">
-                            Síðasta brottför: allt staðfest ✓
+                        <div role="status" className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2.5 rounded-xl text-xs font-medium">
+                            Síðasta brottför: allt staðfest <span aria-hidden="true">✓</span>
                         </div>
                     ) : (
                         <div className="bg-amber/10 border border-amber/20 text-amber-900 px-4 py-2.5 rounded-xl text-xs font-medium">
@@ -1015,7 +1023,7 @@ const UserDashboard = () => {
                     <div className="bg-amber/10 border border-amber/20 rounded-2xl p-6 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-amber/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
                         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-4">
-                            <div className="w-10 h-10 bg-amber rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber/20">
+                            <div className="w-10 h-10 bg-amber rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber/20" aria-hidden="true">
                                 <MapPin size={24} className="text-[#1a1a1a]" />
                             </div>
                             <div className="flex-1">
@@ -1024,12 +1032,12 @@ const UserDashboard = () => {
                                     Til þess að fá <strong>veðurspá</strong>, nákvæma <strong>staðsetningu á korti</strong> og leiðbeiningar fyrir gesti þarf að skrá heimilisfang hússins.
                                 </p>
                             </div>
-                            <button
-                                onClick={() => navigate('/settings?tab=house')}
+                            <Link
+                                to="/settings?tab=house"
                                 className="bg-[#1a1a1a] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-stone-800 transition-all whitespace-nowrap shadow-lg"
                             >
                                 Skrá heimilisfang
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 )}
@@ -1040,28 +1048,32 @@ const UserDashboard = () => {
                     {(!currentHouse?.privacy_hide_finances ||
                         currentHouse?.manager_id === currentUser?.uid ||
                         currentHouse?.finance_viewer_ids?.includes(currentUser?.uid || '')) && (
-                            <section onClick={() => navigate('/finance')} className="group cursor-pointer">
+                            <section className="group relative cursor-pointer">
                                 <div className="flex justify-between items-center mb-4 px-1">
                                     <div className="flex items-center gap-2">
                                         <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Hússjóður</h3>
                                         {currentHouse?.privacy_hide_finances && (
-                                            <div title="Aðeins sýnilegt stjórnendum">
-                                                <Shield size={16} className="text-amber" />
+                                            <div role="img" aria-label="Aðeins sýnilegt stjórnendum" title="Aðeins sýnilegt stjórnendum">
+                                                <Shield size={16} className="text-amber-ink" aria-hidden="true" />
                                             </div>
                                         )}
                                     </div>
-                                    <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-[#1a1a1a] group-hover:text-white transition-colors">
-                                        <ChevronRight size={18} />
-                                    </div>
+                                    <Link
+                                        to="/finance"
+                                        aria-label="Opna hússjóð"
+                                        className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 group-hover:bg-[#1a1a1a] group-hover:text-white transition-colors after:absolute after:inset-0 after:z-[15]"
+                                    >
+                                        <ChevronRight size={18} aria-hidden="true" />
+                                    </Link>
                                 </div>
-                                <div className="bg-[#1a1a1a] p-6 rounded-2xl text-white shadow-xl shadow-stone-200 relative overflow-hidden group hover:shadow-2xl hover:scale-[1.01] transition-all duration-300">
+                                <div className="bg-[#1a1a1a] p-6 rounded-2xl text-white shadow-xl shadow-stone-200 relative overflow-hidden group hover:shadow-2xl motion-safe:hover:scale-[1.01] transition-all duration-300">
                                     {/* Decorative Gradients */}
                                     <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-amber/20 to-transparent opacity-50 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
 
                                     <div className="relative z-10">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="p-1.5 bg-white/10 rounded-md">
-                                                <Wallet size={16} className="text-amber" />
+                                                <Wallet size={16} className="text-amber" aria-hidden="true" />
                                             </div>
                                             <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Staða sjóðs</p>
                                         </div>
@@ -1077,7 +1089,14 @@ const UserDashboard = () => {
                                                         <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest">Nýting áætlunar ({budgetPlan.year})</p>
                                                         <p className="text-white text-xs font-bold">{Math.round((finances.actualYTD / (budgetPlan.items.filter(i => i.type !== 'income').reduce((sum, i) => sum + (i.frequency === 'monthly' ? i.estimated_amount * 12 : i.estimated_amount), 0) || 1)) * 100)}%</p>
                                                     </div>
-                                                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                                    <div
+                                                        role="progressbar"
+                                                        aria-label="Nýting áætlunar"
+                                                        aria-valuemin={0}
+                                                        aria-valuemax={100}
+                                                        aria-valuenow={Math.round(Math.min((finances.actualYTD / (budgetPlan.items.filter(i => i.type !== 'income').reduce((sum, i) => sum + (i.frequency === 'monthly' ? i.estimated_amount * 12 : i.estimated_amount), 0) || 1)) * 100, 100))}
+                                                        className="h-1.5 bg-white/10 rounded-full overflow-hidden"
+                                                    >
                                                         <div
                                                             className={`h-full transition-all duration-1000 ${finances.actualYTD > budgetPlan.items.filter(i => i.type !== 'income').reduce((sum, i) => sum + (i.frequency === 'monthly' ? i.estimated_amount * 12 : i.estimated_amount), 0) ? 'bg-red-400' : 'bg-amber'}`}
                                                             style={{ width: `${Math.min((finances.actualYTD / (budgetPlan.items.filter(i => i.type !== 'income').reduce((sum, i) => sum + (i.frequency === 'monthly' ? i.estimated_amount * 12 : i.estimated_amount), 0) || 1)) * 100, 100)}%` }}
@@ -1102,7 +1121,7 @@ const UserDashboard = () => {
                                         ) : (
                                             <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
                                                 <div className="flex items-center gap-3 text-sm">
-                                                    <div className={`w-2 h-2 rounded-full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
+                                                    <div aria-hidden="true" className={`w-2 h-2 rounded-full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-stone-300 text-xs uppercase tracking-wide font-bold mb-0.5">Síðasta færsla</p>
                                                         <p className="text-white font-medium truncate">{finances.lastAction}</p>
@@ -1116,15 +1135,15 @@ const UserDashboard = () => {
                                     {finances.balance === 0 && finances.lastAction === "Ekkert að frétta" && !budgetPlan && (
                                         <div className="absolute inset-0 bg-charcoal/95 backdrop-blur-sm flex items-center justify-center z-20 rounded-2xl">
                                             <div className="text-center p-6">
-                                                <Wallet size={32} className="mx-auto mb-3 text-amber" />
+                                                <Wallet size={32} className="mx-auto mb-3 text-amber" aria-hidden="true" />
                                                 <p className="text-white font-bold mb-2">Engin gögn fundust</p>
                                                 <p className="text-stone-400 text-sm mb-4">Byrjaðu á að bæta við færslu eða gera áætlun</p>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); navigate('/finance'); }}
-                                                    className="px-4 py-2 bg-amber text-charcoal rounded-lg font-bold text-sm hover:bg-amber/90 transition-colors"
+                                                <Link
+                                                    to="/finance"
+                                                    className="inline-block px-4 py-2 bg-amber text-charcoal rounded-lg font-bold text-sm hover:bg-amber/90 transition-colors"
                                                 >
                                                     Opna Hússjóð
-                                                </button>
+                                                </Link>
                                             </div>
                                         </div>
                                     )}
@@ -1134,20 +1153,30 @@ const UserDashboard = () => {
 
                     {/* NEXT BOOKING CARD */}
                     <section
-                        onClick={() => nextBooking && setShowBookingDetailModal(true)}
-                        className={nextBooking ? "group cursor-pointer" : ""}
+                        className={nextBooking ? "group relative cursor-pointer" : ""}
                     >
                         <div className="flex justify-between items-center mb-4 px-1">
                             <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Næst á dagskrá</h3>
-                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-amber group-hover:text-white transition-colors">
-                                <ChevronRight size={18} />
-                            </div>
+                            {nextBooking ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowBookingDetailModal(true)}
+                                    aria-label="Sjá nánari upplýsingar um næstu bókun"
+                                    className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 group-hover:bg-amber group-hover:text-charcoal transition-colors after:absolute after:inset-0 after:z-[15]"
+                                >
+                                    <ChevronRight size={18} aria-hidden="true" />
+                                </button>
+                            ) : (
+                                <div aria-hidden="true" className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500">
+                                    <ChevronRight size={18} />
+                                </div>
+                            )}
                         </div>
                         <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300">
-                            <div className="absolute top-0 left-0 w-1.5 h-full bg-amber"></div>
+                            <div className="absolute top-0 left-0 w-1.5 h-full bg-amber" aria-hidden="true"></div>
 
                             {/* Background Pattern */}
-                            <div className="absolute right-0 top-0 opacity-[0.03] transform translate-x-1/3 -translate-y-1/3 pointer-events-none">
+                            <div className="absolute right-0 top-0 opacity-[0.03] transform translate-x-1/3 -translate-y-1/3 pointer-events-none" aria-hidden="true">
                                 <Calendar size={200} />
                             </div>
 
@@ -1156,8 +1185,8 @@ const UserDashboard = () => {
                                     <>
                                         <div className="flex items-start justify-between mb-6">
                                             <div>
-                                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber/10 text-amber font-bold text-xs rounded-full uppercase tracking-wider mb-3">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-amber animate-pulse"></div>
+                                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber/10 text-amber-ink font-bold text-xs rounded-full uppercase tracking-wider mb-3">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-amber motion-safe:animate-pulse" aria-hidden="true"></div>
                                                     {getDaysUntil(nextBooking.start)}
                                                 </div>
                                                 <h4 className="text-2xl font-serif font-bold text-[#1a1a1a] mb-1">
@@ -1171,7 +1200,7 @@ const UserDashboard = () => {
 
                                         <div className="flex items-center gap-4 pt-4 border-t border-stone-100">
                                             <div className="text-center flex-1">
-                                                <p className="text-[10px] uppercase text-stone-400 font-bold tracking-widest mb-0.5">Nætur</p>
+                                                <p className="text-[10px] uppercase text-stone-500 font-bold tracking-widest mb-0.5">Nætur</p>
                                                 <p className="font-bold text-lg text-[#1a1a1a]">
                                                     {Math.ceil((nextBooking.end.getTime() - nextBooking.start.getTime()) / (1000 * 60 * 60 * 24))}
                                                 </p>
@@ -1180,19 +1209,19 @@ const UserDashboard = () => {
                                     </>
                                 ) : (
                                     <div className="py-8 text-center">
-                                        <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-300">
+                                        <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-300" aria-hidden="true">
                                             <Calendar size={32} />
                                         </div>
                                         <h4 className="font-bold text-lg text-stone-900 mb-2">Ekkert bókað</h4>
                                         <p className="text-stone-500 text-sm mb-6 max-w-[200px] mx-auto">
                                             Það eru engar bókanir framundan. Bústaðurinn er laus!
                                         </p>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); navigate('/calendar'); }}
-                                            className="text-amber font-bold text-sm hover:underline"
+                                        <Link
+                                            to="/calendar"
+                                            className="text-amber-ink font-bold text-sm hover:underline"
                                         >
                                             Bóka helgi núna
-                                        </button>
+                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -1206,15 +1235,15 @@ const UserDashboard = () => {
                             <Link
                                 to="/settings?tab=shopping"
                                 aria-label="Opna innkaupalistann"
-                                className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-amber group-hover:text-white transition-colors"
+                                className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 group-hover:bg-amber group-hover:text-charcoal transition-colors"
                             >
-                                <ChevronRight size={18} />
+                                <ChevronRight size={18} aria-hidden="true" />
                             </Link>
                         </div>
                         <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300 min-h-[200px]">
                             {shoppingItems.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center py-6">
-                                    <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-3">
+                                    <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-3" aria-hidden="true">
                                         <ShoppingCart size={20} />
                                     </div>
                                     <p className="font-bold text-[#1a1a1a]">Allt til alls!</p>
@@ -1224,21 +1253,23 @@ const UserDashboard = () => {
                                 <div className="space-y-3">
                                     {shoppingItems.map(item => (
                                         <div key={item.id} className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 group/item hover:bg-amber/10 transition-colors">
-                                            <div 
-                                                onClick={(e) => handleCheckShoppingItem(e, item)} 
-                                                className="mt-0.5 w-5 h-5 rounded-md border-2 border-stone-300 flex items-center justify-center cursor-pointer hover:border-amber hover:bg-amber/20 transition-colors shrink-0"
+                                            <button
+                                                type="button"
+                                                onClick={(e) => handleCheckShoppingItem(e, item)}
+                                                className="group/check mt-0.5 w-5 h-5 rounded-md border-2 border-stone-400 flex items-center justify-center cursor-pointer hover:border-amber hover:bg-amber/20 transition-colors shrink-0 relative before:absolute before:-inset-1.5 before:content-['']"
                                                 title="Merkja sem keypt"
+                                                aria-label={`Merkja sem keypt: ${item.item}`}
                                             >
-                                                <Check size={14} className="text-amber hidden group-hover/item:block" />
-                                            </div>
+                                                <Check size={14} aria-hidden="true" className="text-amber-ink hidden group-hover/item:block group-focus-visible/check:block [@media(hover:none)]:block" />
+                                            </button>
                                             <div>
                                                 <p className="font-bold text-[#1a1a1a] text-sm leading-tight">{item.item}</p>
-                                                <p className="text-[10px] text-stone-400 mt-0.5">Skráð af {item.added_by_name?.split(' ')[0]}</p>
+                                                <p className="text-[10px] text-stone-500 mt-0.5">Skráð af {item.added_by_name?.split(' ')[0]}</p>
                                             </div>
                                         </div>
                                     ))}
                                     {shoppingItems.length >= 5 && (
-                                        <p className="text-xs text-center text-stone-400 pt-2">... og fleira</p>
+                                        <p className="text-xs text-center text-stone-500 pt-2">... og fleira</p>
                                     )}
                                 </div>
                             )}
@@ -1256,17 +1287,21 @@ const UserDashboard = () => {
                     />
 
                     {/* TASKS */}
-                    <section onClick={() => navigate('/tasks')} className="group cursor-pointer">
+                    <section className="group relative cursor-pointer">
                         <div className="flex justify-between items-center mb-4 px-1">
                             <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Verkefni</h3>
-                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-amber group-hover:text-white transition-colors">
-                                <ChevronRight size={18} />
-                            </div>
+                            <Link
+                                to="/tasks"
+                                aria-label="Opna verkefnalistann"
+                                className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 group-hover:bg-amber group-hover:text-charcoal transition-colors after:absolute after:inset-0 after:z-[15]"
+                            >
+                                <ChevronRight size={18} aria-hidden="true" />
+                            </Link>
                         </div>
                         <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300 min-h-[200px]">
                             {tasks.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center py-6">
-                                    <div className="w-12 h-12 bg-stone-100 text-stone-400 rounded-full flex items-center justify-center mb-3">
+                                    <div className="w-12 h-12 bg-stone-100 text-stone-400 rounded-full flex items-center justify-center mb-3" aria-hidden="true">
                                         <CheckSquare size={20} />
                                     </div>
                                     <p className="font-bold text-[#1a1a1a]">Ekkert á listanum</p>
@@ -1276,9 +1311,12 @@ const UserDashboard = () => {
                                 <div className="space-y-3">
                                     {tasks.map(task => (
                                         <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-colors">
-                                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${task.priority === 'high' || task.priority === 'urgent' ? 'bg-red-500' : 'bg-blue-500'
+                                            <div aria-hidden="true" className={`w-2 h-2 rounded-full flex-shrink-0 ${task.priority === 'high' || task.priority === 'urgent' ? 'bg-red-500' : 'bg-blue-500'
                                                 }`} />
                                             <div className="flex-1 min-w-0">
+                                                {(task.priority === 'high' || task.priority === 'urgent') && (
+                                                    <span className="sr-only">Áríðandi: </span>
+                                                )}
                                                 <p className="font-bold text-[#1a1a1a] text-sm truncate">{task.title}</p>
                                                 <p className="text-[10px] text-stone-500 truncate">
                                                     {task.assigned_to_names && task.assigned_to_names.length > 0
@@ -1316,22 +1354,19 @@ const UserDashboard = () => {
 
             {nextBooking && (
                 <ErrorBoundary fallback={
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-                        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-                            <div className="text-center">
-                                <div className="text-4xl mb-4">⚠️</div>
-                                <h3 className="font-serif font-bold text-xl mb-2">Villa kom upp</h3>
-                                <p className="text-stone-600 mb-4">Ekki tókst að hlaða bókunarglugga</p>
-                                <button
-                                    onClick={() => setShowBookingDetailModal(false)}
-                                    className="btn btn-primary"
-                                >
-                                    Loka
-                                </button>
-                            </div>
+                    <Modal open={showBookingDetailModal} onClose={() => setShowBookingDetailModal(false)} title="Villa kom upp" size="md">
+                        <div className="text-center">
+                            <div className="text-4xl mb-4" aria-hidden="true">⚠️</div>
+                            <p className="text-stone-600 mb-4">Ekki tókst að hlaða bókunarglugga</p>
+                            <button
+                                type="button"
+                                onClick={() => setShowBookingDetailModal(false)}
+                                className="btn btn-primary"
+                            >
+                                Loka
+                            </button>
                         </div>
-                    </div>
+                    </Modal>
                 }>
                     <BookingDetailModal
                         isOpen={showBookingDetailModal}
@@ -1345,22 +1380,19 @@ const UserDashboard = () => {
 
             {showCheckoutModal && (
                 <ErrorBoundary fallback={
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-                        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-                            <div className="text-center">
-                                <div className="text-4xl mb-4">⚠️</div>
-                                <h3 className="font-serif font-bold text-xl mb-2">Villa kom upp</h3>
-                                <p className="text-stone-600 mb-4">Ekki tókst að hlaða útskráningarglugga</p>
-                                <button
-                                    onClick={() => setShowCheckoutModal(false)}
-                                    className="btn btn-primary"
-                                >
-                                    Loka
-                                </button>
-                            </div>
+                    <Modal open={showCheckoutModal} onClose={() => setShowCheckoutModal(false)} title="Villa kom upp" size="md">
+                        <div className="text-center">
+                            <div className="text-4xl mb-4" aria-hidden="true">⚠️</div>
+                            <p className="text-stone-600 mb-4">Ekki tókst að hlaða útskráningarglugga</p>
+                            <button
+                                type="button"
+                                onClick={() => setShowCheckoutModal(false)}
+                                className="btn btn-primary"
+                            >
+                                Loka
+                            </button>
                         </div>
-                    </div>
+                    </Modal>
                 }>
                     <CheckoutModal
                         isOpen={showCheckoutModal}
@@ -1380,22 +1412,19 @@ const UserDashboard = () => {
             )}
             {showCheckInModal && (
                 <ErrorBoundary fallback={
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-                        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-                            <div className="text-center">
-                                <div className="text-4xl mb-4">⚠️</div>
-                                <h3 className="font-serif font-bold text-xl mb-2">Villa kom upp</h3>
-                                <p className="text-stone-600 mb-4">Ekki tókst að hlaða innskráningarglugga</p>
-                                <button
-                                    onClick={() => setShowCheckInModal(false)}
-                                    className="btn btn-primary"
-                                >
-                                    Loka
-                                </button>
-                            </div>
+                    <Modal open={showCheckInModal} onClose={() => setShowCheckInModal(false)} title="Villa kom upp" size="md">
+                        <div className="text-center">
+                            <div className="text-4xl mb-4" aria-hidden="true">⚠️</div>
+                            <p className="text-stone-600 mb-4">Ekki tókst að hlaða innskráningarglugga</p>
+                            <button
+                                type="button"
+                                onClick={() => setShowCheckInModal(false)}
+                                className="btn btn-primary"
+                            >
+                                Loka
+                            </button>
                         </div>
-                    </div>
+                    </Modal>
                 }>
                     <CheckInModal
                         isOpen={showCheckInModal}

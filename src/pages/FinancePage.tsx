@@ -3,8 +3,8 @@
  * Tabs: Rekstraráætlun (Budget) & Bókhald (Ledger)
  */
 
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useId, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     PiggyBank,
     Receipt,
@@ -192,6 +192,21 @@ export default function FinancePage() {
     const isManager = house?.manager_id === currentUser?.uid;
     const canViewFinances = isManager || (house?.finance_viewer_ids?.includes(currentUser?.uid || '') || false);
 
+    // Arrow keys / Home / End move between the tabs (roving tabindex)
+    const handleTabKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        const order: Tab[] = ['budget', 'ledger', 'summary'];
+        const idx = order.indexOf(activeTab);
+        let next = -1;
+        if (e.key === 'ArrowRight') next = (idx + 1) % order.length;
+        else if (e.key === 'ArrowLeft') next = (idx - 1 + order.length) % order.length;
+        else if (e.key === 'Home') next = 0;
+        else if (e.key === 'End') next = order.length - 1;
+        if (next < 0) return;
+        e.preventDefault();
+        setActiveTab(order[next]);
+        document.getElementById(`finance-tab-${order[next]}`)?.focus();
+    };
+
     if (!primaryHouseId) {
         return (
             <div className="min-h-screen bg-bone p-6 pb-24">
@@ -211,25 +226,25 @@ export default function FinancePage() {
     if (house?.privacy_hide_finances && !canViewFinances) {
         return (
             <div className="min-h-screen bg-bone p-6 flex flex-col items-center justify-center text-center">
-                <Shield className="w-16 h-16 text-stone-300 mb-4" />
+                <Shield className="w-16 h-16 text-stone-300 mb-4" aria-hidden="true" />
                 <h2 className="text-xl font-serif font-bold text-charcoal mb-2">Enginn aðgangur</h2>
                 <p className="text-stone-500 mb-6 max-w-sm">Hússtjórn hefur lokað fyrir aðgang að fjármálaupplýsingum fyrir almenna meðeigendur.</p>
-                <button onClick={() => navigate('/dashboard')} className="btn btn-primary">Til baka á stjórnborð</button>
+                <Link to="/dashboard" className="btn btn-primary">Til baka á stjórnborð</Link>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-bone p-6 pb-24">
+        <main className="min-h-screen bg-bone p-6 pb-24">
             {/* Header */}
             <div className="max-w-5xl mx-auto mb-8">
-                <button
-                    onClick={() => navigate('/dashboard')}
-                    className="flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
+                <Link
+                    to="/dashboard"
+                    className="inline-flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
                 >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
                     Til baka
-                </button>
+                </Link>
 
                 <div className="flex justify-between items-end">
                     <div>
@@ -237,8 +252,8 @@ export default function FinancePage() {
                         <p className="text-grey-mid">Umsjón með rekstri og bókhaldi</p>
                     </div>
                     {isManager && (
-                        <button
-                            onClick={() => navigate('/settings?tab=house')}
+                        <Link
+                            to="/settings?tab=house"
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${house?.privacy_hide_finances
                                 ? 'bg-amber/10 text-amber-700 border-amber/20 hover:bg-amber/20'
                                 : 'bg-stone-100 text-stone-500 border-stone-200 hover:bg-stone-200'
@@ -246,16 +261,16 @@ export default function FinancePage() {
                         >
                             {house?.privacy_hide_finances ? (
                                 <>
-                                    <Shield size={14} />
+                                    <Shield size={14} aria-hidden="true" />
                                     <span>Aðeins stjórnendur</span>
                                 </>
                             ) : (
                                 <>
-                                    <Eye size={14} />
+                                    <Eye size={14} aria-hidden="true" />
                                     <span>Sýnilegt öllum</span>
                                 </>
                             )}
-                        </button>
+                        </Link>
                     )}
                 </div>
             </div>
@@ -263,15 +278,21 @@ export default function FinancePage() {
 
             {/* Tabs */}
             <div className="max-w-5xl mx-auto mb-8 border-b border-grey-warm">
-                <div className="flex gap-8">
+                <div role="tablist" aria-label="Hússjóður" className="flex gap-8" onKeyDown={handleTabKeyDown}>
                     <button
+                        type="button"
+                        role="tab"
+                        id="finance-tab-budget"
+                        aria-selected={activeTab === 'budget'}
+                        aria-controls="finance-tabpanel"
+                        tabIndex={activeTab === 'budget' ? 0 : -1}
                         onClick={() => setActiveTab('budget')}
                         className={`pb-4 px-2 font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'budget'
                             ? 'text-charcoal'
                             : 'text-grey-mid hover:text-charcoal'
                             }`}
                     >
-                        <Calculator className="w-5 h-5" />
+                        <Calculator className="w-5 h-5" aria-hidden="true" />
                         Rekstraráætlun
                         {activeTab === 'budget' && (
                             <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber" />
@@ -279,13 +300,19 @@ export default function FinancePage() {
                     </button>
 
                     <button
+                        type="button"
+                        role="tab"
+                        id="finance-tab-ledger"
+                        aria-selected={activeTab === 'ledger'}
+                        aria-controls="finance-tabpanel"
+                        tabIndex={activeTab === 'ledger' ? 0 : -1}
                         onClick={() => setActiveTab('ledger')}
                         className={`pb-4 px-2 font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'ledger'
                             ? 'text-charcoal'
                             : 'text-grey-mid hover:text-charcoal'
                             }`}
                     >
-                        <Receipt className="w-5 h-5" />
+                        <Receipt className="w-5 h-5" aria-hidden="true" />
                         Bókhald
                         {activeTab === 'ledger' && (
                             <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber" />
@@ -293,13 +320,19 @@ export default function FinancePage() {
                     </button>
 
                     <button
+                        type="button"
+                        role="tab"
+                        id="finance-tab-summary"
+                        aria-selected={activeTab === 'summary'}
+                        aria-controls="finance-tabpanel"
+                        tabIndex={activeTab === 'summary' ? 0 : -1}
                         onClick={() => setActiveTab('summary')}
                         className={`pb-4 px-2 font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'summary'
                             ? 'text-charcoal'
                             : 'text-grey-mid hover:text-charcoal'
                             }`}
                     >
-                        <ClipboardList className="w-5 h-5" />
+                        <ClipboardList className="w-5 h-5" aria-hidden="true" />
                         Ársyfirlit
                         {activeTab === 'summary' && (
                             <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber" />
@@ -309,7 +342,7 @@ export default function FinancePage() {
             </div>
 
             {/* Content Area */}
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-5xl mx-auto" role="tabpanel" id="finance-tabpanel" aria-labelledby={`finance-tab-${activeTab}`}>
                 {(houseError || entriesError) && (
                     <div role="alert" className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-sm text-red-700">
                         {entriesError
@@ -370,15 +403,17 @@ export default function FinancePage() {
                     </div>
                 )}
             </div>
-        </div >
+        </main>
     );
 }
 
 function YearSelect({ years, value, onChange }: { years: number[]; value: number; onChange: (year: number) => void }) {
+    const selectId = useId();
     return (
-        <label className="inline-flex items-center gap-2 text-sm text-grey-mid">
+        <label htmlFor={selectId} className="inline-flex items-center gap-2 text-sm text-grey-mid">
             <span>Ár:</span>
             <select
+                id={selectId}
                 className="input w-auto py-1"
                 value={value}
                 onChange={(e) => onChange(Number(e.target.value))}
@@ -512,7 +547,7 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
         return Array.from(new Set(cats)).sort();
     }, [plan]);
 
-    if (loading || loadingPlan) return <div className="p-8 text-center text-grey-mid">Hleð gögnum...</div>;
+    if (loading || loadingPlan) return <div role="status" className="p-8 text-center text-grey-mid">Hleð gögnum...</div>;
 
     return (
         <div className="space-y-6">
@@ -520,7 +555,7 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
             <div className={`card text-white p-4 sm:p-6 ${netPosition >= 0 ? 'bg-charcoal' : 'bg-red-800'}`}>
                 <div className="flex items-start gap-3 sm:gap-4 mb-4">
                     <div className="p-2.5 sm:p-3 bg-white/10 rounded-full flex-shrink-0">
-                        <PiggyBank className="w-5 h-5 sm:w-6 sm:h-6 text-amber" />
+                        <PiggyBank className="w-5 h-5 sm:w-6 sm:h-6 text-amber" aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <h2 className="text-base sm:text-lg font-medium opacity-90 mb-1">Rekstraráætlun {currentYear}</h2>
@@ -559,8 +594,8 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
                     <h3 className="text-lg sm:text-xl font-serif">Kostnaðarliðir</h3>
                     {!showForm && (
-                        <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm w-full sm:w-auto">
-                            <Plus className="w-4 h-4 mr-2" />
+                        <button type="button" onClick={() => setShowForm(true)} className="btn btn-primary btn-sm w-full sm:w-auto">
+                            <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                             Bæta við lið
                         </button>
                     )}
@@ -626,11 +661,12 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
                                             )}
                                         </div>
                                         <button
+                                            type="button"
                                             onClick={() => handleDeleteItem(item)}
-                                            className="sm:opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-opacity touch-manipulation"
-                                            aria-label="Eyða"
+                                            className="sm:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 p-2 text-red-600 hover:text-red-700 transition-opacity touch-manipulation"
+                                            aria-label={`Eyða lið: ${item.category}`}
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Trash2 className="w-4 h-4" aria-hidden="true" />
                                         </button>
                                     </div>
                                 </div>
@@ -820,7 +856,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, allEnt
     // Selected year only.
     const yearTotals = useMemo(() => computeTotals(yearEntries), [yearEntries]);
 
-    if (loading) return <div className="p-8 text-center text-grey-mid">Hleð gögnum...</div>;
+    if (loading) return <div role="status" className="p-8 text-center text-grey-mid">Hleð gögnum...</div>;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -828,7 +864,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, allEnt
             <div className={`col-span-1 md:col-span-3 card text-white p-6 mb-6 ${fund.balance >= 0 ? 'bg-charcoal' : 'bg-red-800'}`}>
                 <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-white/10 rounded-full">
-                        <Wallet className="w-6 h-6 text-amber" />
+                        <Wallet className="w-6 h-6 text-amber" aria-hidden="true" />
                     </div>
                     <div>
                         <h2 className="text-lg font-medium opacity-90">Staða sjóðsins</h2>
@@ -858,13 +894,14 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, allEnt
                     </div>
                     {!showForm && (
                         <button
+                            type="button"
                             onClick={() => {
                                 setEditingEntry(null);
                                 setShowForm(true);
                             }}
                             className="btn btn-primary btn-sm"
                         >
-                            <Plus className="w-4 h-4 mr-2" />
+                            <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                             Skrá færslu
                         </button>
                     )}

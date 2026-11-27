@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     X, ChevronRight, CheckCircle,
     Calendar, CheckSquare, Wallet,
@@ -63,21 +63,47 @@ export default function Walkthrough({ onClose }: WalkthroughProps) {
         onClose();
     };
 
+    // Escape dismisses the walkthrough (same as "Sleppa kynningu")
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                localStorage.setItem('has_seen_walkthrough', 'true');
+                onClose();
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [onClose]);
+
     const step = STEPS[currentStep];
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-charcoal/80 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-300">
+        <div
+            role="region"
+            aria-label="Kynning á Bústaðnum"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-charcoal/80 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in duration-300"
+        >
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative motion-safe:animate-in motion-safe:zoom-in-95 duration-300">
                 {/* Close Button */}
                 <button
+                    type="button"
                     onClick={complete}
-                    className="absolute top-4 right-4 text-stone-400 hover:text-charcoal transition-colors z-10"
+                    aria-label="Loka kynningu"
+                    className="absolute top-4 right-4 p-1 text-stone-500 hover:text-charcoal transition-colors z-10"
                 >
-                    <X size={24} />
+                    <X size={24} aria-hidden="true" />
                 </button>
 
                 {/* Progress Bar */}
-                <div className="flex gap-1 p-1 absolute top-0 left-0 right-0">
+                <div
+                    role="progressbar"
+                    aria-label="Skref í kynningu"
+                    aria-valuemin={1}
+                    aria-valuemax={STEPS.length}
+                    aria-valuenow={currentStep + 1}
+                    aria-valuetext={`Skref ${currentStep + 1} af ${STEPS.length}`}
+                    className="flex gap-1 p-1 absolute top-0 left-0 right-0"
+                >
                     {STEPS.map((_, idx) => (
                         <div
                             key={idx}
@@ -90,37 +116,41 @@ export default function Walkthrough({ onClose }: WalkthroughProps) {
                 <div className="p-8 pt-12 text-center min-h-[400px] flex flex-col items-center">
 
                     {/* Icon Animation */}
-                    <div className="mb-8 relative">
+                    <div className="mb-8 relative" aria-hidden="true">
                         <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 transition-colors duration-500 ${step.color}`}>
                             <step.icon size={48} strokeWidth={1.5} />
                         </div>
                         {/* Ripple Effect */}
-                        <div className={`absolute inset-0 rounded-full opacity-20 animate-ping-slow ${step.color.split(' ')[0]}`}></div>
+                        <div className={`absolute inset-0 rounded-full opacity-20 motion-safe:animate-ping-slow ${step.color.split(' ')[0]}`}></div>
                     </div>
 
-                    <h2 className="text-2xl font-serif font-bold text-charcoal mb-4 transition-all duration-300">
-                        {step.title}
-                    </h2>
+                    <div aria-live="polite" className="flex flex-col items-center">
+                        <h2 className="text-2xl font-serif font-bold text-charcoal mb-4 transition-all duration-300">
+                            {step.title}
+                        </h2>
 
-                    <p className="text-stone-500 leading-relaxed mb-8 max-w-sm transition-all duration-300">
-                        {step.description}
-                    </p>
+                        <p className="text-stone-500 leading-relaxed mb-8 max-w-sm transition-all duration-300">
+                            {step.description}
+                        </p>
+                    </div>
 
                     <div className="mt-auto w-full space-y-3">
                         <button
+                            type="button"
                             onClick={handleNext}
                             className="btn btn-primary w-full py-3 text-lg flex items-center justify-center gap-2 group"
                         >
                             {currentStep === STEPS.length - 1 ? 'Byrja að nota' : 'Áfram'}
                             {currentStep !== STEPS.length - 1 && (
-                                <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                <ChevronRight size={18} aria-hidden="true" className="motion-safe:group-hover:translate-x-1 transition-transform" />
                             )}
                         </button>
 
                         {currentStep < STEPS.length - 1 && (
                             <button
+                                type="button"
                                 onClick={complete}
-                                className="text-sm font-bold text-stone-400 hover:text-charcoal"
+                                className="text-sm font-bold text-stone-500 hover:text-charcoal"
                             >
                                 Sleppa kynningu
                             </button>

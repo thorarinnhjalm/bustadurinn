@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Plus, X, Calendar } from 'lucide-react';
 import type { LedgerEntry, LedgerType } from '@/types/models';
 import { toDateInputValue, fromDateInputValue } from '@/components/finance/dateInput';
@@ -16,6 +16,7 @@ interface LedgerFormProps {
 }
 
 export default function LedgerForm({ onSave, onCancel, budgetCategories = [], initialValues, houseMembers = [] }: LedgerFormProps) {
+    const baseId = useId();
     const [type, setType] = useState<LedgerType>(initialValues?.type || 'expense');
     const [amount, setAmount] = useState(initialValues?.amount?.toString() || '');
     const [category, setCategory] = useState(initialValues?.category || '');
@@ -69,15 +70,16 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
         <form onSubmit={handleSubmit} className="bg-bone p-4 rounded-lg border border-grey-warm mb-6">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="font-serif text-charcoal">{initialValues?.id ? 'Breyta færslu' : 'Ný færsla'}</h3>
-                <button type="button" onClick={onCancel} aria-label="Loka" className="text-grey-mid hover:text-charcoal">
-                    <X className="w-5 h-5" />
+                <button type="button" onClick={onCancel} aria-label="Loka" className="p-1 text-grey-mid hover:text-charcoal">
+                    <X className="w-5 h-5" aria-hidden="true" />
                 </button>
             </div>
 
             {/* Type Toggle */}
-            <div className="flex gap-2 mb-4 p-1 bg-white/50 rounded-lg w-fit">
+            <div role="group" aria-label="Tegund færslu" className="flex gap-2 mb-4 p-1 bg-white/50 rounded-lg w-fit">
                 <button
                     type="button"
+                    aria-pressed={type === 'expense'}
                     onClick={() => setType('expense')}
                     className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${type === 'expense'
                         ? 'bg-charcoal text-white shadow-sm'
@@ -88,6 +90,7 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
                 </button>
                 <button
                     type="button"
+                    aria-pressed={type !== 'expense'}
                     onClick={() => setType('income')}
                     className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${type !== 'expense'
                         ? 'bg-green-600 text-white shadow-sm'
@@ -100,21 +103,23 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label className="label">Dagsetning</label>
+                    <label htmlFor={`${baseId}-date`} className="label">Dagsetning</label>
                     <div className="relative">
                         <input
+                            id={`${baseId}-date`}
                             type="date"
                             className="input w-full"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
                             required
                         />
-                        <Calendar className="w-4 h-4 text-grey-mid absolute right-3 top-3 pointer-events-none" />
+                        <Calendar className="w-4 h-4 text-grey-mid absolute right-3 top-3 pointer-events-none" aria-hidden="true" />
                     </div>
                 </div>
                 <div>
-                    <label className="label">Upphæð (kr.)</label>
+                    <label htmlFor={`${baseId}-amount`} className="label">Upphæð (kr.)</label>
                     <input
+                        id={`${baseId}-amount`}
                         type="number"
                         className="input"
                         placeholder="0"
@@ -124,8 +129,9 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
                     />
                 </div>
                 <div>
-                    <label className="label">Flokkur</label>
+                    <label htmlFor={`${baseId}-category`} className="label">Flokkur</label>
                     <input
+                        id={`${baseId}-category`}
                         type="text"
                         className="input"
                         list="category-list"
@@ -141,8 +147,9 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
                     </datalist>
                 </div>
                 <div>
-                    <label className="label">Lýsing (valfrjálst)</label>
+                    <label htmlFor={`${baseId}-description`} className="label">Lýsing (valfrjálst)</label>
                     <input
+                        id={`${baseId}-description`}
                         type="text"
                         className="input"
                         placeholder="Nánari skýring..."
@@ -155,17 +162,18 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
             {/* Split / Member Selection (Mostly relevant for Income/Innborgun) */}
             {houseMembers.length > 0 && (
                 <div className="mb-4 pt-4 border-t border-grey-warm/50">
-                    <label className="label mb-2 block">
+                    <p id={`${baseId}-split-label`} className="label mb-2 block">
                         {type === 'income' ? 'Hver greiddi inn?' : 'Hver stofnaði til kostnaðar?'}
-                    </label>
-                    <div className="flex flex-wrap gap-2">
+                    </p>
+                    <div role="group" aria-labelledby={`${baseId}-split-label`} className="flex flex-wrap gap-2">
                         {houseMembers.map(member => (
                             <button
                                 key={member.uid}
                                 type="button"
+                                aria-pressed={splitUsers.includes(member.uid)}
                                 onClick={() => toggleSplitUser(member.uid)}
-                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${splitUsers.includes(member.uid)
-                                    ? 'bg-amber text-white border-amber'
+                                className={`px-3 py-2 rounded-full text-xs font-medium border transition-all ${splitUsers.includes(member.uid)
+                                    ? 'bg-amber text-charcoal border-amber'
                                     : 'bg-white text-stone-600 border-stone-200 hover:border-amber'
                                     }`}
                             >
@@ -174,7 +182,7 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
                         ))}
                     </div>
                     {splitUsers.length === 0 && (
-                        <p className="text-xs text-stone-400 mt-1 italic">
+                        <p className="text-xs text-stone-500 mt-1 italic">
                             Ef enginn er valinn skráist þetta á þig ({'núverandi notandi'}).
                         </p>
                     )}
@@ -187,7 +195,7 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
 
             <div className="flex justify-end">
                 <button type="submit" className="btn btn-primary">
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                     Skrá færslu
                 </button>
             </div>

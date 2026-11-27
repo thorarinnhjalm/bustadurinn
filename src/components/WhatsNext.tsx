@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Calendar, Users, Link2, ChevronRight, Sparkles } from 'lucide-react';
 import type { House, User } from '@/types/models';
 
@@ -19,8 +19,6 @@ interface Nudge {
 }
 
 export default function WhatsNext({ house, currentUser, bookingsCount, membersCount }: WhatsNextProps) {
-    const navigate = useNavigate();
-
     if (!house || !currentUser) return null;
 
     // Calculate what's done
@@ -70,7 +68,7 @@ export default function WhatsNext({ house, currentUser, bookingsCount, membersCo
     return (
         <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 mb-6">
             <div className="flex items-center gap-2 mb-4">
-                <Sparkles size={18} className="text-amber" />
+                <Sparkles size={18} aria-hidden="true" className="text-amber-ink" />
                 <h3 className="font-serif font-bold text-lg text-charcoal">
                     Næstu skref
                 </h3>
@@ -78,20 +76,20 @@ export default function WhatsNext({ house, currentUser, bookingsCount, membersCo
 
             <div className="space-y-3">
                 {nudges.slice(0, 2).map(nudge => (
-                    <button
+                    <Link
                         key={nudge.id}
-                        onClick={() => navigate(nudge.link)}
+                        to={nudge.link}
                         className="w-full flex items-center gap-4 p-3 rounded-xl border border-stone-100 hover:border-amber/30 hover:bg-amber/5 transition-all group text-left"
                     >
                         <div className={`w-10 h-10 rounded-full ${nudge.color} flex items-center justify-center flex-shrink-0`}>
-                            <nudge.icon size={18} />
+                            <nudge.icon size={18} aria-hidden="true" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="font-bold text-sm text-charcoal">{nudge.title}</p>
                             <p className="text-xs text-stone-500 truncate">{nudge.description}</p>
                         </div>
-                        <ChevronRight size={16} className="text-stone-300 group-hover:text-amber transition-colors flex-shrink-0" />
-                    </button>
+                        <ChevronRight size={16} aria-hidden="true" className="text-stone-300 group-hover:text-amber-ink transition-colors flex-shrink-0" />
+                    </Link>
                 ))}
             </div>
         </div>

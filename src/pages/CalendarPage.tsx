@@ -4,15 +4,15 @@
  * Supports multiple languages and highlights Icelandic holidays
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useId, useMemo } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css'; // Add base styles
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { is } from 'date-fns/locale';
-import { Plus, X, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock, Trash2, Check } from 'lucide-react';
+import { Plus, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock, Trash2, Check } from 'lucide-react';
 import { collection, query, getDocs, doc, getDoc, limit, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import type { Booking, BookingType, House } from '@/types/models';
@@ -26,6 +26,7 @@ import { logger } from '@/utils/logger';
 import { toDateInputValue, fromDateInputValue } from '@/utils/localDate';
 import MobileNav from '@/components/MobileNav';
 import EmptyState from '@/components/EmptyState';
+import Modal from '@/components/ui/Modal';
 import HolidayFairnessPanel from '@/components/calendar/HolidayFairnessPanel';
 import confetti from 'canvas-confetti';
 
@@ -51,27 +52,31 @@ const CustomToolbar = ({ label, onNavigate }: CustomToolbarProps) => {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <button
+                        type="button"
                         className="p-2 h-10 w-10 rounded-full flex items-center justify-center border border-stone-300 hover:bg-stone-100 bg-white shadow-md active:scale-95 transition-all"
                         onClick={() => onNavigate('PREV')}
-                        aria-label="Fyrri"
+                        aria-label="Fyrra tímabil"
                     >
-                        <ChevronLeft className="w-6 h-6 text-stone-800" />
+                        <ChevronLeft className="w-6 h-6 text-stone-800" aria-hidden="true" />
                     </button>
                     <button
+                        type="button"
                         className="p-2 h-10 w-10 rounded-full flex items-center justify-center border border-stone-300 hover:bg-stone-100 bg-white shadow-md active:scale-95 transition-all"
                         onClick={() => onNavigate('NEXT')}
-                        aria-label="Næsti"
+                        aria-label="Næsta tímabil"
                     >
-                        <ChevronRight className="w-6 h-6 text-stone-800" />
+                        <ChevronRight className="w-6 h-6 text-stone-800" aria-hidden="true" />
                     </button>
-                    <h2 className="text-xl font-serif font-bold text-charcoal ml-2 capitalize">
+                    <h2 aria-live="polite" className="text-xl font-serif font-bold text-charcoal ml-2 capitalize">
                         {label}
                     </h2>
                 </div>
 
                 <button
+                    type="button"
                     className="btn btn-secondary text-sm hidden md:flex"
                     onClick={() => onNavigate('TODAY')}
+                    aria-label="Fara á daginn í dag"
                 >
                     Í dag
                 </button>
@@ -141,7 +146,7 @@ const BookingCard = ({ booking, onClick, getTypeLabel }: {
 
             {/* Date Range - Prominent */}
             <div className="flex items-center gap-2 mb-2 bg-stone-50 rounded-lg p-3">
-                <CalendarIcon className="w-5 h-5 text-amber flex-shrink-0" />
+                <CalendarIcon className="w-5 h-5 text-amber-ink flex-shrink-0" aria-hidden="true" />
                 <span className="text-base font-semibold text-stone-700">
                     {formatDateRange(booking.start, booking.end)}
                 </span>
@@ -155,8 +160,8 @@ const BookingCard = ({ booking, onClick, getTypeLabel }: {
 
             {/* Created date */}
             {booking.created_at && (
-                <div className="flex items-center text-xs text-stone-400 mt-2">
-                    <Clock className="w-3 h-3 mr-1" />
+                <div className="flex items-center text-xs text-stone-500 mt-2">
+                    <Clock className="w-3 h-3 mr-1" aria-hidden="true" />
                     Bókað: {booking.created_at.toLocaleDateString('is-IS', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </div>
             )}
@@ -212,9 +217,9 @@ const BookingsListView = ({
     if (upcoming.length === 0) {
         return (
             <div className="text-center py-12 bg-stone-50 rounded-lg border border-stone-200">
-                <CalendarIcon className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+                <CalendarIcon className="w-12 h-12 text-stone-300 mx-auto mb-3" aria-hidden="true" />
                 <p className="text-stone-500 font-medium">Engar framtíðarbókanir</p>
-                <p className="text-sm text-stone-400 mt-1">Gamlari bókanir eru ekki sýndar í þessum lista.</p>
+                <p className="text-sm text-stone-500 mt-1">Gamlari bókanir eru ekki sýndar í þessum lista.</p>
             </div>
         );
     }
@@ -261,7 +266,7 @@ const startOfToday = (): Date => {
 };
 
 export default function CalendarPage() {
-    const navigate = useNavigate();
+    const bookingFormId = useId();
     const { user: currentUser } = useEffectiveUser();
     const currentHouse = useAppStore((state) => state.currentHouse);
     const houseId = currentHouse?.id || currentUser?.house_ids?.[0];
@@ -513,12 +518,14 @@ export default function CalendarPage() {
             setShowModal(false);
             setShowSuccess(true);
 
-            // Confetti celebration!
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
+            // Confetti celebration! (skipped for users who prefer reduced motion)
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
 
             setNewBooking({
                 start: startOfToday(),
@@ -658,28 +665,29 @@ export default function CalendarPage() {
     }, [bookings]);
 
     return (
-        <div className="min-h-screen bg-bone">
+        <main className="min-h-screen bg-bone">
             {/* Header */}
             <div className="bg-white border-b border-grey-warm relative md:sticky md:top-0 z-30 shadow-sm">
                 <div className="container mx-auto px-6 py-6">
                     <div className="flex flex-wrap md:flex-nowrap justify-between items-center gap-4">
                         <div className="w-full md:w-auto">
-                            <button
-                                onClick={() => navigate('/dashboard')}
-                                className="flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
+                            <Link
+                                to="/dashboard"
+                                className="inline-flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
                             >
-                                <ArrowLeft className="w-4 h-4 mr-2" />
+                                <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
                                 Til baka
-                            </button>
+                            </Link>
                             <h1 className="text-3xl font-serif mb-2">Bókunardagatal</h1>
                             <p className="text-grey-mid">Skipulagðu dvöl í sumarhúsinu</p>
                         </div>
                         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                             <button
+                                type="button"
                                 onClick={() => setShowModal(true)}
                                 className="btn btn-primary flex items-center gap-2 whitespace-nowrap"
                             >
-                                <Plus className="w-5 h-5" />
+                                <Plus className="w-5 h-5" aria-hidden="true" />
                                 Ný bókun
                             </button>
                         </div>
@@ -690,8 +698,10 @@ export default function CalendarPage() {
             {/* Calendar */}
             <div className="container mx-auto px-4 py-4 md:px-6 md:py-8 pb-24 md:pb-8">
                 {/* View Toggle - Controls Month vs List View */}
-                <div className="flex p-1 bg-stone-100 rounded-lg mb-4 w-full md:w-auto md:inline-flex">
+                <div role="group" aria-label="Yfirlit dagatals" className="flex p-1 bg-stone-100 rounded-lg mb-4 w-full md:w-auto md:inline-flex">
                     <button
+                        type="button"
+                        aria-pressed={view === 'month'}
                         onClick={() => setView('month')}
                         className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${view === 'month'
                             ? 'bg-white text-charcoal shadow-sm'
@@ -701,6 +711,8 @@ export default function CalendarPage() {
                         Mánuður
                     </button>
                     <button
+                        type="button"
+                        aria-pressed={view === 'agenda'}
                         onClick={() => setView('agenda')}
                         className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${view === 'agenda'
                             ? 'bg-white text-charcoal shadow-sm'
@@ -774,26 +786,26 @@ export default function CalendarPage() {
                 </div>
 
                 {/* Legend */}
-                <div className="mt-6 flex gap-6 justify-center flex-wrap">
+                <div role="group" aria-label="Skýringar á litum" className="mt-6 flex gap-6 justify-center flex-wrap">
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded bg-amber"></div>
+                        <div className="w-4 h-4 rounded bg-amber" aria-hidden="true"></div>
                         <span className="text-sm text-grey-dark">{bookingTypeLabels[language].personal}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded bg-green-500"></div>
+                        <div className="w-4 h-4 rounded bg-green-500" aria-hidden="true"></div>
                         <span className="text-sm text-grey-dark">{bookingTypeLabels[language].rental}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded bg-red-500"></div>
+                        <div className="w-4 h-4 rounded bg-red-500" aria-hidden="true"></div>
                         <span className="text-sm text-grey-dark">{bookingTypeLabels[language].maintenance}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded bg-indigo-500"></div>
+                        <div className="w-4 h-4 rounded bg-indigo-500" aria-hidden="true"></div>
                         <span className="text-sm text-grey-dark">{bookingTypeLabels[language].guest}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fef3c7', border: '1px solid #f59e0b' }}></div>
-                        <span className="text-sm text-grey-dark">🇮🇸 Frídagur</span>
+                        <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fef3c7', border: '1px solid #f59e0b' }} aria-hidden="true"></div>
+                        <span className="text-sm text-grey-dark"><span aria-hidden="true">🇮🇸</span> Frídagur</span>
                     </div>
                 </div>
 
@@ -810,7 +822,7 @@ export default function CalendarPage() {
                 {holidays.length > 0 && (
                     <div className="mt-6 card">
                         <div className="flex items-center gap-2 mb-4">
-                            <CalendarIcon className="w-5 h-5 text-amber" />
+                            <CalendarIcon className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                             <h3 className="text-lg font-serif">Íslenskir frídagar {new Date().getFullYear()}</h3>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
@@ -829,28 +841,46 @@ export default function CalendarPage() {
             </div>
 
             {/* Booking Modal */}
-            {
-                showModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
-                        <div className="bg-white rounded-lg max-w-md w-full p-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-serif">Ný bókun</h2>
-                                <button onClick={() => { setShowModal(false); setConflictWarning(null); }} className="text-grey-mid hover:text-charcoal">
-                                    <X className="w-6 h-6" />
-                                </button>
-                            </div>
-
+            <Modal
+                open={showModal}
+                onClose={() => { setShowModal(false); setConflictWarning(null); }}
+                title="Ný bókun"
+                size="md"
+                dismissible={!loading}
+                footer={
+                    <div className="flex gap-3 w-full">
+                        <button
+                            type="button"
+                            onClick={() => { setShowModal(false); setConflictWarning(null); }}
+                            className="btn btn-ghost flex-1"
+                            disabled={loading}
+                        >
+                            Hætta við
+                        </button>
+                        <button
+                            type="submit"
+                            form={bookingFormId}
+                            className="btn btn-primary flex-1"
+                            disabled={loading}
+                        >
+                            {loading ? 'Bý til...' : 'Búa til bókun'}
+                        </button>
+                    </div>
+                }
+            >
+                <div>
                             {error && (
-                                <div className="bg-red-500/10 border border-red-500 text-red-700 rounded p-4 mb-6 flex items-start gap-3">
-                                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                <div role="alert" className="bg-red-500/10 border border-red-500 text-red-700 rounded p-4 mb-6 flex items-start gap-3">
+                                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
                                     <span className="text-sm">{error}</span>
                                 </div>
                             )}
 
-                            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleCreateBooking(); }}>
+                            <form id={bookingFormId} className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleCreateBooking(); }}>
                                 <div>
-                                    <label className="label">Upphafsdagur</label>
+                                    <label htmlFor={`${bookingFormId}-start`} className="label">Upphafsdagur</label>
                                     <input
+                                        id={`${bookingFormId}-start`}
                                         type="date"
                                         className="input"
                                         value={toDateInputValue(newBooking.start)}
@@ -870,8 +900,9 @@ export default function CalendarPage() {
                                 </div>
 
                                 <div>
-                                    <label className="label">Lokadagur</label>
+                                    <label htmlFor={`${bookingFormId}-end`} className="label">Lokadagur</label>
                                     <input
+                                        id={`${bookingFormId}-end`}
                                         type="date"
                                         className="input"
                                         value={toDateInputValue(newBooking.end)}
@@ -886,8 +917,9 @@ export default function CalendarPage() {
                                 </div>
 
                                 <div>
-                                    <label className="label">Tegund bókunar</label>
+                                    <label htmlFor={`${bookingFormId}-type`} className="label">Tegund bókunar</label>
                                     <select
+                                        id={`${bookingFormId}-type`}
                                         className="input"
                                         value={newBooking.type}
                                         onChange={(e) => setNewBooking({ ...newBooking, type: e.target.value as BookingType })}
@@ -900,8 +932,9 @@ export default function CalendarPage() {
                                 </div>
 
                                 <div>
-                                    <label className="label">Athugasemd (valfrjálst)</label>
+                                    <label htmlFor={`${bookingFormId}-notes`} className="label">Athugasemd (valfrjálst)</label>
                                     <textarea
+                                        id={`${bookingFormId}-notes`}
                                         className="input min-h-[80px]"
                                         placeholder="t.d. Fjölskyldusamkoma, páskahátíð..."
                                         value={newBooking.notes}
@@ -909,107 +942,83 @@ export default function CalendarPage() {
                                     />
                                 </div>
 
-                                <div className="flex gap-3 pt-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => { setShowModal(false); setConflictWarning(null); }}
-                                        className="btn btn-ghost flex-1"
-                                        disabled={loading}
-                                    >
-                                        Hætta við
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="btn btn-primary flex-1"
-                                        disabled={loading}
-                                    >
-                                        {loading ? 'Bý til...' : 'Búa til bókun'}
-                                    </button>
-                                </div>
                             </form>
-                        </div>
-                    </div>
-                )
-            }
+                </div>
+            </Modal>
 
             {/* Conflict Warning Modal - warn instead of hard-block, offer override */}
-            {conflictWarning && conflictWarning.length > 0 && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-[60]">
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-serif">Skörun bókana</h2>
-                            <button onClick={() => setConflictWarning(null)} className="text-grey-mid hover:text-charcoal">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        <div className="bg-amber/10 border border-amber text-amber-800 rounded p-4 mb-4 flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                            <span className="text-sm">Þessi bókun skarast á við:</span>
-                        </div>
-
-                        <div className="space-y-2 mb-6">
-                            {conflictWarning.map((conflict) => (
-                                <div key={conflict.id} className="bg-stone-50 rounded p-3 border border-stone-200">
-                                    <p className="font-medium text-charcoal">{conflict.user_name}</p>
-                                    <p className="text-sm text-stone-500">
-                                        {format(conflict.start, 'd. MMMM yyyy', { locale: is })} - {format(conflict.end, 'd. MMMM yyyy', { locale: is })}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-
-                        <p className="text-sm text-stone-500 mb-4">
-                            Þú getur samt bókað ef þið eruð sammála um að deila húsinu þessa daga.
-                        </p>
-
-                        <div className="flex gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setConflictWarning(null)}
-                                className="btn btn-ghost flex-1"
-                                disabled={loading}
-                            >
-                                Hætta við
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleConfirmConflictingBooking}
-                                className="btn btn-primary flex-1"
-                                disabled={loading}
-                            >
-                                {loading ? 'Bý til...' : 'Bóka samt'}
-                            </button>
-                        </div>
+            <Modal
+                open={!!conflictWarning && conflictWarning.length > 0}
+                onClose={() => setConflictWarning(null)}
+                title="Skörun bókana"
+                size="md"
+                dismissible={!loading}
+                footer={
+                    <div className="flex gap-3 w-full">
+                        <button
+                            type="button"
+                            onClick={() => setConflictWarning(null)}
+                            className="btn btn-ghost flex-1"
+                            disabled={loading}
+                        >
+                            Hætta við
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleConfirmConflictingBooking}
+                            className="btn btn-primary flex-1"
+                            disabled={loading}
+                        >
+                            {loading ? 'Bý til...' : 'Bóka samt'}
+                        </button>
                     </div>
+                }
+            >
+                <div role="alert" className="bg-amber/10 border border-amber text-amber-800 rounded p-4 mb-4 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                    <span className="text-sm">Þessi bókun skarast á við:</span>
                 </div>
-            )}
+
+                <ul className="space-y-2 mb-6 list-none p-0">
+                    {(conflictWarning ?? []).map((conflict) => (
+                        <li key={conflict.id} className="bg-stone-50 rounded p-3 border border-stone-200">
+                            <p className="font-medium text-charcoal">{conflict.user_name}</p>
+                            <p className="text-sm text-stone-500">
+                                {format(conflict.start, 'd. MMMM yyyy', { locale: is })} - {format(conflict.end, 'd. MMMM yyyy', { locale: is })}
+                            </p>
+                        </li>
+                    ))}
+                </ul>
+
+                <p className="text-sm text-stone-500">
+                    Þú getur samt bókað ef þið eruð sammála um að deila húsinu þessa daga.
+                </p>
+            </Modal>
 
             {/* View/Delete Booking Modal */}
-            {selectedBooking && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-serif">Bókun</h2>
-                            <button onClick={() => setSelectedBooking(null)} className="text-grey-mid hover:text-charcoal">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
+            <Modal
+                open={!!selectedBooking}
+                onClose={() => setSelectedBooking(null)}
+                title="Bókun"
+                size="md"
+                dismissible={!loading}
+            >
+                {selectedBooking && (
+                    <div>
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500 text-red-700 rounded p-4 mb-4 flex items-start gap-3">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                            <div role="alert" className="bg-red-500/10 border border-red-500 text-red-700 rounded p-4 mb-4 flex items-start gap-3">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
                                 <span className="text-sm">{error}</span>
                             </div>
                         )}
 
                         <div className="space-y-4 mb-6">
                             <div>
-                                <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Bókað af</label>
+                                <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Bókað af</p>
                                 <p className="text-lg font-medium">{selectedBooking.user_name}</p>
                                 {/* Added Created At Date */}
                                 {selectedBooking.created_at && (
-                                    <p className="text-xs text-stone-400 mt-1">
+                                    <p className="text-xs text-stone-500 mt-1">
                                         Bókað þann: {selectedBooking.created_at.toLocaleDateString('is-IS')}
                                     </p>
                                 )}
@@ -1017,19 +1026,19 @@ export default function CalendarPage() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Frá</label>
+                                    <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Frá</p>
                                     <p>{selectedBooking.start.toLocaleDateString('is-IS')}</p>
                                     <p className="text-sm text-stone-500">{selectedBooking.start.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}</p>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Til</label>
+                                    <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Til</p>
                                     <p>{selectedBooking.end.toLocaleDateString('is-IS')}</p>
                                     <p className="text-sm text-stone-500">{selectedBooking.end.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}</p>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Tegund</label>
+                                <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Tegund</p>
                                 <span className={`inline-block mt-1 px-2 py-1 rounded text-sm font-medium ${selectedBooking.type === 'personal' ? 'bg-amber/10 text-amber-dark' :
                                     selectedBooking.type === 'rental' ? 'bg-green-100 text-green-700' :
                                         selectedBooking.type === 'maintenance' ? 'bg-red-100 text-red-700' :
@@ -1041,7 +1050,7 @@ export default function CalendarPage() {
 
                             {selectedBooking.notes && (
                                 <div>
-                                    <label className="text-xs text-stone-500 uppercase tracking-wider font-bold">Athugasemd</label>
+                                    <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Athugasemd</p>
                                     <p className="text-stone-700 bg-stone-50 p-3 rounded mt-1">{selectedBooking.notes}</p>
                                 </div>
                             )}
@@ -1052,14 +1061,12 @@ export default function CalendarPage() {
                             <div className="pt-4 border-t border-stone-100">
                                 {!showDeleteConfirm ? (
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setShowDeleteConfirm(true);
-                                        }}
+                                        type="button"
+                                        onClick={() => setShowDeleteConfirm(true)}
                                         className="btn bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 w-full flex items-center justify-center gap-2"
                                         disabled={loading}
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                                         Eyða Bókun
                                     </button>
                                 ) : (
@@ -1067,24 +1074,20 @@ export default function CalendarPage() {
                                         <p className="text-sm text-red-600 font-medium mb-3 text-center">Ertu viss um að þú viljir eyða þessari bókun?</p>
                                         <div className="flex gap-3">
                                             <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setShowDeleteConfirm(false);
-                                                }}
+                                                type="button"
+                                                onClick={() => setShowDeleteConfirm(false)}
                                                 className="btn btn-ghost flex-1"
                                                 disabled={loading}
                                             >
                                                 Hætta við
                                             </button>
                                             <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteBooking();
-                                                }}
+                                                type="button"
+                                                onClick={() => handleDeleteBooking()}
                                                 className="btn bg-red-600 text-white hover:bg-red-700 flex-1 flex items-center justify-center gap-2"
                                                 disabled={loading}
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                <Trash2 className="w-4 h-4" aria-hidden="true" />
                                                 {loading ? 'Eyði...' : 'Já, eyða'}
                                             </button>
                                         </div>
@@ -1093,43 +1096,46 @@ export default function CalendarPage() {
                             </div>
                         )}
                     </div>
-                </div>
-            )}
+                )}
+            </Modal>
 
             {/* Success Modal */}
-            {showSuccess && successBooking && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 text-center animate-in zoom-in-95 duration-300 overflow-hidden">
+            <Modal
+                open={showSuccess && !!successBooking}
+                onClose={() => setShowSuccess(false)}
+                title="Bókun staðfest!"
+                size="md"
+                footer={
+                    <button
+                        type="button"
+                        onClick={() => setShowSuccess(false)}
+                        className="w-full px-6 py-3 bg-gradient-to-r from-charcoal to-stone-800 text-white rounded-xl font-bold hover:from-stone-800 hover:to-charcoal transition-all shadow-lg active:scale-[0.98]"
+                    >
+                        Loka
+                    </button>
+                }
+            >
+                {successBooking && (
+                    <div role="status" className="text-center">
                         {/* Success Icon */}
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 pb-6">
-                            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 relative">
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 mb-4">
+                            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 relative" aria-hidden="true">
                                 <Check className="w-10 h-10 text-green-600" strokeWidth={3} />
-                                <div className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-20"></div>
+                                <div className="absolute inset-0 rounded-full bg-green-400 motion-safe:animate-ping opacity-20"></div>
                             </div>
-                            <h3 className="text-2xl font-serif font-bold text-charcoal mb-2">Bókun staðfest! 🎉</h3>
                             <p className="text-stone-600">
                                 <span className="font-bold">{successBooking.user_name}</span>
                                 <br />
                                 {successBooking.start.toLocaleDateString('is-IS', { day: 'numeric', month: 'long' })} - {successBooking.end.toLocaleDateString('is-IS', { day: 'numeric', month: 'long' })}
                             </p>
                         </div>
-
-                        {/* Action Buttons */}
-                        <div className="p-6 bg-white space-y-3">
-                            <p className="text-sm text-stone-500 mb-4">
-                                Staðfesting hefur verið send í tölvupósti til allra meðeigenda
-                            </p>
-                            <button
-                                onClick={() => setShowSuccess(false)}
-                                className="w-full px-6 py-3 bg-gradient-to-r from-charcoal to-stone-800 text-white rounded-xl font-bold hover:from-stone-800 hover:to-charcoal transition-all shadow-lg active:scale-[0.98]"
-                            >
-                                Loka
-                            </button>
-                        </div>
+                        <p className="text-sm text-stone-500">
+                            Staðfesting hefur verið send í tölvupósti til allra meðeigenda
+                        </p>
                     </div>
-                </div>
-            )}
+                )}
+            </Modal>
             <MobileNav />
-        </div >
+        </main>
     );
 }

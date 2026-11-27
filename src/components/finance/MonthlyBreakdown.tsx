@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { ChevronDown, ChevronUp, TrendingUp, TrendingDown } from 'lucide-react';
 import type { BudgetItem } from '@/types/models';
 
@@ -16,6 +16,7 @@ interface MonthData {
 }
 
 export default function MonthlyBreakdown({ budgetItems }: MonthlyBreakdownProps) {
+    const baseId = useId();
     const [isExpanded, setIsExpanded] = useState(false);
 
     // Calculate monthly breakdown
@@ -83,7 +84,10 @@ export default function MonthlyBreakdown({ budgetItems }: MonthlyBreakdownProps)
     return (
         <div className="card">
             <button
+                type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
+                aria-expanded={isExpanded}
+                aria-controls={`${baseId}-panel`}
                 className="w-full flex justify-between items-center"
             >
                 <div>
@@ -93,14 +97,14 @@ export default function MonthlyBreakdown({ budgetItems }: MonthlyBreakdownProps)
                     </p>
                 </div>
                 {isExpanded ? (
-                    <ChevronUp className="w-5 h-5 text-grey-mid" />
+                    <ChevronUp className="w-5 h-5 text-grey-mid" aria-hidden="true" />
                 ) : (
-                    <ChevronDown className="w-5 h-5 text-grey-mid" />
+                    <ChevronDown className="w-5 h-5 text-grey-mid" aria-hidden="true" />
                 )}
             </button>
 
             {isExpanded && (
-                <div className="mt-6 space-y-4">
+                <div id={`${baseId}-panel`} className="mt-6 space-y-4">
                     {/* Year Summary */}
                     <div className="grid grid-cols-3 gap-4 p-4 bg-bone/50 rounded-lg">
                         <div>
@@ -124,48 +128,53 @@ export default function MonthlyBreakdown({ budgetItems }: MonthlyBreakdownProps)
                     </div>
 
                     {/* Monthly Grid */}
-                    <div className="space-y-2">
+                    <div role="table" aria-label="Mánaðarleg sundurliðun áætlunar" className="space-y-4">
+                    <div role="rowgroup" className="space-y-2">
                         {monthlyData.map((data) => (
                             <div
                                 key={data.monthNumber}
+                                role="row"
                                 className="grid grid-cols-5 gap-3 p-3 bg-white rounded hover:bg-bone/30 transition-colors text-sm"
                             >
-                                <div className="font-medium text-charcoal">
+                                <div role="rowheader" className="font-medium text-charcoal">
                                     {data.month}
                                 </div>
-                                <div className="text-right text-green-600">
+                                <div role="cell" className="text-right text-green-600">
                                     +{Math.round(data.income).toLocaleString()}
                                 </div>
-                                <div className="text-right text-red-600">
+                                <div role="cell" className="text-right text-red-600">
                                     -{Math.round(data.expenses).toLocaleString()}
                                 </div>
-                                <div className="text-right font-medium flex items-center justify-end gap-1">
+                                <div role="cell" className="text-right font-medium flex items-center justify-end gap-1">
                                     {data.net >= 0 ? (
                                         <>
-                                            <TrendingUp className="w-3 h-3 text-green-600" />
+                                            <TrendingUp className="w-3 h-3 text-green-600" aria-hidden="true" />
                                             <span className="text-green-600">+{Math.round(data.net).toLocaleString()}</span>
                                         </>
                                     ) : (
                                         <>
-                                            <TrendingDown className="w-3 h-3 text-red-600" />
+                                            <TrendingDown className="w-3 h-3 text-red-600" aria-hidden="true" />
                                             <span className="text-red-600">{Math.round(data.net).toLocaleString()}</span>
                                         </>
                                     )}
                                 </div>
-                                <div className="text-right font-bold text-charcoal">
+                                <div role="cell" className="text-right font-bold text-charcoal">
                                     {Math.round(data.runningBalance).toLocaleString()}
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    {/* Legend */}
-                    <div className="grid grid-cols-5 gap-3 px-3 text-xs text-grey-mid border-t border-grey-warm pt-3">
-                        <div>Mánuður</div>
-                        <div className="text-right">Tekjur</div>
-                        <div className="text-right">Gjöld</div>
-                        <div className="text-right">Nettó</div>
-                        <div className="text-right">Staða</div>
+                    {/* Legend (column headers; sits below the rows visually, exposed as the header row) */}
+                    <div role="rowgroup">
+                    <div role="row" className="grid grid-cols-5 gap-3 px-3 text-xs text-grey-mid border-t border-grey-warm pt-3">
+                        <div role="columnheader">Mánuður</div>
+                        <div role="columnheader" className="text-right">Tekjur</div>
+                        <div role="columnheader" className="text-right">Gjöld</div>
+                        <div role="columnheader" className="text-right">Nettó</div>
+                        <div role="columnheader" className="text-right">Staða</div>
+                    </div>
+                    </div>
                     </div>
 
                     <div className="text-xs text-grey-mid text-center pt-2 border-t border-grey-warm">

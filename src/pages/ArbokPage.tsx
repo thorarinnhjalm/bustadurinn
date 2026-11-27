@@ -10,7 +10,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Printer, Moon, Users, CalendarDays, Sparkles, Quote } from 'lucide-react';
 import { format, getYear } from 'date-fns';
 import { is } from 'date-fns/locale';
@@ -35,7 +35,6 @@ const monthLabel = (month: number) => format(new Date(2000, month, 1), 'MMMM', {
 const dateLabel = (date: Date) => format(date, 'd. MMMM', { locale: is });
 
 export default function ArbokPage() {
-    const navigate = useNavigate();
     const currentHouse = useAppStore((state) => state.currentHouse);
 
     const currentYear = getYear(new Date());
@@ -95,8 +94,9 @@ export default function ArbokPage() {
 
     if (!currentHouse) {
         return (
-            <div className="min-h-screen bg-bone flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-4 border-charcoal border-t-transparent rounded-full" />
+            <div role="status" className="min-h-screen bg-bone flex items-center justify-center">
+                <div aria-hidden="true" className="motion-safe:animate-spin w-8 h-8 border-4 border-charcoal border-t-transparent rounded-full" />
+                <span className="sr-only">Hleð…</span>
             </div>
         );
     }
@@ -117,18 +117,18 @@ export default function ArbokPage() {
     const maxFamilyNights = yearbook?.familyNights[0]?.nights ?? 0;
 
     return (
-        <div className="min-h-screen bg-bone pb-24 arbok-print-bg">
+        <main className="min-h-screen bg-bone pb-24 arbok-print-bg">
             <style>{PRINT_STYLES}</style>
 
             {/* Header */}
             <div className="max-w-4xl mx-auto px-6 pt-6 arbok-no-print">
-                <button
-                    onClick={() => navigate('/dashboard')}
-                    className="flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
+                <Link
+                    to="/dashboard"
+                    className="inline-flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
                 >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
                     Til baka
-                </button>
+                </Link>
 
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <div>
@@ -149,8 +149,8 @@ export default function ArbokPage() {
                                 </option>
                             ))}
                         </select>
-                        <button onClick={() => window.print()} className="btn btn-primary">
-                            <Printer className="w-4 h-4 mr-2" />
+                        <button type="button" onClick={() => window.print()} className="btn btn-primary">
+                            <Printer className="w-4 h-4 mr-2" aria-hidden="true" />
                             Prenta / vista sem PDF
                         </button>
                     </div>
@@ -158,7 +158,8 @@ export default function ArbokPage() {
             </div>
 
             {loading && (
-                <div className="max-w-4xl mx-auto px-6 space-y-6 animate-pulse">
+                <div role="status" className="max-w-4xl mx-auto px-6 space-y-6 motion-safe:animate-pulse">
+                    <span className="sr-only">Hleð…</span>
                     <div className="h-64 bg-stone-200 rounded-lg" />
                     <div className="grid grid-cols-3 gap-4">
                         <div className="h-24 bg-stone-200 rounded-lg" />
@@ -171,7 +172,7 @@ export default function ArbokPage() {
 
             {!loading && hasLoadError && (
                 <div className="max-w-4xl mx-auto px-6 arbok-no-print">
-                    <div className="bg-amber/10 border border-amber/30 rounded-xl p-5">
+                    <div role="alert" className="bg-amber/10 border border-amber/30 rounded-xl p-5">
                         <p className="font-serif font-bold text-charcoal mb-1">
                             Ekki tókst að sækja öll gögn
                         </p>
@@ -230,12 +231,19 @@ export default function ArbokPage() {
                     {/* Big stats */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="arbok-card card text-center">
-                            <Moon className="w-5 h-5 text-amber mx-auto mb-2" />
+                            <Moon className="w-5 h-5 text-amber-ink mx-auto mb-2" aria-hidden="true" />
                             <p className="text-4xl font-serif text-charcoal">{yearbook.totalNights}</p>
                             <p className="text-sm text-grey-mid mt-1">nætur</p>
                             {yearbook.occupancy.availableNights > 0 && (
                                 <div className="mt-3">
-                                    <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                                    <div
+                                        role="progressbar"
+                                        aria-label="Nýting ársins"
+                                        aria-valuenow={Math.round(Math.min(100, yearbook.occupancy.percent))}
+                                        aria-valuemin={0}
+                                        aria-valuemax={100}
+                                        className="h-1.5 bg-stone-100 rounded-full overflow-hidden"
+                                    >
                                         <div
                                             className="h-full bg-amber rounded-full"
                                             style={{
@@ -247,19 +255,19 @@ export default function ArbokPage() {
                                         {Math.round(yearbook.occupancy.percent)}% nýting
                                         {yearbook.occupancy.isPartialYear ? ' það sem af er ári' : ' af árinu'}
                                     </p>
-                                    <p className="text-[11px] text-grey-mid/70">
+                                    <p className="text-[11px] text-grey-mid">
                                         {yearbook.occupancy.occupiedNights} af {yearbook.occupancy.availableNights} nóttum
                                     </p>
                                 </div>
                             )}
                         </div>
                         <div className="arbok-card card text-center">
-                            <CalendarDays className="w-5 h-5 text-amber mx-auto mb-2" />
+                            <CalendarDays className="w-5 h-5 text-amber-ink mx-auto mb-2" aria-hidden="true" />
                             <p className="text-4xl font-serif text-charcoal">{yearbook.totalBookings}</p>
                             <p className="text-sm text-grey-mid mt-1">bókanir</p>
                         </div>
                         <div className="arbok-card card text-center">
-                            <Users className="w-5 h-5 text-amber mx-auto mb-2" />
+                            <Users className="w-5 h-5 text-amber-ink mx-auto mb-2" aria-hidden="true" />
                             <p className="text-4xl font-serif text-charcoal">{yearbook.familyNights.length}</p>
                             <p className="text-sm text-grey-mid mt-1">fjölskyldur</p>
                         </div>
@@ -269,7 +277,7 @@ export default function ArbokPage() {
                     {(yearbook.busiestMonth || yearbook.longestStay || yearbook.firstVisit || yearbook.lastVisit) && (
                         <div className="arbok-card card">
                             <h3 className="text-xl font-serif text-charcoal mb-4 flex items-center gap-2">
-                                <Sparkles className="w-5 h-5 text-amber" />
+                                <Sparkles className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                                 Hápunktar ársins
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -339,7 +347,11 @@ export default function ArbokPage() {
                                             <span className="font-medium text-charcoal">{f.userName}</span>
                                             <span className="text-grey-mid">{f.nights} nætur</span>
                                         </div>
-                                        <div className="h-2.5 bg-stone-100 rounded-full overflow-hidden">
+                                        <div
+                                            role="img"
+                                            aria-label={`${f.userName}: ${f.nights} nætur`}
+                                            className="h-2.5 bg-stone-100 rounded-full overflow-hidden"
+                                        >
                                             <div
                                                 className="h-full bg-amber rounded-full"
                                                 style={{
@@ -360,7 +372,7 @@ export default function ArbokPage() {
                             <div className="space-y-6">
                                 {yearbook.guestbookEntries.map((q) => (
                                     <blockquote key={q.id} className="border-l-2 border-amber pl-4">
-                                        <Quote className="w-4 h-4 text-amber/60 mb-1" />
+                                        <Quote className="w-4 h-4 text-amber/60 mb-1" aria-hidden="true" />
                                         <p className="text-charcoal italic leading-relaxed">&ldquo;{q.message}&rdquo;</p>
                                         <footer className="text-sm text-grey-mid mt-2">
                                             — {q.author}, {dateLabel(q.date)}
@@ -388,6 +400,6 @@ export default function ArbokPage() {
             <div className="arbok-no-print">
                 <MobileNav />
             </div>
-        </div>
+        </main>
     );
 }
