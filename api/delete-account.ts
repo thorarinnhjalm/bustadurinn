@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getAuth } from './utils/firebaseAdmin.js';
-import { isSuperAdminRole } from './utils/apiAuth.js';
+import { admin, getAuth } from './utils/firebaseAdmin.js';
+import { isAdminIdentity } from './utils/apiAuth.js';
 import {
     MembershipError,
     beginMembershipRequest,
@@ -22,9 +22,16 @@ import {
  * stays) and 500 is returned so the user can retry; the whole flow is
  * idempotent.
  *
+ * Organizations: if the caller is the only admin of any organization the
+ * request is refused (409 sole_org_admin) before anything is changed.
+ * Otherwise the uid is removed from every organization's admin_user_ids and
+ * each organization's members/{uid} doc is deleted (member doc ids are uids; found by
+ * listing organizations, so no collection-group index is needed).
+ *
  * Responses: 200 { success: true }
  * Errors: { error, code }
  *   400 invalid_request
+ *   409 sole_org_admin
  *   401 reauth_required (sign in again, then retry)
  *   403 super_admin_forbidden
  *   500 internal
@@ -41,6 +48,24 @@ async function deleteUserNotifications(db: FirebaseFirestore.Firestore, uid: str
         snap.docs.forEach((d) => batch.delete(d.ref));
         await batch.commit();
         if (snap.size < 400) return;
+    }
+}
+
+/** Remove the uid from org admin lists and delete its member docs in every organization. */
+async function cleanupOrganizations(
+    db: FirebaseFirestore.Firestore,
+    uid: string,
+    adminOrgs: FirebaseFirestore.QueryDocumentSnapshot[]
+): Promise<void> {
+    for (const org of adminOrgs) {
+        await org.ref.update({ admin_user_ids: admin.firestore.FieldValue.arrayRemove(uid) });
+    }
+    // Member doc id == uid, so address it directly in each organization.
+    const orgRefs = await db.collection('organizations').listDocuments();
+    for (let i = 0; i < orgRefs.length; i += 400) {
+        const batch = db.batch();
+        orgRefs.slice(i, i + 400).forEach((ref) => batch.delete(ref.collection('members').doc(uid)));
+        await batch.commit();
     }
 }
 
@@ -64,8 +89,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             db.collection('user_roles').doc(uid).get(),
             db.collection('users').doc(uid).get(),
         ]);
-        if (roleSnap.exists && isSuperAdminRole(roleSnap.data())) {
+        if (isAdminIdentity(decoded, roleSnap.exists ? roleSnap.data() : undefined)) {
             return res.status(403).json({ error: 'super_admin_forbidden', code: 'super_admin_forbidden' });
+        }
+
+        // Never orphan an organization: refuse while the caller is its only admin.
+        const adminOrgsSnap = await db.collection('organizations').where('admin_user_ids', 'array-contains', uid).get();
+        const soleAdmin = adminOrgsSnap.docs.some((d) => {
+            const ids = d.data().admin_user_ids;
+            return !Array.isArray(ids) || ids.filter((id: unknown) => id !== uid).length === 0;
+        });
+        if (soleAdmin) {
+            return res.status(409).json({ error: 'sole_org_admin', code: 'sole_org_admin' });
         }
 
         // owner_ids is authoritative; house_ids may hold stale ids.
@@ -114,6 +149,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'Internal server error', code: 'internal' });
         }
 
+        await cleanupOrganizations(db, uid, adminOrgsSnap.docs);
         await db.collection('user_roles').doc(uid).delete();
         await deleteUserNotifications(db, uid);
         await db.collection('users').doc(uid).delete();

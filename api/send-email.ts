@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { initializeFirebaseAdmin, getDb } from './utils/firebaseAdmin.js';
-import { requireAuth, getAuthErrorResponse, isSuperAdminRole } from './utils/apiAuth.js';
+import { requireAuth, getAuthErrorResponse, isAdminIdentity } from './utils/apiAuth.js';
 import { checkRateLimit, getEmailRateLimit, tryGetRateLimit } from './utils/ratelimit.js';
 
 const SITE_ORIGIN = 'https://www.bustadurinn.is';
@@ -132,7 +132,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let isAdmin = false;
         try {
             const roleSnap = await db.collection('user_roles').doc(decodedToken.uid).get();
-            isAdmin = roleSnap.exists && isSuperAdminRole(roleSnap.data());
+            isAdmin = isAdminIdentity(decodedToken, roleSnap.exists ? roleSnap.data() : undefined);
         } catch (roleError) {
             console.error('send-email: role lookup failed', roleError);
             isAdmin = false;

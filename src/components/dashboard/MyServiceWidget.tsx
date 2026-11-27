@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store/appStore';
 import type { ServiceProvider } from '@/types/models';
 import { Wrench, Star, Eye, Edit2 } from 'lucide-react';
@@ -24,7 +25,7 @@ export default function MyServiceWidget() {
                     setProvider({ ...data, id: snapshot.docs[0].id });
                 }
             } catch (error) {
-                console.error('Error fetching my service:', error);
+                logger.error('Error fetching my service:', error);
             } finally {
                 setLoading(false);
             }
@@ -48,9 +49,9 @@ export default function MyServiceWidget() {
                         <p className="text-xs text-grey-mid uppercase tracking-wider font-bold">Verktakaskráning</p>
                     </div>
                 </div>
-                <div className={`px-2 py-1 rounded text-xs font-bold ${provider.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                <div className={`px-2 py-1 rounded text-xs font-bold ${provider.status === 'active' ? 'bg-green-100 text-green-700' : provider.status === 'pending' ? 'bg-amber/20 text-charcoal' : 'bg-red-100 text-red-700'
                     }`}>
-                    {provider.status === 'active' ? 'Virkt' : 'Óvirkt'}
+                    {provider.status === 'active' ? 'Virkt' : provider.status === 'pending' ? 'Í yfirferð' : 'Óvirkt'}
                 </div>
             </div>
 

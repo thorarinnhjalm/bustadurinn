@@ -1,16 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import admin from 'firebase-admin';
 import { getDb, initializeFirebaseAdmin } from './firebaseAdmin.js';
-import { isSuperAdminRole } from './apiAuth.js';
-
-const ADMIN_EMAILS = [
-    'thorarinnhjalmarsson@gmail.com',
-    'thorarinnhjalm@gmail.com'
-];
-
-const ADMIN_UIDS = [
-    'sxcToczAAwT3Fmh8FPXa1P6hMHB3'
-];
+import { isAdminIdentity } from './apiAuth.js';
 
 export async function verifyAdminToken(req: VercelRequest, res: VercelResponse): Promise<admin.auth.DecodedIdToken | null> {
     // Ensure services are ready
@@ -29,24 +20,11 @@ export async function verifyAdminToken(req: VercelRequest, res: VercelResponse):
         if (!auth) throw new Error('Auth service not initialized');
         const decodedToken = await auth.verifyIdToken(token);
 
-        // 1. Hardcoded Super Admin Check (Recovery/Master)
-        // Only honour the email allowlist when the email is verified
-        const isEmailAdmin = decodedToken.email_verified === true
-            && !!decodedToken.email
-            && ADMIN_EMAILS.includes(decodedToken.email.toLowerCase());
-        const isUidAdmin = ADMIN_UIDS.includes(decodedToken.uid);
-
-        if (isEmailAdmin || isUidAdmin) {
-            return decodedToken;
-        }
-
-        // 2. RBAC Check (Database)
+        // Role doc OR verified allow-listed email OR allow-listed uid
         const db = getDb();
-        if (db) {
-            const roleDoc = await db.collection('user_roles').doc(decodedToken.uid).get();
-            if (roleDoc.exists && isSuperAdminRole(roleDoc.data())) {
-                return decodedToken;
-            }
+        const roleDoc = db ? await db.collection('user_roles').doc(decodedToken.uid).get() : null;
+        if (isAdminIdentity(decodedToken, roleDoc?.exists ? roleDoc.data() : undefined)) {
+            return decodedToken;
         }
 
         console.warn(`Blocked unauthorized access attempt by: ${decodedToken.email} (${decodedToken.uid})`);

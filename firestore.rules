@@ -67,6 +67,12 @@ service cloud.firestore {
              get(/databases/$(database)/documents/organizations/$(orgId)/members/$(getUserId())).data.status == 'active';
     }
 
+    // The organization a house belongs to, or null. Callers must check
+    // `houseOrgId(houseId) is string` before passing the result to an org helper.
+    function houseOrgId(houseId) {
+      return get(/databases/$(database)/documents/houses/$(houseId)).data.get('organization_id', null);
+    }
+
     // ============================================
     // System & Promotions
     // ============================================
@@ -99,7 +105,7 @@ service cloud.firestore {
     match /houses/{houseId} {
       allow read: if isAuthenticated() && (
         (getUserId() in resource.data.owner_ids) || isSuperAdmin() ||
-        ('organization_id' in resource.data && resource.data.organization_id is string && (isOrgMember(resource.data.organization_id) || isOrgAdmin(resource.data.organization_id)))
+        ('organization_id' in resource.data && resource.data.organization_id is string && (isActiveOrgMember(resource.data.organization_id) || isOrgAdmin(resource.data.organization_id)))
       );
 
       allow create: if isAuthenticated() && 
@@ -148,10 +154,16 @@ service cloud.firestore {
       }
 
       // Bookings live in this subcollection (CalendarPage, bookingService,
-      // fairnessService, arbokService all read/write here). There was no rule
-      // for it, so every query fell through to the default deny.
+      // fairnessService, arbokService all read/write here). House members and
+      // super admins have full access. For houses that belong to an
+      // organization, active org members may read (availability) and org
+      // admins may also create/update/delete (approving booking requests).
       match /bookings/{bookingId} {
-        allow read, write: if isHouseMember(houseId) || isSuperAdmin();
+        allow read: if isHouseMember(houseId) || isSuperAdmin() ||
+                       (houseOrgId(houseId) is string &&
+                        (isActiveOrgMember(houseOrgId(houseId)) || isOrgAdmin(houseOrgId(houseId))));
+        allow create, update, delete: if isHouseMember(houseId) || isSuperAdmin() ||
+                       (houseOrgId(houseId) is string && isOrgAdmin(houseOrgId(houseId)));
       }
     }
 
@@ -303,7 +315,8 @@ service cloud.firestore {
     // Anyone may submit an application, but only as a pending, unrated entry.
     // Approval, rating changes, edits and deletes are super-admin only.
     match /service_providers/{id} {
-      allow read: if isSuperAdmin() || resource.data.status == 'active';
+      allow read: if isSuperAdmin() || resource.data.status == 'active' ||
+                     (isAuthenticated() && resource.data.owner_uid == getUserId());
       allow create: if isSuperAdmin() || (
         request.resource.data.keys().hasOnly([
           'name', 'category', 'service_areas', 'contact_email', 'contact_phone',

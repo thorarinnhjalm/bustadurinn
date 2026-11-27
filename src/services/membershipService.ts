@@ -72,6 +72,8 @@ export function membershipErrorMessage(result: MembershipResult): string {
             return 'Af öryggisástæðum þarftu að skrá þig út og inn aftur áður en þú eyðir aðganginum. Reyndu svo aftur innan 10 mínútna.';
         case 'super_admin_forbidden':
             return 'Ekki er hægt að eyða þessum aðgangi.';
+        case 'sole_org_admin':
+            return 'Þú ert eini stjórnandi stofnunar. Bættu við öðrum stjórnanda eða hafðu samband við okkur áður en þú eyðir aðganginum.';
         case 'unauthenticated':
             return 'Þú þarft að skrá þig inn aftur.';
         case 'network':

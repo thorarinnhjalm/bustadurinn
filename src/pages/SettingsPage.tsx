@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { signOut, sendPasswordResetEmail } from 'firebase/auth';
+import {
+    signOut,
+    sendPasswordResetEmail,
+    reauthenticateWithPopup,
+    reauthenticateWithCredential,
+    EmailAuthProvider,
+    GoogleAuthProvider,
+    FacebookAuthProvider,
+} from 'firebase/auth';
 import { db, storage, auth } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import {
@@ -174,6 +182,9 @@ export default function SettingsPage() {
     const [membershipBusy, setMembershipBusy] = useState(false);
     const [membershipModalError, setMembershipModalError] = useState('');
     const [membersReloadKey, setMembersReloadKey] = useState(0);
+    // Account deletion re-authentication (password accounts)
+    const [reauthPasswordNeeded, setReauthPasswordNeeded] = useState(false);
+    const [reauthPassword, setReauthPassword] = useState('');
     const [transferConfirmation, setTransferConfirmation] = useState('');
     const [imageFile, setImageFile] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
@@ -736,6 +747,8 @@ export default function SettingsPage() {
         setMembershipText('');
         setNewManagerChoice('');
         setMembershipModalError('');
+        setReauthPasswordNeeded(false);
+        setReauthPassword('');
     };
 
     const closeMembershipAction = () => {
@@ -744,6 +757,58 @@ export default function SettingsPage() {
         setMembershipText('');
         setNewManagerChoice('');
         setMembershipModalError('');
+        setReauthPasswordNeeded(false);
+        setReauthPassword('');
+    };
+
+    // Re-authenticate the signed-in user in place so account deletion can
+    // proceed without signing out. Returns null on success, 'need_password'
+    // when a password account must type its password first, or an Icelandic
+    // error message.
+    const reauthenticateInPlace = async (): Promise<string | null> => {
+        const user = auth.currentUser;
+        if (!user) return membershipErrorMessage({ ok: false, status: 401, code: 'reauth_required' });
+        const providers = user.providerData.map((p) => p.providerId);
+        try {
+            if (providers.includes('google.com')) {
+                await reauthenticateWithPopup(user, new GoogleAuthProvider());
+            } else if (providers.includes('facebook.com')) {
+                await reauthenticateWithPopup(user, new FacebookAuthProvider());
+            } else if (providers.includes('password') && user.email) {
+                if (!reauthPassword) return 'need_password';
+                await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, reauthPassword));
+            } else {
+                return membershipErrorMessage({ ok: false, status: 401, code: 'reauth_required' });
+            }
+            await user.getIdToken(true);
+            return null;
+        } catch (e) {
+            const code = (e as { code?: string })?.code;
+            logger.warn('Re-authentication failed:', code);
+            if (code === 'auth/wrong-password' || code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials') {
+                return 'Rangt lykilorð. Reyndu aftur.';
+            }
+            if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+                return 'Innskráningarglugganum var lokað áður en auðkenningu lauk. Reyndu aftur.';
+            }
+            return membershipErrorMessage({ ok: false, status: 401, code: 'reauth_required' });
+        }
+    };
+
+    // The house has no manager who is still an owner (legacy data or a deleted
+    // manager): any owner may take the role.
+    const handleClaimManager = async () => {
+        if (!house || !currentUser) return;
+        const result = await callMembershipApi('transfer-manager', {
+            houseId: house.id,
+            newManagerId: currentUser.uid,
+        });
+        if (!result.ok) {
+            setError(membershipErrorMessage(result));
+            return;
+        }
+        setSuccess('Þú ert nú umsjónarmaður hússins');
+        await refreshHouseAfterChange();
     };
 
     const handleConfirmMembershipAction = async () => {
@@ -754,7 +819,22 @@ export default function SettingsPage() {
             if (membershipAction.type === 'delete_account') {
                 // Keep AuthHandler from re-creating the profile the server is about to delete
                 accountDeletionState.inProgress = true;
-                const result = await callMembershipApi('delete-account', { confirm: 'EYÐA' });
+                let result = await callMembershipApi('delete-account', { confirm: 'EYÐA' });
+                if (!result.ok && result.code === 'reauth_required') {
+                    const reauthError = await reauthenticateInPlace();
+                    if (reauthError === 'need_password') {
+                        accountDeletionState.inProgress = false;
+                        setReauthPasswordNeeded(true);
+                        setMembershipModalError('Sláðu inn lykilorðið þitt til að staðfesta auðkenni þitt.');
+                        return;
+                    }
+                    if (reauthError) {
+                        accountDeletionState.inProgress = false;
+                        setMembershipModalError(reauthError);
+                        return;
+                    }
+                    result = await callMembershipApi('delete-account', { confirm: 'EYÐA' });
+                }
                 if (!result.ok) {
                     accountDeletionState.inProgress = false;
                     setMembershipModalError(membershipErrorMessage(result));
@@ -1367,6 +1447,21 @@ export default function SettingsPage() {
                                         members={members}
                                     />
                                 )}
+                            </div>
+                        )}
+
+                        {house && currentUser && house.owner_ids?.includes(currentUser.uid) &&
+                            !(house.manager_id && house.owner_ids.includes(house.manager_id)) && (
+                            <div className="mb-4 bg-amber/10 border border-amber/30 text-charcoal px-4 py-3 rounded text-sm flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                                <span>Húsið er án umsjónarmanns</span>
+                                <button
+                                    type="button"
+                                    onClick={handleClaimManager}
+                                    disabled={!canChangeMembership}
+                                    className="btn-primary text-sm disabled:opacity-50"
+                                >
+                                    Gerast umsjónarmaður
+                                </button>
                             </div>
                         )}
 
@@ -2441,6 +2536,22 @@ export default function SettingsPage() {
                                             autoComplete="off"
                                         />
                                     </>
+                                )}
+
+                                {type === 'delete_account' && reauthPasswordNeeded && (
+                                    <div className="mb-4">
+                                        <label className="label text-xs uppercase text-grey-mid" htmlFor="reauth-password">
+                                            Lykilorð
+                                        </label>
+                                        <input
+                                            id="reauth-password"
+                                            type="password"
+                                            className="input w-full"
+                                            value={reauthPassword}
+                                            onChange={(e) => setReauthPassword(e.target.value)}
+                                            autoComplete="current-password"
+                                        />
+                                    </div>
                                 )}
 
                                 {membershipModalError && (

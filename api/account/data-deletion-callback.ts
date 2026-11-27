@@ -6,7 +6,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
-import { initializeFirebaseAdmin, getDb, getAuth, admin } from '../utils/firebaseAdmin.js';
+import { initializeFirebaseAdmin, getDb, getAuth } from '../utils/firebaseAdmin.js';
+import { detachUserFromAllHouses } from '../utils/membership.js';
 
 // Initialize Firebase Admin
 initializeFirebaseAdmin();
@@ -91,28 +92,9 @@ async function deleteUserData(facebookUserId: string): Promise<string> {
         // Non-critical
     }
 
-    // Remove the user from houses they belong to; delete houses with no other owners
-    const housesSnap = await db.collection('houses').where('owner_ids', 'array-contains', userUid).get();
-    if (!housesSnap.empty) {
-        const batch = db.batch();
-        housesSnap.docs.forEach((houseDoc) => {
-            const houseData = houseDoc.data();
-            const owners: string[] = Array.isArray(houseData.owner_ids) ? houseData.owner_ids : [];
-            const otherOwners = owners.filter((id) => id !== userUid);
-
-            if (otherOwners.length === 0) {
-                batch.delete(houseDoc.ref);
-            } else {
-                batch.update(houseDoc.ref, {
-                    owner_ids: admin.firestore.FieldValue.arrayRemove(userUid),
-                });
-                if (houseData.manager_id === userUid) {
-                    batch.update(houseDoc.ref, { manager_id: null });
-                }
-            }
-        });
-        await batch.commit();
-    }
+    // Remove the user from houses they belong to; delete houses with no other
+    // owners; promote the first remaining owner when the user was the manager.
+    await detachUserFromAllHouses(db, userUid);
 
     // Delete other user-related data
     const collections = ['bookings', 'tasks', 'notifications'];

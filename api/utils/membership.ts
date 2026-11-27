@@ -127,8 +127,17 @@ export async function removeUserFromHouse(
     });
 }
 
+/** True when the house has a manager who is also one of its owners. */
+export function hasValidManager(house: FirebaseFirestore.DocumentData | undefined): boolean {
+    const manager = house?.manager_id;
+    return typeof manager === 'string' && manager.length > 0 && ownerIdsOf(house).includes(manager);
+}
+
 /**
  * Hand the manager role from `callerUid` to `newManagerId` (both must be owners).
+ * Recovery: when the house has no valid manager (missing/null/empty manager_id,
+ * or one that is not an owner), any current owner may set the manager, to
+ * themselves or to another owner.
  */
 export async function transferManager(
     db: Db,
@@ -143,8 +152,9 @@ export async function transferManager(
         const house = snap.data() || {};
         const owners = ownerIdsOf(house);
         if (!owners.includes(callerUid)) throw new MembershipError('not_member');
-        if (house.manager_id !== callerUid) throw new MembershipError('not_manager');
-        if (newManagerId === callerUid) throw new MembershipError('same_manager');
+        const managerless = !hasValidManager(house);
+        if (!managerless && house.manager_id !== callerUid) throw new MembershipError('not_manager');
+        if (!managerless && newManagerId === callerUid) throw new MembershipError('same_manager');
         if (!owners.includes(newManagerId)) throw new MembershipError('target_not_member');
         t.update(houseRef, {
             manager_id: newManagerId,
@@ -206,6 +216,42 @@ export async function deleteHouseCompletely(
     }
 
     return { guestViews, invitations, guestbook, notifications };
+}
+
+/**
+ * Detach a user that is being deleted from every house they own: the house is
+ * deleted when they are the sole owner, otherwise they are removed and, if
+ * they were the manager, the first remaining owner becomes manager.
+ * Safe to call after users/{uid} is gone. Throws on the first failure.
+ */
+export async function detachUserFromAllHouses(
+    db: Db,
+    uid: string
+): Promise<{ removedFrom: number; deleted: number }> {
+    const snap = await db.collection('houses').where('owner_ids', 'array-contains', uid).get();
+    let removedFrom = 0;
+    let deleted = 0;
+    for (const houseDoc of snap.docs) {
+        const owners = ownerIdsOf(houseDoc.data());
+        const remaining = owners.filter((id) => id !== uid);
+        if (remaining.length === 0) {
+            await deleteHouseCompletely(db, houseDoc.id, owners);
+            deleted++;
+            continue;
+        }
+        try {
+            await removeUserFromHouse(db, houseDoc.id, uid, { newManagerId: remaining[0] });
+            removedFrom++;
+        } catch (e) {
+            if (e instanceof MembershipError && e.code === 'sole_owner') {
+                await deleteHouseCompletely(db, houseDoc.id, owners);
+                deleted++;
+            } else {
+                throw e;
+            }
+        }
+    }
+    return { removedFrom, deleted };
 }
 
 /**

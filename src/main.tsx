@@ -127,10 +127,9 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     const host = document.createElement('div');
     document.body.appendChild(host);
     createRoot(host).render(<UpdateBanner onReload={reloadNow} />);
-    // Reload at the next safe moment: when the user leaves the tab.
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) reloadNow();
-    });
+    // The banner only appears because a form is in progress, so never reload
+    // behind the user's back (e.g. when they switch apps to copy a number):
+    // the page reloads only when they press "Endurhlaða".
   };
 
   navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -141,7 +140,10 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     reloading = true;
     const active = document.activeElement;
     const formFocused = !!active && active.matches('input, textarea, select');
-    if (document.hidden || (!formFocused && !formTouched)) {
+    // A hidden tab with no typed input has nothing to lose; one with typed
+    // input keeps its form and shows the banner for when the user returns.
+    const formInProgress = formTouched || (!document.hidden && formFocused);
+    if (!formInProgress) {
       reloadNow();
     } else {
       showUpdateBanner();

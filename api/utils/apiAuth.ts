@@ -14,6 +14,34 @@ export function isSuperAdminRole(roleData: FirebaseFirestore.DocumentData | unde
     return roleData?.system_role === 'super_admin' || roleData?.is_super_admin === true;
 }
 
+// Recovery/master identities. The single source of truth for the allowlists:
+// requireAdmin, verifyAdminToken, send-email and delete-account all go
+// through isAdminIdentity(). (firestore.rules isSuperAdmin() mirrors the
+// verified-email fallback.)
+const ADMIN_EMAILS = [
+    'thorarinnhjalmarsson@gmail.com',
+    'thorarinnhjalm@gmail.com'
+];
+
+const ADMIN_UIDS = [
+    'sxcToczAAwT3Fmh8FPXa1P6hMHB3'
+];
+
+/**
+ * True if the identity is a super admin: a user_roles grant, OR an
+ * allow-listed email that Firebase has verified, OR an allow-listed uid.
+ */
+export function isAdminIdentity(
+    decodedToken: { uid: string; email?: string | null; email_verified?: boolean | null },
+    roleData?: FirebaseFirestore.DocumentData | null
+): boolean {
+    if (isSuperAdminRole(roleData)) return true;
+    if (ADMIN_UIDS.includes(decodedToken.uid)) return true;
+    return decodedToken.email_verified === true
+        && !!decodedToken.email
+        && ADMIN_EMAILS.includes(decodedToken.email.toLowerCase());
+}
+
 /**
  * Verify Firebase ID token and check if user is a super admin via RBAC
  * @throws Error if unauthorized or forbidden
@@ -38,7 +66,7 @@ export async function requireAdmin(req: VercelRequest): Promise<admin.auth.Decod
             .doc(decodedToken.uid)
             .get();
 
-        if (!isSuperAdminRole(roleDoc.exists ? roleDoc.data() : undefined)) {
+        if (!isAdminIdentity(decodedToken, roleDoc.exists ? roleDoc.data() : undefined)) {
             throw new Error('FORBIDDEN: Admin access required');
         }
 

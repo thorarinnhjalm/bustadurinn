@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getDb, getAuth, initializeFirebaseAdmin } from './utils/firebaseAdmin.js';
-import admin from 'firebase-admin';
 import { verifyAdminToken } from './utils/admin-auth.js';
+import { detachUserFromAllHouses } from './utils/membership.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -46,39 +46,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             console.log(`ℹ️ No user_roles document for ${uid}`);
         }
 
-        // 4. Cleanup memberships and orphan houses
-        const housesSnap = await db.collection('houses').where('owner_ids', 'array-contains', uid).get();
-
-        const batch = db.batch();
-        let deletedHousesCount = 0;
-
-        housesSnap.docs.forEach((doc: any) => {
-            const houseData = doc.data();
-            const houseRef = db!.collection('houses').doc(doc.id);
-            
-            // If the user is the ONLY owner (and manager), delete the house entirely
-            if (houseData.owner_ids.length === 1 && houseData.owner_ids[0] === uid) {
-                batch.delete(houseRef);
-                deletedHousesCount++;
-            } else {
-                // Otherwise, just remove them from the owner list
-                batch.update(houseRef, {
-                    owner_ids: admin.firestore.FieldValue.arrayRemove(uid)
-                });
-                
-                // If they were the manager, we should ideally reassign, but setting to null is acceptable for a force delete
-                if (houseData.manager_id === uid) {
-                    batch.update(houseRef, {
-                        manager_id: null
-                    });
-                }
-            }
-        });
-
-        if (!housesSnap.empty) {
-            await batch.commit();
-            console.log(`✅ Removed user ${uid} from ${housesSnap.size - deletedHousesCount} houses and deleted ${deletedHousesCount} orphan houses`);
-        }
+        // 4. Cleanup memberships: sole-owner houses are deleted completely,
+        // otherwise the user is removed and the first remaining owner becomes
+        // manager if they were the manager.
+        const { removedFrom, deleted } = await detachUserFromAllHouses(db, uid);
+        console.log(`✅ Removed user ${uid} from ${removedFrom} houses and deleted ${deleted} orphan houses`);
 
         return res.status(200).json({ success: true, message: `User ${uid} deleted completely` });
 

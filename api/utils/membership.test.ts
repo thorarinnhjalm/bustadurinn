@@ -95,6 +95,27 @@ describe('transferManager', () => {
         expect(store['houses/h1'].manager_id).toBe('b');
     });
 
+    it('with no valid manager any owner may claim the role', async () => {
+        for (const manager of [undefined, null, '', 'ghost']) {
+            const store = { 'houses/h1': { owner_ids: ['a', 'b'], manager_id: manager } } as Record<string, Doc>;
+            const db = fakeDb(store);
+            await expect(transferManager(db, 'h1', 'outsider', 'b')).rejects.toMatchObject({ code: 'not_member' });
+            await transferManager(db, 'h1', 'b', 'b');
+            expect(store['houses/h1'].manager_id).toBe('b');
+        }
+        const store = { 'houses/h1': { owner_ids: ['a', 'b'] } } as Record<string, Doc>;
+        await transferManager(fakeDb(store), 'h1', 'a', 'b');
+        expect(store['houses/h1'].manager_id).toBe('b');
+        await expect(transferManager(fakeDb({ 'houses/h1': { owner_ids: ['a', 'b'] } }), 'h1', 'a', 'x')).rejects.toMatchObject({ code: 'target_not_member' });
+    });
+
+    it('with a valid manager a non-manager is still refused', async () => {
+        const store = { 'houses/h1': { owner_ids: ['a', 'b', 'c'], manager_id: 'a' } } as Record<string, Doc>;
+        await expect(transferManager(fakeDb(store), 'h1', 'b', 'b')).rejects.toMatchObject({ code: 'not_manager' });
+        await expect(transferManager(fakeDb(store), 'h1', 'b', 'c')).rejects.toMatchObject({ code: 'not_manager' });
+        expect(store['houses/h1'].manager_id).toBe('a');
+    });
+
     it('MembershipError carries http status', () => {
         expect(new MembershipError('not_manager').status).toBe(403);
     });

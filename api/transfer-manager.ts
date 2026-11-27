@@ -10,6 +10,8 @@ import {
  * POST /api/transfer-manager  { houseId, newManagerId }
  *
  * Auth: Firebase ID token. Only the current manager; the target must be an owner.
+ * Recovery: if the house has no valid manager, any owner may set the manager
+ * (themselves included).
  * Responses: 200 { success: true }
  * Errors: { error, code }
  *   400 invalid_request | same_manager

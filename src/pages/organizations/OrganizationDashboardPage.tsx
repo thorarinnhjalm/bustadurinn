@@ -162,12 +162,7 @@ export default function OrganizationDashboardPage() {
             await loadData();
         } catch (err) {
             logger.error('Error approving booking:', err);
-            // The booking is written into the house, which only house owners may do.
-            alert(
-                (err as { code?: string })?.code === 'permission-denied'
-                    ? 'Þú þarft að vera skráður eigandi hússins til að samþykkja bókun'
-                    : 'Villa kom upp við að samþykkja bókun'
-            );
+            alert('Villa kom upp við að samþykkja bókun');
         }
     };
 

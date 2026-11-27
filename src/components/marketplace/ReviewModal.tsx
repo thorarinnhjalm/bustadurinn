@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Star, X, Loader2 } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store/appStore';
 import type { ServiceProvider } from '@/types/models';
@@ -30,10 +30,16 @@ export default function ReviewModal({ provider, onClose, onReviewSubmitted }: Re
             // One review per user and provider (deterministic id; rules allow create only).
             // rating_avg / rating_count on the provider doc are computed from the
             // reviews when the marketplace loads, because users cannot write provider docs.
-            await setDoc(doc(db, 'service_reviews', `${provider.id}_${currentUser.uid}`), {
+            const reviewRef = doc(db, 'service_reviews', `${provider.id}_${currentUser.uid}`);
+            const existing = await getDoc(reviewRef);
+            if (existing.exists()) {
+                alert('Þú hefur þegar gefið þessum þjónustuaðila umsögn.');
+                return;
+            }
+            await setDoc(reviewRef, {
                 provider_id: provider.id,
                 user_id: currentUser.uid,
-                user_name: currentUser.name || 'Notandi',
+                user_name: (currentUser.name || 'Notandi').slice(0, 100),
                 rating: rating,
                 comment: comment.trim().slice(0, 1000),
                 created_at: serverTimestamp()
@@ -41,13 +47,9 @@ export default function ReviewModal({ provider, onClose, onReviewSubmitted }: Re
 
             onReviewSubmitted();
             onClose();
-        } catch (error: any) {
+        } catch (error) {
             logger.error('Error submitting review:', error);
-            if (error?.code === 'permission-denied') {
-                alert('Þú hefur þegar gefið þessum þjónustuaðila umsögn.');
-            } else {
-                alert('Villa kom upp við að senda inn umsögn.');
-            }
+            alert('Villa kom upp við að senda inn umsögn.');
         } finally {
             setLoading(false);
         }
