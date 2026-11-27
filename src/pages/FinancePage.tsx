@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import EmptyState from '@/components/EmptyState';
 import { useAppStore } from '@/store/appStore';
+import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { db } from '@/lib/firebase';
 import {
     collection,
@@ -33,7 +34,7 @@ import {
     arrayUnion,
     serverTimestamp,
     arrayRemove,
-    getDocs,
+    deleteField,
     orderBy
 } from 'firebase/firestore';
 import type { BudgetPlan, BudgetItem, LedgerEntry, House, RecurringCost } from '@/types/models';
@@ -47,60 +48,93 @@ import RecurringCosts from '@/components/finance/RecurringCosts';
 import RecurringCostReminders from '@/components/finance/RecurringCostReminders';
 import YearEndSummary from '@/components/finance/YearEndSummary';
 import { logger } from '@/utils/logger';
+import { getHouseMembers } from '@/services/houseMembersService';
+import type { HouseMember } from '@/services/houseMembersService';
+import {
+    filterEntriesByYear,
+    getEntryYears,
+    computeTotals,
+    resolvePaidByName,
+    validateAmount
+} from '@/components/finance/ledgerUtils';
 
 type Tab = 'budget' | 'ledger' | 'summary';
 
+interface EntriesState {
+    houseId: string;
+    entries: LedgerEntry[];
+    error: boolean;
+}
+
+interface MembersState {
+    houseId: string;
+    members: HouseMember[] | null; // null = failed to load
+}
+
 export default function FinancePage() {
     const navigate = useNavigate();
-    const { currentUser } = useAppStore();
+    const { user: currentUser } = useEffectiveUser();
     const [activeTab, setActiveTab] = useState<Tab>('budget');
     const [house, setHouse] = useState<House | null>(null);
-    const [entries, setEntries] = useState<LedgerEntry[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [members, setMembers] = useState<{ uid: string, name: string }[]>([]);
+    const [houseError, setHouseError] = useState(false);
+    const [entriesState, setEntriesState] = useState<EntriesState | null>(null);
+    const [membersState, setMembersState] = useState<MembersState | null>(null);
     const [prefillEntry, setPrefillEntry] = useState<Partial<LedgerEntry> | null>(null);
+    const currentYear = new Date().getFullYear();
+    const [selectedYear, setSelectedYear] = useState(currentYear);
     const currentHouse = useAppStore((state) => state.currentHouse);
     const primaryHouseId = currentHouse?.id;
 
     useEffect(() => {
         if (!primaryHouseId) return;
+        let cancelled = false;
 
         const fetchHouse = async () => {
-            const houseDoc = await getDoc(doc(db, 'houses', primaryHouseId));
-            if (houseDoc.exists()) {
-                setHouse({ id: houseDoc.id, ...houseDoc.data() } as House);
+            try {
+                const houseDoc = await getDoc(doc(db, 'houses', primaryHouseId));
+                if (cancelled) return;
+                if (houseDoc.exists()) {
+                    setHouse({ id: houseDoc.id, ...houseDoc.data() } as House);
+                }
+                setHouseError(false);
+            } catch (err) {
+                logger.error('Error fetching house:', err);
+                if (!cancelled) setHouseError(true);
             }
         };
         fetchHouse();
+        return () => { cancelled = true; };
     }, [primaryHouseId]);
 
-    // Members (owners) — fetched once per house, shared by ownership shares,
-    // the year-end summary, and the ledger's split-payer picker.
+    // Members — fetched once per house through the members service (other
+    // users' docs are not readable from the client). Shared by ownership
+    // shares, the year-end summary, and the ledger's split-payer picker.
     useEffect(() => {
-        if (!house?.id) return;
-        const ownerIds = house.owner_ids || [];
-        if (ownerIds.length === 0) return;
+        if (!primaryHouseId) return;
+        let cancelled = false;
 
-        const fetchMembers = async () => {
-            try {
-                const chunks: string[][] = [];
-                for (let i = 0; i < ownerIds.length; i += 10) {
-                    chunks.push(ownerIds.slice(i, i + 10));
-                }
-
-                const memberList: { uid: string, name: string }[] = [];
-                for (const chunk of chunks) {
-                    const q = query(collection(db, 'users'), where('uid', 'in', chunk));
-                    const snap = await getDocs(q);
-                    snap.docs.forEach((d) => memberList.push({ uid: d.id, name: d.data().name }));
-                }
-                setMembers(memberList);
-            } catch (err) {
+        getHouseMembers(primaryHouseId)
+            .then((list) => {
+                if (!cancelled) setMembersState({ houseId: primaryHouseId, members: list });
+            })
+            .catch((err) => {
                 logger.error('Error fetching members:', err);
-            }
-        };
-        fetchMembers();
-    }, [house?.id, house?.owner_ids]);
+                if (!cancelled) setMembersState({ houseId: primaryHouseId, members: null });
+            });
+
+        return () => { cancelled = true; };
+    }, [primaryHouseId]);
+
+    const membersFailed = !!primaryHouseId && membersState?.houseId === primaryHouseId && membersState.members === null;
+    const currentUid = currentUser?.uid;
+    const currentName = currentUser?.name;
+    const members = useMemo<{ uid: string; name: string }[]>(() => {
+        if (membersState && membersState.houseId === primaryHouseId && membersState.members) {
+            return membersState.members.map((m) => ({ uid: m.uid, name: m.name }));
+        }
+        // Fallback (loading or failed): the current user only
+        return currentUid ? [{ uid: currentUid, name: currentName || 'Notandi' }] : [];
+    }, [membersState, primaryHouseId, currentUid, currentName]);
 
     // Applies a partial update to the locally-held house doc after a
     // finance_settings/recurring_costs write (avoids a second getDoc round-trip).
@@ -121,38 +155,58 @@ export default function FinancePage() {
         });
     };
 
-    // Lifted Finance Entries Listener (Optimized with date filter)
+    // One real-time listener over ALL entries of the house (these collections
+    // are small). Per-year views and the fund balance are derived below.
     useEffect(() => {
         if (!primaryHouseId) return;
 
-        setLoading(true);
-        const startOfYear = new Date(new Date().getFullYear(), 0, 1);
-
         const q = query(
             collection(db, 'houses', primaryHouseId, 'finance_entries'),
-            where('date', '>=', startOfYear),
             orderBy('date', 'desc')
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                date: doc.data().date?.toDate() || new Date()
+            const data = snapshot.docs.map(d => ({
+                id: d.id,
+                ...d.data(),
+                date: d.data().date?.toDate() || new Date()
             })) as LedgerEntry[];
 
-            setEntries(data);
-            setLoading(false);
+            setEntriesState({ houseId: primaryHouseId, entries: data, error: false });
         }, (error) => {
-            console.error("Finance entries listener error:", error);
-            setLoading(false);
+            logger.error('Finance entries listener error:', error);
+            setEntriesState({ houseId: primaryHouseId, entries: [], error: true });
         });
 
         return () => unsubscribe();
     }, [primaryHouseId]);
 
+    const currentEntriesState = entriesState && entriesState.houseId === primaryHouseId ? entriesState : null;
+    const loading = !!primaryHouseId && !currentEntriesState;
+    const entriesError = currentEntriesState?.error ?? false;
+    const allEntries = useMemo(() => currentEntriesState?.entries ?? [], [currentEntriesState]);
+    const years = useMemo(() => getEntryYears(allEntries, currentYear), [allEntries, currentYear]);
+    const yearEntries = useMemo(() => filterEntriesByYear(allEntries, selectedYear), [allEntries, selectedYear]);
+    const currentYearEntries = useMemo(() => filterEntriesByYear(allEntries, currentYear), [allEntries, currentYear]);
+
     const isManager = house?.manager_id === currentUser?.uid;
     const canViewFinances = isManager || (house?.finance_viewer_ids?.includes(currentUser?.uid || '') || false);
+
+    if (!primaryHouseId) {
+        return (
+            <div className="min-h-screen bg-bone p-6 pb-24">
+                <div className="max-w-5xl mx-auto">
+                    <EmptyState
+                        icon={PiggyBank}
+                        title="Ekkert hús valið"
+                        description="Veldu eða stofnaðu hús til að sjá hússjóðinn og bókhaldið."
+                        actionLabel="Til baka á stjórnborð"
+                        onAction={() => navigate('/dashboard')}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     if (house?.privacy_hide_finances && !canViewFinances) {
         return (
@@ -256,10 +310,22 @@ export default function FinancePage() {
 
             {/* Content Area */}
             <div className="max-w-5xl mx-auto">
+                {(houseError || entriesError) && (
+                    <div role="alert" className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-sm text-red-700">
+                        {entriesError
+                            ? 'Ekki tókst að sækja færslur. Reyndu að endurhlaða síðuna.'
+                            : 'Ekki tókst að sækja upplýsingar um húsið. Reyndu að endurhlaða síðuna.'}
+                    </div>
+                )}
+                {membersFailed && (
+                    <div role="status" className="mb-4 p-3 rounded border border-amber/30 bg-amber/10 text-sm text-charcoal">
+                        Ekki tókst að sækja nöfn meðeigenda. Aðeins þú birtist í listanum að svo stöddu.
+                    </div>
+                )}
                 {house && (
                     <RecurringCostReminders
                         recurringCosts={house.recurring_costs || []}
-                        entries={entries}
+                        entries={currentYearEntries}
                         onFill={handleFillReminder}
                     />
                 )}
@@ -269,7 +335,7 @@ export default function FinancePage() {
                         houseId={house?.id}
                         currentUserId={currentUser?.uid}
                         house={house}
-                        entries={entries}
+                        entries={currentYearEntries}
                         loading={loading}
                         isManager={isManager}
                         members={members}
@@ -281,23 +347,47 @@ export default function FinancePage() {
                         currentUserId={currentUser?.uid}
                         isManager={isManager}
                         currentUserName={currentUser?.name}
-                        entries={entries}
+                        allEntries={allEntries}
+                        yearEntries={yearEntries}
+                        years={years}
+                        selectedYear={selectedYear}
+                        onYearChange={setSelectedYear}
                         loading={loading}
                         members={members}
                         prefillEntry={prefillEntry}
                         onPrefillConsumed={() => setPrefillEntry(null)}
                     />
                 ) : (
-                    <YearEndSummary
-                        year={new Date().getFullYear()}
-                        entries={entries}
+                    <div className="space-y-4">
+                        <YearSelect years={years} value={selectedYear} onChange={setSelectedYear} />
+                        <YearEndSummary
+                        year={selectedYear}
+                        entries={yearEntries}
                         ownerIds={house?.owner_ids || []}
                         members={members}
                         memberShares={house?.finance_settings?.member_shares}
-                    />
+                        />
+                    </div>
                 )}
             </div>
         </div >
+    );
+}
+
+function YearSelect({ years, value, onChange }: { years: number[]; value: number; onChange: (year: number) => void }) {
+    return (
+        <label className="inline-flex items-center gap-2 text-sm text-grey-mid">
+            <span>Ár:</span>
+            <select
+                className="input w-auto py-1"
+                value={value}
+                onChange={(e) => onChange(Number(e.target.value))}
+            >
+                {years.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                ))}
+            </select>
+        </label>
     );
 }
 
@@ -320,6 +410,7 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
     const [plan, setPlan] = useState<BudgetPlan | null>(null);
     const [showForm, setShowForm] = useState(false);
     const [loadingPlan, setLoadingPlan] = useState(true);
+    const [actionError, setActionError] = useState<string | null>(null);
 
     const currentYear = new Date().getFullYear();
 
@@ -339,6 +430,11 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
             } else {
                 setPlan(null);
             }
+            setLoadingPlan(false);
+            setActionError(null);
+        }, (error) => {
+            logger.error('Budget plan listener error:', error);
+            setActionError('Ekki tókst að sækja rekstraráætlun. Reyndu að endurhlaða síðuna.');
             setLoadingPlan(false);
         });
 
@@ -367,8 +463,10 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
                 });
             }
             setShowForm(false);
+            setActionError(null);
         } catch (error) {
-            console.error('Error saving budget item:', error);
+            logger.error('Error saving budget item:', error);
+            setActionError('Ekki tókst að vista kostnaðarliðinn. Reyndu aftur.');
         }
     };
 
@@ -378,8 +476,10 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
             await updateDoc(doc(db, 'houses', houseId, 'budget_plans', plan.id), {
                 items: arrayRemove(item)
             });
+            setActionError(null);
         } catch (error) {
-            console.error('Error deleting item:', error);
+            logger.error('Error deleting item:', error);
+            setActionError('Ekki tókst að eyða kostnaðarliðnum. Reyndu aftur.');
         }
     };
 
@@ -450,6 +550,12 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
                 </div>
             </div>
 
+            {actionError && (
+                <div role="alert" className="p-3 rounded border border-red-200 bg-red-50 text-sm text-red-700">
+                    {actionError}
+                </div>
+            )}
+
             {/* Budget Items List - Improved Mobile Layout */}
             <div className="card">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
@@ -466,7 +572,7 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
                     <BudgetForm
                         onSave={handleSaveItem}
                         onCancel={() => setShowForm(false)}
-                        ownerIds={house?.owner_ids}
+                        members={members}
                     />
                 )}
 
@@ -538,7 +644,7 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
 
             {/* Sidebar Widgets - Stack on Mobile */}
             <div className="space-y-6">
-                <VarianceWidget budgetItems={plan?.items.filter(i => i.type === 'expense') || []} entries={entries} />
+                <VarianceWidget budgetItems={plan?.items?.filter(i => (i.type || 'expense') === 'expense') || []} entries={entries} />
 
                 <div className="card">
                     <h3 className="font-medium mb-4 text-sm sm:text-base">Um Rekstraráætlun</h3>
@@ -587,7 +693,13 @@ interface LedgerViewProps {
     currentUserId?: string;
     isManager: boolean;
     currentUserName?: string;
-    entries: LedgerEntry[];
+    // Fund balance is computed over ALL entries; the list and the
+    // income/expense breakdown are for the selected year only.
+    allEntries: LedgerEntry[];
+    yearEntries: LedgerEntry[];
+    years: number[];
+    selectedYear: number;
+    onYearChange: (year: number) => void;
     loading: boolean;
     members: { uid: string, name: string }[];
     // A pending prefill (e.g. from a recurring cost reminder) opens the form
@@ -596,10 +708,11 @@ interface LedgerViewProps {
     onPrefillConsumed?: () => void;
 }
 
-function LedgerView({ houseId, currentUserId, isManager, currentUserName, entries, loading, members, prefillEntry, onPrefillConsumed }: LedgerViewProps) {
+function LedgerView({ houseId, currentUserId, isManager, currentUserName, allEntries, yearEntries, years, selectedYear, onYearChange, loading, members, prefillEntry, onPrefillConsumed }: LedgerViewProps) {
     const [showForm, setShowForm] = useState(false);
     const [editingEntry, setEditingEntry] = useState<Partial<LedgerEntry> | null>(null);
     const [budgetCategories, setBudgetCategories] = useState<string[]>([]);
+    const [error, setError] = useState<string | null>(null);
 
     const currentYear = new Date().getFullYear();
 
@@ -617,6 +730,9 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, entrie
                 // Unique categories
                 setBudgetCategories(Array.from(new Set(cats)).sort());
             }
+        }, (err) => {
+            logger.error('Budget categories listener error:', err);
+            setError('Ekki tókst að sækja flokka úr rekstraráætlun. Þú getur samt skráð færslu.');
         });
         return () => unsubscribe();
     }, [houseId, currentYear]);
@@ -633,37 +749,54 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, entrie
     const handleSaveEntry = async (entryData: Partial<LedgerEntry>) => {
         if (!houseId || !currentUserId) return;
 
+        const amountError = validateAmount(entryData.amount as number);
+        if (amountError) {
+            setError(amountError);
+            return;
+        }
+
         try {
-            // Determine paid_by logic for backward compatibility + display
-            let finalPaidByName = currentUserName || 'Notandi';
-            // If split between is set, we might want to update paid_by_name to be a comma list or "Multiple"
-            if (entryData.split_between && entryData.split_between.length > 0) {
-                // For the main display column "paid_by_name", we can join names.
-                finalPaidByName = entryData.split_between.map(u => u.name.split(' ')[0]).join(', ');
-            }
+            const isEdit = !!entryData.id;
+            const original = isEdit ? editingEntry : null;
+            const paidByName = resolvePaidByName({
+                isEdit,
+                split: entryData.split_between,
+                creatorName: isEdit
+                    ? (original?.user_uid === currentUserId || original?.paid_by_user_id === currentUserId
+                        ? currentUserName
+                        : members.find(m => m.uid === original?.paid_by_user_id)?.name)
+                    : currentUserName,
+                original
+            });
 
-            const dataToSave = {
-                ...entryData,
-                house_id: houseId,
-                paid_by_name: finalPaidByName,
-                ...(entryData.id ? { updated_at: serverTimestamp() } : {
-                    user_uid: currentUserId,
-                    paid_by_user_id: currentUserId, // Primary creator/payer
-                })
-            };
-
-            if (entryData.id) {
-                // Update existing
-                const { id, ...data } = dataToSave;
+            if (isEdit) {
+                const { id, ...rest } = entryData;
+                const data: Record<string, unknown> = {
+                    ...rest,
+                    house_id: houseId,
+                    updated_at: serverTimestamp()
+                };
+                // `undefined` would be silently dropped: explicitly clear the split.
+                if (!entryData.split_between || entryData.split_between.length === 0) {
+                    data.split_between = deleteField();
+                }
+                if (paidByName !== undefined) data.paid_by_name = paidByName;
                 await updateDoc(doc(db, 'houses', houseId, 'finance_entries', id!), data);
             } else {
-                // Create new
-                await addDoc(collection(db, 'houses', houseId, 'finance_entries'), dataToSave);
+                await addDoc(collection(db, 'houses', houseId, 'finance_entries'), {
+                    ...entryData,
+                    house_id: houseId,
+                    paid_by_name: paidByName,
+                    user_uid: currentUserId,
+                    paid_by_user_id: currentUserId // Primary creator/payer
+                });
             }
+            setError(null);
             setShowForm(false);
             setEditingEntry(null);
-        } catch (error) {
-            console.error('Error saving entry:', error);
+        } catch (err) {
+            logger.error('Error saving entry:', err);
+            setError('Ekki tókst að vista færsluna. Reyndu aftur.');
         }
     };
 
@@ -672,8 +805,10 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, entrie
         if (!confirm('Ertu viss um að þú viljir eyða þessari færslu?')) return;
         try {
             await deleteDoc(doc(db, 'houses', houseId, 'finance_entries', entry.id));
-        } catch (error) {
-            console.error('Error deleting entry:', error);
+            setError(null);
+        } catch (err) {
+            logger.error('Error deleting entry:', err);
+            setError('Ekki tókst að eyða færslunni. Reyndu aftur.');
         }
     };
 
@@ -682,24 +817,17 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, entrie
         setShowForm(true);
     };
 
-    const { totalIncome, totalExpense, balance } = useMemo(() => {
-        const income = entries
-            .filter(e => e.type !== 'expense')
-            .reduce((sum, e) => sum + e.amount, 0);
-
-        const expense = entries
-            .filter(e => e.type === 'expense')
-            .reduce((sum, e) => sum + e.amount, 0);
-
-        return { totalIncome: income, totalExpense: expense, balance: income - expense };
-    }, [entries]);
+    // Fund standing: all entries, all years.
+    const fund = useMemo(() => computeTotals(allEntries), [allEntries]);
+    // Selected year only.
+    const yearTotals = useMemo(() => computeTotals(yearEntries), [yearEntries]);
 
     if (loading) return <div className="p-8 text-center text-grey-mid">Hleð gögnum...</div>;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Balance Card */}
-            <div className={`col-span-1 md:col-span-3 card text-white p-6 mb-6 ${balance >= 0 ? 'bg-charcoal' : 'bg-red-800'}`}>
+            {/* Balance Card (whole history) */}
+            <div className={`col-span-1 md:col-span-3 card text-white p-6 mb-6 ${fund.balance >= 0 ? 'bg-charcoal' : 'bg-red-800'}`}>
                 <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-white/10 rounded-full">
                         <Wallet className="w-6 h-6 text-amber" />
@@ -707,25 +835,29 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, entrie
                     <div>
                         <h2 className="text-lg font-medium opacity-90">Staða sjóðsins</h2>
                         <div className="text-3xl font-serif font-bold mt-1">
-                            {balance.toLocaleString()} kr.
+                            {fund.balance.toLocaleString()} kr.
                         </div>
+                        <div className="text-xs opacity-60 mt-1">Samtals frá upphafi, óháð ári</div>
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-4 border-t border-white/10 pt-4">
                     <div>
-                        <div className="text-sm opacity-60">Allar tekjur</div>
-                        <div className="text-xl font-medium text-green-400">+{totalIncome.toLocaleString()} kr.</div>
+                        <div className="text-sm opacity-60">Tekjur {selectedYear}</div>
+                        <div className="text-xl font-medium text-green-400">+{yearTotals.income.toLocaleString()} kr.</div>
                     </div>
                     <div>
-                        <div className="text-sm opacity-60">Allar útgjöld</div>
-                        <div className="text-xl font-medium text-red-300">-{totalExpense.toLocaleString()} kr.</div>
+                        <div className="text-sm opacity-60">Útgjöld {selectedYear}</div>
+                        <div className="text-xl font-medium text-red-300">-{yearTotals.expense.toLocaleString()} kr.</div>
                     </div>
                 </div>
             </div>
 
             <div className="col-span-1 md:col-span-2 card">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-serif">Bókhald</h3>
+                <div className="flex justify-between items-center mb-6 gap-3 flex-wrap">
+                    <div className="flex items-center gap-4 flex-wrap">
+                        <h3 className="text-xl font-serif">Bókhald {selectedYear}</h3>
+                        <YearSelect years={years} value={selectedYear} onChange={onYearChange} />
+                    </div>
                     {!showForm && (
                         <button
                             onClick={() => {
@@ -740,8 +872,15 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, entrie
                     )}
                 </div>
 
+                {error && (
+                    <div role="alert" className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-sm text-red-700">
+                        {error}
+                    </div>
+                )}
+
                 {showForm && (
                     <LedgerForm
+                        key={editingEntry?.id ?? 'new'}
                         onSave={handleSaveEntry}
                         onCancel={() => {
                             setShowForm(false);
@@ -754,7 +893,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, entrie
                 )}
 
                 <TransactionList
-                    entries={entries}
+                    entries={yearEntries}
                     onDelete={handleDeleteEntry}
                     onEdit={handleEditEntry}
                     currentUserId={currentUserId || ''}
@@ -766,6 +905,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, entrie
                 <h3 className="font-medium mb-4">Um Bókhald</h3>
                 <p className="text-sm text-grey-mid">
                     Hér heldur þú utan um raunverulegar tekjur (innborganir) og útgjöld.
+                    Staða sjóðsins nær yfir allar færslur frá upphafi; listinn og tekjur/útgjöld sýna valið ár.
                 </p>
             </div>
         </div>

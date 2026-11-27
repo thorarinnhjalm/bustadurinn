@@ -1,50 +1,43 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, X, TrendingDown, TrendingUp } from 'lucide-react';
-import type { BudgetItem, BudgetFrequency, BudgetItemType, User } from '@/types/models';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import type { BudgetItem, BudgetFrequency, BudgetItemType } from '@/types/models';
+import { validateAmount, parseAmountInput } from '@/components/finance/ledgerUtils';
 
 interface BudgetFormProps {
     onSave: (item: BudgetItem) => void;
     onCancel: () => void;
-    ownerIds?: string[]; // List of co-owner IDs
+    members?: { uid: string; name: string }[]; // Co-owners (for assigning income)
 }
 
-export default function BudgetForm({ onSave, onCancel, ownerIds = [] }: BudgetFormProps) {
+export default function BudgetForm({ onSave, onCancel, members = [] }: BudgetFormProps) {
     const [type, setType] = useState<BudgetItemType>('expense');
     const [category, setCategory] = useState('');
     const [amount, setAmount] = useState('');
     const [frequency, setFrequency] = useState<BudgetFrequency>('monthly');
     const [assignedOwnerId, setAssignedOwnerId] = useState('');
-    const [owners, setOwners] = useState<User[]>([]);
-
-    // Fetch owner details for the dropdown
-    useEffect(() => {
-        const fetchOwners = async () => {
-            if (!ownerIds.length) return;
-
-            const promises = ownerIds.map(uid => getDoc(doc(db, 'users', uid)));
-            const docs = await Promise.all(promises);
-            const userData = docs
-                .filter(d => d.exists())
-                .map(d => ({ uid: d.id, ...d.data() } as User));
-
-            setOwners(userData);
-        };
-
-        fetchOwners();
-    }, [ownerIds]);
+    const [error, setError] = useState<string | null>(null);
+    // Co-owners come from the parent (loaded via getHouseMembers); other
+    // users' docs are not readable from the client.
+    const owners = members;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!category || !amount) return;
+
+        const parsedAmount = Math.round(parseAmountInput(amount));
+        const amountError = validateAmount(parsedAmount);
+        if (amountError) {
+            setError(amountError);
+            return;
+        }
+        setError(null);
 
         const selectedOwner = owners.find(o => o.uid === assignedOwnerId);
 
         // Build the item object conditionally to avoid undefined values
         const item: BudgetItem = {
             category,
-            estimated_amount: parseInt(amount),
+            estimated_amount: parsedAmount,
             frequency,
             type
         };
@@ -160,6 +153,10 @@ export default function BudgetForm({ onSave, onCancel, ownerIds = [] }: BudgetFo
                         Veldu meðeiganda ef þetta eru framlag frá ákveðnum aðila
                     </p>
                 </div>
+            )}
+
+            {error && (
+                <p role="alert" className="text-sm text-red-600 mb-3">{error}</p>
             )}
 
             <div className="flex justify-end">
