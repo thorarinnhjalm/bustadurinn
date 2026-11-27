@@ -65,14 +65,18 @@ export default function ArbokPage() {
 
     const [year, setYear] = useState(currentYear);
     const [yearbook, setYearbook] = useState<Yearbook | null>(null);
-    const [loading, setLoading] = useState(true);
+    // Which (house, year) the latest finished request was for. `loading` is
+    // derived: anything other than the current inputs having completed counts
+    // as loading, so the effect never has to set it synchronously.
+    const [loadedFor, setLoadedFor] = useState<{ house: typeof currentHouse; year: number } | null>(null);
+    const loading = loadedFor === null || loadedFor.house !== currentHouse || loadedFor.year !== year;
 
     useEffect(() => {
         if (!currentHouse?.id) return;
         let cancelled = false;
-        setLoading(true);
+        const house = currentHouse;
 
-        buildYearbook(currentHouse.id, year, currentHouse)
+        buildYearbook(house.id, year, house)
             .then((result) => {
                 if (!cancelled) setYearbook(result);
             })
@@ -81,7 +85,7 @@ export default function ArbokPage() {
                 if (!cancelled) setYearbook(null);
             })
             .finally(() => {
-                if (!cancelled) setLoading(false);
+                if (!cancelled) setLoadedFor({ house, year });
             });
 
         return () => {

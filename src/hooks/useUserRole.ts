@@ -37,6 +37,9 @@ interface ResolvedRole {
 // Module-level (not store-level) - this is purely a request-dedup mechanism,
 // not app state, so it doesn't belong in Zustand. Keyed by userId, same as
 // the store cache, for the same impersonation-safety reason.
+// Stable reference so consumers using houseRoles in dependency lists don't churn.
+const EMPTY_HOUSE_ROLES: { [houseId: string]: HouseRole } = {};
+
 const inFlightFetches = new Map<string, Promise<ResolvedRole>>();
 
 async function fetchRole(userId: string): Promise<ResolvedRole> {
@@ -86,63 +89,36 @@ function getOrCreateInFlightFetch(userId: string): Promise<ResolvedRole> {
 }
 
 export function useUserRole(userId: string | undefined): UseUserRoleReturn {
-    // Read the store once for the initial value rather than subscribing
-    // reactively - subscribing would re-render every mounted useUserRole
-    // consumer on every cache write. The effect below re-checks the store
-    // directly (via getState()) whenever userId changes, so a live
-    // subscription isn't needed for correctness.
     const setCachedRole = useAppStore((state) => state.setCachedRole);
-
-    const [systemRole, setSystemRole] = useState<SystemRole>(() => {
-        const cached = useAppStore.getState().cachedRole;
-        return cached && userId && cached.userId === userId ? cached.systemRole : 'regular_user';
-    });
-    const [houseRoles, setHouseRoles] = useState<{ [houseId: string]: HouseRole }>(() => {
-        const cached = useAppStore.getState().cachedRole;
-        return cached && userId && cached.userId === userId ? cached.houseRoles : {};
-    });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    // The cache is a single slot written only when a fetch resolves, so
+    // subscribing is cheap, and it means a role written by another component
+    // (or a deduplicated in-flight fetch) shows up here without extra state.
+    const cachedRole = useAppStore((state) => state.cachedRole);
+    // Only failures need local state: a successful fetch lands in the store
+    // cache above. Keyed by userId so a failure for one user is never shown
+    // for another (impersonation).
+    const [failedUserId, setFailedUserId] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!userId) {
-            setSystemRole('regular_user');
-            setHouseRoles({});
-            return;
-        }
+        if (!userId) return;
 
         const cached = useAppStore.getState().cachedRole;
-        if (cached && cached.userId === userId) {
-            setSystemRole(cached.systemRole);
-            setHouseRoles(cached.houseRoles);
-            setLoading(false);
-            setError(null);
-            return;
-        }
+        if (cached && cached.userId === userId) return;
 
         let cancelled = false;
-        setLoading(true);
-        setError(null);
 
         getOrCreateInFlightFetch(userId)
             .then((resolved) => {
                 if (cancelled) return;
-                setSystemRole(resolved.systemRole);
-                setHouseRoles(resolved.houseRoles);
                 setCachedRole({ userId, ...resolved });
             })
             .catch((err) => {
                 if (cancelled) return;
                 logger.error('Error fetching user role:', err);
-                setError('Failed to load user permissions');
-                // Default to regular user on error. Deliberately do NOT write
+                // Report regular_user on error. Deliberately do NOT write
                 // to the cache here - an error result must not get "stuck"
                 // and served to later mounts as if it were a real role.
-                setSystemRole('regular_user');
-                setHouseRoles({});
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false);
+                setFailedUserId(userId);
             });
 
         return () => {
@@ -150,5 +126,27 @@ export function useUserRole(userId: string | undefined): UseUserRoleReturn {
         };
     }, [userId, setCachedRole]);
 
-    return { systemRole, houseRoles, loading, error };
+    // Everything below is derived during render, so the first render for a
+    // userId that has no cached role reports the lowest role (never a stale
+    // elevated one from a previous user) and `loading: true`.
+    if (!userId) {
+        return { systemRole: 'regular_user', houseRoles: EMPTY_HOUSE_ROLES, loading: false, error: null };
+    }
+    if (cachedRole && cachedRole.userId === userId) {
+        return {
+            systemRole: cachedRole.systemRole,
+            houseRoles: cachedRole.houseRoles,
+            loading: false,
+            error: null,
+        };
+    }
+    if (failedUserId === userId) {
+        return {
+            systemRole: 'regular_user',
+            houseRoles: EMPTY_HOUSE_ROLES,
+            loading: false,
+            error: 'Failed to load user permissions',
+        };
+    }
+    return { systemRole: 'regular_user', houseRoles: EMPTY_HOUSE_ROLES, loading: true, error: null };
 }

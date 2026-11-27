@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
     Home,
     ImageIcon,
@@ -50,20 +50,8 @@ interface HouseSettingsProps {
     handleSelectPrediction: (suggestion: any) => void;
 }
 
-export default function HouseSettings({
-    house,
-    isManager,
-    members,
-    loadingMembers,
-    isSaving,
-    onSave,
-    onImageSelect,
-    onRemoveGalleryImage,
-    suggestions,
-    handleAddressChange,
-    handleSelectPrediction
-}: HouseSettingsProps) {
-    const [houseForm, setHouseForm] = useState({
+function buildHouseForm(house: House) {
+    return {
         name: house.name || '',
         address: house.address || '',
         lat: house.location?.lat || 0,
@@ -97,50 +85,35 @@ export default function HouseSettings({
         gas_cylinder_size: house.gas_cylinder?.size || '',
         gas_cylinder_connection: house.gas_cylinder?.connection || '',
         gas_cylinder_notes: house.gas_cylinder?.notes || ''
-    });
+    };
+}
+
+export default function HouseSettings({
+    house,
+    isManager,
+    members,
+    loadingMembers,
+    isSaving,
+    onSave,
+    onImageSelect,
+    onRemoveGalleryImage,
+    suggestions,
+    handleAddressChange,
+    handleSelectPrediction
+}: HouseSettingsProps) {
+    const [houseForm, setHouseForm] = useState(() => buildHouseForm(house));
+
+    // Sync form with house prop: when a new house object arrives, rebuild the
+    // form during render (tracking the previous prop) instead of in an effect.
+    const [prevHouse, setPrevHouse] = useState(house);
+    if (prevHouse !== house) {
+        setPrevHouse(house);
+        setHouseForm(buildHouseForm(house));
+    }
 
     const [isEditingLocation, setIsEditingLocation] = useState(false);
     const [editLang, setEditLang] = useState<'is' | 'en'>('is');
     const [, setCropMode] = useState<'main' | 'gallery'>('main');
-
-    // Sync form with house prop
-    useEffect(() => {
-        setHouseForm({
-            name: house.name || '',
-            address: house.address || '',
-            lat: house.location?.lat || 0,
-            lng: house.location?.lng || 0,
-            invite_code: house.invite_code || '',
-            wifi_ssid: house.wifi_ssid || '',
-            wifi_password: house.wifi_password || '',
-            no_wifi: house.no_wifi || false,
-            holiday_mode: house.holiday_mode || 'first_come',
-            house_rules: house.house_rules || '',
-            house_rules_en: house.house_rules_en || '',
-            check_in_time: house.check_in_time || '',
-            check_out_time: house.check_out_time || '',
-            directions: house.directions || '',
-            directions_en: house.directions_en || '',
-            access_instructions: house.access_instructions || '',
-            access_instructions_en: house.access_instructions_en || '',
-            emergency_contact: house.emergency_contact || '',
-            guest_instructions: house.guest_instructions || '',
-            guest_instructions_en: house.guest_instructions_en || '',
-            amenities: house.amenities || [],
-            privacy_hide_finances: house.privacy_hide_finances || false,
-            finance_viewer_ids: house.finance_viewer_ids || [],
-            checkout_checklist: house.checkout_checklist || [],
-            arrival_checklist: house.arrival_checklist || [],
-            supply_checklist: house.supply_checklist || [],
-            seasonal_checklists: {
-                spring: house.seasonal_checklists?.spring || [],
-                autumn: house.seasonal_checklists?.autumn || []
-            },
-            gas_cylinder_size: house.gas_cylinder?.size || '',
-            gas_cylinder_connection: house.gas_cylinder?.connection || '',
-            gas_cylinder_notes: house.gas_cylinder?.notes || ''
-        });
-    }, [house]);
 
     const DEFAULT_CHECKOUT_CHECKLIST = [
         'Læsa öllum hurðum',

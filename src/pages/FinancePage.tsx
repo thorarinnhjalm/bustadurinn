@@ -441,8 +441,6 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
         return () => unsubscribe();
     }, [houseId, currentYear]);
 
-    // Subscription syncing removed as per user request
-
     const handleSaveItem = async (item: BudgetItem) => {
         if (!houseId || !currentUserId) return;
 

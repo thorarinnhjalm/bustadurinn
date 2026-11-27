@@ -3,9 +3,8 @@ declare const google: any;
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Home, MapPin, Users, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, doc, arrayUnion, getDoc, runTransaction } from 'firebase/firestore';
-import type { FieldValue } from 'firebase/firestore';
+import { Home, MapPin, Users, CheckCircle, Loader2 } from 'lucide-react';
+import { collection, addDoc, serverTimestamp, doc, arrayUnion, runTransaction } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
@@ -13,7 +12,6 @@ import { analytics } from '@/utils/analytics';
 import { logger } from '@/utils/logger';
 import { trackFunnel, describeError, markInOnboarding } from '@/utils/funnel';
 import AddToHomeScreenPrompt from '@/components/AddToHomeScreenPrompt';
-import type { AppNotification } from '@/types/models';
 import { generateInviteCode } from '@/utils/secureToken';
 
 type OnboardingStep = 'welcome' | 'house' | 'invite' | 'finish';
@@ -44,9 +42,6 @@ export default function OnboardingPage() {
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [debounceTimer, setDebounceTimer] = useState<any>(null); // Store timer
     const [showPwaPrompt, setShowPwaPrompt] = useState(false);
-
-    const [duplicateHouse, setDuplicateHouse] = useState<{ id: string; name: string; manager_id: string } | null>(null);
-    const [joinRequestSent, setJoinRequestSent] = useState(false);
 
     const steps = [
         { id: 'welcome', label: 'Velkomin' },
@@ -114,7 +109,7 @@ export default function OnboardingPage() {
             const loadMaps = async () => {
                 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
                 if (!apiKey) {
-                    console.warn('Google Maps API key not found.');
+                    logger.warn('Google Maps API key not found.');
                     void trackFunnel('maps_key_missing');
                     return;
                 }
@@ -127,7 +122,7 @@ export default function OnboardingPage() {
                     script.defer = true;
                     script.onload = () => setScriptLoaded(true);
                     script.onerror = () => {
-                        console.error('Failed to load Maps');
+                        logger.error('Failed to load Maps');
                         void trackFunnel('maps_load_error');
                     };
                     document.head.appendChild(script);
@@ -141,8 +136,6 @@ export default function OnboardingPage() {
 
     const handleAddressChange = (val: string) => {
         setHouseData(prev => ({ ...prev, address: val }));
-        setDuplicateHouse(null); // Reset duplicate warning on change
-        setJoinRequestSent(false);
 
         // Debounce Search
         if (debounceTimer) clearTimeout(debounceTimer);
@@ -163,7 +156,7 @@ export default function OnboardingPage() {
                         });
                     });
                 } catch (e) {
-                    console.error("HMS search error:", e);
+                    logger.error("HMS search error:", e);
                     void trackFunnel('address_search_error', { source: 'hms', ...describeError(e) });
                 }
 
@@ -191,7 +184,7 @@ export default function OnboardingPage() {
                             });
                         }
                     } catch (e) {
-                        console.error("Google search error:", e);
+                        logger.error("Google search error:", e);
                         void trackFunnel('address_search_error', { source: 'google', ...describeError(e) });
                     }
                 }
@@ -246,65 +239,6 @@ export default function OnboardingPage() {
             analytics.funnelDropoff(currentStep, 'back_button');
             void trackFunnel('onboarding_back', { from: currentStep, to: prevStepId, mount_id: mountId });
             setCurrentStep(prevStepId as OnboardingStep);
-        }
-    };
-
-    const handleSendJoinRequest = async () => {
-        if (!duplicateHouse || !currentUser) return;
-        void trackFunnel('join_request_submitted', { target_house_id: duplicateHouse.id });
-        setLoading(true);
-        setError('');
-
-        try {
-            // 1. Fetch manager email
-            const managerDoc = await getDoc(doc(db, 'users', duplicateHouse.manager_id));
-            if (!managerDoc.exists()) throw new Error('Eigandi fannst ekki');
-            const managerData = managerDoc.data();
-            const managerEmail = managerData.email;
-
-            // 2. Send email via API
-            const token = await auth.currentUser?.getIdToken();
-            await fetch('/api/send-email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    templateId: 'general_notification', // Using generic template for now
-                    to: managerEmail,
-                    variables: {
-                        title: 'Beiðni um aðgang að húsi',
-                        message: `${currentUser.name || currentUser.email} hefur óskað eftir aðgangi að húsinu ${duplicateHouse.name} (${houseData.address}).`,
-                        actionUrl: 'https://www.bustadurinn.is/dashboard' // Ideally link to approvals
-                    }
-                })
-            });
-
-            // 3. Create a notification in DB
-            const joinRequestNotification: Omit<AppNotification, 'id' | 'created_at'> & { created_at: FieldValue } = {
-                user_id: duplicateHouse.manager_id,
-                house_id: duplicateHouse.id,
-                type: 'join_request',
-                title: 'Beiðni um aðgang',
-                message: `${currentUser.name || currentUser.email} vill ganga í húsfélagið fyrir ${duplicateHouse.name}`,
-                data: {
-                    requester_id: currentUser.uid,
-                    requester_email: currentUser.email || undefined,
-                },
-                read: false,
-                created_at: serverTimestamp()
-            };
-            await addDoc(collection(db, 'notifications'), joinRequestNotification);
-
-            setJoinRequestSent(true);
-            void trackFunnel('join_request_sent', { target_house_id: duplicateHouse.id });
-        } catch (err: any) {
-            console.error('Error sending request:', err);
-            void trackFunnel('join_request_error', describeError(err));
-            setError('Ekki tókst að senda beiðni: ' + err.message);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -415,7 +349,7 @@ export default function OnboardingPage() {
                     created_at: serverTimestamp()
                 });
             } catch (initErr) {
-                console.error("Error initializing default data:", initErr);
+                logger.error("Error initializing default data:", initErr);
                 void trackFunnel('house_init_error', { house_id: houseId!, ...describeError(initErr) });
                 // Non-critical, continue
             }
@@ -434,7 +368,7 @@ export default function OnboardingPage() {
                 house_ids: [...(currentUser.house_ids || []), houseId!]
             });
 
-            console.log("House transaction complete. ID:", houseId!);
+            logger.debug("House transaction complete. ID:", houseId!);
 
             analytics.onboardingCompleted();
 
@@ -460,11 +394,11 @@ export default function OnboardingPage() {
                     if (res.ok) {
                         logger.info('Welcome email sent');
                     } else {
-                        console.error('❌ Failed to send welcome email');
+                        logger.error('Failed to send welcome email');
                         void trackFunnel('onboarding_email_error', { template: 'welcome', status: res.status });
                     }
                 } catch (e) {
-                    console.error("Failed to send welcome email:", e);
+                    logger.error("Failed to send welcome email:", e);
                     void trackFunnel('onboarding_email_error', { template: 'welcome', ...describeError(e) });
                 }
             })();
@@ -494,25 +428,25 @@ export default function OnboardingPage() {
                     if (res.ok) {
                         logger.info('Onboarding completion email sent');
                     } else {
-                        console.error('❌ Failed to send onboarding email');
+                        logger.error('Failed to send onboarding email');
                         void trackFunnel('onboarding_email_error', { template: 'onboarding_complete', status: res.status });
                     }
                 } catch (e) {
-                    console.error("Failed to send onboarding email:", e);
+                    logger.error("Failed to send onboarding email:", e);
                     void trackFunnel('onboarding_email_error', { template: 'onboarding_complete', ...describeError(e) });
                 }
             })();
 
-            console.log("Tracking analytics...");
+            logger.debug("Tracking analytics...");
             analytics.onboardingStep('invite');
             logFunnelEvent('house_created', { house_id: houseId! });
             // Lets the dashboard record the end of the funnel once.
             markInOnboarding();
 
-            console.log("Calling nextStep()...");
+            logger.debug("Calling nextStep()...");
             nextStep();
         } catch (err: any) {
-            console.error('Error creating house:', err);
+            logger.error('Error creating house:', err);
             void trackFunnel('house_create_error', { stage: 'transaction', ...describeError(err) });
             if (err.message && err.message.includes("User does not exist")) {
                 setError('Villa: Notandaskráningu ekki lokið. Vinsamlegast endurhladdu síðuna til að klára uppsetningu.');
@@ -581,14 +515,14 @@ export default function OnboardingPage() {
                 first_error: failures.length > 0 ? describeError((failures[0] as PromiseRejectedResult).reason).message : undefined,
             });
             if (failures.length > 0) {
-                console.error('Some invites failed:', failures);
+                logger.error('Some invites failed:', failures);
                 setError(`Villa: Gat ekki sent boð á ${failures.length} af ${emailList.length} netföngum. Þú getur reynt aftur, eða smellt á 'Sleppa þessu' til að halda áfram og bæta þeim við síðar.`);
                 return; // Block flow so user can see error and retry or skip
             }
 
             nextStep();
         } catch (err: any) {
-            console.error('Error sending invites:', err);
+            logger.error('Error sending invites:', err);
             void trackFunnel('invites_error', describeError(err));
             setError('Villa við að senda boð: ' + err.message);
         } finally {
@@ -640,57 +574,6 @@ export default function OnboardingPage() {
 
                 {/* Step Content */}
                 <div className="card">
-                    {/* Duplicate House Modal/Override */}
-                    {duplicateHouse && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                            <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
-                                <div className="flex items-center gap-3 text-amber mb-4">
-                                    <AlertTriangle className="w-8 h-8" />
-                                    <h3 className="text-xl font-bold text-charcoal m-0">Húsið er þegar skráð</h3>
-                                </div>
-
-                                <p className="text-charcoal mb-4">
-                                    Húsið <strong>{duplicateHouse.name}</strong> á {houseData.address} er þegar skráð í kerfið.
-                                </p>
-
-                                {joinRequestSent ? (
-                                    <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded mb-6 flex items-center gap-3">
-                                        <CheckCircle className="w-5 h-5" />
-                                        <div>
-                                            <p className="font-bold">Beiðni send!</p>
-                                            <p className="text-sm">Eigandi hússins fær tilkynningu um að þú viljir fá aðgang.</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <p className="text-grey-dark mb-6">
-                                        Í stað þess að búa til nýtt hús, viltu senda beiðni á núverandi eiganda um að fá aðgang?
-                                    </p>
-                                )}
-
-                                <div className="flex flex-col gap-3">
-                                    {!joinRequestSent && (
-                                        <button
-                                            onClick={handleSendJoinRequest}
-                                            className="btn btn-primary w-full justify-center"
-                                            disabled={loading}
-                                        >
-                                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Senda aðgangsbeiðni'}
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={() => {
-                                            setDuplicateHouse(null);
-                                            setJoinRequestSent(false);
-                                        }}
-                                        className="btn btn-ghost w-full"
-                                    >
-                                        Loka og breyta skráningu
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     {currentStep === 'welcome' && (
                         <div className="text-center py-8 animate-fade-in relative">
                             {/* Removed Urgency Badge */}

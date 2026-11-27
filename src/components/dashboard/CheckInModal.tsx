@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Loader2, LogIn, X } from 'lucide-react';
 
 // Stable default: see CheckoutModal for why an inline `checklist = []` default
@@ -25,11 +25,12 @@ export default function CheckInModal({
 
     // Reset checked state whenever the modal (re)opens or the checklist
     // changes, so a previous check-in's ticks don't leak into the next one.
-    useEffect(() => {
-        if (isOpen) {
-            setCheckedItems({});
-        }
-    }, [isOpen, checklist]);
+    // Done during render (tracking the previous inputs) rather than in an effect.
+    const [prevInputs, setPrevInputs] = useState({ isOpen, checklist });
+    if (prevInputs.isOpen !== isOpen || prevInputs.checklist !== checklist) {
+        setPrevInputs({ isOpen, checklist });
+        if (isOpen) setCheckedItems({});
+    }
 
     if (!isOpen) return null;
 
