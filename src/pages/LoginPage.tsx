@@ -2,7 +2,7 @@
  * Login Page
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
     signInWithEmailAndPassword,
@@ -18,6 +18,7 @@ import SEO from '@/components/SEO';
 import { analytics } from '@/utils/analytics';
 import { trackFunnel, describeError } from '@/utils/funnel';
 import { logger } from '@/utils/logger';
+import { getUserMessage } from '@/utils/userMessages';
 import { safeRedirect } from '@/utils/safeRedirect';
 
 // Checks super_admin role in Firestore by UID (distinct from rbac.ts isSuperAdmin which takes a role string)
@@ -49,6 +50,10 @@ export default function LoginPage() {
     const [crossDeviceEmail, setCrossDeviceEmail] = useState('');
     const [pendingSignInUrl, setPendingSignInUrl] = useState<string | null>(null);
     const signingInRef = useRef(false);
+    const emailId = useId();
+    const passwordId = useId();
+    const crossDeviceEmailId = useId();
+    const errorId = useId();
 
     const doEmailLinkSignIn = async (emailToUse: string, signInUrl: string) => {
         if (signingInRef.current) return;
@@ -97,7 +102,7 @@ export default function LoginPage() {
             }
         } catch (err: any) {
             logger.error('Email link sign in error:', err);
-            setError('Villa við að skrá inn með hlekk: ' + (err.message || 'Ógildur eða útrunninn hlekkur'));
+            setError(getUserMessage(err, 'Villa við að skrá inn með hlekk. Hlekkurinn gæti verið ógildur eða útrunninn.'));
             analytics.error('login_email_link', err.message, err.code);
             void trackFunnel('login_error', { context: 'login_email_link', ...describeError(err) });
             signingInRef.current = false;
@@ -149,7 +154,7 @@ export default function LoginPage() {
             setStatusMessage('');
         } catch (err: any) {
             logger.error('Error sending magic link:', err);
-            setError('Villa við að senda hlekk: ' + (err.message || 'Prófaðu aftur síðar'));
+            setError(getUserMessage(err, 'Villa við að senda hlekk. Reyndu aftur síðar.'));
             analytics.error('send_magic_link_error', err.message, err.code);
             void trackFunnel('login_error', { context: 'send_magic_link_error', ...describeError(err) });
         } finally {
@@ -181,7 +186,7 @@ export default function LoginPage() {
                 navigate('/dashboard');
             }
         } catch (err: any) {
-            setError('Rangt netfang eða lykilorð');
+            setError(getUserMessage(err, 'Rangt netfang eða lykilorð'));
             logger.error('Login error:', err);
             analytics.error('login_email', err.message, err.code);
             void trackFunnel('login_error', { context: 'login_email', ...describeError(err) });
@@ -240,7 +245,7 @@ export default function LoginPage() {
                 }
             }
         } catch (err: any) {
-            setError('Villa við innskráningu með Google');
+            setError(getUserMessage(err, 'Villa við innskráningu með Google'));
             logger.error('Google login error:', err);
             analytics.error('login_google', err.message, err.code);
             void trackFunnel('login_error', { context: 'login_google', ...describeError(err) });
@@ -299,7 +304,7 @@ export default function LoginPage() {
                 }
             }
         } catch (err: any) {
-            setError('Villa við innskráningu með Facebook');
+            setError(getUserMessage(err, 'Villa við innskráningu með Facebook'));
             logger.error('Facebook login error:', err);
             analytics.error('login_facebook', err.message, err.code);
             void trackFunnel('login_error', { context: 'login_facebook', ...describeError(err) });
@@ -323,15 +328,15 @@ export default function LoginPage() {
 
                 <div className="card">
                     {statusMessage && (
-                        <div className="bg-stone-50 border border-stone-200 text-stone-700 px-4 py-3 rounded mb-4 flex items-center justify-center gap-2">
-                            <span className="animate-spin w-4 h-4 border-2 border-stone-600 border-t-transparent rounded-full"></span>
+                        <div role="status" className="bg-stone-50 border border-stone-200 text-stone-700 px-4 py-3 rounded mb-4 flex items-center justify-center gap-2">
+                            <span aria-hidden="true" className="animate-spin w-4 h-4 border-2 border-stone-600 border-t-transparent rounded-full"></span>
                             {statusMessage}
                         </div>
                     )}
 
                     {pendingSignInUrl ? (
                         <div className="text-center py-6 space-y-4">
-                            <div className="w-12 h-12 bg-amber/10 rounded-full flex items-center justify-center mx-auto text-amber text-2xl">
+                            <div className="w-12 h-12 bg-amber/10 rounded-full flex items-center justify-center mx-auto text-amber-ink text-2xl" aria-hidden="true">
                                 ✉️
                             </div>
                             <h3 className="text-lg font-serif font-bold text-charcoal">Staðfestu netfangið þitt</h3>
@@ -339,13 +344,19 @@ export default function LoginPage() {
                                 Þú opnaðir innskráningarhlekk í öðrum vafra eða tæki. Sláðu inn netfangið þitt til að halda áfram.
                             </p>
                             {error && (
-                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+                                <div id={errorId} role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
                                     {error}
                                 </div>
                             )}
                             <form onSubmit={handleCrossDeviceSignIn} className="space-y-4">
+                                <label htmlFor={crossDeviceEmailId} className="sr-only">Netfang</label>
                                 <input
+                                    id={crossDeviceEmailId}
                                     type="email"
+                                    inputMode="email"
+                                    autoComplete="email"
+                                    aria-invalid={error ? true : undefined}
+                                    aria-describedby={error ? errorId : undefined}
                                     className="input"
                                     value={crossDeviceEmail}
                                     onChange={(e) => setCrossDeviceEmail(e.target.value)}
@@ -357,15 +368,16 @@ export default function LoginPage() {
                                     type="submit"
                                     className="btn btn-primary w-full"
                                     disabled={isLoading}
+                                    aria-busy={isLoading}
                                 >
-                                    <LogIn className="w-5 h-5" />
+                                    <LogIn className="w-5 h-5" aria-hidden="true" />
                                     {isLoading ? 'Skrái inn...' : 'Staðfesta og skrá inn'}
                                 </button>
                             </form>
                         </div>
                     ) : magicLinkSent ? (
                         <div className="text-center py-6 space-y-4">
-                            <div className="w-12 h-12 bg-amber/10 rounded-full flex items-center justify-center mx-auto text-amber text-2xl">
+                            <div className="w-12 h-12 bg-amber/10 rounded-full flex items-center justify-center mx-auto text-amber-ink text-2xl" aria-hidden="true">
                                 ✉️
                             </div>
                             <h3 className="text-lg font-serif font-bold text-charcoal">Innskráningarhlekkur sendur!</h3>
@@ -376,7 +388,7 @@ export default function LoginPage() {
                             <button
                                 type="button"
                                 onClick={() => setMagicLinkSent(false)}
-                                className="text-sm text-charcoal font-medium hover:text-amber underline"
+                                className="text-sm text-charcoal font-medium hover:text-amber-ink underline"
                             >
                                 Senda aftur eða breyta netfangi
                             </button>
@@ -384,15 +396,20 @@ export default function LoginPage() {
                     ) : (
                         <form onSubmit={isMagicLinkMode ? handleSendMagicLink : handleLogin} className="space-y-6">
                             {error && (
-                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                                <div id={errorId} role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                                     {error}
                                 </div>
                             )}
 
                             <div>
-                                <label className="label">Netfang</label>
+                                <label htmlFor={emailId} className="label">Netfang</label>
                                 <input
+                                    id={emailId}
                                     type="email"
+                                    inputMode="email"
+                                    autoComplete={isMagicLinkMode ? 'email' : 'username'}
+                                    aria-invalid={error ? true : undefined}
+                                    aria-describedby={error ? errorId : undefined}
                                     className="input"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -403,9 +420,13 @@ export default function LoginPage() {
 
                             {!isMagicLinkMode && (
                                 <div>
-                                    <label className="label">Lykilorð</label>
+                                    <label htmlFor={passwordId} className="label">Lykilorð</label>
                                     <input
+                                        id={passwordId}
                                         type="password"
+                                        autoComplete="current-password"
+                                        aria-invalid={error ? true : undefined}
+                                        aria-describedby={error ? errorId : undefined}
                                         className="input"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
@@ -419,8 +440,9 @@ export default function LoginPage() {
                                 type="submit"
                                 className="btn btn-primary w-full"
                                 disabled={isLoading}
+                                aria-busy={isLoading}
                             >
-                                <LogIn className="w-5 h-5" />
+                                <LogIn className="w-5 h-5" aria-hidden="true" />
                                 {isLoading
                                     ? (isMagicLinkMode ? 'Sendi hlekk...' : 'Skrái inn...')
                                     : (isMagicLinkMode ? 'Senda innskráningarhlekk' : 'Skrá inn')}
@@ -433,7 +455,7 @@ export default function LoginPage() {
                                         setIsMagicLinkMode(!isMagicLinkMode);
                                         setError('');
                                     }}
-                                    className="text-sm text-charcoal font-medium hover:text-amber underline"
+                                    className="text-sm text-charcoal font-medium hover:text-amber-ink underline"
                                 >
                                     {isMagicLinkMode ? 'Innskrá með lykilorði' : 'Innskrá án lykilorðs (tölvupóst-hlekkur)'}
                                 </button>
@@ -451,7 +473,7 @@ export default function LoginPage() {
                                             navigate('/signup');
                                         }
                                     }}
-                                    className="text-charcoal font-medium hover:text-amber"
+                                    className="text-charcoal font-medium hover:text-amber-ink"
                                 >
                                     Skrá sig
                                 </button>
@@ -472,7 +494,7 @@ export default function LoginPage() {
                                 className="btn bg-white border border-grey-mid text-charcoal hover:bg-grey-warm w-full flex items-center justify-center gap-2"
                                 disabled={isLoading}
                             >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
                                     <path
                                         fill="currentColor"
                                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -499,7 +521,7 @@ export default function LoginPage() {
                                 className="btn bg-[#1877F2] text-white hover:bg-[#166FE5] w-full flex items-center justify-center gap-2"
                                 disabled={isLoading}
                             >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                                 </svg>
                                 Facebook

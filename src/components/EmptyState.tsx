@@ -26,7 +26,7 @@ export default function EmptyState({
         <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
             {/* Icon */}
             <div className="w-16 h-16 rounded-full bg-amber/10 flex items-center justify-center mb-6">
-                <Icon className="w-8 h-8 text-amber" strokeWidth={1.5} />
+                <Icon className="w-8 h-8 text-amber-ink" strokeWidth={1.5} aria-hidden="true" />
             </div>
 
             {/* Title */}
@@ -44,6 +44,7 @@ export default function EmptyState({
                 <div className="flex flex-wrap gap-3 justify-center">
                     {actionLabel && onAction && (
                         <button
+                            type="button"
                             onClick={onAction}
                             className="btn btn-primary"
                         >
@@ -52,6 +53,7 @@ export default function EmptyState({
                     )}
                     {secondaryActionLabel && onSecondaryAction && (
                         <button
+                            type="button"
                             onClick={onSecondaryAction}
                             className="btn btn-secondary"
                         >

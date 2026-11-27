@@ -7,6 +7,22 @@ import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 
+// jsdom does not implement HTMLDialogElement.showModal/close
+if (typeof HTMLDialogElement !== 'undefined') {
+    HTMLDialogElement.prototype.show = function show(this: HTMLDialogElement) {
+        this.setAttribute('open', '');
+    };
+    HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+        this.setAttribute('open', '');
+    };
+    HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement, returnValue?: string) {
+        if (!this.hasAttribute('open')) return;
+        this.removeAttribute('open');
+        if (returnValue !== undefined) this.returnValue = returnValue;
+        this.dispatchEvent(new Event('close'));
+    };
+}
+
 // Cleanup after each test
 afterEach(() => {
     cleanup();

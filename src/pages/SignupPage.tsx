@@ -2,13 +2,14 @@
  * Signup Page
  */
 
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, googleProvider, facebookProvider, db } from '@/lib/firebase';
 import { UserPlus } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { logger } from '@/utils/logger';
+import { getUserMessage } from '@/utils/userMessages';
 import { useEffect } from 'react';
 import { getStoredUTMParams } from '@/utils/utm';
 import SEO from '@/components/SEO';
@@ -30,6 +31,11 @@ export default function SignupPage() {
     const [error, setError] = useState('');
     const [showLoginLink, setShowLoginLink] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [passwordInvalid, setPasswordInvalid] = useState(false);
+    const nameId = useId();
+    const emailId = useId();
+    const passwordId = useId();
+    const errorId = useId();
 
     const createProfileWithRetry = async (uid: string, data: any) => {
         let retryCount = 0;
@@ -57,10 +63,12 @@ export default function SignupPage() {
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setPasswordInvalid(false);
 
         // Basic password validation
         if (formData.password.length < 6) {
             setError('Lykilorð verður að vera að minnsta kosti 6 stafir');
+            setPasswordInvalid(true);
             analytics.error('signup_validation', 'Password too short');
             void trackFunnel('signup_error', { method: 'email', stage: 'validation', code: 'password_too_short' });
             return;
@@ -160,7 +168,8 @@ export default function SignupPage() {
                 }
             } else {
                 logger.error('SignupPage: Signup error:', err);
-                setError(`Villa kom upp við skráningu: ${err.message} (${err.code || 'unknown'})`);
+                setError(getUserMessage(err, 'Villa kom upp við skráningu. Reyndu aftur.'));
+                if (err.code === 'auth/weak-password') setPasswordInvalid(true);
                 analytics.error('signup_error', err.message, err.code);
                 void trackFunnel('signup_error', { method: 'email', stage, ...describeError(err) });
             }
@@ -207,7 +216,7 @@ export default function SignupPage() {
                 navigate(returnUrl || '/dashboard');
             }
         } catch (err: any) {
-            setError('Villa við skráningu með Google');
+            setError(getUserMessage(err, 'Villa við skráningu með Google'));
             void trackFunnel('signup_error', { method: 'google', ...describeError(err) });
             logger.error('SignupPage: Google signup error:', err);
         } finally {
@@ -253,7 +262,7 @@ export default function SignupPage() {
                 navigate(returnUrl || '/dashboard');
             }
         } catch (err: any) {
-            setError('Villa við skráningu með Facebook');
+            setError(getUserMessage(err, 'Villa við skráningu með Facebook'));
             void trackFunnel('signup_error', { method: 'facebook', ...describeError(err) });
             logger.error('SignupPage: Facebook signup error:', err);
         } finally {
@@ -277,7 +286,7 @@ export default function SignupPage() {
                 <div className="card">
                     <form onSubmit={handleSignup} className="space-y-6">
                         {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                            <div id={errorId} role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                                 {error}
                                 {showLoginLink && (
                                     <button
@@ -292,9 +301,11 @@ export default function SignupPage() {
                         )}
 
                         <div>
-                            <label className="label">Nafn</label>
+                            <label htmlFor={nameId} className="label">Nafn</label>
                             <input
+                                id={nameId}
                                 type="text"
+                                autoComplete="name"
                                 className="input"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -304,9 +315,12 @@ export default function SignupPage() {
                         </div>
 
                         <div>
-                            <label className="label">Netfang</label>
+                            <label htmlFor={emailId} className="label">Netfang</label>
                             <input
+                                id={emailId}
                                 type="email"
+                                inputMode="email"
+                                autoComplete="username"
                                 className="input"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -316,9 +330,13 @@ export default function SignupPage() {
                         </div>
 
                         <div>
-                            <label className="label">Lykilorð</label>
+                            <label htmlFor={passwordId} className="label">Lykilorð</label>
                             <input
+                                id={passwordId}
                                 type="password"
+                                autoComplete="new-password"
+                                aria-invalid={passwordInvalid ? true : undefined}
+                                aria-describedby={passwordInvalid && error ? errorId : undefined}
                                 className="input"
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -331,8 +349,9 @@ export default function SignupPage() {
                             type="submit"
                             className="btn btn-primary w-full"
                             disabled={isLoading}
+                            aria-busy={isLoading}
                         >
-                            <UserPlus className="w-5 h-5" />
+                            <UserPlus className="w-5 h-5" aria-hidden="true" />
                             {isLoading ? 'Býr til aðgang...' : 'Stofna ókeypis aðgang'}
                         </button>
 
@@ -347,7 +366,7 @@ export default function SignupPage() {
                                         navigate('/login');
                                     }
                                 }}
-                                className="text-charcoal font-medium hover:text-amber"
+                                className="text-charcoal font-medium hover:text-amber-ink"
                             >
                                 Skrá inn
                             </button>
@@ -368,7 +387,7 @@ export default function SignupPage() {
                             className="btn bg-white border border-grey-mid text-charcoal hover:bg-grey-warm w-full flex items-center justify-center gap-2"
                             disabled={isLoading}
                         >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
                                 <path
                                     fill="currentColor"
                                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -395,7 +414,7 @@ export default function SignupPage() {
                             className="btn bg-[#1877F2] text-white hover:bg-[#166FE5] w-full flex items-center justify-center gap-2"
                             disabled={isLoading}
                         >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                             </svg>
                             Nýskrá með Facebook

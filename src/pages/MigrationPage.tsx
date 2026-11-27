@@ -5,6 +5,9 @@ import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import { useUserRole } from '@/hooks/useUserRole';
 import { ArrowLeft, Play, AlertTriangle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Modal from '@/components/ui/Modal';
+import { logger } from '@/utils/logger';
+import { getUserMessage } from '@/utils/userMessages';
 
 export default function MigrationPage() {
     const navigate = useNavigate();
@@ -13,20 +16,21 @@ export default function MigrationPage() {
     const [loading, setLoading] = useState(false);
     const [logs, setLogs] = useState<string[]>([]);
     const [progress, setProgress] = useState(0);
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
     const isSuperAdmin = systemRole === 'super_admin';
 
-    const log = (msg: string) => setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`]);
+    const log = (msg: string) => setLogs(prev => [...prev, `${new Date().toLocaleTimeString('is-IS')}: ${msg}`]);
 
     const migrateCollection = async (houseId: string, collectionName: string) => {
-        log(`Migrating ${collectionName} for house ${houseId}...`);
+        log(`Færi ${collectionName} fyrir hús ${houseId}...`);
         try {
             // Query legacy top-level collection
             const q = query(collection(db, collectionName), where('house_id', '==', houseId));
             const snapshot = await getDocs(q);
 
             if (snapshot.empty) {
-                log(`No documents found in ${collectionName} for house ${houseId}`);
+                log(`Engin skjöl fundust í ${collectionName} fyrir hús ${houseId}`);
                 return 0;
             }
 
@@ -43,27 +47,26 @@ export default function MigrationPage() {
             }
 
             await batch.commit();
-            log(`Migrated ${count} documents in ${collectionName}`);
+            log(`Færði ${count} skjöl í ${collectionName}`);
             return count;
         } catch (error) {
-            console.error(`Error migrating ${collectionName}:`, error);
-            log(`ERROR migrating ${collectionName}: ${error}`);
+            logger.error(`Error migrating ${collectionName}:`, error);
+            log(`VILLA við færslu á ${collectionName}: ${getUserMessage(error)}`);
             return 0;
         }
     };
 
     const handleMigration = async () => {
-        if (!confirm('Are you sure you want to start the migration? This will copy data to subcollections.')) return;
-
+        setConfirmOpen(false);
         setLoading(true);
         setLogs([]);
 
         try {
-            log("Fetching all houses...");
+            log("Sæki öll hús...");
             const housesSnap = await getDocs(collection(db, 'houses'));
             const houses = housesSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
 
-            log(`Found ${houses.length} houses.`);
+            log(`Fann ${houses.length} hús.`);
 
             let completed = 0;
             const collectionsToMigrate = [
@@ -76,7 +79,7 @@ export default function MigrationPage() {
             ];
 
             for (const house of houses) {
-                log(`Processing House: ${house.name || house.id} (${house.id})`);
+                log(`Vinn hús: ${house.name || house.id} (${house.id})`);
 
                 for (const colName of collectionsToMigrate) {
                     await migrateCollection(house.id, colName);
@@ -86,10 +89,11 @@ export default function MigrationPage() {
                 setProgress((completed / houses.length) * 100);
             }
 
-            log("Migration Completed Successfully!");
+            log("Gagnafærslu lokið!");
 
         } catch (e: any) {
-            log(`FATAL ERROR: ${e.message}`);
+            logger.error('Migration failed:', e);
+            log(`ALVARLEG VILLA: ${getUserMessage(e)}`);
         } finally {
             setLoading(false);
         }
@@ -98,10 +102,10 @@ export default function MigrationPage() {
     if (!isSuperAdmin) {
         return (
             <div className="p-8 text-center">
-                <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" aria-hidden="true" />
                 <h1 className="text-xl font-bold">Aðgangur bannaður</h1>
                 <p>Aðeins kerfisstjórar mega framkvæma gagnafærslur.</p>
-                <button onClick={() => navigate('/')} className="mt-4 btn btn-primary">Heim</button>
+                <button type="button" onClick={() => navigate('/')} className="mt-4 btn btn-primary">Heim</button>
             </div>
         );
     }
@@ -110,10 +114,10 @@ export default function MigrationPage() {
         <div className="min-h-screen bg-bone p-8">
             <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-4 mb-8">
-                    <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-stone-200 rounded-full">
-                        <ArrowLeft className="w-6 h-6" />
+                    <button type="button" onClick={() => navigate('/dashboard')} aria-label="Til baka á stjórnborð" className="p-2 hover:bg-stone-200 rounded-full">
+                        <ArrowLeft className="w-6 h-6" aria-hidden="true" />
                     </button>
-                    <h1 className="text-2xl font-serif font-bold">Gagnafærsla (Migration Tool)</h1>
+                    <h1 className="text-2xl font-serif font-bold">Gagnafærsla</h1>
                 </div>
 
                 <div className="card mb-8">
@@ -125,18 +129,27 @@ export default function MigrationPage() {
 
                     <div className="flex gap-4">
                         <button
-                            onClick={handleMigration}
+                            type="button"
+                            onClick={() => setConfirmOpen(true)}
                             disabled={loading}
+                            aria-busy={loading}
                             className="btn btn-primary flex items-center gap-2"
                         >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Play className="w-4 h-4" aria-hidden="true" />}
                             Byrja Færslu
                         </button>
                     </div>
 
                     {loading && (
                         <div className="mt-4">
-                            <div className="w-full bg-stone-200 rounded-full h-2.5">
+                            <div
+                                className="w-full bg-stone-200 rounded-full h-2.5"
+                                role="progressbar"
+                                aria-label="Framvinda gagnafærslu"
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-valuenow={Math.round(progress)}
+                            >
                                 <div className="bg-amber h-2.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
                             </div>
                             <p className="text-right text-xs mt-1 text-grey-mid">{Math.round(progress)}%</p>
@@ -144,14 +157,40 @@ export default function MigrationPage() {
                     )}
                 </div>
 
-                <div className="bg-charcoal text-green-400 font-mono p-4 rounded-lg h-96 overflow-y-auto text-sm">
+                <div
+                    role="log"
+                    aria-label="Færsluskrá"
+                    tabIndex={0}
+                    className="bg-charcoal text-green-400 font-mono p-4 rounded-lg h-96 overflow-y-auto text-sm"
+                >
                     {logs.length === 0 ? (
-                        <span className="opacity-50">// Logs will appear here...</span>
+                        <span className="text-stone-300">// Skrár birtast hér...</span>
                     ) : (
                         logs.map((L, i) => <div key={i}>{L}</div>)
                     )}
                 </div>
             </div>
+
+            <Modal
+                open={confirmOpen}
+                onClose={() => setConfirmOpen(false)}
+                title="Hefja gagnafærslu?"
+                size="sm"
+                footer={
+                    <>
+                        <button type="button" className="btn btn-secondary" onClick={() => setConfirmOpen(false)}>
+                            Hætta við
+                        </button>
+                        <button type="button" className="btn btn-primary" onClick={handleMigration}>
+                            Já, hefja færslu
+                        </button>
+                    </>
+                }
+            >
+                <p className="text-grey-dark">
+                    Þetta afritar gögn úr gömlu söfnunum yfir í undirsöfn hvers húss. Ertu viss um að þú viljir hefja færsluna?
+                </p>
+            </Modal>
         </div>
     );
 }

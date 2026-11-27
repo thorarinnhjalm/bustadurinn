@@ -79,8 +79,10 @@
     @apply bg-amber text-charcoal border-amber;
   }
 
-  .btn-primary:active {
-    transform: scale(0.95);
+  @media (prefers-reduced-motion: no-preference) {
+    .btn-primary:active {
+      transform: scale(0.95);
+    }
   }
 
   .btn-secondary {
@@ -91,8 +93,10 @@
     @apply bg-stone-50 border-stone-400;
   }
 
-  .btn-secondary:active {
-    transform: scale(0.95);
+  @media (prefers-reduced-motion: no-preference) {
+    .btn-secondary:active {
+      transform: scale(0.95);
+    }
   }
 
   .btn-ghost {
@@ -116,12 +120,18 @@
 
   .card:hover {
     @apply border-stone-300 shadow-sm;
-    transform: translateY(-1px);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .card:hover {
+      transform: translateY(-1px);
+    }
   }
 
   /* Form Inputs - Clean and Minimal */
   .input {
-    @apply w-full px-4 py-3 font-sans text-base text-stone-900 bg-white border border-stone-300 transition-all outline-none;
+    @apply w-full px-4 py-3 font-sans text-base text-stone-900 bg-white border transition-all outline-none;
+    border-color: #8a8580; /* 3.65:1 on white (WCAG 1.4.11) */
     border-radius: 6px;
     transition-duration: 200ms;
     font-size: 16px;
@@ -129,12 +139,19 @@
     line-height: 1.5;
   }
 
-  .input:focus {
+  .input:focus,
+  .input:focus-visible {
     @apply border-charcoal ring-2 ring-charcoal/10;
+    outline: 2px solid #1a1a1a;
+    outline-offset: 1px;
+  }
+
+  .input[aria-invalid="true"] {
+    @apply border-red-600;
   }
 
   .input::placeholder {
-    @apply text-stone-400;
+    @apply text-stone-500;
   }
 
   /* Select elements - ensure perfect alignment */
@@ -153,7 +170,7 @@
 
   /* Badge - Subtle and Refined */
   .badge {
-    @apply inline-flex items-center px-3 py-1 text-xs font-medium bg-amber/10 text-amber border border-amber/20 rounded-md;
+    @apply inline-flex items-center px-3 py-1 text-xs font-medium bg-amber/10 text-amber-ink border border-amber/30 rounded-md;
   }
 
   /* Layout Helpers */
@@ -194,7 +211,7 @@
 
   a:hover,
   .link:hover {
-    @apply text-amber;
+    @apply text-amber-ink;
   }
 }
 
@@ -208,7 +225,7 @@
   }
 
   .text-grey-mid {
-    color: #8a8580;
+    color: #6b665f;
   }
 
   .text-grey-dark {
@@ -237,6 +254,12 @@
 
   .bg-gradient-charcoal {
     background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  }
+
+  /* Focus ring for elements sitting on charcoal backgrounds */
+  .focus-on-dark:focus-visible {
+    outline: 2px solid #fdfcf8;
+    outline-offset: 2px;
   }
 
   /* Animations */
@@ -307,6 +330,83 @@
 
   .animate-pulse-slow {
     animation: pulse-slow 8s ease-in-out infinite;
+  }
+}
+
+/* =============================================================================
+   ACCESSIBILITY
+   ============================================================================= */
+
+/* Baseline keyboard focus ring (zero specificity so components can override) */
+:where(a, button, [role="button"], [role="switch"], [role="checkbox"], input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 2px;
+}
+
+/* Native modal dialog */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overscroll-behavior: contain;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog[open] {
+    animation: dialogIn 160ms ease-out;
+  }
+
+  dialog[open]::backdrop {
+    animation: dialogBackdropIn 160ms ease-out;
+  }
+}
+
+@keyframes dialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dialogBackdropIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Disable only spatial/looping animation; colour and opacity transitions stay */
+@media (prefers-reduced-motion: reduce) {
+
+  .animate-float,
+  .animate-float-delayed,
+  .animate-pulse-slow,
+  .animate-bounce,
+  .toast {
+    animation: none !important;
+  }
+
+  .animate-fade-in {
+    animation-name: none !important;
+  }
+
+  .btn:active,
+  .card:hover,
+  .card:active {
+    transform: none !important;
+  }
+
+  .rbc-event:hover {
+    transform: none !important;
   }
 }
 

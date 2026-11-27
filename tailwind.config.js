@@ -13,8 +13,10 @@ export default {
                     DEFAULT: '#e8b058',
                     dark: '#d49b3d',
                 },
+                // Dark amber for TEXT/icons on light backgrounds (5.76:1 on bone, 5.91:1 on white)
+                'amber-ink': '#8a5a12',
                 'grey-warm': '#e8e4df',
-                'grey-mid': '#8a8580',
+                'grey-mid': '#6b665f',
                 'grey-dark': '#4a4642',
             },
             fontFamily: {
