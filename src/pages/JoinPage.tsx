@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
-import { doc, getDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { Home, Loader2, CheckCircle, AlertTriangle, X, Calendar, DollarSign, ListTodo, ArrowRight, ExternalLink } from 'lucide-react';
@@ -28,99 +28,71 @@ export default function JoinPage() {
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
     const [isIAB, setIsIAB] = useState(false);
 
+    // Look the invitation up through the API: invitees may be logged out or not
+    // yet members, so the client can no longer read houses/invitations/users.
     useEffect(() => {
         if ((window as any).isInsideAppBrowser) {
             setIsIAB(true);
         }
+
+        let cancelled = false;
+
         const checkHouse = async () => {
-            // Case 1: Handle Token (from email)
-            if (tokenParam) {
-                try {
-                    logger.debug("Checking token:", tokenParam);
-                    const q = query(collection(db, 'invitations'), where('token', '==', tokenParam), limit(1));
-                    const snap = await getDocs(q);
-
-                    if (!snap.empty) {
-                        const inviteData = snap.docs[0].data();
-                        const hId = inviteData.house_id;
-
-                        const houseSnap = await getDoc(doc(db, 'houses', hId));
-                        if (houseSnap.exists()) {
-                            const houseData = { id: houseSnap.id, ...houseSnap.data() } as House;
-                            setHouse(houseData);
-
-                            // Set inviter info from invitation if available
-                            if (inviteData.invited_by_name) {
-                                setInviter({ name: inviteData.invited_by_name } as User);
-                            }
-
-                            if (currentUser && houseData.owner_ids?.includes(currentUser.uid)) {
-                                setStatus('joined');
-                            }
-                        } else {
-                            setError('Sumarhús fannst ekki lengur.');
-                        }
-                    } else {
-                        setError('Boðstengill er útrunninn eða ógildur.');
-                    }
-                } catch (err) {
-                    console.error("Token check error:", err);
-                    setError('Villa við að staðfesta boð.');
-                } finally {
-                    setLoading(false);
-                }
-                return;
-            }
-
-            // Case 2: Handle houseId + code (direct sharing)
-            if (!houseIdParam || !codeParam) {
+            const hasToken = !!tokenParam;
+            if (!hasToken && (!houseIdParam || !codeParam)) {
                 setError('Ógildur boðshlekkur.');
                 setLoading(false);
                 return;
             }
 
             try {
-                const docRef = doc(db, 'houses', houseIdParam);
-                const docSnap = await getDoc(docRef);
+                const response = await fetch('/api/invite-info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(hasToken ? { token: tokenParam } : { houseId: houseIdParam, code: codeParam })
+                });
 
-                if (docSnap.exists()) {
-                    const houseData = docSnap.data() as House;
-                    if (houseData.invite_code === codeParam) {
-                        setHouse({ ...houseData, id: docSnap.id });
+                if (cancelled) return;
 
-                        // Fetch inviter (manager) info
-                        if (houseData.manager_id) {
-                            try {
-                                const managerDoc = await getDoc(doc(db, 'users', houseData.manager_id));
-                                if (managerDoc.exists()) {
-                                    setInviter({ uid: managerDoc.id, ...managerDoc.data() } as User);
-                                }
-                            } catch (err) {
-                                console.error('Could not fetch inviter:', err);
-                            }
-                        }
+                if (response.status === 404) {
+                    setError(hasToken ? 'Boðstengill er útrunninn eða ógildur.' : 'Boðskóði er ekki réttur eða útrunninn.');
+                    return;
+                }
+                if (response.status === 429) {
+                    setError('Of margar tilraunir. Reyndu aftur síðar.');
+                    return;
+                }
+                if (!response.ok) {
+                    setError(hasToken ? 'Villa við að staðfesta boð.' : 'Villa við að sækja upplýsingar.');
+                    return;
+                }
 
-                        // Check if already a member
-                        if (currentUser && houseData.owner_ids?.includes(currentUser.uid)) {
-                            setStatus('joined');
-                        }
+                const info = await response.json() as { houseId: string; houseName: string; inviterName?: string; email?: string };
+                if (cancelled) return;
 
-                    } else {
-                        setError('Boðskóði er ekki réttur eða útrunninn.');
-                    }
-                } else {
-                    setError('Sumarhús fannst ekki.');
+                setHouse({ id: info.houseId, name: info.houseName } as House);
+                if (info.inviterName) {
+                    setInviter({ name: info.inviterName } as User);
                 }
             } catch (err) {
-                console.error(err);
-                setError('Villa við að sækja upplýsingar.');
+                if (cancelled) return;
+                logger.error('Invite lookup error:', err);
+                setError(hasToken ? 'Villa við að staðfesta boð.' : 'Villa við að sækja upplýsingar.');
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
 
         checkHouse();
-    }, [houseIdParam, codeParam, tokenParam, currentUser]);
+        return () => { cancelled = true; };
+    }, [houseIdParam, codeParam, tokenParam]);
+
+    // Already a member? (uses the profile already in the store; no extra reads)
+    useEffect(() => {
+        if (house && currentUser?.house_ids?.includes(house.id)) {
+            setStatus('joined');
+        }
+    }, [house, currentUser]);
 
     const handleJoinHouse = async () => {
         if (!currentUser || !house) return;
@@ -144,8 +116,25 @@ export default function JoinPage() {
             });
 
             if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to join');
+                let message = 'Villa við að ganga í hús.';
+                if (response.status === 429) {
+                    message = 'Of margar tilraunir. Reyndu aftur síðar.';
+                } else if (response.status === 400 || response.status === 404) {
+                    message = 'Boðið er ógilt eða útrunnið.';
+                }
+                throw new Error(message);
+            }
+
+            // Now that the user is a member the house doc is readable; load the
+            // full document for the store (fall back to the minimal info).
+            let fullHouse: House = house;
+            try {
+                const houseSnap = await getDoc(doc(db, 'houses', house.id));
+                if (houseSnap.exists()) {
+                    fullHouse = { ...houseSnap.data(), id: houseSnap.id } as House;
+                }
+            } catch (loadErr) {
+                logger.warn('Could not load house after joining:', loadErr);
             }
 
             // Update Local Store immediately (otherwise Dashboard redirects to onboarding)
@@ -153,12 +142,12 @@ export default function JoinPage() {
                 ...currentUser,
                 house_ids: [...(currentUser.house_ids || []), house.id]
             });
-            useAppStore.getState().setCurrentHouse(house);
+            useAppStore.getState().setCurrentHouse(fullHouse);
 
             setStatus('joined');
             setShowWelcomeModal(true);
         } catch (err: any) {
-            console.error(err);
+            logger.error('Join house failed:', err);
             setError(err.message || 'Villa við að ganga í hús.');
             setStatus('idle');
         }

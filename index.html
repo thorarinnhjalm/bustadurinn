@@ -37,12 +37,62 @@
     media="print" onload="this.media='all'" />
 
 
+  <!-- Analytics privacy: /guest/<token>, /join... and any ?token= / ?returnUrl= URL carry
+       bearer secrets (guest links, invitations). Never report those URLs to third parties. -->
+  <script>
+    window.__analyticsSensitive = function () {
+      var p = location.pathname, q = location.search;
+      return p.indexOf('/guest/') === 0 || p.indexOf('/join') === 0 ||
+        /[?&](token|returnUrl|code)=/i.test(q);
+    };
+    // Redacted location to report instead of the real URL (null = report as-is).
+    window.__analyticsLocation = function () {
+      var p = location.pathname;
+      if (p.indexOf('/guest/') === 0) return { path: '/guest/[token]' };
+      if (p.indexOf('/join') === 0) return { path: '/join/[redacted]' };
+      if (/[?&](token|returnUrl|code)=/i.test(location.search)) return { path: p };
+      return null;
+    };
+  </script>
+
   <!-- Google Analytics - Deferred for performance -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-    gtag('config', 'G-ZK96M9074D');
+
+    // Page views are sent manually (initial load + SPA navigation) so secret-bearing URLs can be redacted.
+    gtag('config', 'G-ZK96M9074D', { send_page_view: false });
+    function sendGaPageView() {
+      var red = window.__analyticsLocation();
+      var params = red
+        ? { page_location: location.origin + red.path, page_path: red.path }
+        : { page_location: location.href, page_path: location.pathname + location.search };
+      params.page_title = red ? 'Redacted' : document.title;
+      // 'set' also redacts the location of later events (gtag custom events) until the next route change
+      gtag('set', { page_location: params.page_location, page_path: params.page_path });
+      gtag('event', 'page_view', params);
+    }
+    sendGaPageView();
+
+    // SPA route changes
+    var lastGaPath = location.pathname + location.search;
+    function onGaRouteChange() {
+      var current = location.pathname + location.search;
+      if (current === lastGaPath) return;
+      lastGaPath = current;
+      // Let the router update document.title first
+      setTimeout(sendGaPageView, 0);
+    }
+    ['pushState', 'replaceState'].forEach(function (fn) {
+      var orig = history[fn];
+      history[fn] = function () {
+        var result = orig.apply(this, arguments);
+        onGaRouteChange();
+        return result;
+      };
+    });
+    window.addEventListener('popstate', onGaRouteChange);
 
     // Load GA script after page load
     window.addEventListener('load', function () {
@@ -65,9 +115,36 @@
       s.parentNode.insertBefore(t, s)
     }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
 
-    // Initialize & Track PageView
+    // Initialize & Track PageView. The Pixel reads the real URL itself, so on
+    // secret-bearing URLs (guest links, invitations) it is not told about the page
+    // and automatic button/metadata events are switched off.
+    if (window.__analyticsSensitive()) {
+      fbq('set', 'autoConfig', false, '1349173416958913');
+    }
     fbq('init', '1349173416958913');
-    fbq('track', 'PageView');
+    if (!window.__analyticsSensitive()) {
+      fbq('track', 'PageView');
+    }
+
+    // The Pixel's built-in pushState tracking would report secret-bearing URLs on SPA
+    // navigation, so it is disabled and PageView is sent manually for safe URLs only.
+    fbq.disablePushState = true;
+    var lastPixelPath = location.pathname + location.search;
+    function onPixelRouteChange() {
+      var current = location.pathname + location.search;
+      if (current === lastPixelPath) return;
+      lastPixelPath = current;
+      if (!window.__analyticsSensitive()) fbq('track', 'PageView');
+    }
+    ['pushState', 'replaceState'].forEach(function (fn) {
+      var orig = history[fn];
+      history[fn] = function () {
+        var result = orig.apply(this, arguments);
+        onPixelRouteChange();
+        return result;
+      };
+    });
+    window.addEventListener('popstate', onPixelRouteChange);
   </script>
   <!-- End Meta Pixel Code -->
 
