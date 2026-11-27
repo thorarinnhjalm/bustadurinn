@@ -13,11 +13,12 @@
  * server, drives real Chromium (playwright-core) to each public route,
  * waits for the route to actually render (an <h1> — the loading spinner
  * fallback has no h1), and writes the resulting fully-rendered HTML to
- * dist/<route>/index.html. On Vercel, static files are matched against the
- * filesystem BEFORE rewrites run, so these files are served as-is for
- * exact-match requests and the SPA rewrite is untouched for every other
- * (dynamic/private) path. See vercel.json — no changes were needed there;
- * see the note at the bottom of this file for why.
+ * dist/<route>/index.html ("/" -> dist/index.html). On Vercel, static files
+ * are matched against the filesystem BEFORE rewrites run, so these files are
+ * served as-is for exact-match requests. Every other (dynamic/private) path
+ * falls through to the SPA rewrite in vercel.json, which targets
+ * /app-shell.html — the pristine Vite-built shell — NOT /index.html, because
+ * index.html is overwritten here with the prerendered landing page.
  *
  * Route list: imported from scripts/generate-sitemap.js so the sitemap and
  * the prerender set can never drift apart. A couple of sitemap routes are
@@ -83,43 +84,32 @@ const MIME_TYPES = {
 };
 
 /**
- * Minimal static file server mirroring the piece of vercel.json's routing
- * that matters here: exact filesystem matches are served as-is; anything
- * without a matching file falls back to the app shell (dist/index.html),
- * same as the `rewrites` entry does in production.
+ * Minimal static file server for rendering. Paths with a file extension are
+ * served from dist/ as-is (404 if missing). Every extensionless (route-like)
+ * path gets the pristine app shell, held in memory, regardless of what is on
+ * disk: dist/index.html is the OUTPUT of this script for "/", so it must never
+ * be used as the shell (a re-run of postbuild would otherwise render the
+ * landing page into every route). The shell is dist/app-shell.html, emitted
+ * unmodified by the Vite plugin in vite.config.ts.
  */
-function startStaticServer() {
+function startStaticServer(shellHtml) {
     const server = createServer(async (req, res) => {
         try {
             const url = new URL(req.url, 'http://localhost');
-            let filePath = join(DIST_DIR, decodeURIComponent(url.pathname));
+            const pathname = decodeURIComponent(url.pathname);
 
-            let served = false;
-            if (existsSync(filePath)) {
-                const s = await stat(filePath);
-                if (s.isFile()) {
-                    served = true;
-                } else if (s.isDirectory()) {
-                    const indexPath = join(filePath, 'index.html');
-                    if (existsSync(indexPath)) {
-                        filePath = indexPath;
-                        served = true;
-                    }
-                }
+            if (!extname(pathname)) {
+                res.writeHead(200, { 'Content-Type': MIME_TYPES['.html'] });
+                res.end(shellHtml);
+                return;
             }
 
-            if (!served) {
-                // SPA fallback — only for extensionless (route-like) paths,
-                // so a genuinely missing asset still 404s instead of being
-                // masked as index.html.
-                if (extname(url.pathname)) {
-                    res.writeHead(404);
-                    res.end('Not found');
-                    return;
-                }
-                filePath = join(DIST_DIR, 'index.html');
+            const filePath = join(DIST_DIR, pathname);
+            if (!filePath.startsWith(DIST_DIR) || !existsSync(filePath) || !(await stat(filePath)).isFile()) {
+                res.writeHead(404);
+                res.end('Not found');
+                return;
             }
-
             const data = await readFile(filePath);
             const mime = MIME_TYPES[extname(filePath)] || 'application/octet-stream';
             res.writeHead(200, { 'Content-Type': mime });
@@ -254,9 +244,19 @@ async function prerenderRoute(browser, baseUrl, path) {
         // the review widget is loaded only above a viewport width the
         // prerenderer always satisfies, so serialising it would ship it to
         // phones too.
+        //
+        // The same goes for third-party scripts that index.html injects when
+        // the page loads (GA's gtag.js on window load, the Meta Pixel's
+        // fbevents.js synchronously, the umsognin widget). They are not marked
+        // data-runtime-injected, and serialising them would make the browser
+        // load them twice: once from the baked-in tag, once from the inline
+        // bootstrap snippet that still runs on the prerendered page.
         await page.evaluate(() => {
             document
-                .querySelectorAll('[data-runtime-injected]')
+                .querySelectorAll(
+                    '[data-runtime-injected], script[src*="googletagmanager.com/gtag/js"], ' +
+                    'script[src*="connect.facebook.net"], script[src*="umsognin.is"]'
+                )
                 .forEach((el) => el.remove());
         });
 
@@ -278,7 +278,15 @@ async function main() {
         process.exit(1);
     }
 
-    const server = await startStaticServer();
+    const shellPath = join(DIST_DIR, 'app-shell.html');
+    if (!existsSync(shellPath)) {
+        throw new Error(
+            'dist/app-shell.html is missing — the app-shell plugin in vite.config.ts did not run.'
+        );
+    }
+    const shellHtml = await readFile(shellPath);
+
+    const server = await startStaticServer(shellHtml);
     const { port } = server.address();
     const baseUrl = `http://127.0.0.1:${port}`;
 
@@ -345,7 +353,7 @@ main().catch((err) => {
 });
 
 // --- Vercel routing note ----------------------------------------------
-// vercel.json's only rewrite is `/((?!api).*)` -> `/index.html`. Vercel's
+// vercel.json's only rewrite is `/((?!api).*)` -> `/app-shell.html`. Vercel's
 // documented routing order is: 1) filesystem (exact static file match,
 // including implicit `<dir>/index.html` resolution for extensionless
 // paths — the same mechanism that lets framework static exports, e.g.
@@ -355,9 +363,8 @@ main().catch((err) => {
 // for /handbok/fjarmal is served that file directly and never reaches the
 // rewrite. Routes with no prerendered file (dynamic ones like
 // /guest/:token, /join/*, and protected ones like /dashboard, /settings)
-// have no filesystem match, so they still fall through to the rewrite and
-// get the SPA shell, exactly as before. No vercel.json changes were
-// needed. This reasoning matches documented Vercel behavior; it was not
+// have no filesystem match, so they fall through to the rewrite and get the
+// pristine SPA shell. This reasoning matches documented Vercel behavior; it was not
 // possible to spin up a live Vercel deployment from this environment to
 // confirm end-to-end, so a quick post-deploy spot check of one
 // prerendered route and one dynamic route is recommended.

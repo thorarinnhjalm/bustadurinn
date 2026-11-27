@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { google } from 'googleapis';
+import { verifyAdminToken } from './utils/admin-auth.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -20,6 +21,10 @@ interface SearchConsoleData {
 // MOCK_DATA removed
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    // Admin only: this returns the site's Search Console data.
+    const decodedToken = await verifyAdminToken(req, res);
+    if (!decodedToken) return; // response already written by the helper
+
     const { period = '30d' } = req.query;
 
     // 1. Check for configuration

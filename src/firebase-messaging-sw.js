@@ -42,11 +42,18 @@ clientsClaim();
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
-// SPA fallback: serve the precached index.html for any navigation request
-// that isn't otherwise handled (client-side routing). Never intercept
-// /api/* — those must always go to the network.
+// SPA fallback: serve the precached app shell for any navigation request that
+// isn't otherwise handled (client-side routing). Never intercept /api/* —
+// those must always go to the network.
+//
+// The shell is app-shell.html, NOT index.html: the postbuild prerender step
+// overwrites dist/index.html with the prerendered landing page, and the
+// precache manifest (built earlier, during the Vite build) would describe the
+// wrong bytes for it. app-shell.html is emitted by a Vite plugin (see
+// vite.config.ts) and is never modified after the manifest is generated, so
+// its revision is correct. index.html is excluded from the precache.
 registerRoute(
-    new NavigationRoute(createHandlerBoundToURL('index.html'), {
+    new NavigationRoute(createHandlerBoundToURL('app-shell.html'), {
         denylist: [/^\/api\//],
     })
 );
