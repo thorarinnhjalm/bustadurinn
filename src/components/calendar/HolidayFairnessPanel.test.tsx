@@ -8,8 +8,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { getDoc } from 'firebase/firestore';
 import HolidayFairnessPanel from './HolidayFairnessPanel';
+import { getHouseMembers } from '@/services/houseMembersService';
 import { getHolidayPriority } from '@/services/fairnessService';
 import { getUpcomingContestedWindows } from '@/utils/icelandicHolidays';
 import type { ContestedHolidayWindow } from '@/utils/icelandicHolidays';
@@ -18,9 +18,9 @@ vi.mock('@/lib/firebase', () => ({
     db: {},
 }));
 
-vi.mock('firebase/firestore', () => ({
-    doc: vi.fn(),
-    getDoc: vi.fn(),
+vi.mock('@/services/houseMembersService', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/services/houseMembersService')>()),
+    getHouseMembers: vi.fn(),
 }));
 
 vi.mock('@/services/fairnessService', () => ({
@@ -31,7 +31,7 @@ vi.mock('@/utils/icelandicHolidays', () => ({
     getUpcomingContestedWindows: vi.fn(),
 }));
 
-const mockedGetDoc = vi.mocked(getDoc);
+const mockedGetHouseMembers = vi.mocked(getHouseMembers);
 const mockedGetHolidayPriority = vi.mocked(getHolidayPriority);
 const mockedGetUpcoming = vi.mocked(getUpcomingContestedWindows);
 
@@ -46,9 +46,10 @@ describe('HolidayFairnessPanel', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockedGetUpcoming.mockReturnValue([paskarWindow]);
-        mockedGetDoc.mockResolvedValue({
-            data: () => ({ name: 'Anna' }),
-        } as unknown as Awaited<ReturnType<typeof getDoc>>);
+        mockedGetHouseMembers.mockResolvedValue([
+            { uid: 'u1', name: 'Anna', email: '', avatar_url: null },
+            { uid: 'u2', name: 'Anna', email: '', avatar_url: null },
+        ]);
     });
 
     it('renders the window, priority name and history, and fires onClaimWindow', async () => {

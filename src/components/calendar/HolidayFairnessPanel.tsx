@@ -17,8 +17,8 @@ import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp, Trophy, Unlock, Sparkles } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { is } from 'date-fns/locale';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getHouseMembers, getHouseMemberName } from '@/services/houseMembersService';
+import type { HouseMember } from '@/services/houseMembersService';
 import { getUpcomingContestedWindows } from '@/utils/icelandicHolidays';
 import type { ContestedHolidayWindow } from '@/utils/icelandicHolidays';
 import { getHolidayPriority } from '@/services/fairnessService';
@@ -74,7 +74,7 @@ export default function HolidayFairnessPanel({ houseId, ownerIds, onClaimWindow 
             setLoading(true);
             const upcoming = getUpcomingContestedWindows(new Date(), 12);
 
-            const [priorities, nameEntries] = await Promise.all([
+            const [priorities, members] = await Promise.all([
                 Promise.all(
                     upcoming.map((window) =>
                         getHolidayPriority(houseId, window, ownerIds).catch((err) => {
@@ -83,24 +83,18 @@ export default function HolidayFairnessPanel({ houseId, ownerIds, onClaimWindow 
                         })
                     )
                 ),
-                Promise.all(
-                    ownerIds.map(async (uid) => {
-                        try {
-                            const snap = await getDoc(doc(db, 'users', uid));
-                            const name = (snap.data() as { name?: string } | undefined)?.name ?? 'Meðlimur';
-                            return [uid, name] as const;
-                        } catch (err) {
-                            logger.error('HolidayFairnessPanel: failed to resolve user name', uid, err);
-                            return [uid, 'Meðlimur'] as const;
-                        }
-                    })
-                ),
+                getHouseMembers(houseId).catch((err): HouseMember[] => {
+                    logger.warn('HolidayFairnessPanel: failed to resolve member names', err);
+                    return [];
+                }),
             ]);
 
             if (cancelled) return;
 
             setRows(upcoming.map((window, i) => ({ window, priority: priorities[i] })));
-            setUserNames(Object.fromEntries(nameEntries));
+            setUserNames(
+                Object.fromEntries(ownerIds.map((uid) => [uid, getHouseMemberName(members, uid, 'Meðlimur')]))
+            );
             setLoading(false);
         }
 

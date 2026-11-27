@@ -16,6 +16,12 @@ import {
 } from './fairnessService';
 import { getContestedHolidayWindows } from '@/utils/icelandicHolidays';
 import type { House } from '@/types/models';
+import { getHouseMembers } from './houseMembersService';
+
+vi.mock('./houseMembersService', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('./houseMembersService')>()),
+    getHouseMembers: vi.fn(),
+}));
 
 vi.mock('@/lib/firebase', () => ({
     db: {},
@@ -36,6 +42,7 @@ vi.mock('firebase/firestore', () => ({
 
 const mockedGetDocs = vi.mocked(getDocs);
 const mockedGetDoc = vi.mocked(getDoc);
+const mockedGetHouseMembers = vi.mocked(getHouseMembers);
 
 function fakeTimestamp(date: Date) {
     return { toDate: () => date };
@@ -387,7 +394,9 @@ describe('checkFairnessForBooking', () => {
             .mockResolvedValueOnce(
                 bookingsSnapshot([booking('b25', 'u2', 'Jón', w2025.start, w2025.end, new Date(2025, 10, 1))])
             );
-        mockedGetDoc.mockResolvedValueOnce({ data: () => ({ name: 'Fetched Name' }) } as any);
+        mockedGetHouseMembers.mockResolvedValueOnce([
+            { uid: 'u1', name: 'Fetched Name', email: '', avatar_url: null },
+        ]);
 
         const result = await checkFairnessForBooking(
             'house-1',
@@ -403,6 +412,6 @@ describe('checkFairnessForBooking', () => {
         if (!result.allowed) {
             expect(result.reason).toContain('Fetched Name');
         }
-        expect(mockedGetDoc).toHaveBeenCalledTimes(1);
+        expect(mockedGetHouseMembers).toHaveBeenCalledTimes(1);
     });
 });
