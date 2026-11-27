@@ -4,7 +4,7 @@ import {
     Calendar, CheckSquare,
     Plus, Bell, Shield,
     ChevronDown, Home,
-    HelpCircle, Coffee, UserPlus,
+    HelpCircle, UserPlus,
     BookOpen
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
@@ -173,18 +173,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     >
                         <HelpCircle size={20} />
                     </button>
-                    
-                    <a
-                        href="https://askell.is/public/payments/170/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber/10 text-amber hover:bg-amber/20 rounded-full text-xs font-bold transition-colors ml-1"
-                        title="Styrkja Bústaðurinn.is"
-                    >
-                        <Coffee size={14} />
-                        Kaffibolli
-                    </a>
-
                     <button
                         onClick={() => setShowNotifications(!showNotifications)}
                         className="relative text-stone-400 hover:text-[#1a1a1a] transition-colors"

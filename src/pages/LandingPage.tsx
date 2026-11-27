@@ -92,7 +92,7 @@ export default function LandingPage() {
                 "name": "Hvað kostar kerfið?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Þú getur boðið ótakmörkuðum fjölda meðeigenda og fjölskyldumeðlima í kerfið án nokkurs kostnaðar. Ef þér líkar við kerfið og vilt styrkja þróun þess er velkomið að kaupa handa okkur kaffibolla."
+                    "text": "Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Þú getur boðið ótakmörkuðum fjölda meðeigenda og fjölskyldumeðlima í kerfið án nokkurs kostnaðar."
                 }
             }
         ]
@@ -729,22 +729,6 @@ export default function LandingPage() {
                                 Stofna ókeypis aðgang
                             </Link>
                         </div>
-
-                        {/* Support message */}
-                        <div className="mt-8 text-center">
-                            <p className="text-sm text-stone-400 mb-3">
-                                Ef þér líkar við kerfið og vilt styrkja þróun þess er velkomið að kaupa handa okkur kaffibolla ☕
-                            </p>
-                            <a
-                                href="https://askell.is/public/payments/170/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone-50 hover:bg-amber/10 text-stone-500 hover:text-amber border border-stone-200 hover:border-amber/30 rounded-full text-sm font-medium transition-all duration-300"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>
-                                Styrkja Bústaðinn
-                            </a>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -809,7 +793,6 @@ export default function LandingPage() {
                             <h3 className="text-xl font-bold mb-3">Hvað kostar kerfið?</h3>
                             <p className="text-stone-600 leading-relaxed font-light">
                                 Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Þú getur boðið ótakmörkuðum fjölda meðeigenda og fjölskyldumeðlima í kerfið án nokkurs kostnaðar.
-                                Ef þér líkar við kerfið og vilt styrkja þróun þess er velkomið að <a href="https://askell.is/public/payments/170/" target="_blank" rel="noopener noreferrer" className="text-amber hover:underline">kaupa handa okkur kaffibolla</a>.
                             </p>
                         </div>
                     </div>

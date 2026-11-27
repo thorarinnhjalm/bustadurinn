@@ -7,7 +7,7 @@ export default function FAQPage() {
     const faqs = [
         {
             q: "Hvað kostar þjónustan?",
-            a: "Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Allir eiginleikar eru innifaldir og þú getur boðið ótakmörkuðum fjölda notenda og gesta. Ef þér líkar við kerfið og vilt styrkja þróun þess er velkomið að kaupa handa okkur kaffibolla."
+            a: "Ekkert! Bústaðurinn.is er ókeypis og opið öllum. Allir eiginleikar eru innifaldir og þú getur boðið ótakmörkuðum fjölda notenda og gesta."
         },
         {
             q: "Hvað er Torgið?",

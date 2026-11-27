@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Bústaðurinn.is is a free platform for managing shared Icelandic summer houses (sumarhús). All user-facing text is in Icelandic. Private, proprietary product owned by Neðri Hóll Hugmyndahús ehf.
 
-**The platform is fully free** — there are no subscriptions, trials, or payment gates. All houses have `subscription_status: 'free'`. Do not introduce subscription/payment logic. The Áskell integration (payment processor) is decommissioned; any remaining references are legacy code to be removed.
+**The platform is fully free** — there are no subscriptions, trials, or payment gates. All houses have `subscription_status: 'free'`. Do not introduce subscription/payment logic.
 
 ## Commands
 
@@ -15,6 +15,8 @@ npm run dev          # Vite dev server on port 5173
 npm run build        # Production build via SWC → dist/ (drops console.* and debugger)
 npm run preview      # Preview production build locally
 npm run lint         # ESLint (flat config format)
+npm run typecheck    # tsc for tsconfig.app.json, tsconfig.node.json and tsconfig.api.json (api/, non-strict)
+npm run verify       # lint + typecheck + test (what CI runs before building)
 npm run test         # Vitest (single run)
 npm run test:ui      # Vitest with browser UI
 npm run test:watch   # Vitest in watch mode
@@ -25,7 +27,7 @@ npm run test:e2e     # Playwright E2E tests (requires dev server running)
 npm run test:e2e:ui  # Playwright with interactive UI
 ```
 
-There is no CI. Before pushing run `npm run lint`, `npx tsc -p tsconfig.app.json --noEmit` and `npm run test`. `api/` is outside every tsconfig and must be type-checked explicitly: `npx tsc --noEmit --skipLibCheck --module nodenext --moduleResolution nodenext --target es2022 --types node api/<file>.ts`.
+CI: `.github/workflows/ci.yml` runs on pull requests and pushes to `main` (Node 24): `npm ci`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` (with Chrome for the postbuild prerender via `PRERENDER_CHROMIUM_PATH`), then `node scripts/verify-dist.js`. It does not deploy anything; Vercel deploys from `main` and `firestore.rules`/`storage.rules` are published by hand. Run `npm run verify` before pushing. `api/` is checked by `tsconfig.api.json` (nodenext, `strict: false`, tests excluded).
 
 Utility scripts in `scripts/`:
 ```bash
@@ -33,6 +35,8 @@ npm run seed-email-templates  # Seed email templates to Firestore
 npm run generate-sitemap      # Generate sitemap.xml
 npm run migrate-admin-rbac    # Migrate admin to RBAC system
 ```
+
+Past one-off debugging/migration scripts (they run against production Firebase) live in `scripts/one-off/` and are not maintained. Historical session notes and status reports live in `docs/archive/` and are not a source of truth; current docs are this file and `docs/engineering/`.
 
 ## Architecture
 

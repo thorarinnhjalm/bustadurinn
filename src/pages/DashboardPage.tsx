@@ -6,7 +6,7 @@ import {
     ChevronRight, Loader2, Shield,
     Home, LogOut,
     Image as ImageIcon, MapPin, Camera,
-    ShoppingCart, CheckSquare, Coffee, Check
+    ShoppingCart, CheckSquare, Check
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
@@ -903,48 +903,6 @@ const UserDashboard = () => {
 
             {/* --- MAIN CONTENT --- */}
             <div className="max-w-5xl mx-auto px-4 relative z-10 space-y-8 -mt-8 pt-10">
-
-                {/* SUPPORT BANNER */}
-                {(() => {
-                    // Don't show if user dismissed it
-                    const dismissed = localStorage.getItem('support_banner_dismissed');
-                    if (dismissed) return null;
-
-                    return (
-                        <div className="bg-gradient-to-r from-amber/10 to-amber/5 border border-amber/20 p-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                            <div className="flex items-center gap-3 relative z-10">
-                                <div className="p-2 bg-amber/20 rounded-lg">
-                                    <Coffee className="w-5 h-5 text-amber" />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-sm md:text-base text-charcoal">Ef þér líkar við kerfið</p>
-                                    <p className="text-stone-500 text-xs md:text-sm">er velkomið að styrkja þróun þess með kaffibolla ☕</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2 relative z-10">
-                                <a
-                                    href={`https://askell.is/public/payments/170/`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="bg-amber text-charcoal px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-amber/90 transition-all shadow-sm"
-                                >
-                                    Styrkja
-                                </a>
-                                <button
-                                    onClick={() => {
-                                        localStorage.setItem('support_banner_dismissed', 'true');
-                                        window.location.reload();
-                                    }}
-                                    className="text-stone-400 hover:text-stone-600 p-1.5 rounded-lg hover:bg-stone-100 transition-colors text-xs"
-                                    title="Loka"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        </div>
-                    );
-                })()}
 
                 {/* Push notification opt-in nudge (booking + weather alerts) */}
                 <PushOptInPrompt currentUser={currentUser} />
