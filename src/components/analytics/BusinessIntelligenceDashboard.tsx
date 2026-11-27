@@ -81,11 +81,11 @@ const MetricCard = ({
         <div className="bg-white rounded-xl p-6 border border-stone-200 hover:shadow-lg transition-shadow">
             <div className="flex items-start justify-between mb-4">
                 <div className="w-10 h-10 rounded-lg bg-amber/10 flex items-center justify-center">
-                    <Icon size={20} className="text-amber" />
+                    <Icon size={20} className="text-amber-ink" aria-hidden="true" />
                 </div>
                 {change !== undefined && (
                     <div className={`flex items-center gap-1 text-sm font-bold ${getTrendColor()}`}>
-                        <TrendIcon size={14} />
+                        <TrendIcon size={14} aria-hidden="true" />
                         <span>{Math.abs(change).toFixed(1)}%</span>
                     </div>
                 )}
@@ -117,14 +117,18 @@ const HealthScoreCard = ({
         <div className="bg-white rounded-xl p-6 border border-stone-200">
             <div className="flex items-center justify-between mb-4">
                 <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center`}>
-                    <Icon size={20} className="text-white" />
+                    <Icon size={20} className={color === 'bg-amber' ? 'text-charcoal' : 'text-white'} aria-hidden="true" />
                 </div>
                 <span className="text-2xl font-serif font-bold text-charcoal">{count}</span>
             </div>
             <div className="space-y-2">
                 <p className="text-stone-700 font-medium">{label}</p>
                 <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-stone-100 rounded-full h-2 overflow-hidden">
+                    <div
+                        className="flex-1 bg-stone-100 rounded-full h-2 overflow-hidden"
+                        role="img"
+                        aria-label={`${label}: ${count} af ${total} (${percentage.toFixed(0)}%)`}
+                    >
                         <div
                             className={`h-full ${color} transition-all duration-500`}
                             style={{ width: `${percentage}%` }}
@@ -224,12 +228,12 @@ export default function BusinessIntelligenceDashboard({ allHouses, allUsers, all
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-serif font-bold text-charcoal mb-2">Business Intelligence</h2>
+                    <h2 className="text-3xl font-serif font-bold text-charcoal mb-2">Viðskiptagreind</h2>
                     <p className="text-stone-600">Rauntíma greining á viðskiptaþróun og notendahegðun</p>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-sm font-bold text-green-700">Live Data</span>
+                    <div className="w-2 h-2 rounded-full bg-green-500 motion-safe:animate-pulse" aria-hidden="true"></div>
+                    <span className="text-sm font-bold text-green-700">Rauntímagögn</span>
                 </div>
             </div>
 

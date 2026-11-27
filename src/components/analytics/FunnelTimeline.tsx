@@ -8,6 +8,7 @@ import { Loader2, RotateCw, AppWindow } from 'lucide-react';
 import { getFunnelEventsForUser } from '@/services/funnelService';
 import type { AnnotatedFunnelEvent } from '@/services/funnelService';
 import { logger } from '@/utils/logger';
+import { getUserMessage } from '@/utils/userMessages';
 
 const EVENT_LABELS: Record<string, string> = {
     signup_viewed: 'Opnaði nýskráningu',
@@ -91,18 +92,18 @@ export default function FunnelTimeline({ uid }: { uid: string }) {
             .then((result) => { if (!cancelled) setEvents(result); })
             .catch((e) => {
                 logger.error('Failed to load funnel events:', e);
-                if (!cancelled) setError(e?.message || 'Óþekkt villa');
+                if (!cancelled) setError(getUserMessage(e, 'Óþekkt villa'));
             });
         return () => { cancelled = true; };
     }, [uid]);
 
     if (error) {
-        return <p className="text-sm text-red-700">Gat ekki sótt skrefin: {error}</p>;
+        return <p role="alert" className="text-sm text-red-700">Gat ekki sótt skrefin: {error}</p>;
     }
     if (!events) {
         return (
-            <p className="text-sm text-grey-mid flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" /> Sæki skref...
+            <p role="status" className="text-sm text-grey-mid flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Sæki skref...
             </p>
         );
     }
@@ -127,12 +128,12 @@ export default function FunnelTimeline({ uid }: { uid: string }) {
                         <li key={event.id}>
                             {event.newSession && (
                                 <div className="flex items-center gap-1 text-xs font-bold text-blue-700 mt-2 mb-1">
-                                    <AppWindow className="w-3 h-3" /> Ný lota: nýr flipi, ný heimsókn eða ný innskráning
+                                    <AppWindow className="w-3 h-3" aria-hidden="true" /> Ný lota: nýr flipi, ný heimsókn eða ný innskráning
                                 </div>
                             )}
                             {event.reload && (
                                 <div className="flex items-center gap-1 text-xs font-bold text-amber-700 mt-2 mb-1">
-                                    <RotateCw className="w-3 h-3" /> Síðan hlóðst upp á nýtt (notandinn eða forritið)
+                                    <RotateCw className="w-3 h-3" aria-hidden="true" /> Síðan hlóðst upp á nýtt (notandinn eða forritið)
                                 </div>
                             )}
                             <div className={`flex flex-wrap items-baseline gap-x-3 gap-y-1 px-2 py-1 rounded ${problem ? 'bg-red-50' : ''}`}>

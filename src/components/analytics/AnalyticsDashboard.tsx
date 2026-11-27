@@ -47,25 +47,27 @@ export default function AnalyticsDashboard() {
     }, [period]);
 
     if (loading) return (
-        <div className="flex flex-col items-center justify-center p-12 space-y-4">
-            <div className="w-8 h-8 border-4 border-amber border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-stone-500 animate-pulse">Sæki gögn úr Google Analytics & Search Console...</p>
+        <div role="status" className="flex flex-col items-center justify-center p-12 space-y-4">
+            <div className="w-8 h-8 border-4 border-amber border-t-transparent rounded-full animate-spin" aria-hidden="true"></div>
+            <p className="text-stone-500 motion-safe:animate-pulse">Sæki gögn úr Google Analytics & Search Console...</p>
         </div>
     );
-    if (!data) return <div className="p-12 text-center text-red-400">Gat ekki sótt gögn.</div>;
+    if (!data) return <div role="alert" className="p-12 text-center text-red-700">Gat ekki sótt gögn.</div>;
 
     return (
         <div className="space-y-12">
             {/* Header / Period Selector */}
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-serif font-bold text-charcoal flex items-center gap-2">
-                    <BarChart2 className="w-5 h-5 text-amber" />
+                    <BarChart2 className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                     Vefgreining (GA4)
                 </h2>
-                <div className="flex bg-stone-100 rounded-lg p-1">
+                <div className="flex bg-stone-100 rounded-lg p-1" role="group" aria-label="Tímabil">
                     {(['7d', '30d', '90d'] as const).map((p) => (
                         <button
                             key={p}
+                            type="button"
+                            aria-pressed={period === p}
                             onClick={() => setPeriod(p)}
                             className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${period === p ? 'bg-white shadow text-charcoal' : 'text-stone-500 hover:text-stone-700'
                                 }`}
@@ -81,22 +83,22 @@ export default function AnalyticsDashboard() {
                 <MetricCard
                     label="Notendur"
                     value={data.activeUsers.toLocaleString('is-IS')}
-                    icon={<Users className="w-5 h-5 text-blue-500" />}
+                    icon={<Users className="w-5 h-5 text-blue-500" aria-hidden="true" />}
                 />
                 <MetricCard
                     label="Heimsóknir"
                     value={data.sessions.toLocaleString('is-IS')}
-                    icon={<MousePointer className="w-5 h-5 text-purple-500" />}
+                    icon={<MousePointer className="w-5 h-5 text-purple-500" aria-hidden="true" />}
                 />
                 <MetricCard
                     label="Flettingar"
                     value={data.screenPageViews.toLocaleString('is-IS')}
-                    icon={<Eye className="w-5 h-5 text-green-500" />}
+                    icon={<Eye className="w-5 h-5 text-green-500" aria-hidden="true" />}
                 />
                 <MetricCard
                     label="Engagament"
                     value={`${Math.round(data.engagementRate * 100)}%`}
-                    icon={<TrendingUp className="w-5 h-5 text-amber" />}
+                    icon={<TrendingUp className="w-5 h-5 text-amber-ink" aria-hidden="true" />}
                 />
             </div>
 
@@ -105,9 +107,9 @@ export default function AnalyticsDashboard() {
                 {/* Top Pages */}
                 <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
                     <h3 className="font-bold text-charcoal mb-4 flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-stone-400" /> Vinsælustu síður
+                        <Globe className="w-4 h-4 text-stone-400" aria-hidden="true" /> Vinsælustu síður
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-3" role="img" aria-label={`Súlurit: vinsælustu síður eftir flettingum. ${data.topPages.slice(0, 6).map(p => `${p.pagePath}: ${p.screenPageViews}`).join('; ')}`}>
                         {data.topPages.slice(0, 6).map((page, idx) => (
                             <div key={idx} className="flex items-center justify-between text-sm">
                                 <span className="font-mono text-stone-600 truncate max-w-[200px]" title={page.pagePath}>
@@ -132,9 +134,9 @@ export default function AnalyticsDashboard() {
                 {/* Traffic Sources */}
                 <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
                     <h3 className="font-bold text-charcoal mb-4 flex items-center gap-2">
-                        <Users className="w-4 h-4 text-stone-400" /> Uppruni umferðar
+                        <Users className="w-4 h-4 text-stone-400" aria-hidden="true" /> Uppruni umferðar
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-3" role="img" aria-label={`Súlurit: uppruni umferðar eftir notendum. ${data.trafficSources.slice(0, 6).map(s => `${s.source}: ${s.users}`).join('; ')}`}>
                         {data.trafficSources.slice(0, 6).map((source, idx) => (
                             <div key={idx} className="flex items-center justify-between text-sm">
                                 <span className="text-stone-600 capitalize">
@@ -161,56 +163,57 @@ export default function AnalyticsDashboard() {
             {searchData && (
                 <div className="pt-8 border-t border-stone-200">
                     <h2 className="text-xl font-serif font-bold text-charcoal flex items-center gap-2 mb-6">
-                        <Search className="w-5 h-5 text-blue-600" />
+                        <Search className="w-5 h-5 text-blue-600" aria-hidden="true" />
                         Google Search (SEO)
                     </h2>
 
                     {searchData.error ? (
-                        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-8">
+                        <div role="alert" className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-8">
                             <h3 className="font-bold flex items-center gap-2">
-                                <span className="text-xl">⚠️</span> Connection Error
+                                <span className="text-xl" aria-hidden="true">⚠️</span> Tengingarvilla
                             </h3>
                             <p className="mt-1 text-sm">{searchData.error}</p>
-                            <p className="text-xs text-red-500 mt-2">Check server logs for details.</p>
+                            <p className="text-xs text-red-700 mt-2">Skoðaðu þjónustuskrár fyrir nánari upplýsingar.</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                             <MetricCard
                                 label="Smellir (Clicks)"
                                 value={searchData.clicks?.toLocaleString() || '0'}
-                                icon={<MousePointer className="w-5 h-5 text-blue-600" />}
+                                icon={<MousePointer className="w-5 h-5 text-blue-600" aria-hidden="true" />}
                             />
                             <MetricCard
                                 label="Birtingar (Impressions)"
                                 value={searchData.impressions?.toLocaleString() || '0'}
-                                icon={<Eye className="w-5 h-5 text-purple-600" />}
+                                icon={<Eye className="w-5 h-5 text-purple-600" aria-hidden="true" />}
                             />
                             <MetricCard
                                 label="CTR (Smellihlutfall)"
                                 value={`${searchData.ctr?.toFixed(1) || '0'}%`}
-                                icon={<TrendingUp className="w-5 h-5 text-green-600" />}
+                                icon={<TrendingUp className="w-5 h-5 text-green-600" aria-hidden="true" />}
                             />
                             <MetricCard
                                 label="Meðal Staða"
                                 value={searchData.position?.toFixed(1) || '-'}
-                                icon={<Globe className="w-5 h-5 text-amber" />}
+                                icon={<Globe className="w-5 h-5 text-amber-ink" aria-hidden="true" />}
                             />
                         </div>
                     )}
 
                     <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
                         <h3 className="font-bold text-charcoal mb-4 flex items-center gap-2">
-                            <Search className="w-4 h-4 text-stone-400" /> Top Search Queries
+                            <Search className="w-4 h-4 text-stone-400" aria-hidden="true" /> Vinsælustu leitarorð
                         </h3>
                         {searchData.topQueries && searchData.topQueries.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm text-left">
+                                    <caption className="sr-only">Vinsælustu leitarorð í Google Search</caption>
                                     <thead className="text-xs text-stone-500 uppercase bg-stone-50">
                                         <tr>
-                                            <th className="px-4 py-2">Leitarorð</th>
-                                            <th className="px-4 py-2 text-right">Smellir</th>
-                                            <th className="px-4 py-2 text-right">Birtingar</th>
-                                            <th className="px-4 py-2 text-right">CTR</th>
+                                            <th scope="col" className="px-4 py-2">Leitarorð</th>
+                                            <th scope="col" className="px-4 py-2 text-right">Smellir</th>
+                                            <th scope="col" className="px-4 py-2 text-right">Birtingar</th>
+                                            <th scope="col" className="px-4 py-2 text-right">CTR</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-stone-100">
@@ -228,7 +231,7 @@ export default function AnalyticsDashboard() {
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-stone-400 text-sm">Engin leitarorð fundust á þessu tímabili.</p>
+                            <p className="text-stone-500 text-sm">Engin leitarorð fundust á þessu tímabili.</p>
                         )}
                     </div>
                 </div>
