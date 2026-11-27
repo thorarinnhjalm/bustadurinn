@@ -60,7 +60,7 @@ check('SW still wires FCM background messages', /onBackgroundMessage/.test(sw) |
 
 // vercel.json.
 const vercel = JSON.parse(read(join(ROOT, 'vercel.json')));
-const fallback = vercel.rewrites.find((r) => r.source.includes('(?!api)'));
+const fallback = vercel.rewrites.find((r) => r.source.includes('(?!api'));
 check('vercel.json fallback destination equals /app-shell.html', fallback?.destination === '/app-shell.html', String(fallback?.destination));
 check('fallback target exists in dist', existsSync(join(DIST, fallback?.destination?.slice(1) ?? '__none__')));
 
