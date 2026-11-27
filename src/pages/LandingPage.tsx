@@ -20,14 +20,13 @@ export default function LandingPage() {
     const { isAuthenticated, currentUser, isLoading } = useAppStore();
     const [reviews, setReviews] = useState<Feedback[]>([]);
 
-    // Note: these only load for signed-in visitors, so they drive the on-page
-    // testimonials only — never structured data (see softwareAppSchema below).
+    // Public sanitised copies (featured_feedback): readable by everyone. They
+    // drive the on-page testimonials only, not structured data (see softwareAppSchema below).
     useEffect(() => {
-        if (!isAuthenticated) return;
         feedbackService.getFeaturedFeedback().then(data => {
             setReviews(data);
         }).catch(() => {});
-    }, [isAuthenticated]);
+    }, []);
 
     // Redirect if already logged in and has a house
     useEffect(() => {

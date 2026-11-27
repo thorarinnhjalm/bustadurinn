@@ -125,7 +125,7 @@ const UserDashboard = () => {
                 const startOfYear = new Date(now.getFullYear(), 0, 1);
 
 
-                // 0. Listen to the House itself (for subscription updates)
+                // 0. Listen to the House itself (for live house updates)
                 const houseRef = doc(db, 'houses', currentHouse.id);
                 unsubscribes.push(onSnapshot(houseRef, (snap) => {
                     if (snap.exists()) {
@@ -904,7 +904,7 @@ const UserDashboard = () => {
             {/* --- MAIN CONTENT --- */}
             <div className="max-w-5xl mx-auto px-4 relative z-10 space-y-8 -mt-8 pt-10">
 
-                {/* SUPPORT BANNER (replaces old trial banner) */}
+                {/* SUPPORT BANNER */}
                 {(() => {
                     // Don't show if user dismissed it
                     const dismissed = localStorage.getItem('support_banner_dismissed');
@@ -1294,6 +1294,7 @@ const UserDashboard = () => {
                         currentUserName={currentUser?.name || currentUser?.email || ''}
                         inventoryItems={inventoryItems}
                         onInitialize={handleInitializeInventory}
+                        canManage={currentHouse.manager_id === currentUser?.uid}
                     />
 
                     {/* TASKS */}

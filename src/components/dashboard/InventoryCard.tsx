@@ -31,6 +31,8 @@ interface InventoryCardProps {
     currentUserName: string;
     inventoryItems: InventoryItem[];
     onInitialize: () => Promise<void>;
+    /** Initialising the checklist writes manager-only house fields. Defaults to true. */
+    canManage?: boolean;
 }
 
 type CategoryKey = 'pantry' | 'kitchen' | 'bedding' | 'cleaning';
@@ -82,7 +84,8 @@ export default function InventoryCard({
     currentUserId,
     currentUserName,
     inventoryItems,
-    onInitialize
+    onInitialize,
+    canManage = true
 }: InventoryCardProps) {
     const [activeTab, setActiveTab] = useState<CategoryKey>('pantry');
     const [showAddForm, setShowAddForm] = useState(false);
@@ -256,15 +259,19 @@ export default function InventoryCard({
                         <p className="text-xs text-stone-500 mb-6 max-w-xs leading-relaxed">
                             Búðu til lista yfir það sem er til í bústaðnum — krydd, leirtau, sængur og fleira.
                         </p>
-                        <button
-                            type="button"
-                            onClick={handleInit}
-                            disabled={initializing}
-                            className="btn btn-primary text-xs px-5 py-2.5 font-bold shadow-md flex items-center gap-2"
-                        >
-                            {initializing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                            Virkja sjálfgefinn lista
-                        </button>
+                        {canManage ? (
+                            <button
+                                type="button"
+                                onClick={handleInit}
+                                disabled={initializing}
+                                className="btn btn-primary text-xs px-5 py-2.5 font-bold shadow-md flex items-center gap-2"
+                            >
+                                {initializing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                                Virkja sjálfgefinn lista
+                            </button>
+                        ) : (
+                            <p className="text-xs text-stone-400">Aðeins umsjónarmaður hússins getur virkjað sjálfgefinn lista.</p>
+                        )}
                     </div>
                 ) : (
                     <div className="space-y-4">

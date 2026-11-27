@@ -8,6 +8,7 @@ import type { ServiceProvider } from '@/types/models';
 import { Search, MapPin, Star, Hammer, Shovel, Droplets, Zap, Home, ArrowLeft } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import ReviewModal from '@/components/marketplace/ReviewModal';
+import ProviderContactActions from '@/components/marketplace/ProviderContactActions';
 import { useAppStore } from '@/store/appStore';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { logger } from '@/utils/logger';
@@ -115,28 +116,21 @@ export default function MarketplacePage() {
     // SEO Data (JSON-LD)
     // Note: providers are fetched client-side from Firestore, so crawlers
     // can't see this markup today — correctness still matters for when
-    // prerendering lands. LocalBusiness requires `address`; providers without
-    // one (address is optional on ServiceProvider) fall back to the less
-    // demanding `Organization` type rather than emitting invalid markup.
+    // prerendering lands. Contact details (phone, email, address) are not public
+    // (service_provider_contacts), so providers are described as `Organization`.
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "ItemList",
         "itemListElement": filteredProviders.map((provider, index) => {
             const item: Record<string, unknown> = {
-                "@type": provider.address ? "LocalBusiness" : "Organization",
+                "@type": "Organization",
                 "name": provider.name,
                 "description": provider.description,
-                "telephone": provider.contact_phone,
-                "email": provider.contact_email,
                 "areaServed": provider.service_areas.map(area => ({
                     "@type": "Place",
                     "name": area
                 }))
             };
-
-            if (provider.address) {
-                item.address = provider.address;
-            }
 
             if (provider.rating_count > 0) {
                 item.aggregateRating = {
@@ -274,18 +268,7 @@ export default function MarketplacePage() {
                                     <div className="pt-4 border-t border-grey-warm">
                                         {isAuthenticated ? (
                                             <div className="flex gap-3">
-                                                <a
-                                                    href={`tel:${provider.contact_phone}`}
-                                                    className="flex-1 btn btn-secondary text-center py-2 text-sm justify-center"
-                                                >
-                                                    Hringja
-                                                </a>
-                                                <a
-                                                    href={`mailto:${provider.contact_email}?subject=Fyrirspurn af Bústaðurinn.is`}
-                                                    className="flex-1 btn btn-primary text-center py-2 text-sm justify-center"
-                                                >
-                                                    Senda póst
-                                                </a>
+                                                <ProviderContactActions provider={provider} />
                                                 <button
                                                     onClick={() => setReviewingProvider(provider)}
                                                     className="px-3 py-2 text-sm font-medium text-amber hover:bg-amber/10 rounded-lg transition-colors"

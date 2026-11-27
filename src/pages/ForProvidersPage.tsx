@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MarketingLayout from '@/components/MarketingLayout';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { Check, Star, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { logger } from '@/utils/logger';
@@ -44,15 +44,28 @@ export default function ForProvidersPage() {
                 return;
             }
 
-            await addDoc(collection(db, 'service_providers'), {
-                ...formData,
+            // Contact details go to service_provider_contacts (signed-in readers only);
+            // both docs are written in one batch under a client-generated id.
+            const { contact_email, contact_phone, address, ...publicFields } = formData;
+            const owner_uid = currentUser?.uid || null; // Link to user if logged in
+            const providerRef = doc(collection(db, 'service_providers'));
+            const batch = writeBatch(db);
+            batch.set(providerRef, {
+                ...publicFields,
                 service_areas: areas,
                 status: 'pending', // Applications are reviewed by an admin before they appear on Torgið
                 rating_avg: 0,
                 rating_count: 0,
                 created_at: serverTimestamp(),
-                owner_uid: currentUser?.uid || null, // Link to user if logged in
+                owner_uid,
             });
+            batch.set(doc(db, 'service_provider_contacts', providerRef.id), {
+                contact_email,
+                contact_phone,
+                address,
+                owner_uid,
+            });
+            await batch.commit();
 
             setSuccess(true);
         } catch (error) {

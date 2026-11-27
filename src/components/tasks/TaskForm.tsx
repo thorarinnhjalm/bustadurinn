@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import type { Task, TaskStatus } from '@/types/models';
+import { fromDateInputValue } from '@/utils/localDate';
 
 interface TaskFormProps {
     onSave: (task: Partial<Task>) => void;
@@ -29,7 +30,7 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
             priority: 'medium',
             assigned_to: assignedTo ? [assignedTo] : undefined,
             assigned_to_names: assignedMember ? [assignedMember.name] : undefined,
-            due_date: dueDate ? new Date(dueDate) : undefined,
+            due_date: fromDateInputValue(dueDate) ?? undefined,
             created_at: new Date(),
             updated_at: new Date()
         });

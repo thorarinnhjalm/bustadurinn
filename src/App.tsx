@@ -179,7 +179,14 @@ function App() {
                 <Route path="/skilmalar" element={<TermsPage />} />
                 <Route path="/data-deletion" element={<DataDeletionPage />} />
                 <Route path="/gogn-eyding" element={<DataDeletionPage />} />
-                <Route path="/sentry-example-page" element={<SentryTestPage />} />
+                <Route
+                  path="/sentry-example-page"
+                  element={
+                    <AdminRoute>
+                      <SentryTestPage />
+                    </AdminRoute>
+                  }
+                />
                 <Route path="/verktakar" element={<ForProvidersPage />} />
                 <Route path="/torgid" element={<MarketplacePage />} />
 

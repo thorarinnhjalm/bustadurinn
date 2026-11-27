@@ -12,7 +12,7 @@ import {
     Edit, MapPin, UserCog, Zap, Building2, Eye, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { db, auth } from '@/lib/firebase';
-import { collection, collectionGroup, getCountFromServer, getDocs, getDoc, deleteDoc, doc, updateDoc, setDoc, query, where, limit } from 'firebase/firestore';
+import { collection, collectionGroup, getCountFromServer, getDocs, getDoc, deleteDoc, deleteField, writeBatch, doc, updateDoc, setDoc, query, where, limit } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
@@ -183,7 +183,7 @@ export default function SuperAdminPage() {
                     return null;
                 });
 
-            const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, subSnap, feedbackSnap, providersSnap, organizationsData, sandboxVisitsSnap] = await Promise.all([
+            const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, subSnap, feedbackSnap, providersSnap, providerContactsSnap, organizationsData, sandboxVisitsSnap] = await Promise.all([
                 safeFetch('houses'),
                 safeFetch('users'),
                 safeFetchGroup('bookings', 500),
@@ -192,6 +192,7 @@ export default function SuperAdminPage() {
                 safeFetch('newsletter_subscribers', 2000),
                 safeFetch('feedback', 500),
                 safeFetch('service_providers', 500),
+                safeFetch('service_provider_contacts', 500),
                 getAllOrganizations().catch((e) => {
                     logger.error('Error fetching organizations:', e);
                     warnings.push('Gat ekki sótt gögn fyrir "organizations"');
@@ -246,7 +247,15 @@ export default function SuperAdminPage() {
                 allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
                 allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
                 allFeedback: feedback.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
-                allProviders: providersSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceProvider)) || [],
+                // Contact fields come from service_provider_contacts; legacy fields on the provider doc are the fallback.
+                allProviders: providersSnap?.docs.map(doc => {
+                    const c = providerContactsSnap?.docs.find(x => x.id === doc.id)?.data();
+                    return {
+                        id: doc.id,
+                        ...doc.data(),
+                        ...(c ? { contact_email: c.contact_email, contact_phone: c.contact_phone, address: c.address } : {})
+                    } as ServiceProvider;
+                }) || [],
                 allOrganizations: organizationsData || [],
             };
             statsCache = { data: newStats, timestamp: Date.now() };
@@ -854,6 +863,56 @@ export default function SuperAdminPage() {
         }
     };
 
+    const handleSyncFeaturedFeedback = async () => {
+        setActionLoading('sync-featured');
+        try {
+            const { created, removed } = await feedbackService.syncFeaturedCopies();
+            alert(`Lokið! ${created} birtar umsagnir samstilltar, ${removed} fjarlægðar.`);
+        } catch (error: any) {
+            logger.error('Error syncing featured feedback:', error);
+            alert('Villa: ' + error.message);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    // One-off: move contact fields from service_providers docs to service_provider_contacts.
+    const handleMigrateProviderContacts = async () => {
+        if (!confirm('Færa tengiliðaupplýsingar verktaka í sér safn og fjarlægja þær af opinberu skránni?')) return;
+        setActionLoading('migrate-provider-contacts');
+        try {
+            const snap = await getDocs(collection(db, 'service_providers'));
+            const legacy = snap.docs.filter(d => {
+                const x = d.data();
+                return x.contact_email !== undefined || x.contact_phone !== undefined || x.address !== undefined;
+            });
+            for (let i = 0; i < legacy.length; i += 200) {
+                const batch = writeBatch(db);
+                legacy.slice(i, i + 200).forEach(d => {
+                    const x = d.data();
+                    batch.set(doc(db, 'service_provider_contacts', d.id), {
+                        contact_email: x.contact_email ?? '',
+                        contact_phone: x.contact_phone ?? '',
+                        address: x.address ?? '',
+                        owner_uid: x.owner_uid ?? null
+                    });
+                    batch.update(d.ref, {
+                        contact_email: deleteField(),
+                        contact_phone: deleteField(),
+                        address: deleteField()
+                    });
+                });
+                await batch.commit();
+            }
+            alert(`Lokið! ${legacy.length} verktakar fluttir.`);
+        } catch (error: any) {
+            logger.error('Error migrating provider contacts:', error);
+            alert('Villa: ' + error.message);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     const handleDeleteFeedback = async (id: string) => {
         if (!confirm('Ertu viss um að þú viljir eyða þessari umsögn?')) return;
         setActionLoading(`delete-feedback-${id}`);
@@ -901,7 +960,10 @@ export default function SuperAdminPage() {
         if (!confirm('Ertu viss um að þú viljir eyða þessum verktaka?')) return;
         setActionLoading(`delete-provider-${providerId}`);
         try {
-            await deleteDoc(doc(db, 'service_providers', providerId));
+            const delBatch = writeBatch(db);
+            delBatch.delete(doc(db, 'service_providers', providerId));
+            delBatch.delete(doc(db, 'service_provider_contacts', providerId));
+            await delBatch.commit();
             setStats(prev => ({
                 ...prev,
                 allProviders: prev.allProviders.filter(p => p.id !== providerId)
@@ -1885,7 +1947,16 @@ export default function SuperAdminPage() {
                 {/* Feedback Tab */}
                 {activeTab === 'communications' && communicationsSubTab === 'feedback' && (
                     <div className="bg-white border border-stone-200 rounded-lg p-6">
-                        <h2 className="text-lg font-serif font-semibold mb-6">Umsagnir</h2>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-lg font-serif font-semibold">Umsagnir</h2>
+                            <button
+                                onClick={handleSyncFeaturedFeedback}
+                                disabled={actionLoading === 'sync-featured'}
+                                className="btn btn-secondary text-sm"
+                            >
+                                Samstilla birtar umsagnir
+                            </button>
+                        </div>
                         <DataTable
                             columns={[
                                 {
@@ -2028,7 +2099,16 @@ export default function SuperAdminPage() {
                 {/* Providers Tab */}
                 {activeTab === 'data' && dataSubTab === 'providers' && (
                     <div className="bg-white border border-stone-200 rounded-lg p-6">
-                        <h2 className="text-lg font-serif font-semibold mb-6">Skráðir Verktakar</h2>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-lg font-serif font-semibold">Skráðir Verktakar</h2>
+                            <button
+                                onClick={handleMigrateProviderContacts}
+                                disabled={actionLoading === 'migrate-provider-contacts'}
+                                className="btn btn-secondary text-sm"
+                            >
+                                Færa tengiliðaupplýsingar
+                            </button>
+                        </div>
                         <DataTable
                             columns={[
                                 { key: 'name', label: 'Nafn', sortable: true },

@@ -279,6 +279,16 @@ service cloud.firestore {
       allow read, update, delete: if isSuperAdmin();
     }
 
+    // Public, sanitised copies of featured feedback for the landing page.
+    // `feedback` documents also hold userId, userEmail, userAgent, path and
+    // canContact, so they stay super-admin only. Each copy here holds ONLY
+    // userName (first name), rating, comment, createdAt and featuredAt and is
+    // written by the super admin in the same batch that toggles `featured`.
+    match /featured_feedback/{feedbackId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
     match /coupons/{couponId} {
       allow read, write: if isSuperAdmin();
     }
@@ -319,9 +329,8 @@ service cloud.firestore {
                      (isAuthenticated() && resource.data.owner_uid == getUserId());
       allow create: if isSuperAdmin() || (
         request.resource.data.keys().hasOnly([
-          'name', 'category', 'service_areas', 'contact_email', 'contact_phone',
-          'website', 'description', 'address', 'status', 'rating_avg',
-          'rating_count', 'created_at', 'owner_uid'
+          'name', 'category', 'service_areas', 'website', 'description',
+          'status', 'rating_avg', 'rating_count', 'created_at', 'owner_uid'
         ]) &&
         request.resource.data.status == 'pending' &&
         request.resource.data.rating_avg == 0 &&
@@ -332,11 +341,33 @@ service cloud.firestore {
         request.resource.data.name is string && request.resource.data.name.size() <= 100 &&
         request.resource.data.category is string && request.resource.data.category.size() <= 50 &&
         request.resource.data.description is string && request.resource.data.description.size() <= 2000 &&
+        request.resource.data.website is string && request.resource.data.website.size() <= 300 &&
+        request.resource.data.service_areas is list && request.resource.data.service_areas.size() <= 20
+      );
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Provider contact details (email, phone, address) live apart from the
+    // world-readable service_providers docs; only signed-in users see them
+    // (matches the UI). The doc id equals the provider id. Applicants create the
+    // contact doc in the same batch as their (new, pending) provider doc:
+    // the provider must not exist yet but must exist after the batch, with the
+    // same owner_uid, so nobody can attach contact data to an existing provider.
+    match /service_provider_contacts/{providerId} {
+      allow read: if isAuthenticated() || isSuperAdmin();
+      allow create: if isSuperAdmin() || (
+        request.resource.data.keys().hasOnly([
+          'contact_email', 'contact_phone', 'address', 'owner_uid'
+        ]) &&
+        !exists(/databases/$(database)/documents/service_providers/$(providerId)) &&
+        existsAfter(/databases/$(database)/documents/service_providers/$(providerId)) &&
+        getAfter(/databases/$(database)/documents/service_providers/$(providerId)).data.owner_uid
+          == request.resource.data.owner_uid &&
+        (request.resource.data.owner_uid == null ||
+         (isAuthenticated() && request.resource.data.owner_uid == getUserId())) &&
         request.resource.data.contact_email is string && request.resource.data.contact_email.size() <= 200 &&
         request.resource.data.contact_phone is string && request.resource.data.contact_phone.size() <= 50 &&
-        request.resource.data.website is string && request.resource.data.website.size() <= 300 &&
-        request.resource.data.address is string && request.resource.data.address.size() <= 300 &&
-        request.resource.data.service_areas is list && request.resource.data.service_areas.size() <= 20
+        request.resource.data.address is string && request.resource.data.address.size() <= 300
       );
       allow update, delete: if isSuperAdmin();
     }

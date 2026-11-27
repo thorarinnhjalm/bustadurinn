@@ -286,3 +286,21 @@ export function getMembershipChangeRateLimit(): Ratelimit {
     }
     return _membershipChangeRateLimit;
 }
+
+/**
+ * Rate limiter for api/send-email.ts callers whose token email is NOT verified
+ * (restricted to the onboarding templates, mailed to themselves only).
+ * Limit: 3 requests per day per user
+ */
+let _unverifiedEmailRateLimit: Ratelimit | null = null;
+export function getUnverifiedEmailRateLimit(): Ratelimit {
+    if (!_unverifiedEmailRateLimit) {
+        _unverifiedEmailRateLimit = new Ratelimit({
+            redis: getRedis(),
+            limiter: Ratelimit.slidingWindow(3, '1 d'),
+            analytics: true,
+            prefix: 'ratelimit:email-unverified',
+        });
+    }
+    return _unverifiedEmailRateLimit;
+}

@@ -237,20 +237,6 @@
           "order": "DESCENDING"
         }
       ]
-    },
-    {
-      "collectionGroup": "feedback",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "featured",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
     }
   ],
   "fieldOverrides": []
