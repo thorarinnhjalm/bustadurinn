@@ -32,24 +32,33 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
                     key={item.id}
                     className="group p-3 rounded-lg hover:bg-stone-50 flex items-center justify-between cursor-pointer transition-colors"
                 >
-                    <div className="flex items-center gap-3 flex-1" onClick={() => onToggle(item)}>
+                    <button
+                        type="button"
+                        role="checkbox"
+                        aria-checked={false}
+                        aria-label={`Merkja ${item.item} sem keypt`}
+                        className="flex items-center gap-3 flex-1 text-left"
+                        onClick={() => onToggle(item)}
+                    >
                         <div className="w-5 h-5 rounded border border-stone-300 bg-white flex items-center justify-center hover:border-green-500 transition-colors">
                             {/* Empty checkbox */}
                         </div>
                         <span className="text-sm text-[#1a1a1a] font-medium">
                             {item.item}
                         </span>
-                    </div>
+                    </button>
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded">
                             {item.added_by_name}
                         </span>
                         <button
+                            type="button"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onDelete(item);
                             }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label={`Eyða ${item.item}`}
+                            className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                         >
                             <Trash2 size={14} className="text-stone-300 hover:text-red-500 transition-colors" />
                         </button>
@@ -65,20 +74,29 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
                             key={item.id}
                             className="group p-3 rounded-lg hover:bg-stone-50 flex items-center justify-between cursor-pointer transition-colors"
                         >
-                            <div className="flex items-center gap-3 flex-1" onClick={() => onToggle(item)}>
+                            <button
+                                type="button"
+                                role="checkbox"
+                                aria-checked={true}
+                                aria-label={`Taka ${item.item} af keyptum vörum`}
+                                className="flex items-center gap-3 flex-1 text-left"
+                                onClick={() => onToggle(item)}
+                            >
                                 <div className="w-5 h-5 rounded border border-stone-200 bg-stone-200 flex items-center justify-center">
                                     <Check size={12} className="text-stone-500" />
                                 </div>
                                 <span className="text-sm text-stone-400 line-through">
                                     {item.item}
                                 </span>
-                            </div>
+                            </button>
                             <button
+                                type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onDelete(item);
                                 }}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                aria-label={`Eyða ${item.item}`}
+                                className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                             >
                                 <Trash2 size={14} className="text-stone-300 hover:text-red-500 transition-colors" />
                             </button>
@@ -95,7 +113,7 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
                         value={newItem}
                         onChange={(e) => setNewItem(e.target.value)}
                         onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleAdd();
+                            if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) handleAdd();
                             if (e.key === 'Escape') {
                                 setShowInput(false);
                                 setNewItem('');

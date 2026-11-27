@@ -27,6 +27,7 @@ import TaskBoard from '@/components/tasks/TaskBoard';
 import MobileNav from '@/components/MobileNav';
 import { notifyTaskAssignment } from '@/services/inAppNotifications';
 import { logger } from '@/utils/logger';
+import { getHouseMembers } from '@/services/houseMembersService';
 
 export default function TasksPage() {
     const navigate = useNavigate();
@@ -37,8 +38,28 @@ export default function TasksPage() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
+    const [houseMembers, setHouseMembers] = useState<{ uid: string; name: string }[]>([]);
+    const houseId = currentHouse?.id;
+
+    // Load house members so tasks can be assigned to anyone in the house.
+    // On failure we fall back to the current user only (see `members` below).
+    useEffect(() => {
+        if (!houseId) return;
+        let cancelled = false;
+        getHouseMembers(houseId)
+            .then((list) => {
+                if (!cancelled) setHouseMembers(list.map((m) => ({ uid: m.uid, name: m.name })));
+            })
+            .catch((error) => {
+                logger.warn('Failed to load house members for tasks:', error);
+                if (!cancelled) setHouseMembers([]);
+            });
+        return () => { cancelled = true; };
+    }, [houseId]);
 
     useEffect(() => {
+        // No house: the render below shows an empty state instead of the spinner.
         if (!currentHouse?.id) return;
 
         const q = query(
@@ -46,16 +67,23 @@ export default function TasksPage() {
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
+            // created_at is null while the server timestamp is still pending on
+            // the local snapshot: treat a pending task as "now" (newest).
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
                 due_date: doc.data().due_date?.toDate(),
-                created_at: doc.data().created_at?.toDate()
+                created_at: doc.data().created_at?.toDate() ?? new Date()
             })) as Task[];
 
             // Sort by created_at desc
             const sorted = data.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
             setTasks(sorted);
+            setLoadError('');
+            setLoading(false);
+        }, (error) => {
+            logger.error('Error listening to tasks:', error);
+            setLoadError('Ekki tókst að sækja verkefni. Reyndu aftur síðar.');
             setLoading(false);
         });
 
@@ -89,7 +117,7 @@ export default function TasksPage() {
 
             setShowForm(false);
         } catch (error) {
-            console.error('Error creating task:', error);
+            logger.error('Error creating task:', error);
         }
     };
 
@@ -101,7 +129,7 @@ export default function TasksPage() {
                 completed_at: newStatus === 'completed' ? serverTimestamp() : null
             });
         } catch (error) {
-            console.error('Error updating task:', error);
+            logger.error('Error updating task:', error);
         }
     };
 
@@ -111,19 +139,26 @@ export default function TasksPage() {
         try {
             await deleteDoc(doc(db, 'houses', currentHouse.id, 'tasks', task.id));
         } catch (error) {
-            console.error('Error deleting task:', error);
+            logger.error('Error deleting task:', error);
         }
     };
 
     // Filter logic
     const filteredTasks = tasks.filter(task => {
         if (filter === 'mine') {
-            return task.assigned_to === currentUser?.uid;
+            // assigned_to is string[]; tolerate a legacy single-string value
+            const assigned: unknown = task.assigned_to;
+            if (!currentUser?.uid) return false;
+            return Array.isArray(assigned)
+                ? assigned.includes(currentUser.uid)
+                : assigned === currentUser.uid;
         }
         return true;
     });
 
-    const members = currentUser ? [{ uid: currentUser.uid, name: currentUser.name }] : [];
+    const members = houseMembers.length > 0
+        ? houseMembers
+        : currentUser ? [{ uid: currentUser.uid, name: currentUser.name }] : [];
 
     return (
         <div className="min-h-screen bg-bone p-6 pb-24">
@@ -176,14 +211,16 @@ export default function TasksPage() {
                     <button
                         onClick={() => setView('list')}
                         className={`p-1.5 rounded transition-colors ${view === 'list' ? 'bg-bone text-charcoal' : 'text-grey-mid'}`}
-                        title="List view"
+                        title="Listayfirlit"
+                        aria-label="Listayfirlit"
                     >
                         <List className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => setView('board')}
                         className={`p-1.5 rounded transition-colors ${view === 'board' ? 'bg-bone text-charcoal' : 'text-grey-mid'}`}
-                        title="Board view"
+                        title="Töfluyfirlit"
+                        aria-label="Töfluyfirlit"
                     >
                         <Layout className="w-4 h-4" />
                     </button>
@@ -202,7 +239,11 @@ export default function TasksPage() {
                     </div>
                 )}
 
-                {loading ? (
+                {!currentHouse?.id ? (
+                    <div className="text-center py-12 text-grey-mid">Ekkert hús valið. Veldu hús til að sjá verkefni.</div>
+                ) : loadError ? (
+                    <div role="alert" className="text-center py-12 text-red-700">{loadError}</div>
+                ) : loading ? (
                     <div className="text-center py-12 text-grey-mid">Hleð verkefnum...</div>
                 ) : filteredTasks.length === 0 && !showForm ? (
                     <div className="text-center py-24 text-grey-mid border-2 border-dashed border-grey-warm rounded-xl">
