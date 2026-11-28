@@ -312,18 +312,18 @@ export const MultiHouseMockup = () => (
                 <div className="flex items-center gap-4">
                     <Home className="text-amber w-6 h-6" />
                     <div className="text-white">
-                        <h4 className="font-bold">Fjölskyldan</h4>
+                        <h4 className="mb-0 text-lg font-bold text-white">Fjölskyldan</h4>
                         <p className="text-xs text-stone-400">4 meðeigendur</p>
                     </div>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-amber"></div>
             </div>
 
-            <div className="bg-[#1a1a1a]/50 p-4 rounded-xl border border-white/5 flex items-center justify-between opacity-50 hover:opacity-100 transition-opacity">
+            <div className="bg-[#1a1a1a]/50 p-4 rounded-xl border border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Share2 className="text-white w-6 h-6" />
                     <div className="text-white">
-                        <h4 className="font-bold">Veiðihúsið</h4>
+                        <h4 className="mb-0 text-lg font-bold text-white">Veiðihúsið</h4>
                         <p className="text-xs text-stone-400">2 leigjendur</p>
                     </div>
                 </div>

@@ -27,6 +27,8 @@
     "test:rules": "firebase emulators:exec --only firestore,storage --project demo-bustadurinn \"vitest run --config vitest.rules.config.ts\""
   },
   "dependencies": {
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/inter": "^5.3.0",
     "@google-analytics/data": "^5.2.1",
     "@sentry/react": "^10.39.0",
     "@upstash/ratelimit": "^2.0.7",

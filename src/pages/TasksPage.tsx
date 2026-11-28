@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import {
     CheckSquare,
     Plus,
-    ArrowLeft,
     List,
     Layout
 } from 'lucide-react';
@@ -29,6 +27,7 @@ import { notifyTaskAssignment } from '@/services/inAppNotifications';
 import { logger } from '@/utils/logger';
 import { getHouseMembers } from '@/services/houseMembersService';
 import PageTitle from '@/components/PageTitle';
+import PageHeader, { PageContainer } from '@/components/PageHeader';
 
 export default function TasksPage() {
     const { user: currentUser } = useEffectiveUser();
@@ -161,38 +160,26 @@ export default function TasksPage() {
         : currentUser ? [{ uid: currentUser.uid, name: currentUser.name }] : [];
 
     return (
-        <main className="min-h-screen bg-bone p-6 pb-24">
+        <main className="min-h-screen bg-bone pb-24">
             <PageTitle title="Verkefni" />
-            {/* Header */}
-            <div className="max-w-5xl mx-auto mb-8">
-                <Link
-                    to="/dashboard"
-                    className="inline-flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
-                    Til baka
-                </Link>
-
-                <div className="flex justify-between items-end">
-                    <div>
-                        <h1 className="text-3xl font-serif text-charcoal mb-2">Verkefni</h1>
-                        <p className="text-grey-mid">Umsjón með viðhaldi og verkum</p>
-                    </div>
-                    {!showForm && (
-                        <button
-                            type="button"
-                            onClick={() => setShowForm(true)}
-                            className="btn btn-primary"
-                        >
-                            <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-                            Nýtt verkefni
-                        </button>
-                    )}
-                </div>
-            </div>
+            <PageHeader
+                title="Verkefni"
+                description="Umsjón með viðhaldi og verkum"
+                actions={!showForm && (
+                    <button
+                        type="button"
+                        onClick={() => setShowForm(true)}
+                        className="btn btn-primary"
+                    >
+                        <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
+                        Nýtt verkefni
+                    </button>
+                )}
+            />
 
             {/* Controls */}
-            <div className="max-w-5xl mx-auto mb-6 flex justify-between items-center bg-white p-2 rounded-lg border border-grey-warm">
+            <PageContainer className="mb-6">
+            <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-grey-warm">
                 <div role="group" aria-label="Sía verkefni" className="flex gap-2">
                     <button
                         type="button"
@@ -236,9 +223,10 @@ export default function TasksPage() {
                     </button>
                 </div>
             </div>
+            </PageContainer>
 
             {/* Content  */}
-            <div className={`max-w-5xl mx-auto ${view === 'board' ? 'overflow-x-hidden' : ''}`}>
+            <PageContainer className={view === 'board' ? 'overflow-x-hidden' : ''}>
                 {showForm && (
                     <div className="mb-8 animate-fade-in">
                         <TaskForm
@@ -281,7 +269,7 @@ export default function TasksPage() {
                         )}
                     </>
                 )}
-            </div>
+            </PageContainer>
             <MobileNav />
         </main>
     );

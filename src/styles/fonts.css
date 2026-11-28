@@ -1,0 +1,62 @@
+/*
+ * Self-hosted web fonts (Inter + Fraunces), replacing the Google Fonts stylesheet.
+ *
+ * Family names are the plain "Inter" / "Fraunces" that tailwind.config.js
+ * (fontFamily.sans / fontFamily.serif) expects, so nothing else changes.
+ * Only the Latin and Latin-ext subsets ship: Icelandic letters (þ ð æ ö á é í ó ú ý and
+ * capitals) are all in U+0000-00FF, i.e. the "latin" file; "latin-ext" is only fetched
+ * when a page contains a character from its unicode-range (browsers skip the download
+ * otherwise). Both are variable fonts, so one file serves every weight in use
+ * (Inter 300-700, Fraunces 400-700). font-display: swap shows text immediately.
+ *
+ * vite-plugin "bustadurinn:font-preload" (vite.config.ts) adds <link rel="preload"> for the
+ * two latin files; vite-plugin-pwa precaches them (globPatterns) so fonts work offline.
+ */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/fraunces/files/fraunces-latin-ext-wght-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+/*
+ * Metric-adjusted fallback for Inter (Arial scaled to Inter's width and vertical metrics), so the
+ * swap from system font to Inter shifts as little layout as possible. NOT wired in yet: it only
+ * takes effect once tailwind.config.js lists it after Inter, i.e.
+ *   sans: ['Inter', 'Inter Fallback', 'sans-serif']
+ * (tailwind.config.js belongs to the design work, so that one-word change is left to its owner).
+ */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial');
+  size-adjust: 107.4%;
+  ascent-override: 90.2%;
+  descent-override: 22.5%;
+  line-gap-override: 0%;
+}

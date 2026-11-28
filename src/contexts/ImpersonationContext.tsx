@@ -4,7 +4,6 @@
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { auth } from '@/lib/firebase';
 import { logger } from '@/utils/logger';
 import type { User } from '@/types/models';
 
@@ -43,15 +42,27 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
     }, []);
 
     // Listen for auth state changes to clear impersonation on logout
+    // Only relevant while impersonating (the callback does nothing otherwise), so the
+    // Firebase SDK is only pulled in then. This provider wraps the whole app and must not
+    // load Firebase on public pages.
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            // If user logs out (user is null) and we are impersonating, stop it
-            if (!user && impersonatedUser) {
-                logger.debug('User logged out - clearing impersonation');
-                stopImpersonation();
-            }
+        if (!impersonatedUser) return;
+        let cancelled = false;
+        let unsubscribe: (() => void) | undefined;
+        void import('@/lib/firebase').then(({ auth }) => {
+            if (cancelled) return;
+            unsubscribe = auth.onAuthStateChanged((user) => {
+                // If user logs out (user is null) and we are impersonating, stop it
+                if (!user && impersonatedUser) {
+                    logger.debug('User logged out - clearing impersonation');
+                    stopImpersonation();
+                }
+            });
         });
-        return () => unsubscribe();
+        return () => {
+            cancelled = true;
+            unsubscribe?.();
+        };
     }, [impersonatedUser, stopImpersonation]);
 
     const startImpersonation = (user: User) => {

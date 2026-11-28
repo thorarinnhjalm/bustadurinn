@@ -23,6 +23,9 @@ const CabinLogo = ({ size = 24, className = "" }: { size?: number, className?: s
     </svg>
 );
 
+// Every icon in the top bar is the same 40px touch target on one centre line.
+const ICON_BTN = 'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md transition-colors';
+
 interface DashboardLayoutProps {
     children: React.ReactNode;
 }
@@ -75,15 +78,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return (
         <div className="min-h-screen bg-[#FDFCF8] text-[#1a1a1a] font-sans pb-24 md:pb-0">
             {/* --- TOP NAVIGATION (Mobile & Desktop) --- */}
-            <nav aria-label="Efri valmynd" className="fixed top-0 w-full bg-[#FDFCF8]/90 backdrop-blur-md border-b border-stone-100 z-50 px-4 h-16 flex items-center justify-between max-w-5xl mx-auto left-0 right-0">
-                <div className="flex items-center gap-2 relative min-w-0">
+            <nav aria-label="Efri valmynd" className="fixed top-0 w-full bg-[#FDFCF8]/90 backdrop-blur-md border-b border-stone-100 z-50 px-4 md:px-6 h-16 flex items-center justify-between gap-2 max-w-5xl mx-auto left-0 right-0">
+                <div className="flex items-center gap-2 relative min-w-0 flex-1">
                     {currentHouse ? (
                         <button
                             type="button"
                             onClick={() => setShowHouseSwitcher(!showHouseSwitcher)}
                             aria-expanded={userHouses.length > 1 ? showHouseSwitcher : undefined}
                             aria-controls={userHouses.length > 1 ? houseSwitcherId : undefined}
-                            className="flex items-center gap-2 hover:bg-stone-50 px-2 py-1 rounded-lg transition-colors group min-w-0"
+                            className="flex items-center gap-2 hover:bg-stone-50 px-2 py-1 rounded-lg transition-colors group min-w-0 max-w-full"
                         >
                             <div className="text-[#1a1a1a]">
                                 <CabinLogo size={20} />
@@ -142,12 +145,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         </div>
                     )}
                 </div>
-                <div className="flex items-center gap-4 relative shrink-0">
+                <div className="flex items-center gap-1 md:gap-2 relative shrink-0">
                     {isAdmin && (
                         <Link
                             to="/super-admin"
                             onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
-                            className="flex items-center gap-1 text-stone-500 hover:text-amber-ink transition-colors text-xs font-bold uppercase tracking-wider"
+                            className={`${ICON_BTN} w-auto gap-1 px-2 text-stone-500 hover:text-amber-ink text-xs font-bold uppercase tracking-wider`}
                             aria-label="Stjórnborð kerfisstjóra"
                         >
                             <Shield size={16} aria-hidden="true" />
@@ -161,7 +164,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Link
                         to="/"
                         onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
-                        className={`hidden md:flex transition-colors ${isActivePath('/') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
+                        className={`hidden md:inline-flex ${ICON_BTN} ${isActivePath('/') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Heim"
                         aria-label="Heim"
                         aria-current={isActivePath('/') ? 'page' : undefined}
@@ -171,7 +174,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Link
                         to="/calendar"
                         onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
-                        className={`hidden md:flex transition-colors ${isActivePath('/calendar') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
+                        className={`hidden md:inline-flex ${ICON_BTN} ${isActivePath('/calendar') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Dagatal"
                         aria-label="Dagatal"
                         aria-current={isActivePath('/calendar') ? 'page' : undefined}
@@ -181,7 +184,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Link
                         to="/tasks"
                         onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
-                        className={`hidden md:flex transition-colors ${isActivePath('/tasks') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
+                        className={`hidden md:inline-flex ${ICON_BTN} ${isActivePath('/tasks') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Verkefni"
                         aria-label="Verkefni"
                         aria-current={isActivePath('/tasks') ? 'page' : undefined}
@@ -191,7 +194,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Link
                         to="/arbok"
                         onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
-                        className={`flex transition-colors ${isActivePath('/arbok') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
+                        className={`${ICON_BTN} ${isActivePath('/arbok') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Árbók"
                         aria-label="Árbók"
                         aria-current={isActivePath('/arbok') ? 'page' : undefined}
@@ -201,7 +204,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <button
                         type="button"
                         onClick={() => setShowQuickHelp(true)}
-                        className="text-stone-500 hover:text-amber-ink transition-colors"
+                        className={`${ICON_BTN} text-stone-500 hover:text-amber-ink`}
                         title="Hjálp"
                         aria-label="Hjálp"
                     >
@@ -213,12 +216,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         aria-expanded={showNotifications}
                         aria-controls={notificationsId}
                         aria-label={hasUnread ? 'Tilkynningar (ólesnar tilkynningar)' : 'Tilkynningar'}
-                        className="relative text-stone-500 hover:text-[#1a1a1a] transition-colors"
+                        className={`${ICON_BTN} text-stone-500 hover:text-[#1a1a1a]`}
                     >
-                        <Bell size={20} aria-hidden="true" />
-                        {hasUnread && (
-                            <span aria-hidden="true" className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-[#FDFCF8] rounded-full"></span>
-                        )}
+                        <span className="relative flex">
+                            <Bell size={20} aria-hidden="true" />
+                            {hasUnread && (
+                                <span aria-hidden="true" className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-[#FDFCF8] rounded-full"></span>
+                            )}
+                        </span>
                     </button>
 
                     {/* Notification Dropdown */}
@@ -288,9 +293,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         to="/settings?tab=profile"
                         onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
                         aria-label={`${currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}, prófíllinn minn`}
-                        className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:bg-stone-800"
+                        className={`${ICON_BTN} group`}
                     >
-                        {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}
+                        <span aria-hidden="true" className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center text-white text-xs font-bold group-hover:bg-stone-800 transition-colors">
+                            {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}
+                        </span>
                     </Link>
                 </div>
             </nav>

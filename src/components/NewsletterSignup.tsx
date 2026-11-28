@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { CheckCircle, ArrowRight, Loader2, Mail } from 'lucide-react';
 import { logger } from '@/utils/logger';
 
@@ -21,6 +19,12 @@ export default function NewsletterSignup({ variant = 'full' }: NewsletterSignupP
         setError('');
 
         try {
+            // Firestore is loaded on submit, not with the page: this form is on every marketing page,
+            // and a failed chunk load lands in the catch below like any other failure.
+            const [{ db }, { collection, addDoc, serverTimestamp }] = await Promise.all([
+                import('@/lib/firebase'),
+                import('firebase/firestore'),
+            ]);
             // Save to Firestore directly
             // Public users don't have read access to check if exists, so we just add
             await addDoc(collection(db, 'newsletter_subscribers'), {

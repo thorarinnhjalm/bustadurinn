@@ -21,13 +21,17 @@ export default {
             },
             fontFamily: {
                 serif: ['Fraunces', 'serif'],
-                sans: ['Inter', 'sans-serif'],
+                sans: ['Inter', 'Inter Fallback', 'sans-serif'],
             },
             borderRadius: {
                 sm: '2px',
                 DEFAULT: '4px',
-                md: '4px',
-                lg: '8px',
+                md: '6px',
+                // Design system: max 6px. Pills/avatars use rounded-full; device illustrations use explicit rounded-[..] values.
+                lg: '6px',
+                xl: '6px',
+                '2xl': '6px',
+                '3xl': '6px',
             },
         },
     },

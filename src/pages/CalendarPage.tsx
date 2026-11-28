@@ -5,8 +5,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Plus, Calendar as CalendarIcon, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Plus, Calendar as CalendarIcon } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
 import type { Booking } from '@/types/models';
@@ -26,6 +25,7 @@ import { useBookings } from './calendar/useBookings';
 import { useBookingForm } from './calendar/useBookingForm';
 import type { BookingEvent, CalendarView } from './calendar/calendarTypes';
 import PageTitle from '@/components/PageTitle';
+import PageHeader, { PageContainer } from '@/components/PageHeader';
 
 export default function CalendarPage() {
     const { user: currentUser } = useEffectiveUser();
@@ -139,37 +139,24 @@ export default function CalendarPage() {
     return (
         <main className="min-h-screen bg-bone">
             <PageTitle title="Bókunardagatal" />
-            {/* Header */}
-            <div className="bg-white border-b border-grey-warm relative md:sticky md:top-0 z-30 shadow-sm">
-                <div className="container mx-auto px-6 py-6">
-                    <div className="flex flex-wrap md:flex-nowrap justify-between items-center gap-4">
-                        <div className="w-full md:w-auto">
-                            <Link
-                                to="/dashboard"
-                                className="inline-flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
-                            >
-                                <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
-                                Til baka
-                            </Link>
-                            <h1 className="text-3xl font-serif mb-2">Bókunardagatal</h1>
-                            <p className="text-grey-mid">Skipulagðu dvöl í sumarhúsinu</p>
-                        </div>
-                        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                            <button
-                                type="button"
-                                onClick={openModal}
-                                className="btn btn-primary flex items-center gap-2 whitespace-nowrap"
-                            >
-                                <Plus className="w-5 h-5" aria-hidden="true" />
-                                Ný bókun
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                width="wide"
+                title="Bókunardagatal"
+                description="Skipulagðu dvöl í sumarhúsinu"
+                actions={
+                    <button
+                        type="button"
+                        onClick={openModal}
+                        className="btn btn-primary flex items-center gap-2 whitespace-nowrap"
+                    >
+                        <Plus className="w-5 h-5" aria-hidden="true" />
+                        Ný bókun
+                    </button>
+                }
+            />
 
             {/* Calendar */}
-            <div className="container mx-auto px-4 py-4 md:px-6 md:py-8 pb-24 md:pb-8">
+            <PageContainer width="wide" className="pb-24 md:pb-8">
                 {/* View Toggle - Controls Month vs List View */}
                 <div role="group" aria-label="Yfirlit dagatals" className="flex p-1 bg-stone-100 rounded-lg mb-4 w-full md:w-auto md:inline-flex">
                     <button
@@ -282,7 +269,7 @@ export default function CalendarPage() {
                         )}
                     </div>
                 )}
-            </div>
+            </PageContainer>
 
             <NewBookingDialog
                 open={showModal}

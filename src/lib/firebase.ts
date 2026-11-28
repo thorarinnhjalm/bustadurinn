@@ -5,9 +5,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
 import { initializeFirestore, connectFirestoreEmulator, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
-import { getFunctions } from 'firebase/functions';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
-import { getMessaging } from 'firebase/messaging';
 import firebaseConfig, { USE_EMULATORS } from '@/config/firebase';
 
 // Initialize Firebase
@@ -36,10 +34,11 @@ export const db = initializeFirestore(app, {
     ignoreUndefinedProperties: true,
 });
 
-export const functions = getFunctions(app);
 export const storage = getStorage(app);
-// No push messaging against the emulators (it would talk to the real FCM).
-export const messaging = typeof window !== 'undefined' && !USE_EMULATORS ? getMessaging(app) : null;
+// Messaging is not created here: firebase/messaging is only needed once push is
+// used, so src/utils/pushNotifications.ts imports and initialises it on demand
+// (and never against the emulators). Keeping it out of this module keeps it out
+// of the Firebase chunk every page loads.
 
 // Local emulator e2e suite only (VITE_USE_EMULATORS=true at build time).
 if (USE_EMULATORS) {

@@ -20,20 +20,12 @@
   <meta data-rh="true" name="keywords" content="bókunarkerfi sumarhús, sumarhús í sameign, bókunardagatal, utanumhald sumarhús, hússjóður, meðeigendur, sanngirnisregla, skipulag sumarhúss, orlofshús, íslenskt app" />
   <link data-rh="true" rel="canonical" href="https://www.bustadurinn.is/" />
 
-  <!-- Performance: DNS Prefetch & Preconnect for external resources -->
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+  <!-- Performance: DNS prefetch for the third-party hosts that are loaded after the page is usable
+       (see the deferred loader below). Fonts are self-hosted: src/styles/fonts.css, with the
+       woff2 preloads injected at build time by the "bustadurinn:font-preload" plugin. -->
   <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
   <link rel="dns-prefetch" href="https://www.google-analytics.com" />
   <link rel="dns-prefetch" href="https://connect.facebook.net" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-  <!-- Fonts: a plain stylesheet link (no inline onload handler, so a strict CSP can forbid inline
-       event handlers). display=swap in the URL makes text render in fallback fonts until the
-       web fonts arrive; the preconnect hints above shorten that wait. -->
-  <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
 
   <!-- Analytics privacy: /guest/<token>, /join... and any ?token= / ?returnUrl= URL carry
        bearer secrets (guest links, invitations). Never report those URLs to third parties. -->
@@ -51,6 +43,32 @@
       if (/[?&](token|returnUrl|code)=/i.test(location.search)) return { path: p };
       return null;
     };
+
+    // Third-party loader. Calls made early (gtag/fbq queues below) are recorded by tiny inline
+    // stubs; the heavy external files (gtag/js, fbevents.js, the umsognin widget) are injected
+    // by the callbacks registered here, once, after the page is usable: after "load" when the
+    // browser is idle (3.5 s at the latest), or on the first pointer/key/scroll interaction,
+    // whichever comes first.
+    (function () {
+      var queue = [], started = false, armed = false;
+      function start() {
+        if (started) return;
+        started = true;
+        ['pointerdown', 'keydown', 'scroll'].forEach(function (t) { removeEventListener(t, start, true); });
+        queue.splice(0).forEach(function (fn) { try { fn(); } catch (e) { /* a broken tag must not stop the others */ } });
+      }
+      function arm() {
+        if (armed) return;
+        armed = true;
+        if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 3500 });
+        else setTimeout(start, 3500);
+      }
+      window.__whenPageUsable = function (fn) { if (started) fn(); else queue.push(fn); };
+      ['pointerdown', 'keydown', 'scroll'].forEach(function (t) {
+        addEventListener(t, start, { capture: true, once: true, passive: true });
+      });
+      if (document.readyState === 'complete') arm(); else addEventListener('load', arm, { once: true });
+    })();
   </script>
 
   <!-- Google Analytics - Deferred for performance -->
@@ -92,11 +110,13 @@
     });
     window.addEventListener('popstate', onGaRouteChange);
 
-    // Load GA script after page load
-    window.addEventListener('load', function () {
+    // gtag/js is injected once the page is usable (see __whenPageUsable above). Everything
+    // pushed to dataLayer before that is replayed in order when it loads.
+    window.__whenPageUsable(function () {
       var script = document.createElement('script');
       script.async = true;
       script.fetchPriority = 'low';
+      script.dataset.runtimeInjected = 'true';
       script.src = 'https://www.googletagmanager.com/gtag/js?id=G-ZK96M9074D';
       document.head.appendChild(script);
     });
@@ -109,10 +129,16 @@
         n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments)
       };
       if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
-      n.queue = []; t = b.createElement(e); t.async = !0;
-      t.fetchPriority = 'low';
-      t.src = v; s = b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t, s)
+      n.queue = [];
+      // fbevents.js is injected once the page is usable; fbq() calls before that stay queued
+      // in n.queue and are replayed by the library.
+      f.__whenPageUsable(function () {
+        t = b.createElement(e); t.async = !0;
+        t.fetchPriority = 'low';
+        t.dataset.runtimeInjected = 'true';
+        t.src = v; s = b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t, s)
+      });
     }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
 
     // Initialize & Track PageView. The Pixel reads the real URL itself, so on
@@ -233,17 +259,21 @@
     container and its crawler-facing llms.txt link stay put either way.
   -->
   <script>
-    if (window.matchMedia('(min-width: 768px)').matches) {
-      var umsogninScript = document.createElement('script');
-      umsogninScript.src = 'https://umsognin.is/widget.js';
-      umsogninScript.defer = true;
-      // Prerendering runs at desktop width, so this branch executes and the
-      // tag would otherwise be serialised into the static HTML — handing the
-      // widget to phones anyway. scripts/prerender.js strips anything marked
-      // this way before saving.
-      umsogninScript.dataset.runtimeInjected = 'true';
-      document.head.appendChild(umsogninScript);
-    }
+    // Injected once the page is usable (see __whenPageUsable in the head); the widget
+    // looks up #umsognin-widget when it runs, and the container below is already parsed by then.
+    window.__whenPageUsable(function () {
+      if (window.matchMedia('(min-width: 768px)').matches) {
+        var umsogninScript = document.createElement('script');
+        umsogninScript.src = 'https://umsognin.is/widget.js';
+        umsogninScript.defer = true;
+        // Prerendering runs at desktop width, so this branch executes and the
+        // tag would otherwise be serialised into the static HTML — handing the
+        // widget to phones anyway. scripts/prerender.js strips anything marked
+        // this way before saving.
+        umsogninScript.dataset.runtimeInjected = 'true';
+        document.head.appendChild(umsogninScript);
+      }
+    });
   </script>
   <div id="umsognin-widget"
        data-business-slug="bustadurinn-is"

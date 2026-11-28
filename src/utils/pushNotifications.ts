@@ -1,8 +1,27 @@
-import { getToken, onMessage, type MessagePayload } from 'firebase/messaging';
+import type { MessagePayload } from 'firebase/messaging';
 import { logger } from './logger';
-import { messaging, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
+import { USE_EMULATORS } from "@/config/firebase";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { type User } from "@/types/models";
+
+// firebase/messaging (and the Messaging instance) is loaded on demand, so it is not
+// part of the Firebase chunk that every page needs. No push messaging against the
+// emulators (it would talk to the real FCM).
+const loadMessaging = async () => {
+    if (typeof window === 'undefined' || USE_EMULATORS) return null;
+    try {
+        const [{ getMessaging, getToken, onMessage }, { default: app }] = await Promise.all([
+            import('firebase/messaging'),
+            import('@/lib/firebase'),
+        ]);
+        return { messaging: getMessaging(app), getToken, onMessage };
+    } catch (error) {
+        // Unsupported browser or the chunk failed to load: push is simply unavailable.
+        logger.warn('Push messaging unavailable:', error);
+        return null;
+    }
+};
 
 // This is the public VAPID key from Firebase Console -> Project Settings -> Cloud Messaging -> Web Push certificates
 // If not provided, push notifications won't initialize. 
@@ -10,12 +29,13 @@ import { type User } from "@/types/models";
 const VAPID_KEY = "BD8KsStlsJ0gDutzeb0jUCF_ko3N0r9m-xSv-4srOvNggITWUV6dJ9SzQtGE8hRxCCGU6XKrwly5GGa2guQoyEo";
 
 export const requestPushPermission = async (currentUser: User) => {
-    if (!messaging) return null;
+    const fcm = await loadMessaging();
+    if (!fcm) return null;
 
     try {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
-            const token = await getToken(messaging, {
+            const token = await fcm.getToken(fcm.messaging, {
                 vapidKey: VAPID_KEY
             });
 
@@ -37,10 +57,11 @@ export const requestPushPermission = async (currentUser: User) => {
     return null;
 };
 
-export const onForegroundMessage = () => {
-    if (!messaging) return;
+export const onForegroundMessage = async () => {
+    const fcm = await loadMessaging();
+    if (!fcm) return;
 
-    onMessage(messaging, (payload) => {
+    fcm.onMessage(fcm.messaging, (payload) => {
         logger.debug("Foreground message received:", payload);
         showForegroundToast(payload);
     });

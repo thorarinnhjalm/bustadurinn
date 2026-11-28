@@ -11,7 +11,6 @@ import {
     Plus,
     Trash2,
     Calculator,
-    ArrowLeft,
     Wallet,
     Shield,
     Eye,
@@ -58,6 +57,7 @@ import {
     validateAmount
 } from '@/components/finance/ledgerUtils';
 import PageTitle from '@/components/PageTitle';
+import PageHeader, { PageContainer } from '@/components/PageHeader';
 
 type Tab = 'budget' | 'ledger' | 'summary';
 
@@ -236,51 +236,38 @@ export default function FinancePage() {
     }
 
     return (
-        <main className="min-h-screen bg-bone p-6 pb-24">
+        <main className="min-h-screen bg-bone pb-24">
             <PageTitle title="Hússjóður" />
-            {/* Header */}
-            <div className="max-w-5xl mx-auto mb-8">
-                <Link
-                    to="/dashboard"
-                    className="inline-flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
-                    Til baka
-                </Link>
-
-                <div className="flex justify-between items-end">
-                    <div>
-                        <h1 className="text-3xl font-serif text-charcoal mb-2">Hússjóður</h1>
-                        <p className="text-grey-mid">Umsjón með rekstri og bókhaldi</p>
-                    </div>
-                    {isManager && (
-                        <Link
-                            to="/settings?tab=house"
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${house?.privacy_hide_finances
-                                ? 'bg-amber/10 text-amber-700 border-amber/20 hover:bg-amber/20'
-                                : 'bg-stone-100 text-grey-mid border-stone-200 hover:bg-stone-200'
-                                }`}
-                        >
-                            {house?.privacy_hide_finances ? (
-                                <>
-                                    <Shield size={14} aria-hidden="true" />
-                                    <span>Aðeins stjórnendur</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Eye size={14} aria-hidden="true" />
-                                    <span>Sýnilegt öllum</span>
-                                </>
-                            )}
-                        </Link>
-                    )}
-                </div>
-            </div>
-
+            <PageHeader
+                title="Hússjóður"
+                description="Umsjón með rekstri og bókhaldi"
+                actions={isManager && (
+                    <Link
+                        to="/settings?tab=house"
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${house?.privacy_hide_finances
+                            ? 'bg-amber/10 text-amber-700 border-amber/20 hover:bg-amber/20'
+                            : 'bg-stone-100 text-grey-mid border-stone-200 hover:bg-stone-200'
+                            }`}
+                    >
+                        {house?.privacy_hide_finances ? (
+                            <>
+                                <Shield size={14} aria-hidden="true" />
+                                <span>Aðeins stjórnendur</span>
+                            </>
+                        ) : (
+                            <>
+                                <Eye size={14} aria-hidden="true" />
+                                <span>Sýnilegt öllum</span>
+                            </>
+                        )}
+                    </Link>
+                )}
+            />
 
             {/* Tabs */}
-            <div className="max-w-5xl mx-auto mb-8 border-b border-grey-warm">
-                <div role="tablist" aria-label="Hússjóður" className="flex gap-8" onKeyDown={handleTabKeyDown}>
+            <PageContainer className="mb-8">
+              <div className="border-b border-grey-warm">
+                <div role="tablist" aria-label="Hússjóður" className="flex gap-6 sm:gap-8 overflow-x-auto px-0.5 pt-1" onKeyDown={handleTabKeyDown}>
                     <button
                         type="button"
                         role="tab"
@@ -289,7 +276,7 @@ export default function FinancePage() {
                         aria-controls="finance-tabpanel"
                         tabIndex={activeTab === 'budget' ? 0 : -1}
                         onClick={() => setActiveTab('budget')}
-                        className={`pb-4 px-2 font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'budget'
+                        className={`pb-4 px-2 font-medium transition-colors relative flex shrink-0 items-center gap-2 whitespace-nowrap ${activeTab === 'budget'
                             ? 'text-charcoal'
                             : 'text-grey-mid hover:text-charcoal'
                             }`}
@@ -309,7 +296,7 @@ export default function FinancePage() {
                         aria-controls="finance-tabpanel"
                         tabIndex={activeTab === 'ledger' ? 0 : -1}
                         onClick={() => setActiveTab('ledger')}
-                        className={`pb-4 px-2 font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'ledger'
+                        className={`pb-4 px-2 font-medium transition-colors relative flex shrink-0 items-center gap-2 whitespace-nowrap ${activeTab === 'ledger'
                             ? 'text-charcoal'
                             : 'text-grey-mid hover:text-charcoal'
                             }`}
@@ -329,7 +316,7 @@ export default function FinancePage() {
                         aria-controls="finance-tabpanel"
                         tabIndex={activeTab === 'summary' ? 0 : -1}
                         onClick={() => setActiveTab('summary')}
-                        className={`pb-4 px-2 font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'summary'
+                        className={`pb-4 px-2 font-medium transition-colors relative flex shrink-0 items-center gap-2 whitespace-nowrap ${activeTab === 'summary'
                             ? 'text-charcoal'
                             : 'text-grey-mid hover:text-charcoal'
                             }`}
@@ -341,10 +328,11 @@ export default function FinancePage() {
                         )}
                     </button>
                 </div>
-            </div>
+              </div>
+            </PageContainer>
 
             {/* Content Area */}
-            <div className="max-w-5xl mx-auto" role="tabpanel" id="finance-tabpanel" aria-labelledby={`finance-tab-${activeTab}`}>
+            <PageContainer role="tabpanel" id="finance-tabpanel" aria-labelledby={`finance-tab-${activeTab}`}>
                 {(houseError || entriesError) && (
                     <div role="alert" className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-sm text-red-700">
                         {entriesError
@@ -404,7 +392,7 @@ export default function FinancePage() {
                         />
                     </div>
                 )}
-            </div>
+            </PageContainer>
         </main>
     );
 }

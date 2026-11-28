@@ -60,7 +60,7 @@ export default function TaskBoard({ tasks, onStatusChange, onDelete }: TaskBoard
                             <div aria-hidden="true" className={`w-3 h-3 rounded-full ${col.id === 'completed' ? 'bg-green-500' :
                                 col.id === 'in_progress' ? 'bg-amber' : 'bg-grey-mid'
                                 }`} />
-                            <h3 className="font-medium text-charcoal">{col.label}</h3>
+                            <h3 className="mb-0 font-sans text-xs font-semibold uppercase tracking-widest text-grey-mid">{col.label}</h3>
                             <span className="text-xs text-grey-mid bg-white px-2 py-0.5 rounded-full border border-grey-warm">
                                 {getColumnTasks(col.id).length}
                             </span>
@@ -81,7 +81,7 @@ export default function TaskBoard({ tasks, onStatusChange, onDelete }: TaskBoard
                                 `}
                             >
                                 <div className="flex justify-between items-start mb-2">
-                                    <h4 className="font-medium text-charcoal text-sm">{task.title}</h4>
+                                    <h4 className="mb-0 font-sans text-base font-medium leading-snug tracking-normal text-charcoal">{task.title}</h4>
                                     <button
                                         type="button"
                                         onClick={() => onDelete(task)}
@@ -101,7 +101,7 @@ export default function TaskBoard({ tasks, onStatusChange, onDelete }: TaskBoard
                                         id={`${baseId}-${task.id}`}
                                         value={task.status}
                                         onChange={(e) => onStatusChange(task, e.target.value as TaskStatus)}
-                                        className="text-xs border border-grey-warm rounded px-1.5 py-1 bg-white text-charcoal"
+                                        className="input w-auto py-1.5 pl-3 text-sm"
                                     >
                                         {COLUMNS.map(c => (
                                             <option key={c.id} value={c.id}>{c.label}</option>

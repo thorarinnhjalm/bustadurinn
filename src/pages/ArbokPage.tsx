@@ -10,8 +10,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Printer, Moon, Users, CalendarDays, Sparkles, Quote } from 'lucide-react';
+import { BookOpen, Printer, Moon, Users, CalendarDays, Sparkles, Quote } from 'lucide-react';
 import { format, getYear } from 'date-fns';
 import { is } from 'date-fns/locale';
 import { useAppStore } from '@/store/appStore';
@@ -21,6 +20,7 @@ import { buildYearbook } from '@/services/arbokService';
 import type { Yearbook } from '@/services/arbokService';
 import { logger } from '@/utils/logger';
 import PageTitle from '@/components/PageTitle';
+import PageHeader from '@/components/PageHeader';
 
 const PRINT_STYLES = `
 @media print {
@@ -122,22 +122,11 @@ export default function ArbokPage() {
             <PageTitle title="Árbók" />
             <style>{PRINT_STYLES}</style>
 
-            {/* Header */}
-            <div className="max-w-4xl mx-auto px-6 pt-6 arbok-no-print">
-                <Link
-                    to="/dashboard"
-                    className="inline-flex items-center text-grey-mid hover:text-charcoal mb-4 transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
-                    Til baka
-                </Link>
-
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                    <div>
-                        <h1 className="text-3xl font-serif text-charcoal mb-1">Árbók bústaðarins</h1>
-                        <p className="text-grey-mid">Sjálfvirkt samantekt ársins fyrir {currentHouse.name}</p>
-                    </div>
-
+            <PageHeader
+                className="arbok-no-print"
+                title="Árbók bústaðarins"
+                description={`Sjálfvirkt samantekt ársins fyrir ${currentHouse.name}`}
+                actions={
                     <div className="flex items-center gap-3">
                         <select
                             value={year}
@@ -156,11 +145,11 @@ export default function ArbokPage() {
                             Prenta / vista sem PDF
                         </button>
                     </div>
-                </div>
-            </div>
+                }
+            />
 
             {loading && (
-                <div role="status" className="max-w-4xl mx-auto px-6 space-y-6 motion-safe:animate-pulse">
+                <div role="status" className="max-w-5xl mx-auto px-4 md:px-6 space-y-6 motion-safe:animate-pulse">
                     <span className="sr-only">Hleð…</span>
                     <div className="h-64 bg-stone-200 rounded-lg" />
                     <div className="grid grid-cols-3 gap-4">
@@ -173,7 +162,7 @@ export default function ArbokPage() {
             )}
 
             {!loading && hasLoadError && (
-                <div className="max-w-4xl mx-auto px-6 arbok-no-print">
+                <div className="max-w-5xl mx-auto px-4 md:px-6 arbok-no-print">
                     <div role="alert" className="bg-amber/10 border border-amber/30 rounded-xl p-5">
                         <p className="font-serif font-bold text-charcoal mb-1">
                             Ekki tókst að sækja öll gögn
@@ -194,7 +183,7 @@ export default function ArbokPage() {
             )}
 
             {!loading && isEmpty && (
-                <div className="max-w-4xl mx-auto px-6">
+                <div className="max-w-5xl mx-auto px-4 md:px-6">
                     <EmptyState
                         icon={BookOpen}
                         title="Engin gögn fyrir þetta ár enn"
@@ -204,7 +193,7 @@ export default function ArbokPage() {
             )}
 
             {!loading && yearbook && !isEmpty && (
-                <div className="max-w-4xl mx-auto px-6 space-y-8">
+                <div className="max-w-5xl mx-auto px-4 md:px-6 space-y-8">
                     {/* Hero */}
                     <div
                         className="arbok-card arbok-hero relative rounded-lg overflow-hidden border border-stone-200 min-h-[280px] flex items-end"

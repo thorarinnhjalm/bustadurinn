@@ -27,6 +27,7 @@ import GuestsTab from './settings/GuestsTab';
 import GuestbookTab from './settings/GuestbookTab';
 import ProfileTab from './settings/ProfileTab';
 import PageTitle from '@/components/PageTitle';
+import PageHeader, { PageContainer } from '@/components/PageHeader';
 
 export default function SettingsPage() {
     const navigate = useNavigate();
@@ -80,29 +81,16 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen bg-bone pb-24">
             <PageTitle title="Stillingar" />
-            {/* Header */}
-            <div className="bg-white border-b border-grey-warm">
-                <div className="container mx-auto px-6 py-6">
-                    <button
-                        type="button"
-                        onClick={() => navigate('/dashboard')}
-                        className="text-stone-500 hover:text-charcoal font-bold text-sm mb-4 flex items-center gap-1 transition-colors"
-                    >
-                        ← Til baka á stjórnborð
-                    </button>
-                    <h1 className="text-3xl font-serif mb-2">Stillingar</h1>
-                    <p className="text-grey-mid">Stjórnaðu húsinu og þínum aðgangi</p>
-                </div>
-            </div>
+            <PageHeader title="Stillingar" description="Stjórnaðu húsinu og þínum aðgangi" />
 
-            <div className="container mx-auto px-6 py-8 pb-32">
-                <div className="flex flex-col md:flex-row gap-8">
+            <PageContainer className="pb-32">
+                <div className="flex flex-col gap-4 md:flex-row md:gap-8">
 
                     {/* Sidebar Navigation */}
                     <SettingsNav activeTab={activeTab} onSelectTab={setActiveTab} onLogout={handleLogout} />
 
                     {/* Main Content */}
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                         {/* Feedback Messages (live regions stay mounted so announcements are reliable) */}
                         <div role="status" aria-live="polite">
                             {success && (
@@ -232,7 +220,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </PageContainer>
 
             <FeedbackModal
                 isOpen={showFeedbackModal}
