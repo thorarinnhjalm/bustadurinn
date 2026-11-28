@@ -563,25 +563,19 @@ dialog::backdrop {
     font-size: 12px;
   }
 
-  /* Make month view events just small colored dots/bars on mobile to save space */
-  /* The user can switch to List view for details */
+  /* Month view on mobile: bookings are thin coloured bars without text, so a stay
+     spanning several days still reads as one span. The List view has the details.
+     The colour comes from the component's inline background-color. */
   .rbc-month-view .rbc-event {
     padding: 0;
     font-size: 0;
     min-height: 6px;
     height: 6px;
-    width: 6px;
-    border-radius: 50%;
-    margin: 1px auto;
+    border-radius: 3px;
+    margin: 2px 2px 0;
     overflow: hidden;
-    position: relative;
-    /* We need to override the inline styles from the component for mobile */
-    background-color: currentColor !important;
   }
 
-  /* We need to ensure the color passes through or we rely on the component inline style background-color */
-  /* Since inline styles have high specificity, the component's background color will work for the background. */
-  /* But we want to hide the text */
   .rbc-month-view .rbc-event-content {
     display: none;
   }
@@ -665,13 +659,6 @@ dialog::backdrop {
     width: 100%;
   }
 
-  /* Month dots improvement */
-  .rbc-month-view .rbc-event {
-    margin: 1px auto;
-    width: 6px;
-    height: 6px;
-  }
-
   /* Hide 'show more' link on mobile month view to reduce clutter */
   .rbc-month-view .rbc-show-more {
     font-size: 10px;
@@ -684,11 +671,6 @@ dialog::backdrop {
   /* Ensure toolbar doesn't break */
   .rbc-toolbar {
     flex-wrap: wrap;
-  }
-
-  /* Remove the default today background if it clashes */
-  .rbc-today {
-    background-color: #f3f4f6;
   }
 }
 
@@ -716,9 +698,4 @@ dialog::backdrop {
   .rbc-date-cell {
     cursor: pointer;
   }
-}
-
-/* react-big-calendar greys the days of the neighbouring months with #999 on #e6e6e6 (2.3:1) */
-.rbc-month-view .rbc-off-range {
-  color: #5c5852;
 }

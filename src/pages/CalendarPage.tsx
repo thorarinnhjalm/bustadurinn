@@ -193,7 +193,6 @@ export default function CalendarPage() {
                             <BookingMonthView
                                 language={language}
                                 events={events}
-                                bookings={bookings}
                                 date={date}
                                 onNavigate={handleNavigate}
                                 onView={handleViewChange}
@@ -235,7 +234,7 @@ export default function CalendarPage() {
                         <span className="text-sm text-grey-dark">{bookingTypeLabels[language].guest}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fef3c7', border: '1px solid #f59e0b' }} aria-hidden="true"></div>
+                        <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fbefd5', boxShadow: 'inset 0 2px 0 #e8b058' }} aria-hidden="true"></div>
                         <span className="text-sm text-grey-dark"><span aria-hidden="true">🇮🇸</span> Frídagur</span>
                     </div>
                 </div>

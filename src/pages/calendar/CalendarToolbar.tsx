@@ -21,21 +21,21 @@ const CalendarToolbar = ({ label, onNavigate }: CustomToolbarProps) => {
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
-                        className="p-2 h-10 w-10 rounded-full flex items-center justify-center border border-stone-300 hover:bg-stone-100 bg-white shadow-md active:scale-95 transition-all"
+                        className="h-10 w-10 rounded-md flex items-center justify-center border border-stone-300 bg-white hover:bg-stone-50 hover:border-stone-400 transition-colors duration-200"
                         onClick={() => onNavigate('PREV')}
                         aria-label="Fyrra tímabil"
                     >
-                        <ChevronLeft className="w-6 h-6 text-stone-800" aria-hidden="true" />
+                        <ChevronLeft className="w-5 h-5 text-charcoal" aria-hidden="true" />
                     </button>
                     <button
                         type="button"
-                        className="p-2 h-10 w-10 rounded-full flex items-center justify-center border border-stone-300 hover:bg-stone-100 bg-white shadow-md active:scale-95 transition-all"
+                        className="h-10 w-10 rounded-md flex items-center justify-center border border-stone-300 bg-white hover:bg-stone-50 hover:border-stone-400 transition-colors duration-200"
                         onClick={() => onNavigate('NEXT')}
                         aria-label="Næsta tímabil"
                     >
-                        <ChevronRight className="w-6 h-6 text-stone-800" aria-hidden="true" />
+                        <ChevronRight className="w-5 h-5 text-charcoal" aria-hidden="true" />
                     </button>
-                    <h2 aria-live="polite" className="text-xl font-serif font-bold text-charcoal ml-2 capitalize">
+                    <h2 aria-live="polite" className="text-xl font-serif font-semibold text-charcoal ml-2 mb-0 first-letter:uppercase">
                         {label}
                     </h2>
                 </div>

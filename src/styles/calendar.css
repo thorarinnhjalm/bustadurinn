@@ -1,0 +1,300 @@
+/* =============================================================================
+   Bústaðurinn theme for react-big-calendar.
+   Import this right AFTER 'react-big-calendar/lib/css/react-big-calendar.css':
+   the selectors mirror the library's own, so the later file wins.
+   Tokens: bone #fdfcf8, charcoal #1a1a1a, amber #e8b058, amber-ink #8a5a12,
+   grey-warm #e8e4df, grey-mid #6b665f.
+   ============================================================================= */
+
+.rbc-calendar {
+  font-family: inherit;
+  color: #1a1a1a;
+}
+
+/* ---- Frames and grid lines ------------------------------------------------ */
+
+.rbc-month-view,
+.rbc-time-view,
+.rbc-agenda-view table.rbc-agenda-table {
+  border: 1px solid #e8e4df;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.rbc-header {
+  padding: 10px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b665f;
+  background: #fdfcf8;
+  border-bottom: 1px solid #e8e4df;
+}
+
+.rbc-header + .rbc-header,
+.rbc-day-bg + .rbc-day-bg,
+.rbc-time-header-content,
+.rbc-time-content > * + * > *,
+.rbc-time-header.rbc-overflowing {
+  border-left-color: #e8e4df;
+}
+
+.rbc-month-row + .rbc-month-row {
+  border-top-color: #e8e4df;
+}
+
+/* ---- Month cells ---------------------------------------------------------- */
+
+.rbc-off-range-bg {
+  background: #f7f5f0;
+}
+
+/* 5.2:1 on the off-range background (the library default is 2.3:1) */
+.rbc-month-view .rbc-off-range {
+  color: #6b665f;
+}
+
+.rbc-today {
+  background-color: rgba(232, 176, 88, 0.12);
+}
+
+.rbc-date-cell {
+  padding: 6px 8px 2px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The whole cell is the tap target, so the number itself stays small on touch screens */
+.rbc-date-cell .rbc-button-link {
+  min-width: 0;
+  min-height: 0;
+  color: inherit;
+}
+
+.rbc-date-cell.rbc-now {
+  font-weight: 600;
+}
+
+.rbc-date-cell.rbc-now .rbc-button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  background: #1a1a1a;
+  color: #fdfcf8;
+}
+
+/* ---- Events --------------------------------------------------------------- */
+
+.rbc-event,
+.rbc-day-slot .rbc-background-event {
+  background-color: #1a1a1a;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.rbc-event:focus,
+.rbc-event:focus-visible {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 1px;
+}
+
+.rbc-event.rbc-selected {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #1a1a1a;
+}
+
+.rbc-show-more {
+  color: #8a5a12;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rbc-show-more:hover,
+.rbc-show-more:focus {
+  color: #1a1a1a;
+}
+
+.rbc-overlay {
+  border: 1px solid #e8e4df;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(26, 26, 26, 0.12);
+  padding: 12px;
+}
+
+.rbc-overlay-header {
+  margin: -12px -12px 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e8e4df;
+  font-family: Fraunces, serif;
+  font-weight: 600;
+}
+
+/* ---- Built-in toolbar (the app's month view uses its own CalendarToolbar) --- */
+
+.rbc-toolbar {
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.rbc-toolbar .rbc-toolbar-label {
+  font-family: Fraunces, serif;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.rbc-toolbar .rbc-toolbar-label::first-letter {
+  text-transform: uppercase;
+}
+
+.rbc-toolbar button {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #1a1a1a;
+  background: #fff;
+  border: 1px solid #d6d3d1;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 200ms, border-color 200ms, color 200ms;
+}
+
+.rbc-btn-group > button:first-child:not(:last-child) {
+  border-radius: 6px 0 0 6px;
+}
+
+.rbc-btn-group > button:last-child:not(:first-child) {
+  border-radius: 0 6px 6px 0;
+}
+
+.rbc-btn-group > button:only-child {
+  border-radius: 6px;
+}
+
+.rbc-toolbar button:hover,
+.rbc-toolbar button:focus {
+  color: #1a1a1a;
+  background-color: #fafaf9;
+  border-color: #a8a29e;
+}
+
+.rbc-toolbar button:active,
+.rbc-toolbar button.rbc-active,
+.rbc-toolbar button:active:hover,
+.rbc-toolbar button:active:focus,
+.rbc-toolbar button.rbc-active:hover,
+.rbc-toolbar button.rbc-active:focus {
+  color: #fdfcf8;
+  background-color: #1a1a1a;
+  border-color: #1a1a1a;
+  box-shadow: none;
+}
+
+/* ---- Week / day view ------------------------------------------------------ */
+
+.rbc-time-content {
+  border-top: 1px solid #e8e4df;
+}
+
+.rbc-time-header-content > .rbc-row.rbc-row-resource,
+.rbc-timeslot-group {
+  border-bottom-color: #e8e4df;
+}
+
+.rbc-day-slot .rbc-time-slot {
+  border-top-color: #f3f1ec;
+}
+
+.rbc-time-view .rbc-header {
+  border-bottom: 0;
+}
+
+.rbc-time-view .rbc-allday-cell + .rbc-row,
+.rbc-time-header-content > .rbc-row:first-child {
+  border-bottom: 1px solid #e8e4df;
+}
+
+.rbc-label,
+.rbc-time-slot .rbc-label {
+  font-size: 11px;
+  color: #6b665f;
+  font-variant-numeric: tabular-nums;
+}
+
+.rbc-current-time-indicator {
+  height: 2px;
+  background-color: #e8b058;
+}
+
+.rbc-day-slot .rbc-event {
+  border: 1px solid rgba(26, 26, 26, 0.15);
+}
+
+/* ---- Agenda (list) view --------------------------------------------------- */
+
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b665f;
+  background: #fdfcf8;
+  border-bottom: 1px solid #e8e4df;
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td + td,
+.rbc-agenda-view table.rbc-agenda-table .rbc-header + .rbc-header {
+  border-left-color: #e8e4df;
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr + tr {
+  border-top-color: #e8e4df;
+}
+
+.rbc-agenda-empty {
+  padding: 24px 0;
+  color: #6b665f;
+  text-align: center;
+}
+
+/* ---- Small screens -------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .rbc-header {
+    padding: 8px 2px;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .rbc-date-cell {
+    padding: 4px 4px 0;
+    font-size: 12px;
+  }
+
+  .rbc-date-cell.rbc-now .rbc-button-link {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 4px;
+  }
+
+  .rbc-toolbar .rbc-toolbar-label {
+    padding: 4px 0;
+  }
+}

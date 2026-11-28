@@ -16,6 +16,7 @@ import {
     Sparkles
 } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import '@/styles/calendar.css'; // must follow the library CSS
 
 // Setup Calendar Localizer
 const locales = { 'is': is };
