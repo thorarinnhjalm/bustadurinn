@@ -106,7 +106,7 @@ Sentry is configured for error tracking and performance monitoring (`@sentry/rea
 
 Routes are grouped by what the code requires today (check the file's own auth call before relying on this list):
 
-- **No auth:** `contact.ts` (rate-limited via Upstash), `road-conditions.ts`, `weather.ts`, `invite-info.ts`, `guestbook-entry.ts` (the guest-link token is the credential), `account/data-deletion-callback.ts` (verifies Facebook's `signed_request` signature), `search-console.ts` (currently has NO auth check although it should be admin-only)
+- **No auth:** `contact.ts` (rate-limited via Upstash), `road-conditions.ts`, `weather.ts`, `invite-info.ts`, `guestbook-entry.ts` (the guest-link token is the credential), `account/data-deletion-callback.ts` (verifies Facebook's `signed_request` signature), `csp-report.ts` (CSP violation sink, rate-limited via Upstash, always 204), `search-console.ts` (currently has NO auth check although it should be admin-only)
 - **Any signed-in user** (Firebase ID token): `send-email.ts` (own address only unless super admin), `invite-member.ts`, `join-house.ts`, `booking-notification.ts`, `push-notification.ts`, `house-members.ts`, `house-notification.ts`, `leave-house.ts`, `remove-member.ts` and `transfer-manager.ts` (house-manager checks inside), `delete-account.ts` (needs a sign-in less than 10 minutes old)
 - **Admin only:** `payday-create-invoice.ts`, `admin-delete-house.ts`, `admin-send-reply.ts`, `admin-audit-users.ts`, `admin-delete-user.ts`, `admin-repair-user.ts`, `analytics.ts` (GA4)
 - **Cron (Bearer `CRON_SECRET`):** `cron/recover-orphans.ts`, `cron/weather-alerts.ts`. Cron routes fail closed: they return 500 and do nothing when `CRON_SECRET` is unset.
@@ -190,6 +190,8 @@ Set `PW_CHROMIUM_PATH` if the Chromium pinned by `@playwright/test` is not insta
 ## Deployment
 
 Vercel Pro, auto-deploys from `main` branch. SPA fallback configured — all non-`/api` routes rewrite to `index.html`. Security headers (HSTS, CSP, X-Frame-Options) set in `vercel.json`.
+
+**CSP:** the enforcing `Content-Security-Policy` is loose (`'unsafe-inline'`/`'unsafe-eval'` in `script-src`). A strict `Content-Security-Policy-Report-Only` runs next to it; reports go to `/api/csp-report` and appear in Vercel logs as `csp-violation`. Inline-script hashes in that policy are checked by `scripts/verify-dist.js` (edit an inline script in `index.html` and CI tells you the new hash). Details and the tightening procedure: `docs/engineering/CSP.md`.
 
 Cron jobs (configured in `vercel.json`):
 - `/api/cron/weather-alerts` — daily at 07:00 (scans upcoming bookings and sends an in-app + push warning to the booking's user when severe weather is forecast for the stay; sets `weather_alert_sent` on the booking)
