@@ -1,8 +1,6 @@
 import React, { useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MarketingLayout from '@/components/MarketingLayout';
-import { db } from '@/lib/firebase';
-import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { Check, Star, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { logger } from '@/utils/logger';
@@ -47,6 +45,12 @@ export default function ForProvidersPage() {
                 setFormError('Einn eða fleiri reitir eru of langir. Vinsamlegast styttu textann og reyndu aftur.');
                 return;
             }
+
+            // Firestore is loaded on submit so it stays off this page's first load.
+            const [{ db }, { collection, doc, writeBatch, serverTimestamp }] = await Promise.all([
+                import('@/lib/firebase'),
+                import('firebase/firestore'),
+            ]);
 
             // Contact details go to service_provider_contacts (signed-in readers only);
             // both docs are written in one batch under a client-generated id.
@@ -102,7 +106,21 @@ export default function ForProvidersPage() {
         >
             {/* Hero Section */}
             <section className="relative py-20 bg-charcoal text-white overflow-hidden">
-                <div aria-hidden="true" className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20"></div>
+                {/* An <img> instead of a CSS background so the browser discovers it while parsing and can
+                    fetch it with high priority (it is the LCP element); the Unsplash w/q params keep it to
+                    a few dozen KB instead of the full-size original. Same look: cover, centred, 20% opacity. */}
+                <img
+                    aria-hidden="true"
+                    alt=""
+                    src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=60&w=1280"
+                    srcSet="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=60&w=640 640w, https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=60&w=1280 1280w, https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=60&w=1920 1920w"
+                    sizes="100vw"
+                    width={1280}
+                    height={853}
+                    fetchPriority="high"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full object-cover object-center opacity-20"
+                />
                 <div className="relative max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber/20 text-amber text-sm font-medium mb-6">

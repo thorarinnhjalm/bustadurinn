@@ -4,7 +4,8 @@ import * as Sentry from '@sentry/react';
 import { logger } from './utils/logger';
 import { initPerformanceMonitoring, markPerformance } from './utils/performance';
 import { installFunnelErrorCapture } from './utils/funnel';
-import { onForegroundMessage } from './utils/pushNotifications';
+import { isDeferredAuthPath, loadAuthHandler } from './utils/authBootstrap';
+import './styles/fonts.css'
 import './index.css'
 import App from './App.tsx'
 import UpdateBanner from './components/UpdateBanner'
@@ -158,10 +159,13 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   });
 }
 
-// Listen for FCM messages that arrive while the app is in the foreground —
-// otherwise these are silently dropped since the service worker only
-// handles background messages.
-onForegroundMessage();
+// Foreground FCM messages (otherwise silently dropped, since the service worker only
+// handles background messages) are wired up by AuthBootstrap once Firebase has loaded.
+// App routes start fetching AuthHandler (and with it Firebase) now, in parallel with
+// React's first render; public marketing routes start it when the page is usable.
+if (!isDeferredAuthPath(window.location.pathname)) {
+  void loadAuthHandler().catch(() => {});
+}
 
 // Mark when React starts rendering
 markPerformance('react-render-start');

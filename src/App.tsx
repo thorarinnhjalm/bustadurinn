@@ -8,16 +8,39 @@ import { HelmetProvider } from 'react-helmet-async';
 import { useAppStore } from '@/store/appStore';
 import { ImpersonationProvider } from '@/contexts/ImpersonationContext';
 import ImpersonationBanner from '@/components/ImpersonationBanner';
-import AuthHandler from '@/components/AuthHandler';
+import AuthBootstrap from '@/components/AuthBootstrap';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { captureUTMParams, sendUTMToSentry } from '@/utils/utm';
 
-// Critical pages - loaded immediately
+// Critical page - loaded immediately. Login, Signup, Onboarding and Dashboard used to be
+// eager too, but they import the Firebase SDK; as lazy chunks they are fetched in parallel
+// with AuthHandler/Firebase on their own routes (see preloadRouteChunk below) instead of
+// putting Firebase on the first load of every public page.
 import LandingPage from '@/pages/LandingPage';
-import LoginPage from '@/pages/LoginPage';
-import SignupPage from '@/pages/SignupPage';
-import OnboardingPage from '@/pages/OnboardingPage';
-import DashboardPage from '@/pages/DashboardPage';
+
+const importLoginPage = () => import('@/pages/LoginPage');
+const importSignupPage = () => import('@/pages/SignupPage');
+const importOnboardingPage = () => import('@/pages/OnboardingPage');
+const importDashboardPage = () => import('@/pages/DashboardPage');
+const LoginPage = lazy(importLoginPage);
+const SignupPage = lazy(importSignupPage);
+const OnboardingPage = lazy(importOnboardingPage);
+const DashboardPage = lazy(importDashboardPage);
+
+// Start fetching the chunk of the page being opened before React has rendered, so a signed-in
+// user hitting /dashboard (whose lazy element is only rendered after auth resolves) does not
+// pay an extra round trip for it.
+const ROUTE_CHUNKS: Record<string, () => Promise<unknown>> = {
+  '/login': importLoginPage,
+  '/signup': importSignupPage,
+  '/onboarding': importOnboardingPage,
+  '/dashboard': importDashboardPage,
+};
+if (typeof window !== 'undefined') {
+  void ROUTE_CHUNKS[window.location.pathname.replace(/\/+$/, '')]?.().catch(() => {});
+}
+// Warmed up when a marketing page has become usable: the CTAs lead here.
+const MARKETING_PREFETCH = [importSignupPage, importLoginPage];
 
 // Lazy-loaded pages - code split for better performance
 const CalendarPage = lazy(() => import('@/pages/CalendarPage'));
@@ -54,9 +77,8 @@ const OrganizationDashboardPage = lazy(() => import('@/pages/organizations/Organ
 const AccessRequestFormPage = lazy(() => import('@/pages/organizations/AccessRequestFormPage'));
 const MemberDashboardPage = lazy(() => import('@/pages/organizations/MemberDashboardPage'));
 
-// RBAC imports
-import { useUserRole } from '@/hooks/useUserRole';
-import { isSuperAdmin } from '@/utils/rbac';
+// Admin guard: its own chunk, because it reads Firestore (useUserRole).
+const AdminRoute = lazy(() => import('@/components/AdminRoute'));
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -77,54 +99,19 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-// Admin Route Component (RBAC-protected)
-const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const currentUser = useAppStore((state) => state.currentUser);
+// Feedback widget: it renders nothing until a user is signed in, and its modal pulls in
+// Firestore, so it is only loaded once there is a signed-in user to show it to.
+const FeedbackWidget = lazy(() => import('@/components/feedback/FeedbackWidget'));
+function DeferredFeedbackWidget() {
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   const isLoading = useAppStore((state) => state.isLoading);
-  const { systemRole, loading: roleLoading } = useUserRole(currentUser?.uid);
-
-  if (isLoading || roleLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center" role="status">
-          <div aria-hidden="true" className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-grey-mid">Hleð...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Check RBAC permission instead of email
-  const isAdmin = isSuperAdmin(systemRole);
-
-  if (!isAdmin) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-bone p-6">
-        <div className="card max-w-md text-center">
-          <h1 className="text-2xl font-serif mb-4">Aðgangur bannaður</h1>
-          <p className="text-grey-dark mb-6">Þú hefur ekki réttindi til að skoða þessa síðu.</p>
-          <button
-            type="button"
-            onClick={() => window.location.href = '/dashboard'}
-            className="btn btn-primary"
-          >
-            Til baka á stjórnborð
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-};
-
-// Feedback
-import FeedbackWidget from '@/components/feedback/FeedbackWidget';
+  if (isLoading || !isAuthenticated) return null;
+  return (
+    <Suspense fallback={null}>
+      <FeedbackWidget />
+    </Suspense>
+  );
+}
 
 // Loading fallback component
 const PageLoader = () => (
@@ -149,9 +136,10 @@ function App() {
   return (
     <ErrorBoundary>
       <ImpersonationProvider>
-        <AuthHandler />
         <HelmetProvider>
           <Router>
+            {/* Renderless: loads AuthHandler (and Firebase) at once on app routes, when idle on public pages */}
+            <AuthBootstrap prefetch={MARKETING_PREFETCH} />
             <ImpersonationBanner />
             <Suspense fallback={<PageLoader />}>
               <Routes>
@@ -289,7 +277,7 @@ function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>
-            <FeedbackWidget />
+            <DeferredFeedbackWidget />
           </Router>
         </HelmetProvider>
       </ImpersonationProvider>

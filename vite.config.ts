@@ -40,11 +40,43 @@ function appShellPlugin(): Plugin {
   }
 }
 
+/**
+ * Adds <link rel="preload" as="font"> for the Latin subset of the self-hosted
+ * Inter and Fraunces fonts (the two files every page paints text with), so the
+ * browser fetches them in parallel with the CSS instead of after it has been
+ * parsed. Hashed file names come from the bundle, never hard-coded. Latin-ext
+ * is deliberately not preloaded: it is only fetched when a page uses a
+ * character from its unicode-range. Runs for index.html, and app-shell.html
+ * and the prerendered pages inherit the tags from it.
+ */
+function fontPreloadPlugin(): Plugin {
+  return {
+    name: 'bustadurinn:font-preload',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(_html, ctx) {
+        const bundle = ctx.bundle
+        if (!bundle) return
+        const fonts = Object.keys(bundle)
+          .filter((f) => /(^|\/)(inter|fraunces)-latin-wght-normal-[\w-]+\.woff2$/.test(f))
+          .sort()
+        return fonts.map((fileName) => ({
+          tag: 'link',
+          attrs: { rel: 'preload', as: 'font', type: 'font/woff2', href: `/${fileName}`, crossorigin: '' },
+          injectTo: 'head-prepend' as const,
+        }))
+      },
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     appShellPlugin(),
+    fontPreloadPlugin(),
     VitePWA({
       // We already manage public/manifest.json + <link rel="manifest"> by
       // hand (see index.html) — don't let the plugin generate/inject its own.
@@ -71,6 +103,10 @@ export default defineConfig({
         // app-shell.html instead (see src/firebase-messaging-sw.js), which is
         // never rewritten after the manifest is built.
         globIgnores: ['index.html'],
+        // Fonts are part of the shell: without the Latin-subset woff2 files the
+        // offline app would fall back to system fonts. Latin-ext is left out on
+        // purpose (only needed for rare non-Icelandic characters, +120 KiB).
+        globPatterns: ['**/*.{js,wasm,css,html}', '**/*-latin-wght-normal-*.woff2'],
       },
       // We register the SW manually in src/main.tsx (kept close to the
       // existing FCM registration code) rather than via the plugin's

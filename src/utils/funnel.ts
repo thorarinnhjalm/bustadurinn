@@ -15,9 +15,32 @@
  * Tracking must never break the flow it observes: every path swallows errors.
  */
 
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
 import { logger } from '@/utils/logger';
+
+// Firebase is loaded on first use instead of statically: this module is part of
+// the entry bundle (main.tsx installs the error capture), and importing the SDK
+// here would drag the whole Firebase chunk onto every public marketing page.
+// Anything that records an event, flushes or checks auth state is async already.
+type FirebaseDeps = {
+    auth: typeof import('@/lib/firebase').auth;
+    db: typeof import('@/lib/firebase').db;
+    addDoc: typeof import('firebase/firestore').addDoc;
+    collection: typeof import('firebase/firestore').collection;
+    serverTimestamp: typeof import('firebase/firestore').serverTimestamp;
+};
+
+let firebasePromise: Promise<FirebaseDeps> | null = null;
+
+function loadFirebase(): Promise<FirebaseDeps> {
+    firebasePromise ??= Promise.all([import('@/lib/firebase'), import('firebase/firestore')]).then(
+        ([{ auth, db }, { addDoc, collection, serverTimestamp }]) => ({ auth, db, addDoc, collection, serverTimestamp }),
+        (err) => {
+            firebasePromise = null; // allow a retry on the next event
+            throw err;
+        },
+    );
+    return firebasePromise;
+}
 
 const SESSION_KEY = 'funnel_session_id';
 const BUFFER_KEY = 'funnel_buffer';
@@ -141,8 +164,9 @@ function userAgent(): string {
     }
 }
 
-async function write(uid: string, event: PendingEvent, buffered: boolean): Promise<void> {
+async function write(fb: FirebaseDeps, uid: string, event: PendingEvent, buffered: boolean): Promise<void> {
     try {
+        const { db, addDoc, collection, serverTimestamp } = fb;
         const houseId = event.data.house_id;
         await addDoc(collection(db, 'funnel_events'), {
             uid,
@@ -169,7 +193,8 @@ async function write(uid: string, event: PendingEvent, buffered: boolean): Promi
  * signed-in user. Safe to call repeatedly.
  */
 export async function flushFunnelBuffer(): Promise<void> {
-    const uid = auth.currentUser?.uid;
+    const fb = await loadFirebase();
+    const uid = fb.auth.currentUser?.uid;
     if (!uid) return;
     const pending = readBuffer();
     if (pending.length === 0) return;
@@ -178,7 +203,7 @@ export async function flushFunnelBuffer(): Promise<void> {
     // Start every write before awaiting any, so all are queued even if the
     // tab closes mid-flush. Order is recoverable from client_ts.
     await Promise.all(
-        pending.filter((event) => event.client_ts >= cutoff).map((event) => write(uid, event, true))
+        pending.filter((event) => event.client_ts >= cutoff).map((event) => write(fb, uid, event, true))
     );
 }
 
@@ -206,7 +231,8 @@ export async function trackFunnel(eventName: string, data?: FunnelData): Promise
             data: sanitize(data),
         };
 
-        const uid = auth.currentUser?.uid;
+        const fb = await loadFirebase();
+        const uid = fb.auth.currentUser?.uid;
         if (!uid) {
             const buffer = [...readBuffer(), event].slice(-MAX_BUFFER);
             safeStorageSet(BUFFER_KEY, JSON.stringify(buffer));
@@ -214,7 +240,7 @@ export async function trackFunnel(eventName: string, data?: FunnelData): Promise
         }
 
         await flushFunnelBuffer();
-        await write(uid, event, false);
+        await write(fb, uid, event, false);
     } catch (e) {
         logger.warn('Funnel tracking failed:', eventName, e);
     }

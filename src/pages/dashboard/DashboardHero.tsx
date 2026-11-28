@@ -16,7 +16,7 @@ export default function DashboardHero({ currentHouse, currentUser, weather, isOc
 
     return (
         <div className="max-w-5xl mx-auto">
-            <div className="relative h-64 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50" style={{ minHeight: '256px' }}>
+            <div className="relative h-72 md:h-96 w-full overflow-hidden md:rounded-b-3xl shadow-xl shadow-stone-200/50" style={{ minHeight: '288px' }}>
                 <img
                     src={currentHouse?.image_url || "/hero_summer_house.jpg"}
                     alt={currentHouse?.name ? `Mynd af ${currentHouse.name}` : "Mynd af bústaðnum"}
@@ -27,7 +27,7 @@ export default function DashboardHero({ currentHouse, currentUser, weather, isOc
                     width="800"
                     height="600"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/20 to-transparent opacity-90"></div>
+                
 
                 {/* Gallery Preview Button */}
                 <div className="absolute top-6 right-6 flex flex-col gap-2 items-end">
@@ -35,7 +35,7 @@ export default function DashboardHero({ currentHouse, currentUser, weather, isOc
                         <Link
                             to="/settings?tab=house"
                             aria-label="Breyta mynd"
-                            className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/20 transition-all flex items-center gap-2"
+                            className="bg-[#1a1a1a]/65 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/20 transition-all flex items-center gap-2"
                         >
                             <Camera size={14} aria-hidden="true" />
                             <span className="hidden sm:inline">Breyta mynd</span>
@@ -47,7 +47,7 @@ export default function DashboardHero({ currentHouse, currentUser, weather, isOc
                             type="button"
                             onClick={() => setSelectedGalleryImage(currentHouse.image_url || currentHouse.gallery_urls![0])}
                             aria-label={`Skoða myndasafn (${currentHouse.gallery_urls.length + (currentHouse.image_url ? 1 : 0)})`}
-                            className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/20 transition-all flex items-center gap-2"
+                            className="bg-[#1a1a1a]/65 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-white/20 transition-all flex items-center gap-2"
                         >
                             <ImageIcon size={14} aria-hidden="true" />
                             <span className="hidden sm:inline">Skoða myndasafn ({currentHouse.gallery_urls.length + (currentHouse.image_url ? 1 : 0)})</span>
@@ -56,7 +56,9 @@ export default function DashboardHero({ currentHouse, currentUser, weather, isOc
                 </div>
 
                 {/* Greeting & Weather */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white flex flex-col md:flex-row md:items-end justify-between gap-6">
+                {/* Scrim behind the text: transparent at the top, ~85% charcoal by the time the eyebrow starts (the amber
+                    eyebrow needs a background no lighter than ~rgb(74,74,74) to reach 4.5:1, even over a white sky). */}
+                <div className="absolute bottom-0 left-0 right-0 px-6 pb-6 pt-14 md:px-8 md:pb-8 md:pt-24 text-white bg-gradient-to-b from-[#1a1a1a]/0 via-[#1a1a1a]/85 via-20% to-[#1a1a1a]/90 flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>
                         <p className="text-amber font-bold text-sm uppercase tracking-widest mb-2 flex items-center gap-2">
                             <span className="w-8 h-0.5 bg-amber inline-block"></span>
@@ -74,7 +76,7 @@ export default function DashboardHero({ currentHouse, currentUser, weather, isOc
                             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
                                 <Sun size={16} className="text-amber" aria-hidden="true" />
                                 <span>{weather.temp}°</span>
-                                <span className="text-stone-400" aria-hidden="true">|</span>
+                                <span className="text-stone-300" aria-hidden="true">|</span>
                                 <span>{weather.wind} m/s</span>
                             </div>
                             <span className="hidden md:inline text-stone-400" aria-hidden="true">•</span>

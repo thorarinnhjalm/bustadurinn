@@ -11,7 +11,7 @@ import NewsletterSignup from '@/components/NewsletterSignup';
 import Testimonials from '@/components/landing/Testimonials';
 import HolidayPriorityVisualizer from '@/components/landing/HolidayPriorityVisualizer';
 
-import { feedbackService } from '@/services/feedbackService';
+import { whenPageUsable } from '@/utils/authBootstrap';
 import type { Feedback } from '@/types/models';
 // NewsletterPopup moved to MarketingLayout
 
@@ -22,10 +22,23 @@ export default function LandingPage() {
 
     // Public sanitised copies (featured_feedback): readable by everyone. They
     // drive the on-page testimonials only, not structured data (see softwareAppSchema below).
+    // Deferred until the page is usable (and skipped while prerendering): the service pulls in
+    // Firestore, which must not compete with the first paint. <Testimonials> renders the same
+    // fixed-height section whether or not reviews have arrived, so their arrival shifts nothing.
     useEffect(() => {
-        feedbackService.getFeaturedFeedback().then(data => {
-            setReviews(data);
-        }).catch(() => {});
+        let cancelled = false;
+        const cancelWait = whenPageUsable(() => {
+            import('@/services/feedbackService')
+                .then(({ feedbackService }) => feedbackService.getFeaturedFeedback())
+                .then(data => {
+                    if (!cancelled) setReviews(data);
+                })
+                .catch(() => {});
+        });
+        return () => {
+            cancelled = true;
+            cancelWait();
+        };
     }, []);
 
     // Redirect if already logged in and has a house
@@ -265,7 +278,7 @@ export default function LandingPage() {
                                 </div>
 
                                 {/* Floating Badges - Outside Phone */}
-                                <div className="absolute -right-12 top-24 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/50 motion-safe:animate-float w-56 z-20">
+                                <div className="absolute right-0 top-24 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/50 motion-safe:animate-float w-56 z-20">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
                                             <CheckCircle2 size={20} />
@@ -277,7 +290,7 @@ export default function LandingPage() {
                                     </div>
                                 </div>
 
-                                <div className="absolute -left-12 bottom-32 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/50 motion-safe:animate-float-delayed w-64 z-20">
+                                <div className="absolute left-12 bottom-32 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/50 motion-safe:animate-float-delayed w-64 z-20">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-amber/10 text-amber flex items-center justify-center">
                                             <Shield className="w-5 h-5" />
@@ -557,7 +570,7 @@ export default function LandingPage() {
                                         </div>
                                         <div className="text-amber-ink text-xs font-bold uppercase tracking-widest mb-1">Góðan daginn</div>
                                         <div className="text-2xl font-serif font-bold text-[#1a1a1a]">Fjölskyldan</div>
-                                        <div className="flex gap-2 mt-2 text-xs font-medium text-stone-500">
+                                        <div className="flex gap-2 mt-2 text-xs font-medium text-grey-dark">
                                             <span className="flex items-center gap-1"><Calendar size={12} className="text-amber" /> 12°C</span>
                                             <span>•</span>
                                             <span>Heiðskírt</span>
@@ -637,7 +650,7 @@ export default function LandingPage() {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold mb-1">Settu sumarhúsið á símann þinn</h3>
-                                        <p className="text-stone-500">Bættu Bústaðnum á heimaskjáinn þinn á augabragði. Engin þörf á App Store – virkar eins og app, beint í gegnum vafrann.</p>
+                                        <p className="text-grey-dark">Bættu Bústaðnum á heimaskjáinn þinn á augabragði. Engin þörf á App Store – virkar eins og app, beint í gegnum vafrann.</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-4 group">
@@ -646,7 +659,7 @@ export default function LandingPage() {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold mb-1">Rauntíma tilkynningar</h3>
-                                        <p className="text-stone-500">Fáðu tilkynningu um leið og einhver bókar næstu helgi, bætir við á innkaupalistann eða þegar nýtt verkefni er stofnað.</p>
+                                        <p className="text-grey-dark">Fáðu tilkynningu um leið og einhver bókar næstu helgi, bætir við á innkaupalistann eða þegar nýtt verkefni er stofnað.</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-4 group">
@@ -655,7 +668,7 @@ export default function LandingPage() {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold mb-1">Allt á hreinu á staðnum</h3>
-                                        <p className="text-stone-500">Skráðu komu, athugaðu veðurspána eða finndu WiFi lykilorðið með einum smelli þegar þú mætir í bústaðinn.</p>
+                                        <p className="text-grey-dark">Skráðu komu, athugaðu veðurspána eða finndu WiFi lykilorðið með einum smelli þegar þú mætir í bústaðinn.</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-4 group">
@@ -664,7 +677,7 @@ export default function LandingPage() {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold mb-1">Virkar líka ótengt</h3>
-                                        <p className="text-stone-500">Dagatal, verkefni og innkaupalisti eru læsileg þó ekkert netsamband sé í bústaðnum — breytingar samstillast sjálfkrafa þegar samband næst á ný.</p>
+                                        <p className="text-grey-dark">Dagatal, verkefni og innkaupalisti eru læsileg þó ekkert netsamband sé í bústaðnum — breytingar samstillast sjálfkrafa þegar samband næst á ný.</p>
                                     </div>
                                 </li>
                             </ul>
@@ -811,7 +824,7 @@ export default function LandingPage() {
             {/* Final CTA */}
             <section className="py-24 bg-charcoal text-bone text-center">
                 <div className="container mx-auto px-6">
-                    <h2 className="text-3xl md:text-4xl font-serif mb-6">Tilbúinn að prófa?</h2>
+                    <h2 className="text-3xl md:text-4xl font-serif mb-6 text-bone">Tilbúinn að prófa?</h2>
                     <p className="text-xl text-grey-warm mb-8 max-w-2xl mx-auto">
                         Ókeypis og opið öllum. Stofnaðu aðgang á undir mínútu.
                     </p>

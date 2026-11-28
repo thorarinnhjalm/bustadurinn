@@ -102,19 +102,8 @@ export default function SetupProgress({ house, onShowWalkthrough }: SetupProgres
 
     return (
         <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 mb-6 relative">
-            {/* Dismiss button */}
-            <button
-                type="button"
-                onClick={handleDismiss}
-                className="absolute top-3 right-3 text-stone-500 hover:text-charcoal transition-colors p-1"
-                title="Fela"
-                aria-label="Fela uppsetningarhjálp"
-            >
-                <X size={18} aria-hidden="true" />
-            </button>
-
-            <div className="flex items-center justify-between mb-4 pr-6">
-                <div>
+            <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="min-w-0">
                     <h3 className="font-serif font-bold text-lg text-charcoal">
                         Uppsetning húss
                     </h3>
@@ -122,15 +111,27 @@ export default function SetupProgress({ house, onShowWalkthrough }: SetupProgres
                         {percentage}% tilbúið
                     </p>
                 </div>
-                {onShowWalkthrough && (
+                {/* Guide link and dismiss share one row: same 40px height, same centre line, level with the title */}
+                <div className="flex shrink-0 items-center -mt-2 -mr-3">
+                    {onShowWalkthrough && (
+                        <button
+                            type="button"
+                            onClick={onShowWalkthrough}
+                            className="inline-flex h-10 items-center rounded-md px-1.5 text-amber-ink hover:text-amber-700 text-sm font-bold"
+                        >
+                            Sjá leiðbeiningar
+                        </button>
+                    )}
                     <button
                         type="button"
-                        onClick={onShowWalkthrough}
-                        className="text-amber-ink hover:text-amber-700 text-sm font-bold"
+                        onClick={handleDismiss}
+                        className="inline-flex h-10 w-9 items-center justify-center rounded-md text-stone-500 hover:text-charcoal transition-colors"
+                        title="Fela"
+                        aria-label="Fela uppsetningarhjálp"
                     >
-                        Sjá leiðbeiningar
+                        <X size={18} aria-hidden="true" />
                     </button>
-                )}
+                </div>
             </div>
 
             {/* Progress Bar */}

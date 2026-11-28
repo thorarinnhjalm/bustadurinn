@@ -17,7 +17,7 @@ Nobody knows which part of the app depends on the loose settings, so the enforci
 - `report-uri /api/csp-report; report-to csp-endpoint`, with `Reporting-Endpoints: csp-endpoint="/api/csp-report"` as a second header. Chromium uses `report-to` (JSON `application/reports+json`); Firefox/Safari use `report-uri` (`application/csp-report`).
 - No `'strict-dynamic'` on purpose: it makes browsers ignore the host allowlist, which would make the result incomparable with the enforcing policy and inconsistent across browsers. This is a measuring step.
 
-Inline scripts are all in `index.html` (and so in `dist/app-shell.html` and every prerendered page; the text is byte-identical everywhere, so the hashes are stable): analytics-privacy helpers, Google Analytics bootstrap, Meta Pixel snippet, the Facebook in-app-browser fix, the umsognin.is widget loader. JSON-LD blocks (`type="application/ld+json"`) are data and not subject to CSP.
+Inline scripts are all in `index.html` (the third-party loader, GA stub, Pixel stub and umsognin loader inject their external files after `load` + idle or on first interaction; editing any of them changes the hashes, `verify-dist` prints the new ones) (and so in `dist/app-shell.html` and every prerendered page; the text is byte-identical everywhere, so the hashes are stable): analytics-privacy helpers, Google Analytics bootstrap, Meta Pixel snippet, the Facebook in-app-browser fix, the umsognin.is widget loader. JSON-LD blocks (`type="application/ld+json"`) are data and not subject to CSP.
 
 ## Reading reports
 
@@ -37,7 +37,7 @@ From reading the code (`index.html`, `src/`), before any real data:
 
 | Source | Likely report | Verdict |
 |---|---|---|
-| `onload="this.media='all'"` on the Google Fonts `<link>` in `index.html` | `script-src-attr`, blocked `inline` (was seen in the local run on every page) | fixed: the inline handler, the `media="print"` trick, the `rel="preload"` hint and the `<noscript>` duplicate are gone. The fonts are a plain `<link rel="stylesheet">` (the URL has `display=swap`, so text shows in fallback fonts first) with the `preconnect` hints kept. Nothing needs allowing in the policy, and an enforced policy no longer leaves the stylesheet stuck on `print` |
+| `onload="this.media='all'"` on the Google Fonts `<link>` in `index.html` | `script-src-attr`, blocked `inline` | fixed, and obsolete: Inter and Fraunces are now self-hosted (`src/styles/fonts.css`, woff2 from `@fontsource-variable/*`, same origin, preloaded by `bustadurinn:font-preload` in `vite.config.ts`), so `index.html` has no font `<link>`. `fonts.googleapis.com` / `fonts.gstatic.com` stay in `style-src` / `font-src` ONLY for Google Maps (Places autocomplete in `OnboardingPage.tsx` loads its Roboto from there); drop them if Maps is ever removed |
 | Inline scripts of `index.html` (GA, Pixel, helpers, FB IAB fix, umsognin loader) | none while hashes match | expected, needs allowlisting (done by hash; `verify-dist` guards drift) |
 | `gtag.js` from googletagmanager.com, injected on `load` | none (host allowed); may fetch more scripts from the same hosts | expected, needs allowlisting (host) |
 | Meta Pixel `fbevents.js`, may inject further code and `eval`-like helpers | `script-src` `eval` or other `connect.facebook.net` paths | unknown: check reports; Pixel is the main candidate for `unsafe-eval` |

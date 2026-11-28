@@ -71,7 +71,7 @@ export default function TaskList({ tasks, onStatusChange, onDelete }: TaskListPr
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                        <h4 className={`font-medium text-charcoal truncate ${task.status === 'completed' ? 'line-through' : ''
+                        <h4 className={`mb-0 font-sans text-base font-medium tracking-normal text-charcoal truncate ${task.status === 'completed' ? 'line-through' : ''
                             }`}>
                             {task.title}
                         </h4>

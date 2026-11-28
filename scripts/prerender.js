@@ -225,6 +225,15 @@ async function prerenderRoute(browser, baseUrl, path) {
         return req.abort();
     });
 
+    // Tells the app it is being prerendered: the "when the page is usable" work on public
+    // pages (starting AuthHandler/Firebase, warming up the login/signup chunks, see
+    // src/utils/authBootstrap.ts) is skipped, because Vite's preload helper would add
+    // <link rel="modulepreload"> tags for those chunks and page.content() would bake them
+    // into the static HTML of every marketing page.
+    await page.evaluateOnNewDocument(() => {
+        window.__PRERENDER__ = true;
+    });
+
     try {
         await page.goto(`${baseUrl}${path}`, { waitUntil: 'load', timeout: 20000 });
         // Real content signal — the Suspense/PageLoader fallback has no h1,
