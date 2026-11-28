@@ -2,13 +2,17 @@ import { Resend } from 'resend';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { initializeFirebaseAdmin, getDb } from './utils/firebaseAdmin.js';
 import { requireAuth, getAuthErrorResponse, isAdminIdentity } from './utils/apiAuth.js';
-import { checkRateLimit, getEmailRateLimit, tryGetRateLimit } from './utils/ratelimit.js';
+import { checkRateLimit, getEmailRateLimit, getUnverifiedEmailRateLimit, tryGetRateLimit } from './utils/ratelimit.js';
 
 const SITE_ORIGIN = 'https://www.bustadurinn.is';
 const TEMPLATE_ID_PATTERN = /^[a-z0-9_-]{1,64}$/i;
 const VARIABLE_KEY_PATTERN = /^[A-Za-z0-9_]{1,64}$/;
 const MAX_VARIABLE_LENGTH = 2000;
 const MAX_ADMIN_RECIPIENTS = 50;
+// Templates the onboarding flow sends to the user's own address. The app never
+// verifies password sign-ups, so callers with an unverified token email are
+// limited to these (and to a stricter limiter), not blocked outright.
+const UNVERIFIED_ALLOWED_TEMPLATES = new Set(['welcome', 'onboarding_complete']);
 const EMAIL_PATTERN = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]+$/;
 
 /**
@@ -149,9 +153,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
         }
 
+        // An unverified token email can be registered by anyone for a victim's
+        // address, so such callers only get the self-onboarding templates.
+        const isUnverified = !isAdmin && decodedToken.email_verified !== true;
+        if (isUnverified && !UNVERIFIED_ALLOWED_TEMPLATES.has(templateId)) {
+            return res.status(403).json({ error: 'Forbidden', message: 'Insufficient permissions' });
+        }
+
         // Rate limit per uid (admins exempt; fail open when Redis is unavailable)
         if (!isAdmin) {
-            const limiter = tryGetRateLimit(getEmailRateLimit);
+            const limiter = tryGetRateLimit(isUnverified ? getUnverifiedEmailRateLimit : getEmailRateLimit);
             if (limiter) {
                 const rl = await checkRateLimit(limiter, decodedToken.uid, { failOpen: true });
                 if (!rl.allowed) {

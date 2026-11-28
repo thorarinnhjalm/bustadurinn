@@ -92,16 +92,16 @@ class ErrorBoundary extends Component<Props, State> {
             // Default fallback UI
             return (
                 <div className="min-h-screen bg-bone flex items-center justify-center p-6">
-                    <div className="card max-w-lg text-center">
-                        <div className="text-6xl mb-4">⚠️</div>
-                        <h2 className="text-2xl font-serif mb-4">Eitthvað fór úrskeiðis</h2>
+                    <div className="card max-w-lg text-center" role="alert">
+                        <div className="text-6xl mb-4" aria-hidden="true">⚠️</div>
+                        <h1 className="text-2xl font-serif mb-4">Eitthvað fór úrskeiðis</h1>
                         <p className="text-grey-dark mb-6">
                             Því miður kom upp villa í kerfinu. Við höfum verið látin vita og
                             lögum þetta eins fljótt og kostur er.
                         </p>
 
                         {import.meta.env.MODE === 'development' && this.state.error && (
-                            <details className="text-left mb-6 bg-grey-light p-4 rounded">
+                            <details className="text-left mb-6 bg-grey-warm p-4 rounded">
                                 <summary className="cursor-pointer font-semibold mb-2">
                                     Tæknilegar upplýsingar
                                 </summary>
@@ -114,12 +114,14 @@ class ErrorBoundary extends Component<Props, State> {
 
                         <div className="flex gap-4 justify-center">
                             <button
+                                type="button"
                                 onClick={this.handleReset}
                                 className="btn btn-secondary"
                             >
                                 Reyna aftur
                             </button>
                             <button
+                                type="button"
                                 onClick={() => (window.location.href = '/')}
                                 className="btn btn-primary"
                             >

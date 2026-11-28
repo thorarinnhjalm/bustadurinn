@@ -65,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
         }
 
-        const tokenData = await tokenResponse.json();
+        const tokenData = (await tokenResponse.json()) as any;
         const accessToken = tokenData.accessToken || tokenData.access_token;
 
         if (!accessToken) {
@@ -124,7 +124,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let customerId = null;
 
         if (customersResponse.ok) {
-            const customersData = await customersResponse.json();
+            const customersData = (await customersResponse.json()) as any;
             // Handle both array and object responses
             const customersList = Array.isArray(customersData) ? customersData : (customersData.items || customersData.data || customersData.customers || []);
             const existingCustomer = customersList.find((c: any) => c.email === invoiceData.customerEmail);
@@ -159,7 +159,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 });
             }
 
-            const customerData = await createCustomerResponse.json();
+            const customerData = (await createCustomerResponse.json()) as any;
             customerId = customerData.id;
         }
 

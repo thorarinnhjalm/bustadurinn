@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import type { Task, TaskStatus } from '@/types/models';
+import { fromDateInputValue } from '@/utils/localDate';
 
 interface TaskFormProps {
     onSave: (task: Partial<Task>) => void;
@@ -9,6 +10,7 @@ interface TaskFormProps {
 }
 
 export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormProps) {
+    const baseId = useId();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [assignedTo, setAssignedTo] = useState('');
@@ -29,7 +31,7 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
             priority: 'medium',
             assigned_to: assignedTo ? [assignedTo] : undefined,
             assigned_to_names: assignedMember ? [assignedMember.name] : undefined,
-            due_date: dueDate ? new Date(dueDate) : undefined,
+            due_date: fromDateInputValue(dueDate) ?? undefined,
             created_at: new Date(),
             updated_at: new Date()
         });
@@ -39,15 +41,16 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
         <form onSubmit={handleSubmit} className="bg-bone p-4 rounded-lg border border-grey-warm mb-6">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="font-serif text-charcoal">Nýtt verkefni</h3>
-                <button type="button" onClick={onCancel} className="text-grey-mid hover:text-charcoal">
-                    <X className="w-5 h-5" />
+                <button type="button" onClick={onCancel} aria-label="Hætta við" className="p-1 text-grey-mid hover:text-charcoal">
+                    <X className="w-5 h-5" aria-hidden="true" />
                 </button>
             </div>
 
             <div className="space-y-4">
                 <div>
-                    <label className="label">Titill</label>
+                    <label htmlFor={`${baseId}-title`} className="label">Titill</label>
                     <input
+                        id={`${baseId}-title`}
                         type="text"
                         className="input"
                         placeholder="t.d. Mála pallinn..."
@@ -59,8 +62,9 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
                 </div>
 
                 <div>
-                    <label className="label">Lýsing (valfrjálst)</label>
+                    <label htmlFor={`${baseId}-description`} className="label">Lýsing (valfrjálst)</label>
                     <textarea
+                        id={`${baseId}-description`}
                         className="input min-h-[80px]"
                         placeholder="Nánari lýsing á verkinu..."
                         value={description}
@@ -70,9 +74,10 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="label">Ábyrgðarmaður (valfrjálst)</label>
+                        <label htmlFor={`${baseId}-assignee`} className="label">Ábyrgðarmaður (valfrjálst)</label>
                         <div className="relative">
                             <select
+                                id={`${baseId}-assignee`}
                                 className="input w-full"
                                 value={assignedTo}
                                 onChange={(e) => setAssignedTo(e.target.value)}
@@ -88,9 +93,10 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
                     </div>
 
                     <div>
-                        <label className="label">Lokadagur (valfrjálst)</label>
+                        <label htmlFor={`${baseId}-due`} className="label">Lokadagur (valfrjálst)</label>
                         <div className="relative">
                             <input
+                                id={`${baseId}-due`}
                                 type="date"
                                 className="input w-full"
                                 value={dueDate}
@@ -103,7 +109,7 @@ export default function TaskForm({ onSave, onCancel, members = [] }: TaskFormPro
 
             <div className="flex justify-end mt-6">
                 <button type="submit" className="btn btn-primary">
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                     Búa til verkefni
                 </button>
             </div>

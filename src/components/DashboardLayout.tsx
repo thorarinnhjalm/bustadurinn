@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useId, useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
     Calendar, CheckSquare,
     Plus, Bell, Shield,
     ChevronDown, Home,
-    HelpCircle, Coffee, UserPlus,
+    HelpCircle, UserPlus,
     BookOpen
 } from 'lucide-react';
 import MobileNav from '@/components/MobileNav';
@@ -47,6 +47,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const [showHouseSwitcher, setShowHouseSwitcher] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showQuickHelp, setShowQuickHelp] = useState(false);
+    const houseSwitcherId = useId();
+    const notificationsId = useId();
 
     // Close dropdowns when navigating
     const handleNavigate = (path: string) => {
@@ -55,22 +57,40 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         navigate(path);
     };
 
+    // Escape closes whichever dropdown is open
+    useEffect(() => {
+        if (!showHouseSwitcher && !showNotifications) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setShowHouseSwitcher(false);
+                setShowNotifications(false);
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [showHouseSwitcher, showNotifications]);
+
+    const hasUnread = notifications.some(n => !n.read);
+
     return (
         <div className="min-h-screen bg-[#FDFCF8] text-[#1a1a1a] font-sans pb-24 md:pb-0">
             {/* --- TOP NAVIGATION (Mobile & Desktop) --- */}
-            <nav className="fixed top-0 w-full bg-[#FDFCF8]/90 backdrop-blur-md border-b border-stone-100 z-50 px-4 h-16 flex items-center justify-between max-w-5xl mx-auto left-0 right-0">
-                <div className="flex items-center gap-2 relative">
+            <nav aria-label="Efri valmynd" className="fixed top-0 w-full bg-[#FDFCF8]/90 backdrop-blur-md border-b border-stone-100 z-50 px-4 h-16 flex items-center justify-between max-w-5xl mx-auto left-0 right-0">
+                <div className="flex items-center gap-2 relative min-w-0">
                     {currentHouse ? (
                         <button
+                            type="button"
                             onClick={() => setShowHouseSwitcher(!showHouseSwitcher)}
-                            className="flex items-center gap-2 hover:bg-stone-50 px-2 py-1 rounded-lg transition-colors group"
+                            aria-expanded={userHouses.length > 1 ? showHouseSwitcher : undefined}
+                            aria-controls={userHouses.length > 1 ? houseSwitcherId : undefined}
+                            className="flex items-center gap-2 hover:bg-stone-50 px-2 py-1 rounded-lg transition-colors group min-w-0"
                         >
                             <div className="text-[#1a1a1a]">
                                 <CabinLogo size={20} />
                             </div>
-                            <span className="font-serif font-bold text-lg tracking-tight">{currentHouse.name}</span>
+                            <span className="font-serif font-bold text-lg tracking-tight truncate">{currentHouse.name}</span>
                             {userHouses.length > 1 && (
-                                <ChevronDown size={16} className={`text-stone-400 group-hover:text-amber transition-transform ${showHouseSwitcher ? 'rotate-180' : ''} `} />
+                                <ChevronDown size={16} aria-hidden="true" className={`text-stone-500 group-hover:text-amber-ink transition-transform ${showHouseSwitcher ? 'rotate-180' : ''} `} />
                             )}
                         </button>
                     ) : (
@@ -84,12 +104,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
                     {/* House Switcher Dropdown */}
                     {showHouseSwitcher && userHouses.length > 1 && currentHouse && (
-                        <div className="absolute top-12 left-0 w-64 bg-white border border-stone-100 rounded-xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest px-3 py-2">Mín hús</p>
+                        <div id={houseSwitcherId} role="group" aria-label="Mín hús" className="absolute top-12 left-0 w-64 bg-white border border-stone-100 rounded-xl shadow-xl p-2 z-50 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 duration-200">
+                            <p aria-hidden="true" className="text-[10px] font-bold text-stone-500 uppercase tracking-widest px-3 py-2">Mín hús</p>
                             <div className="space-y-1">
                                 {userHouses.map(house => (
                                     <button
+                                        type="button"
                                         key={house.id}
+                                        aria-current={currentHouse.id === house.id ? 'true' : undefined}
                                         onClick={() => {
                                             setCurrentHouse(house);
                                             localStorage.setItem('last_house_id', house.id);
@@ -97,113 +119,118 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                                             window.location.reload();
                                         }}
                                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${currentHouse.id === house.id
-                                            ? 'bg-amber/10 text-amber font-bold'
+                                            ? 'bg-amber/10 text-amber-ink font-bold'
                                             : 'text-stone-600 hover:bg-stone-50'
                                             } `}
                                     >
-                                        <Home size={16} className={currentHouse.id === house.id ? 'text-amber' : 'text-stone-400'} />
+                                        <Home size={16} aria-hidden="true" className={currentHouse.id === house.id ? 'text-amber-ink' : 'text-stone-500'} />
                                         <span className="truncate">{house.name}</span>
-                                        {currentHouse.id === house.id && <div className="ml-auto w-1.5 h-1.5 bg-amber rounded-full"></div>}
+                                        {currentHouse.id === house.id && <div aria-hidden="true" className="ml-auto w-1.5 h-1.5 bg-amber rounded-full"></div>}
                                     </button>
                                 ))}
                             </div>
                             <div className="mt-2 pt-2 border-t border-stone-100">
                                 <button
+                                    type="button"
                                     onClick={() => handleNavigate('/onboarding?new=true')}
-                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-amber hover:bg-stone-50 transition-colors"
+                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-stone-500 hover:text-amber-ink hover:bg-stone-50 transition-colors"
                                 >
-                                    <Plus size={14} />
+                                    <Plus size={14} aria-hidden="true" />
                                     Bæta við nýju húsi
                                 </button>
                             </div>
                         </div>
                     )}
                 </div>
-                <div className="flex items-center gap-4 relative">
+                <div className="flex items-center gap-4 relative shrink-0">
                     {isAdmin && (
-                        <button
-                            onClick={() => handleNavigate('/super-admin')}
-                            className="flex items-center gap-1 text-stone-400 hover:text-amber transition-colors text-xs font-bold uppercase tracking-wider"
-                            title="Admin Mission Control"
+                        <Link
+                            to="/super-admin"
+                            onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
+                            className="flex items-center gap-1 text-stone-500 hover:text-amber-ink transition-colors text-xs font-bold uppercase tracking-wider"
+                            aria-label="Stjórnborð kerfisstjóra"
                         >
-                            <Shield size={16} />
-                            <span className="hidden sm:inline">Admin</span>
-                        </button>
+                            <Shield size={16} aria-hidden="true" />
+                            <span className="hidden sm:inline" aria-hidden="true">Admin</span>
+                        </Link>
                     )}
                     {/* Primary destinations. MobileNav covers these on small
                         screens but is hidden on desktop, so without them here
                         the calendar and tasks were only reachable via the
                         dashboard's quick-action buttons. */}
-                    <button
-                        onClick={() => handleNavigate('/')}
-                        className={`transition-colors ${isActivePath('/') ? 'text-amber' : 'text-stone-400 hover:text-amber'}`}
+                    <Link
+                        to="/"
+                        onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
+                        className={`hidden md:flex transition-colors ${isActivePath('/') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Heim"
                         aria-label="Heim"
+                        aria-current={isActivePath('/') ? 'page' : undefined}
                     >
-                        <Home size={20} />
-                    </button>
-                    <button
-                        onClick={() => handleNavigate('/calendar')}
-                        className={`transition-colors ${isActivePath('/calendar') ? 'text-amber' : 'text-stone-400 hover:text-amber'}`}
+                        <Home size={20} aria-hidden="true" />
+                    </Link>
+                    <Link
+                        to="/calendar"
+                        onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
+                        className={`hidden md:flex transition-colors ${isActivePath('/calendar') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Dagatal"
                         aria-label="Dagatal"
+                        aria-current={isActivePath('/calendar') ? 'page' : undefined}
                     >
-                        <Calendar size={20} />
-                    </button>
-                    <button
-                        onClick={() => handleNavigate('/tasks')}
-                        className={`transition-colors ${isActivePath('/tasks') ? 'text-amber' : 'text-stone-400 hover:text-amber'}`}
+                        <Calendar size={20} aria-hidden="true" />
+                    </Link>
+                    <Link
+                        to="/tasks"
+                        onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
+                        className={`hidden md:flex transition-colors ${isActivePath('/tasks') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Verkefni"
                         aria-label="Verkefni"
+                        aria-current={isActivePath('/tasks') ? 'page' : undefined}
                     >
-                        <CheckSquare size={20} />
-                    </button>
-                    <button
-                        onClick={() => handleNavigate('/arbok')}
-                        className={`transition-colors ${isActivePath('/arbok') ? 'text-amber' : 'text-stone-400 hover:text-amber'}`}
+                        <CheckSquare size={20} aria-hidden="true" />
+                    </Link>
+                    <Link
+                        to="/arbok"
+                        onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
+                        className={`flex transition-colors ${isActivePath('/arbok') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Árbók"
                         aria-label="Árbók"
+                        aria-current={isActivePath('/arbok') ? 'page' : undefined}
                     >
-                        <BookOpen size={20} />
-                    </button>
+                        <BookOpen size={20} aria-hidden="true" />
+                    </Link>
                     <button
+                        type="button"
                         onClick={() => setShowQuickHelp(true)}
-                        className="text-stone-400 hover:text-amber transition-colors"
+                        className="text-stone-500 hover:text-amber-ink transition-colors"
                         title="Hjálp"
+                        aria-label="Hjálp"
                     >
-                        <HelpCircle size={20} />
+                        <HelpCircle size={20} aria-hidden="true" />
                     </button>
-                    
-                    <a
-                        href="https://askell.is/public/payments/170/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber/10 text-amber hover:bg-amber/20 rounded-full text-xs font-bold transition-colors ml-1"
-                        title="Styrkja Bústaðurinn.is"
-                    >
-                        <Coffee size={14} />
-                        Kaffibolli
-                    </a>
-
                     <button
+                        type="button"
                         onClick={() => setShowNotifications(!showNotifications)}
-                        className="relative text-stone-400 hover:text-[#1a1a1a] transition-colors"
+                        aria-expanded={showNotifications}
+                        aria-controls={notificationsId}
+                        aria-label={hasUnread ? 'Tilkynningar (ólesnar tilkynningar)' : 'Tilkynningar'}
+                        className="relative text-stone-500 hover:text-[#1a1a1a] transition-colors"
                     >
-                        <Bell size={20} />
-                        {notifications.some(n => !n.read) && (
-                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-[#FDFCF8] rounded-full"></span>
+                        <Bell size={20} aria-hidden="true" />
+                        {hasUnread && (
+                            <span aria-hidden="true" className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-[#FDFCF8] rounded-full"></span>
                         )}
                     </button>
 
                     {/* Notification Dropdown */}
                     {showNotifications && (
-                        <div className="absolute top-12 right-0 w-80 bg-white border border-stone-100 rounded-xl shadow-2xl p-0 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                        <div id={notificationsId} role="region" aria-label="Tilkynningar" className="absolute top-12 right-0 w-80 bg-white border border-stone-100 rounded-xl shadow-2xl p-0 z-50 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 duration-200 overflow-hidden">
                             <div className="p-4 border-b border-stone-50 flex items-center justify-between bg-stone-50/50">
-                                <h4 className="font-bold text-sm text-[#1a1a1a]">Tilkynningar</h4>
-                                {notifications.some(n => !n.read) && (
+                                <h2 className="font-bold text-sm text-[#1a1a1a]">Tilkynningar</h2>
+                                {hasUnread && (
                                     <button
+                                        type="button"
                                         onClick={markAllAsRead}
-                                        className="text-[10px] font-bold text-amber hover:underline uppercase tracking-wider"
+                                        className="text-[10px] font-bold text-amber-ink hover:underline uppercase tracking-wider"
                                     >
                                         Lesa allt
                                     </button>
@@ -211,14 +238,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                             </div>
                             <div className="max-h-[400px] overflow-y-auto">
                                 {notifications.length === 0 ? (
-                                    <div className="text-center py-8 text-stone-400 text-xs">
-                                        <Bell size={16} className="mx-auto mb-2 opacity-50" />
+                                    <div className="text-center py-8 text-stone-500 text-xs">
+                                        <Bell size={16} aria-hidden="true" className="mx-auto mb-2 opacity-50" />
                                         <p>Engar tilkynningar</p>
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-stone-50">
                                         {notifications.map(notif => (
-                                            <div
+                                            <button
+                                                type="button"
                                                 key={notif.id}
                                                 onClick={() => {
                                                     markAsRead(notif.id);
@@ -227,13 +255,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                                                     if (notif.type === 'guestbook') handleNavigate('/settings?tab=guestbook');
                                                     if (notif.type === 'join_request') handleNavigate('/settings?tab=members');
                                                 }}
-                                                className={`p-4 hover:bg-stone-50 cursor-pointer transition-colors relative flex gap-3 ${!notif.read ? 'bg-amber/5' : ''}`}
+                                                className={`w-full text-left p-4 hover:bg-stone-50 cursor-pointer transition-colors relative flex gap-3 ${!notif.read ? 'bg-amber/5' : ''}`}
                                             >
-                                                {!notif.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber"></div>}
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.type === 'booking' ? 'bg-green-100 text-green-600' :
+                                                {!notif.read && <div aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-1 bg-amber"></div>}
+                                                <div aria-hidden="true" className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.type === 'booking' ? 'bg-green-100 text-green-600' :
                                                     notif.type === 'task' ? 'bg-blue-100 text-blue-600' :
                                                         notif.type === 'join_request' ? 'bg-purple-100 text-purple-600' :
-                                                            'bg-amber-100 text-amber'
+                                                            'bg-amber-100 text-amber-ink'
                                                     }`}>
                                                     {notif.type === 'booking' ? <Calendar size={14} /> :
                                                         notif.type === 'task' ? <CheckSquare size={14} /> :
@@ -241,13 +269,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                                                                 <Bell size={14} />}
                                                 </div>
                                                 <div>
+                                                    {!notif.read && <span className="sr-only">Ólesin tilkynning: </span>}
                                                     <p className="text-sm font-bold text-charcoal leading-tight mb-0.5">{notif.title}</p>
                                                     <p className="text-xs text-stone-500 line-clamp-2">{notif.message}</p>
-                                                    <p className="text-[10px] text-stone-400 mt-1 uppercase font-medium">
+                                                    <p className="text-[10px] text-stone-500 mt-1 uppercase font-medium">
                                                         {format(notif.created_at, 'd. MMMM', { locale: is })}
                                                     </p>
                                                 </div>
-                                            </div>
+                                            </button>
                                         ))}
                                     </div>
                                 )}
@@ -255,12 +284,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         </div>
                     )}
 
-                    <div
+                    <Link
+                        to="/settings?tab=profile"
+                        onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
+                        aria-label="Prófíllinn minn"
                         className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:bg-stone-800"
-                        onClick={() => handleNavigate('/settings?tab=profile')}
                     >
                         {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}
-                    </div>
+                    </Link>
                 </div>
             </nav>
 

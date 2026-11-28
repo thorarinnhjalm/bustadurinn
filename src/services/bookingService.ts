@@ -32,6 +32,7 @@ import {
 } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { logger } from '@/utils/logger';
+import { toDateInputValue } from '@/utils/localDate';
 import type { Booking, BookingType } from '@/types/models';
 
 /** Returns `start` plus one calendar day (local time). */
@@ -166,6 +167,12 @@ export async function createBooking(params: CreateBookingParams): Promise<string
         user_name: userName,
         start: range.start,
         end: range.end,
+        // Zone-independent calendar days ('yyyy-MM-dd', LOCAL days of the booker;
+        // end_date is the check-out day). Server code (emails, weather alerts)
+        // prefers these over the instants above. Booking interface should gain
+        // `start_date?: string; end_date?: string`.
+        start_date: toDateInputValue(range.start),
+        end_date: toDateInputValue(range.end),
         type,
         notes: notes || '',
         created_at: serverTimestamp(),

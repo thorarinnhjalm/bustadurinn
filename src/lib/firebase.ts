@@ -3,12 +3,12 @@
  */
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { getAuth, connectAuthEmulator, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import { initializeFirestore, connectFirestoreEmulator, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
-import { getStorage } from 'firebase/storage';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getMessaging } from 'firebase/messaging';
-import firebaseConfig from '@/config/firebase';
+import firebaseConfig, { USE_EMULATORS } from '@/config/firebase';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -38,7 +38,15 @@ export const db = initializeFirestore(app, {
 
 export const functions = getFunctions(app);
 export const storage = getStorage(app);
-export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
+// No push messaging against the emulators (it would talk to the real FCM).
+export const messaging = typeof window !== 'undefined' && !USE_EMULATORS ? getMessaging(app) : null;
+
+// Local emulator e2e suite only (VITE_USE_EMULATORS=true at build time).
+if (USE_EMULATORS) {
+    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    connectFirestoreEmulator(db, '127.0.0.1', 8080);
+    connectStorageEmulator(storage, '127.0.0.1', 9199);
+}
 
 // Auth Providers
 export const googleProvider = new GoogleAuthProvider();

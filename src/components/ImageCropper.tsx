@@ -1,6 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useId } from 'react';
 import Cropper from 'react-easy-crop';
-import { X, RotateCw } from 'lucide-react';
+import { RotateCw } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
+import { logger } from '@/utils/logger';
 
 interface ImageCropperProps {
     image: string;
@@ -85,6 +87,7 @@ export default function ImageCropper({
     const [rotation, setRotation] = useState(0);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
     const [processing, setProcessing] = useState(false);
+    const baseId = useId();
 
     const onCropChange = (location: { x: number; y: number }) => {
         setCrop(location);
@@ -105,7 +108,7 @@ export default function ImageCropper({
             const croppedImage = await getCroppedImg(image, croppedAreaPixels);
             onCropComplete(croppedImage);
         } catch (e) {
-            console.error('Error cropping image:', e);
+            logger.error('Error cropping image:', e);
         } finally {
             setProcessing(false);
         }
@@ -117,71 +120,26 @@ export default function ImageCropper({
             const blob = dataURLToBlob(image);
             onCropComplete(blob);
         } catch (e) {
-            console.error('Error skipping crop:', e);
+            logger.error('Error skipping crop:', e);
         } finally {
             setProcessing(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/90 z-50 flex flex-col">
-            <div className="bg-black/50 backdrop-blur-sm p-4 flex items-center justify-between">
-                <h3 className="text-white font-bold text-lg">Klippa mynd</h3>
-                <button
-                    onClick={onCancel}
-                    className="text-white/70 hover:text-white transition-colors"
-                >
-                    <X size={24} />
-                </button>
-            </div>
-
-            <div className="flex-1 relative">
-                <Cropper
-                    image={image}
-                    crop={crop}
-                    zoom={zoom}
-                    rotation={rotation}
-                    aspect={aspectRatio}
-                    onCropChange={onCropChange}
-                    onZoomChange={setZoom}
-                    onCropComplete={onCropCompleteCallback}
-                />
-            </div>
-
-            <div className="bg-black/50 backdrop-blur-sm p-6 space-y-4">
-                <div>
-                    <label className="text-white text-sm mb-2 block">Aðdráttur</label>
-                    <input
-                        type="range"
-                        min={1}
-                        max={3}
-                        step={0.1}
-                        value={zoom}
-                        onChange={(e) => setZoom(Number(e.target.value))}
-                        className="w-full"
-                    />
-                </div>
-
-                <div>
-                    <label className="text-white text-sm mb-2 block flex items-center gap-2">
-                        <RotateCw size={16} />
-                        Snúningur
-                    </label>
-                    <input
-                        type="range"
-                        min={0}
-                        max={360}
-                        step={1}
-                        value={rotation}
-                        onChange={(e) => setRotation(Number(e.target.value))}
-                        className="w-full"
-                    />
-                </div>
-
-                <div className="flex gap-3">
+        <Modal
+            open
+            onClose={onCancel}
+            title="Klippa mynd"
+            size="full"
+            className="!bg-black !text-white"
+            bodyClassName="!p-0"
+            footer={
+                <div className="flex gap-3 w-full">
                     <button
+                        type="button"
                         onClick={onCancel}
-                        className="btn btn-ghost flex-1 text-white border-white/20 hover:bg-white/10"
+                        className="btn btn-ghost flex-1"
                     >
                         Hætta við
                     </button>
@@ -190,20 +148,69 @@ export default function ImageCropper({
                             type="button"
                             onClick={handleSkipCrop}
                             disabled={processing}
-                            className="btn btn-secondary flex-1 border-white/20 text-white hover:bg-white/10"
+                            className="btn btn-secondary flex-1"
                         >
                             Sleppa klippingu
                         </button>
                     )}
                     <button
+                        type="button"
                         onClick={handleSave}
                         disabled={processing}
-                        className="btn btn-primary flex-1 bg-amber text-charcoal hover:bg-amber-dark"
+                        className="btn btn-primary flex-1"
                     >
                         {processing ? 'Vinnur...' : 'Vista'}
                     </button>
                 </div>
+            }
+        >
+            <div className="flex flex-col bg-black">
+                <div className="relative h-[55vh]">
+                    <Cropper
+                        image={image}
+                        crop={crop}
+                        zoom={zoom}
+                        rotation={rotation}
+                        aspect={aspectRatio}
+                        onCropChange={onCropChange}
+                        onZoomChange={setZoom}
+                        onCropComplete={onCropCompleteCallback}
+                    />
+                </div>
+
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label htmlFor={`${baseId}-zoom`} className="text-white text-sm mb-2 block">Aðdráttur</label>
+                        <input
+                            id={`${baseId}-zoom`}
+                            type="range"
+                            min={1}
+                            max={3}
+                            step={0.1}
+                            value={zoom}
+                            onChange={(e) => setZoom(Number(e.target.value))}
+                            className="w-full"
+                        />
+                    </div>
+
+                    <div>
+                        <label htmlFor={`${baseId}-rotation`} className="text-white text-sm mb-2 flex items-center gap-2">
+                            <RotateCw size={16} aria-hidden="true" />
+                            Snúningur
+                        </label>
+                        <input
+                            id={`${baseId}-rotation`}
+                            type="range"
+                            min={0}
+                            max={360}
+                            step={1}
+                            value={rotation}
+                            onChange={(e) => setRotation(Number(e.target.value))}
+                            className="w-full"
+                        />
+                    </div>
+                </div>
             </div>
-        </div>
+        </Modal>
     );
 }

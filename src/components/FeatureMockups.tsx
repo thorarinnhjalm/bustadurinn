@@ -1,7 +1,9 @@
 import { Calendar, CheckSquare, Wallet, Globe, Bell, Home, TrendingUp, Shield, ArrowRight, Share2, Plus } from 'lucide-react';
 
 export const CalendarMockup = () => (
-    <div className="w-full h-full bg-white p-6 relative flex flex-col">
+    <>
+    <p className="sr-only">Myndskreyting: dagatal júlímánaðar með bókun merkta Jón 15. til 17. júlí og bókun Siggu í lok mánaðarins.</p>
+    <div aria-hidden="true" className="w-full h-full bg-white p-6 relative flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
             <h3 className="font-serif font-bold text-xl text-[#1a1a1a]">Júlí 2026</h3>
@@ -56,7 +58,7 @@ export const CalendarMockup = () => (
             ))}
 
             {/* Popover Mock */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-xl border border-stone-100 p-4 w-48 z-20 animate-in zoom-in-95">
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-xl border border-stone-100 p-4 w-48 z-20 motion-safe:animate-in motion-safe:zoom-in-95">
                 <div className="flex items-center gap-3 mb-2">
                     <div className="w-8 h-8 rounded-full bg-amber flex items-center justify-center font-bold text-xs">Jón</div>
                     <div>
@@ -70,10 +72,13 @@ export const CalendarMockup = () => (
             </div>
         </div>
     </div>
+    </>
 );
 
 export const FairnessMockup = () => (
-    <div className="w-full h-full bg-stone-50 p-8 flex items-center justify-center relative overflow-hidden">
+    <>
+    <p className="sr-only">Myndskreyting: forgangsstaða meðeigenda þar sem Sigga hefur hár forgang, Palli meðal og Jón lágan.</p>
+    <div aria-hidden="true" className="w-full h-full bg-stone-50 p-8 flex items-center justify-center relative overflow-hidden">
         <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm relative z-10">
             <h4 className="font-serif font-bold text-[#1a1a1a] mb-6">Forgangsstaða</h4>
 
@@ -125,10 +130,13 @@ export const FairnessMockup = () => (
         <div className="absolute top-0 right-0 w-32 h-32 bg-amber/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl"></div>
     </div>
+    </>
 );
 
 export const FinanceMockup = () => (
-    <div className="w-full h-full bg-[#1a1a1a] p-8 flex flex-col justify-between relative text-white">
+    <>
+    <p className="sr-only">Myndskreyting: hússjóður með stöðu upp á 145.200 krónur, innborganir og rafmagnsreikning.</p>
+    <div aria-hidden="true" className="w-full h-full bg-[#1a1a1a] p-8 flex flex-col justify-between relative text-white">
         <div>
             <div className="flex items-center gap-2 mb-6 opacity-80">
                 <Wallet className="w-5 h-5 text-amber" />
@@ -136,7 +144,7 @@ export const FinanceMockup = () => (
             </div>
 
             <div className="text-5xl font-serif font-bold mb-2">
-                145.200 <span className="text-2xl font-sans font-normal text-stone-500">kr.</span>
+                145.200 <span className="text-2xl font-sans font-normal text-stone-300">kr.</span>
             </div>
             <p className="text-stone-400 text-sm mb-12">Staða á reikningi í dag</p>
 
@@ -177,10 +185,13 @@ export const FinanceMockup = () => (
             </svg>
         </div>
     </div>
+    </>
 );
 
 export const RolesMockup = () => (
-    <div className="w-full h-full bg-white p-6 md:p-10 flex flex-col gap-4">
+    <>
+    <p className="sr-only">Myndskreyting: listi yfir meðeigendur með hlutverkin bústaðastjóri og meðeigandi.</p>
+    <div aria-hidden="true" className="w-full h-full bg-white p-6 md:p-10 flex flex-col gap-4">
         <div className="flex items-center gap-4 p-4 border border-stone-100 rounded-xl shadow-sm bg-stone-50/50">
             <div className="w-12 h-12 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center font-bold text-lg">ME</div>
             <div className="flex-1">
@@ -203,15 +214,18 @@ export const RolesMockup = () => (
             </div>
         </div>
 
-        <button className="w-full py-3 border-2 border-dashed border-stone-200 rounded-xl text-stone-400 font-bold text-sm flex items-center justify-center gap-2 hover:border-amber hover:text-amber transition-colors">
+        <div className="w-full py-3 border-2 border-dashed border-stone-200 rounded-xl text-stone-400 font-bold text-sm flex items-center justify-center gap-2">
             <Plus size={16} />
             Bæta við meðeiganda
-        </button>
+        </div>
     </div>
+    </>
 );
 
 export const GuestLinkMockup = () => (
-    <div className="w-full h-full bg-stone-100 flex items-center justify-center p-6 relative overflow-hidden">
+    <>
+    <p className="sr-only">Myndskreyting: gestasíða í síma með WiFi-upplýsingum og lykilboxi fyrir gesti.</p>
+    <div aria-hidden="true" className="w-full h-full bg-stone-100 flex items-center justify-center p-6 relative overflow-hidden">
         {/* Phone Frame */}
         <div className="w-64 bg-white rounded-[2rem] shadow-2xl border-4 border-white overflow-hidden relative z-10">
             <div className="h-4 bg-stone-50 w-full mb-4"></div>
@@ -240,17 +254,20 @@ export const GuestLinkMockup = () => (
                 </div>
 
                 <div className="text-center">
-                    <button className="bg-[#1a1a1a] text-white w-full py-3 rounded-xl text-xs font-bold">
+                    <div className="bg-[#1a1a1a] text-white w-full py-3 rounded-xl text-xs font-bold">
                         Sjá leiðbeiningar
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    </>
 );
 
 export const NotificationsMockup = () => (
-    <div className="w-full h-full bg-[#FAFAFA] text-[#1a1a1a] flex flex-col">
+    <>
+    <p className="sr-only">Myndskreyting: tilkynningar um nýja bókun og lokið verkefni.</p>
+    <div aria-hidden="true" className="w-full h-full bg-[#FAFAFA] text-[#1a1a1a] flex flex-col">
         <div className="p-4 border-b border-stone-100 bg-white shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-2">
                 <Bell size={18} className="text-amber" />
@@ -281,10 +298,13 @@ export const NotificationsMockup = () => (
             </div>
         </div>
     </div>
+    </>
 );
 
 export const MultiHouseMockup = () => (
-    <div className="w-full h-full bg-stone-900 p-8 flex items-center justify-center">
+    <>
+    <p className="sr-only">Myndskreyting: listi yfir hús notandans, til dæmis Fjölskyldan og Veiðihúsið.</p>
+    <div aria-hidden="true" className="w-full h-full bg-stone-900 p-8 flex items-center justify-center">
         <div className="w-full max-w-sm space-y-3">
             <h4 className="text-white font-serif font-bold mb-4 opacity-50 uppercase tracking-widest text-xs">Mín hús</h4>
 
@@ -310,10 +330,11 @@ export const MultiHouseMockup = () => (
             </div>
 
             <div className="flex justify-center mt-4">
-                <button className="text-stone-500 text-xs font-bold flex items-center gap-2 hover:text-white transition-colors">
+                <div className="text-stone-400 text-xs font-bold flex items-center gap-2">
                     <Plus size={14} /> Bæta við nýju húsi
-                </button>
+                </div>
             </div>
         </div>
     </div>
+    </>
 );

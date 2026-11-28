@@ -55,6 +55,14 @@ function toDate(value: any): Date | null {
     return isNaN(d.getTime()) ? null : d;
 }
 
+/** Valid 'yyyy-MM-dd' calendar day or null. */
+function parseDay(v: unknown): string | null {
+    if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+    const [y, m, d] = v.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d ? v : null;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -143,8 +151,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const fmt: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
         const startDate = toDate(booking.start);
         const endDate = toDate(booking.end);
-        const startStr = startDate ? startDate.toLocaleDateString(locale, fmt) : '';
-        const endStr = endDate ? endDate.toLocaleDateString(locale, fmt) : '';
+        // Prefer the zone-independent 'yyyy-MM-dd' strings (start_date/end_date);
+        // fall back to the stored instants for bookings created before they existed.
+        const fmtDay = (day: string | null, instant: Date | null): string => {
+            if (day) {
+                const [y, m, d] = day.split('-').map(Number);
+                return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(locale, { ...fmt, timeZone: 'UTC' });
+            }
+            return instant ? instant.toLocaleDateString(locale, fmt) : '';
+        };
+        const startStr = fmtDay(parseDay(booking.start_date), startDate);
+        const endStr = fmtDay(parseDay(booking.end_date), endDate);
 
         const html = `
             <h2>${escapeHtml(t.title)}</h2>

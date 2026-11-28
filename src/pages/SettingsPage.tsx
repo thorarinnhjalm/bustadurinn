@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
     signOut,
@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { requestPushPermission } from '@/utils/pushNotifications';
 import ImageCropper from '@/components/ImageCropper';
+import Modal from '@/components/ui/Modal';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import {
     doc,
@@ -95,6 +96,7 @@ import { accountDeletionState } from '@/components/authHandlerHelpers';
 export default function SettingsPage() {
     const navigate = useNavigate();
     const location = useLocation();
+    const baseId = useId();
     const { user: currentUser, isImpersonating } = useEffectiveUser();
     const { startImpersonation } = useImpersonation();
     const setCurrentUser = useAppStore((state) => state.setCurrentUser);
@@ -181,6 +183,7 @@ export default function SettingsPage() {
     const [newManagerChoice, setNewManagerChoice] = useState('');
     const [membershipBusy, setMembershipBusy] = useState(false);
     const [membershipModalError, setMembershipModalError] = useState('');
+    const [transferBusy, setTransferBusy] = useState(false);
     const [membersReloadKey, setMembersReloadKey] = useState(0);
     // Account deletion re-authentication (password accounts)
     const [reauthPasswordNeeded, setReauthPasswordNeeded] = useState(false);
@@ -725,10 +728,16 @@ export default function SettingsPage() {
     const handleTransferOwnership = async () => {
         if (!house || !currentUser || !memberToTransfer) return;
 
-        const result = await callMembershipApi('transfer-manager', {
-            houseId: house.id,
-            newManagerId: memberToTransfer.uid,
-        });
+        setTransferBusy(true);
+        let result;
+        try {
+            result = await callMembershipApi('transfer-manager', {
+                houseId: house.id,
+                newManagerId: memberToTransfer.uid,
+            });
+        } finally {
+            setTransferBusy(false);
+        }
         if (!result.ok) {
             setMemberToTransfer(null);
             setTransferConfirmation('');
@@ -1286,7 +1295,7 @@ export default function SettingsPage() {
 
 
     if (loading && !house) {
-        return <div className="p-8 text-center text-grey-mid">Hleð...</div>;
+        return <div role="status" className="p-8 text-center text-grey-mid">Hleð...</div>;
     }
 
     return (
@@ -1295,6 +1304,7 @@ export default function SettingsPage() {
             <div className="bg-white border-b border-grey-warm">
                 <div className="container mx-auto px-6 py-6">
                     <button
+                        type="button"
                         onClick={() => navigate('/dashboard')}
                         className="text-stone-500 hover:text-charcoal font-bold text-sm mb-4 flex items-center gap-1 transition-colors"
                     >
@@ -1309,117 +1319,137 @@ export default function SettingsPage() {
                 <div className="flex flex-col md:flex-row gap-8">
 
                     {/* Sidebar Navigation */}
-                    <div className="w-full md:w-64 flex-shrink-0">
+                    <nav aria-label="Stillingar" className="w-full md:w-64 flex-shrink-0">
                         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                             <button
+                                type="button"
+                                aria-current={activeTab === 'house' ? 'page' : undefined}
                                 onClick={() => setActiveTab('house')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'house'
                                     ? 'bg-charcoal text-white'
                                     : 'text-grey-dark hover:bg-bone'
                                     }`}
                             >
-                                <Home className="w-5 h-5" />
+                                <Home className="w-5 h-5" aria-hidden="true" />
                                 <span>Húsupplýsingar</span>
                             </button>
 
                             <button
+                                type="button"
+                                aria-current={activeTab === 'shopping' ? 'page' : undefined}
                                 onClick={() => setActiveTab('shopping')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'shopping'
                                     ? 'bg-amber text-charcoal font-bold'
                                     : 'text-grey-dark hover:bg-bone'
                                     }`}
                             >
-                                <ShoppingBag className="w-5 h-5" />
+                                <ShoppingBag className="w-5 h-5" aria-hidden="true" />
                                 <span>Innkaupalisti</span>
                             </button>
 
                             <button
+                                type="button"
+                                aria-current={activeTab === 'logs' ? 'page' : undefined}
                                 onClick={() => setActiveTab('logs')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'logs'
                                     ? 'bg-amber text-charcoal font-bold'
                                     : 'text-grey-dark hover:bg-bone'
                                     }`}
                             >
-                                <ClipboardList className="w-5 h-5" />
+                                <ClipboardList className="w-5 h-5" aria-hidden="true" />
                                 <span>Verkefni & Viðhald</span>
                             </button>
 
                             <button
+                                type="button"
+                                aria-current={activeTab === 'members' ? 'page' : undefined}
                                 onClick={() => setActiveTab('members')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'members'
                                     ? 'bg-charcoal text-white'
                                     : 'text-grey-dark hover:bg-bone'
                                     }`}
                             >
-                                <Users className="w-5 h-5" />
+                                <Users className="w-5 h-5" aria-hidden="true" />
                                 <span>Meðeigendur</span>
                             </button>
 
                             <button
+                                type="button"
+                                aria-current={activeTab === 'guests' ? 'page' : undefined}
                                 onClick={() => setActiveTab('guests')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'guests'
                                     ? 'bg-charcoal text-white'
                                     : 'text-grey-dark hover:bg-bone'
                                     }`}
                             >
-                                <BookOpen className="w-5 h-5" />
+                                <BookOpen className="w-5 h-5" aria-hidden="true" />
                                 <span>Gestaupplýsingar</span>
                             </button>
 
                             <button
+                                type="button"
+                                aria-current={activeTab === 'guestbook' ? 'page' : undefined}
                                 onClick={() => setActiveTab('guestbook')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'guestbook'
                                     ? 'bg-charcoal text-white'
                                     : 'text-grey-dark hover:bg-bone'
                                     }`}
                             >
-                                <Heart className="w-5 h-5" />
-                                <span>Gestabók (Journal)</span>
+                                <Heart className="w-5 h-5" aria-hidden="true" />
+                                <span>Gestabók</span>
                             </button>
 
                             <button
+                                type="button"
                                 onClick={() => navigate('/torgid')}
                                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-grey-dark hover:bg-bone transition-colors"
                             >
-                                <Hammer className="w-5 h-5" />
+                                <Hammer className="w-5 h-5" aria-hidden="true" />
                                 <span>Þjónustutorg</span>
                             </button>
 
                             <button
+                                type="button"
+                                aria-current={activeTab === 'profile' ? 'page' : undefined}
                                 onClick={() => setActiveTab('profile')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeTab === 'profile'
                                     ? 'bg-charcoal text-white'
                                     : 'text-grey-dark hover:bg-bone'
                                     }`}
                             >
-                                <UserIcon className="w-5 h-5" />
+                                <UserIcon className="w-5 h-5" aria-hidden="true" />
                                 <span>Mínar stillingar</span>
                             </button>
 
 
                             <button
+                                type="button"
                                 onClick={handleLogout}
-                                className="w-full flex items-center gap-3 px-4 py-3 text-left border-t border-grey-warm text-red-500 hover:bg-red-50 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left border-t border-grey-warm text-red-600 hover:bg-red-50 transition-colors"
                             >
-                                <LogOut className="w-5 h-5" />
+                                <LogOut className="w-5 h-5" aria-hidden="true" />
                                 <span>Skrá út</span>
                             </button>
                         </div>
-                    </div>
+                    </nav>
 
                     {/* Main Content */}
                     <div className="flex-1">
-                        {/* Feedback Messages */}
-                        {success && (
-                            <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-                                {success}
-                            </div>
-                        )}
-                        {error && (
-                            <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-                                {error}
-                            </div>
-                        )}
+                        {/* Feedback Messages (live regions stay mounted so announcements are reliable) */}
+                        <div role="status" aria-live="polite">
+                            {success && (
+                                <div className="mb-4 bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded relative">
+                                    {success}
+                                </div>
+                            )}
+                        </div>
+                        <div role="alert">
+                            {error && (
+                                <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                                    {error}
+                                </div>
+                            )}
+                        </div>
 
                         {/* TAB: SHOPPING */}
                         {activeTab === 'shopping' && (
@@ -1467,7 +1497,7 @@ export default function SettingsPage() {
 
                         {/* TAB: HOUSE INFO */}
                         {activeTab === 'house' && house && !isManager && (
-                            <div className="mb-4 bg-amber/10 border border-amber/30 text-charcoal px-4 py-3 rounded text-sm">
+                            <div id="house-readonly-note" className="mb-4 bg-amber/10 border border-amber/30 text-charcoal px-4 py-3 rounded text-sm">
                                 Aðeins umsjónarmaður hússins getur breytt húsupplýsingum. Þú getur skoðað þær hér.
                             </div>
                         )}
@@ -1492,7 +1522,7 @@ export default function SettingsPage() {
                             <div className="bg-white p-6 rounded-lg shadow-sm">
                                 <div className="flex items-center justify-between mb-6">
                                     <div className="flex items-center gap-2">
-                                        <Users className="w-6 h-6 text-amber" />
+                                        <Users className="w-6 h-6 text-amber-ink" aria-hidden="true" />
                                         <h2 className="text-xl font-serif">Meðeigendur</h2>
                                     </div>
                                 </div>
@@ -1500,14 +1530,15 @@ export default function SettingsPage() {
                                 <div className="space-y-4">
                                     {/* Members List */}
                                     {loadingMembers ? (
-                                        <div className="text-center py-8">
-                                            <div className="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                        <div role="status" className="text-center py-8">
+                                            <div aria-hidden="true" className="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                                             <p className="text-grey-mid">Hleð meðeigendum...</p>
                                         </div>
                                     ) : membersError ? (
-                                        <div className="p-4 bg-red-50 text-red-600 rounded-lg text-center">
+                                        <div role="alert" className="p-4 bg-red-50 text-red-700 rounded-lg text-center">
                                             {membersError}
                                             <button
+                                                type="button"
                                                 onClick={() => setMembersReloadKey((k) => k + 1)}
                                                 className="block mx-auto mt-2 text-sm underline hover:text-red-800"
                                             >
@@ -1539,16 +1570,18 @@ export default function SettingsPage() {
                                                     {isManager && canChangeMembership && house.manager_id !== member.uid && (
                                                         <>
                                                             <button
+                                                                type="button"
                                                                 onClick={() => setMemberToTransfer(member)}
-                                                                className="text-xs text-amber hover:text-amber-dark font-medium"
+                                                                className="text-xs text-amber-ink hover:text-amber-dark font-medium"
                                                             >
-                                                                Gera að umsjónarmanni
+                                                                Gera að umsjónarmanni<span className="sr-only">: {member.name || member.email}</span>
                                                             </button>
                                                             <button
+                                                                type="button"
                                                                 onClick={() => openMembershipAction({ type: 'remove', member })}
-                                                                className="text-xs text-red-500 hover:text-red-700 font-medium hover:underline"
+                                                                className="text-xs text-red-600 hover:text-red-700 font-medium hover:underline"
                                                             >
-                                                                Fjarlægja
+                                                                Fjarlægja<span className="sr-only">: {member.name || member.email}</span>
                                                             </button>
                                                         </>
                                                     )}
@@ -1564,19 +1597,20 @@ export default function SettingsPage() {
                                                 {invitations.map(invite => (
                                                     <div key={invite.id} className="flex items-center justify-between p-3 border border-stone-200 border-dashed rounded-lg bg-stone-50">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-stone-400">
-                                                                <Users size={14} />
+                                                            <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-stone-500">
+                                                                <Users size={14} aria-hidden="true" />
                                                             </div>
                                                             <div>
                                                                 <p className="font-semibold text-sm text-stone-600">{invite.email}</p>
-                                                                <p className="text-xs text-stone-400">Boðið {new Date(invite.created_at?.seconds * 1000).toLocaleDateString('is-IS')}</p>
+                                                                <p className="text-xs text-stone-500">Boðið {new Date(invite.created_at?.seconds * 1000).toLocaleDateString('is-IS')}</p>
                                                             </div>
                                                         </div>
                                                         <button
+                                                            type="button"
                                                             onClick={() => handleRevokeInvite(invite.id)}
-                                                            className="text-xs text-red-500 hover:text-red-700 font-medium hover:underline"
+                                                            className="text-xs text-red-600 hover:text-red-700 font-medium hover:underline"
                                                         >
-                                                            Afturkalla
+                                                            Afturkalla<span className="sr-only"> boð til {invite.email}</span>
                                                         </button>
                                                     </div>
                                                 ))}
@@ -1594,9 +1628,10 @@ export default function SettingsPage() {
 
                                             {/* Email Invite Form */}
                                             <div className="bg-bone p-4 rounded-lg mb-4 border border-stone-200">
-                                                <label className="label text-xs uppercase text-grey-mid">Bjóða með tölvupósti</label>
+                                                <label htmlFor={`${baseId}-invite-email`} className="label text-xs uppercase text-grey-mid">Bjóða með tölvupósti</label>
                                                 <div className="flex gap-2">
                                                     <input
+                                                        id={`${baseId}-invite-email`}
                                                         type="email"
                                                         placeholder="sláðu inn netfang..."
                                                         className="input w-full"
@@ -1605,6 +1640,7 @@ export default function SettingsPage() {
                                                         disabled={inviteLoading}
                                                     />
                                                     <button
+                                                        type="button"
                                                         onClick={handleSendInvite}
                                                         disabled={inviteLoading || !inviteEmail.trim().includes('@')}
                                                         className="btn btn-primary whitespace-nowrap"
@@ -1620,15 +1656,17 @@ export default function SettingsPage() {
                                             <div className="bg-bone p-4 rounded-lg flex flex-col gap-4">
                                                 {house.invite_code ? (
                                                     <div>
-                                                        <label className="label text-xs uppercase text-grey-mid">Boðshlekkur</label>
+                                                        <label htmlFor={`${baseId}-invite-link`} className="label text-xs uppercase text-grey-mid">Boðshlekkur</label>
                                                         <div className="flex gap-2">
                                                             <input
+                                                                id={`${baseId}-invite-link`}
                                                                 readOnly
                                                                 className="input font-mono text-sm bg-white"
                                                                 value={`${window.location.origin}/join?houseId=${house.id}&code=${house.invite_code}`}
                                                                 onClick={(e) => e.currentTarget.select()}
                                                             />
                                                             <button
+                                                                type="button"
                                                                 onClick={() => {
                                                                     navigator.clipboard.writeText(`${window.location.origin}/join?houseId=${house.id}&code=${house.invite_code}`);
                                                                     setSuccess('Hlekkur afritaður!');
@@ -1640,6 +1678,7 @@ export default function SettingsPage() {
                                                             </button>
                                                             {navigator.share && (
                                                                 <button
+                                                                    type="button"
                                                                     onClick={() => {
                                                                         const inviteUrl = `${window.location.origin}/join?houseId=${house.id}&code=${house.invite_code}`;
                                                                         navigator.share({
@@ -1657,6 +1696,7 @@ export default function SettingsPage() {
                                                         {isManager && (
                                                             <div className="mt-4">
                                                                 <button
+                                                                    type="button"
                                                                     onClick={handleGenerateInvite}
                                                                     className="text-xs text-grey-mid hover:underline"
                                                                 >
@@ -1667,6 +1707,7 @@ export default function SettingsPage() {
                                                     </div>
                                                 ) : isManager ? (
                                                     <button
+                                                        type="button"
                                                         onClick={handleGenerateInvite}
                                                         className="btn btn-primary w-full md:w-auto self-start"
                                                     >
@@ -1688,6 +1729,7 @@ export default function SettingsPage() {
                                             <div className="flex flex-wrap gap-3">
                                                 {house.owner_ids.length > 1 && (
                                                     <button
+                                                        type="button"
                                                         onClick={() => openMembershipAction({ type: 'leave' })}
                                                         className="btn btn-secondary text-red-600 border-red-200 hover:bg-red-50"
                                                     >
@@ -1696,6 +1738,7 @@ export default function SettingsPage() {
                                                 )}
                                                 {isManager && (
                                                     <button
+                                                        type="button"
                                                         onClick={() => openMembershipAction({ type: 'delete_house' })}
                                                         className="btn btn-secondary text-red-600 border-red-200 hover:bg-red-50"
                                                     >
@@ -1736,7 +1779,7 @@ export default function SettingsPage() {
                                             <h2 className="text-2xl font-serif font-bold text-charcoal mb-2">Fastur Gestahlekkur</h2>
                                             <p className="text-grey-mid">Einn fastur hlekkur fyrir húsið sem hægt er að senda handvirkt. Virkur þar til honum er eytt.</p>
                                         </div>
-                                        <div className="bg-amber/10 text-amber-700 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider">
+                                        <div className="bg-amber/10 text-amber-ink px-3 py-1 rounded text-xs font-bold uppercase tracking-wider">
                                             Mælt með fyrir fjölskyldu
                                         </div>
                                     </div>
@@ -1751,33 +1794,36 @@ export default function SettingsPage() {
                                                             bustadurinn.is/guest/{house.guest_token}
                                                         </code>
                                                         <button
+                                                            type="button"
                                                             onClick={() => {
                                                                 navigator.clipboard.writeText(`${window.location.origin}/guest/${house.guest_token}`);
                                                                 setSuccess('Hlekkur afritaður!');
                                                             }}
                                                             className="p-2 hover:bg-green-100 rounded-lg text-green-700 transition-colors"
-                                                            title="Afrita hlekk"
+                                                            aria-label="Afrita gestahlekk"
                                                         >
-                                                            <Copy size={20} />
+                                                            <Copy size={20} aria-hidden="true" />
                                                         </button>
                                                     </div>
                                                     <div className="flex justify-center gap-3">
                                                         <button
+                                                            type="button"
                                                             onClick={() => setShowGuestPreview(true)}
-                                                            className="btn bg-amber-500 text-white hover:bg-amber-600 border-none text-sm px-4"
+                                                            className="btn bg-amber-500 text-charcoal hover:bg-amber-600 border-none text-sm px-4"
                                                         >
-                                                            <Eye size={16} className="mr-2" />
+                                                            <Eye size={16} className="mr-2" aria-hidden="true" />
                                                             Forskoða
                                                         </button>
                                                         <a
                                                             href={`/guest/${house.guest_token}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="btn bg-green-600 text-white hover:bg-green-700 border-none text-sm px-6"
+                                                            className="btn bg-green-700 text-white hover:bg-green-800 border-none text-sm px-6"
                                                         >
-                                                            Opna síðu
+                                                            Opna síðu<span className="sr-only"> (opnast í nýjum glugga)</span>
                                                         </a>
                                                         <button
+                                                            type="button"
                                                             onClick={() => {
                                                                 if (navigator.share) {
                                                                     navigator.share({
@@ -1794,7 +1840,7 @@ export default function SettingsPage() {
                                                 </div>
 
                                                 <div className="flex justify-between items-center pt-4 border-t border-stone-100">
-                                                    <p className="text-sm text-stone-500">
+                                                    <p id="guest-link-readonly-note" className="text-sm text-stone-500">
                                                         {isManager
                                                             ? 'Viltu endurnýja hlekkinn? Gamli hlekkurinn hættir að virka.'
                                                             : 'Aðeins umsjónarmaður hússins getur breytt eða eytt fasta hlekknum.'}
@@ -1802,18 +1848,20 @@ export default function SettingsPage() {
                                                     <div className="mt-4 flex gap-2">
                                                         {isManager && (
                                                         <button
+                                                            type="button"
                                                             onClick={() => {
                                                                 const input = document.querySelector('input[type="file"][data-upload-type="gallery"]') as HTMLInputElement;
                                                                 input?.click();
                                                             }}
                                                             className="btn btn-ghost text-stone-500 hover:text-charcoal text-sm"
                                                         >
-                                                            <RefreshCw size={14} className="mr-2" />
+                                                            <RefreshCw size={14} className="mr-2" aria-hidden="true" />
                                                             Endurnýja
                                                         </button>
                                                         )}
                                                         {isManager && (
                                                         <button
+                                                            type="button"
                                                             onClick={async () => {
                                                                 if (!confirm('Ertu viss? Þetta lokar á aðganginn strax.')) return;
                                                                 setLoading(true);
@@ -1829,9 +1877,9 @@ export default function SettingsPage() {
                                                                     setLoading(false);
                                                                 }
                                                             }}
-                                                            className="btn btn-ghost text-red-400 hover:bg-red-50 hover:text-red-600 text-sm"
+                                                            className="btn btn-ghost text-red-600 hover:bg-red-50 hover:text-red-700 text-sm"
                                                         >
-                                                            Eyða
+                                                            Eyða<span className="sr-only"> gestasíðu</span>
                                                         </button>
                                                         )}
                                                     </div>
@@ -1847,13 +1895,14 @@ export default function SettingsPage() {
                                         ) : (
                                             <div className="text-center py-8">
                                                 <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                    <LinkIcon size={32} className="text-stone-400" />
+                                                    <LinkIcon size={32} className="text-stone-500" aria-hidden="true" />
                                                 </div>
                                                 <h3 className="text-lg font-bold text-charcoal mb-2">Enginn fastur gestahlekkur</h3>
                                                 <p className="text-stone-500 mb-6 max-w-sm mx-auto">
                                                     Þú getur búið til einn fastan hlekk sem er alltaf virkur, til dæmis fyrir fjölskyldumeðlimi.
                                                 </p>
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleGenerateGuestToken(false)}
                                                     disabled={loading}
                                                     className="btn btn-primary"
@@ -1868,22 +1917,23 @@ export default function SettingsPage() {
                                 <hr className="border-stone-200" />
 
                                 {!isManager && (
-                                    <div className="bg-amber/10 border border-amber/30 text-charcoal px-4 py-3 rounded text-sm">
+                                    <div id="guest-info-readonly-note" className="bg-amber/10 border border-amber/30 text-charcoal px-4 py-3 rounded text-sm">
                                         Aðeins umsjónarmaður hússins getur breytt gestaupplýsingum. Þú getur skoðað þær hér.
                                     </div>
                                 )}
                                 {/* House-document fields: disabled unless the user is the manager */}
-                                <fieldset disabled={!isManager} className="space-y-12 min-w-0 border-0 p-0 m-0">
+                                <fieldset disabled={!isManager} aria-describedby={!isManager ? 'guest-info-readonly-note' : undefined} className="space-y-12 min-w-0 border-0 p-0 m-0">
+                                <legend className="sr-only">Gestaupplýsingar hússins</legend>
 
                                 {/* Amenities Section */}
                                 <section>
                                     <div className="mb-6">
-                                        <h2 className="text-2xl font-serif font-bold text-charcoal mb-2">Þægindi</h2>
+                                        <h2 id={`${baseId}-amenities-h`} className="text-2xl font-serif font-bold text-charcoal mb-2">Þægindi</h2>
                                         <p className="text-grey-mid">Merktu við það sem er í boði í húsinu. Þetta birtist á gestasíðunni.</p>
                                     </div>
 
                                     <div className="card p-6 border-2 border-stone-100">
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div role="group" aria-labelledby={`${baseId}-amenities-h`} className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                             {[
                                                 { id: 'hot_tub', label: 'Heitur pottur' },
                                                 { id: 'grill', label: 'Grill' },
@@ -1898,8 +1948,9 @@ export default function SettingsPage() {
                                                 { id: 'games', label: 'Leikir / Spil' },
                                                 { id: 'coffee_machine', label: 'Kaffivél' }
                                             ].map(amenity => (
-                                                <label key={amenity.id} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-stone-50 transition-colors">
+                                                <label key={amenity.id} htmlFor={`${baseId}-amenity-${amenity.id}`} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-stone-50 transition-colors">
                                                     <input
+                                                        id={`${baseId}-amenity-${amenity.id}`}
                                                         type="checkbox"
                                                         checked={houseForm.amenities.includes(amenity.id)}
                                                         onChange={(e) => {
@@ -1928,6 +1979,8 @@ export default function SettingsPage() {
 
                                     <div className="card p-6 border-2 border-stone-100">
                                         <textarea
+                                            id={`${baseId}-guest-instr`}
+                                            aria-label="Almennar leiðbeiningar fyrir gesti"
                                             className="input min-h-[120px]"
                                             value={editLang === 'is' ? houseForm.guest_instructions : houseForm.guest_instructions_en}
                                             onChange={(e) => setHouseForm({
@@ -1936,7 +1989,7 @@ export default function SettingsPage() {
                                             })}
                                             placeholder="t.d. Gott að vita: Heitt vatn tekur 10 mín að hitna. Nálægustu matvöruverslanir eru í Selfossi..."
                                         />
-                                        <p className="text-xs text-stone-400 mt-2">
+                                        <p className="text-xs text-stone-500 mt-2">
                                             Skiptið á milli íslensku/ensku með tungumálarofanum hér fyrir neðan.
                                         </p>
                                     </div>
@@ -1955,8 +2008,9 @@ export default function SettingsPage() {
                                         <form onSubmit={handleSaveGuestInfo} className="space-y-6 pb-24">
                                             <div className="grid md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="label">Innritun (kl.)</label>
+                                                    <label htmlFor={`${baseId}-gi-checkin`} className="label">Innritun (kl.)</label>
                                                     <input
+                                                        id={`${baseId}-gi-checkin`}
                                                         type="text"
                                                         className="input"
                                                         value={houseForm.check_in_time}
@@ -1965,8 +2019,9 @@ export default function SettingsPage() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="label">Útritun (kl.)</label>
+                                                    <label htmlFor={`${baseId}-gi-checkout`} className="label">Útritun (kl.)</label>
                                                     <input
+                                                        id={`${baseId}-gi-checkout`}
                                                         type="text"
                                                         className="input"
                                                         value={houseForm.check_out_time}
@@ -1979,9 +2034,10 @@ export default function SettingsPage() {
                                             {/* Language Toggle */}
                                             <div className="flex items-center justify-between pt-4 border-t border-stone-100">
                                                 <span className="text-sm font-medium text-stone-500">Tungumál lýsingar:</span>
-                                                <div className="flex bg-stone-100 rounded-lg p-1">
+                                                <div role="group" aria-label="Tungumál lýsingar" className="flex bg-stone-100 rounded-lg p-1">
                                                     <button
                                                         type="button"
+                                                        aria-pressed={editLang === 'is'}
                                                         onClick={() => setEditLang('is')}
                                                         className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${editLang === 'is'
                                                             ? 'bg-white text-charcoal shadow-sm'
@@ -1992,6 +2048,7 @@ export default function SettingsPage() {
                                                     </button>
                                                     <button
                                                         type="button"
+                                                        aria-pressed={editLang === 'en'}
                                                         onClick={() => setEditLang('en')}
                                                         className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${editLang === 'en'
                                                             ? 'bg-white text-charcoal shadow-sm'
@@ -2005,11 +2062,12 @@ export default function SettingsPage() {
 
                                             <div className={`transition-all duration-300 ${editLang === 'en' ? 'bg-amber-50/50 p-4 rounded-lg border border-amber-100' : ''}`}>
                                                 <div className="mb-4">
-                                                    <label className="label flex items-center gap-2">
+                                                    <label htmlFor={`${baseId}-gi-rules`} className="label flex items-center gap-2">
                                                         Húsreglur
                                                         {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
                                                     </label>
                                                     <textarea
+                                                        id={`${baseId}-gi-rules`}
                                                         className="input min-h-[100px]"
                                                         value={editLang === 'is' ? houseForm.house_rules : houseForm.house_rules_en}
                                                         onChange={(e) => setHouseForm({
@@ -2021,11 +2079,12 @@ export default function SettingsPage() {
                                                 </div>
 
                                                 <div className="mb-4">
-                                                    <label className="label flex items-center gap-2">
+                                                    <label htmlFor={`${baseId}-gi-directions`} className="label flex items-center gap-2">
                                                         Leiðarlýsing (eða hlekkur á kort)
                                                         {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
                                                     </label>
                                                     <textarea
+                                                        id={`${baseId}-gi-directions`}
                                                         className="input"
                                                         value={editLang === 'is' ? houseForm.directions : houseForm.directions_en}
                                                         onChange={(e) => setHouseForm({
@@ -2035,19 +2094,20 @@ export default function SettingsPage() {
                                                         placeholder={editLang === 'is' ? "t.d. Keyrt er í gegnum..." : "e.g. Drive through..."}
                                                     />
                                                     {(houseForm.lat !== 0 && houseForm.lng !== 0) && (
-                                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                                                            <CheckCircle size={12} />
+                                                        <p className="text-xs text-green-700 mt-1 flex items-center gap-1">
+                                                            <CheckCircle size={12} aria-hidden="true" />
                                                             GPS hnit eru skráð. Gestasíðan mun sýna "Rata í hús" takka sjálfkrafa.
                                                         </p>
                                                     )}
                                                 </div>
 
                                                 <div>
-                                                    <label className="label flex items-center gap-2">
+                                                    <label htmlFor={`${baseId}-gi-access`} className="label flex items-center gap-2">
                                                         Aðgangsleiðbeiningar (Lykilbox ofl.)
                                                         {editLang === 'en' && <span className="text-[10px] uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Enska</span>}
                                                     </label>
                                                     <textarea
+                                                        id={`${baseId}-gi-access`}
                                                         className="input"
                                                         value={editLang === 'is' ? houseForm.access_instructions : houseForm.access_instructions_en}
                                                         onChange={(e) => setHouseForm({
@@ -2060,8 +2120,9 @@ export default function SettingsPage() {
                                             </div>
 
                                             <div>
-                                                <label className="label">Neyðarnúmer / Tengiliður</label>
+                                                <label htmlFor={`${baseId}-gi-emergency`} className="label">Neyðarnúmer / Tengiliður</label>
                                                 <input
+                                                    id={`${baseId}-gi-emergency`}
                                                     type="text"
                                                     className="input"
                                                     value={houseForm.emergency_contact}
@@ -2072,7 +2133,7 @@ export default function SettingsPage() {
 
                                             <div className="pt-4 border-t border-stone-100">
                                                 <button type="submit" className="btn btn-primary w-full md:w-auto" disabled={loading}>
-                                                    <Save className="w-4 h-4 mr-2 inline" />
+                                                    <Save className="w-4 h-4 mr-2 inline" aria-hidden="true" />
                                                     Vista upplýsingar
                                                 </button>
                                             </div>
@@ -2088,8 +2149,8 @@ export default function SettingsPage() {
                             <div className="space-y-6">
                                 <div className="bg-white p-6 rounded-lg shadow-sm">
                                     <div className="flex items-center gap-2 mb-6">
-                                        <Heart className="w-6 h-6 text-amber" />
-                                        <h2 className="text-xl font-serif">Gestabók (Digital Journal)</h2>
+                                        <Heart className="w-6 h-6 text-amber-ink" aria-hidden="true" />
+                                        <h2 className="text-xl font-serif">Gestabók</h2>
                                     </div>
                                     <p className="text-grey-dark mb-6">
                                         Hér geta gestir og fjölskyldumeðlimir skrifað minningar og upplifanir af dvöl sinni í húsinu.
@@ -2110,7 +2171,7 @@ export default function SettingsPage() {
                         {activeTab === 'profile' && (
                             <div className="bg-white p-6 rounded-lg shadow-sm">
                                 <div className="flex items-center gap-2 mb-6">
-                                    <UserIcon className="w-6 h-6 text-amber" />
+                                    <UserIcon className="w-6 h-6 text-amber-ink" aria-hidden="true" />
                                     <h2 className="text-xl font-serif">Mínar stillingar</h2>
                                 </div>
 
@@ -2120,39 +2181,42 @@ export default function SettingsPage() {
                                         <div className="relative group cursor-pointer mb-4">
                                             <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-stone-100">
                                                 {currentUser?.avatar ? (
-                                                    <img loading="lazy" src={currentUser.avatar} alt="Profile" className="w-full h-full object-cover" />
+                                                    <img loading="lazy" src={currentUser.avatar} alt="Prófílmynd" className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-stone-400">
-                                                        <UserIcon size={40} />
+                                                    <div className="w-full h-full flex items-center justify-center text-stone-500">
+                                                        <UserIcon size={40} aria-hidden="true" />
                                                     </div>
                                                 )}
                                             </div>
-                                            <label className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
-                                                <ImageIcon size={24} />
+                                            <label htmlFor="avatar-upload" className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity cursor-pointer text-white">
+                                                <ImageIcon size={24} aria-hidden="true" />
+                                                <span className="sr-only">Velja nýja prófílmynd</span>
                                                 <input
                                                     id="avatar-upload"
                                                     type="file"
-                                                    className="hidden"
+                                                    className="sr-only"
                                                     accept="image/*"
                                                     onChange={handleAvatarSelect}
                                                 />
                                             </label>
                                             <button
-                                                className="absolute bottom-0 right-0 bg-amber text-white p-1.5 rounded-full shadow-sm hover:bg-amber-dark transition-colors"
+                                                type="button"
+                                                aria-label="Breyta prófílmynd"
+                                                className="absolute bottom-0 right-0 bg-amber text-charcoal p-1.5 rounded-full shadow-sm hover:bg-amber-dark transition-colors"
                                                 onClick={() => {
                                                     const input = document.getElementById('avatar-upload') as HTMLInputElement;
                                                     input?.click();
                                                 }}
                                             >
-                                                <Edit2 size={12} />
+                                                <Edit2 size={12} aria-hidden="true" />
                                             </button>
                                         </div>
                                         <p className="text-sm text-stone-500">Smelltu á myndina til að breyta</p>
                                     </div>
 
                                     <div>
-                                        <label className="label">Tungumál (Language)</label>
-                                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                        <p id={`${baseId}-lang-h`} className="label">Tungumál</p>
+                                        <div role="group" aria-labelledby={`${baseId}-lang-h`} className="grid grid-cols-2 md:grid-cols-5 gap-3">
                                             {[
                                                 { code: 'is', label: '🇮🇸 Íslenska' },
                                                 { code: 'en', label: '🇬🇧 English' },
@@ -2162,6 +2226,8 @@ export default function SettingsPage() {
                                             ].map((lang) => (
                                                 <button
                                                     key={lang.code}
+                                                    type="button"
+                                                    aria-pressed={currentUser?.language === lang.code}
                                                     onClick={() => handleUpdateLanguage(lang.code as any)}
                                                     className={`
                             p-3 rounded-lg border text-sm font-medium transition-all
@@ -2178,16 +2244,19 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="pt-4 border-t border-grey-warm">
-                                        <label className="label">Nafn</label>
+                                        <label htmlFor={`${baseId}-user-name`} className="label">Nafn</label>
                                         <div className="flex gap-2">
                                             <input
+                                                id={`${baseId}-user-name`}
                                                 type="text"
                                                 className="input max-w-md"
                                                 value={userName}
                                                 onChange={(e) => setUserName(e.target.value)}
                                                 placeholder="Nafn..."
+                                                aria-describedby={`${baseId}-user-name-help`}
                                             />
                                             <button
+                                                type="button"
                                                 onClick={handleSaveProfile}
                                                 disabled={loading || !userName.trim() || userName === currentUser?.name}
                                                 className="btn btn-primary whitespace-nowrap"
@@ -2195,14 +2264,14 @@ export default function SettingsPage() {
                                                 Vista
                                             </button>
                                         </div>
-                                        <p className="text-xs text-grey-mid mt-1">Hér getur þú breytt nafninu þínu sem birtist öðrum notendum.</p>
+                                        <p id={`${baseId}-user-name-help`} className="text-xs text-grey-mid mt-1">Hér getur þú breytt nafninu þínu sem birtist öðrum notendum.</p>
                                     </div>
 
                                     {/* Granular Notification Settings */}
                                     <div className="pt-8 border-t border-stone-200">
                                         <div className="flex items-center gap-3 mb-6">
-                                            <div className="p-2 bg-amber-50 rounded-lg text-amber">
-                                                <Bell size={20} />
+                                            <div className="p-2 bg-amber-50 rounded-lg text-amber-ink">
+                                                <Bell size={20} aria-hidden="true" />
                                             </div>
                                             <div>
                                                 <h3 className="font-serif text-lg font-bold">Tilkynningar</h3>
@@ -2212,10 +2281,10 @@ export default function SettingsPage() {
 
                                         <div className="grid md:grid-cols-3 gap-8">
                                             {/* Email Notifications */}
-                                            <div className="space-y-4">
+                                            <div role="group" aria-labelledby={`${baseId}-notif-email-h`} className="space-y-4">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <Mail size={16} className="text-stone-400" />
-                                                    <h4 className="text-sm font-bold uppercase tracking-wider text-stone-600">Tölvupóstur</h4>
+                                                    <Mail size={16} className="text-stone-500" aria-hidden="true" />
+                                                    <h4 id={`${baseId}-notif-email-h`} className="text-sm font-bold uppercase tracking-wider text-stone-600">Tölvupóstur</h4>
                                                 </div>
 
                                                 <Toggle
@@ -2242,10 +2311,10 @@ export default function SettingsPage() {
                                             </div>
 
                                             {/* In-App Notifications */}
-                                            <div className="space-y-4">
+                                            <div role="group" aria-labelledby={`${baseId}-notif-app-h`} className="space-y-4">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <Bell size={16} className="text-stone-400" />
-                                                    <h4 className="text-sm font-bold uppercase tracking-wider text-stone-600">Í forritinu</h4>
+                                                    <Bell size={16} className="text-stone-500" aria-hidden="true" />
+                                                    <h4 id={`${baseId}-notif-app-h`} className="text-sm font-bold uppercase tracking-wider text-stone-600">Í forritinu</h4>
                                                 </div>
 
                                                 <Toggle
@@ -2274,7 +2343,7 @@ export default function SettingsPage() {
                                             {/* Push Notifications */}
                                             <div className="space-y-4">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <div className="w-4 h-4 rounded-full bg-amber flex items-center justify-center">
+                                                    <div aria-hidden="true" className="w-4 h-4 rounded-full bg-amber flex items-center justify-center">
                                                         <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                                                     </div>
                                                     <h4 className="text-sm font-bold uppercase tracking-wider text-stone-600">Push-tilkynningar</h4>
@@ -2286,12 +2355,13 @@ export default function SettingsPage() {
                                                     </p>
 
                                                     {currentUser?.fcm_tokens && currentUser.fcm_tokens.length > 0 ? (
-                                                        <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100">
-                                                            <Check size={14} />
+                                                        <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 p-2 rounded-lg border border-emerald-100">
+                                                            <Check size={14} aria-hidden="true" />
                                                             <span className="text-xs font-bold">Virkjað á þessu tæki</span>
                                                         </div>
                                                     ) : (
                                                         <button
+                                                            type="button"
                                                             onClick={async () => {
                                                                 if (!currentUser) return;
                                                                 const token = await requestPushPermission(currentUser);
@@ -2313,7 +2383,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="pt-4 border-t border-grey-warm">
-                                        <label className="label">Netfang & Aðgangur</label>
+                                        <p className="label">Netfang & Aðgangur</p>
                                         <div className="bg-stone-50 p-4 rounded-lg border border-stone-200">
                                             <div className="flex justify-between items-center mb-2">
                                                 <div>
@@ -2324,10 +2394,11 @@ export default function SettingsPage() {
                                             </div>
                                             <div className="pt-3 border-t border-stone-200 mt-2">
                                                 <button
+                                                    type="button"
                                                     onClick={handlePasswordReset}
-                                                    className="text-sm font-bold text-amber hover:text-amber-dark flex items-center gap-1 hover:underline"
+                                                    className="text-sm font-bold text-amber-ink hover:text-amber-dark flex items-center gap-1 hover:underline"
                                                 >
-                                                    <RefreshCw size={14} />
+                                                    <RefreshCw size={14} aria-hidden="true" />
                                                     Endurstilla lykilorð (Senda tölvupóst)
                                                 </button>
                                             </div>
@@ -2337,7 +2408,7 @@ export default function SettingsPage() {
                                     {canChangeMembership && (
                                         <div className="pt-8 border-t border-red-200">
                                             <div className="flex items-center gap-2 mb-2 text-red-600">
-                                                <AlertTriangle className="w-5 h-5" />
+                                                <AlertTriangle className="w-5 h-5" aria-hidden="true" />
                                                 <h3 className="font-serif text-lg font-bold">Eyða aðgangi</h3>
                                             </div>
                                             <p className="text-sm text-stone-600 mb-4 max-w-xl">
@@ -2356,10 +2427,11 @@ export default function SettingsPage() {
 
                                     <div className="pt-8 border-t border-grey-warm flex justify-end">
                                         <button
+                                            type="button"
                                             onClick={handleLogout}
-                                            className="btn btn-ghost text-red-500 hover:bg-red-50"
+                                            className="btn btn-ghost text-red-600 hover:bg-red-50"
                                         >
-                                            <LogOut className="w-4 h-4 mr-2" />
+                                            <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
                                             Skrá út
                                         </button>
                                     </div>
@@ -2377,13 +2449,14 @@ export default function SettingsPage() {
                         {/* Feedback Button (Mobile Friendly way to get there) */}
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-100 w-full md:w-80 flex-shrink-0">
                             <div className="flex items-center gap-2 mb-4">
-                                <MessageSquarePlus className="text-amber" size={24} />
+                                <MessageSquarePlus className="text-amber-ink" size={24} aria-hidden="true" />
                                 <h3 className="font-serif font-bold text-lg text-[#1a1a1a]">Gefa umsögn</h3>
                             </div>
                             <p className="text-stone-600 mb-4 text-sm">
                                 Hvað finnst þér um Bústaðinn.is? Við viljum endilega heyra frá þér til að gera kerfið enn betra.
                             </p>
                             <button
+                                type="button"
                                 onClick={() => setShowFeedbackModal(true)}
                                 className="btn btn-secondary w-full border-stone-200 hover:bg-stone-50"
                             >
@@ -2431,21 +2504,33 @@ export default function SettingsPage() {
             {/* Upload Progress Overlay */}
             {
                 uploadingImage && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber/20 flex items-center justify-center">
-                                <Loader2 className="w-8 h-8 text-amber animate-spin" />
+                    <Modal
+                        open
+                        onClose={() => { /* upload cannot be dismissed */ }}
+                        title="Hleður upp mynd..."
+                        size="sm"
+                        dismissible={false}
+                    >
+                        <div className="text-center">
+                            <div aria-hidden="true" className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber/20 flex items-center justify-center">
+                                <Loader2 className="w-8 h-8 text-amber-ink animate-spin" />
                             </div>
-                            <h3 className="text-xl font-bold mb-2">Hleður upp mynd...</h3>
-                            <div className="w-full bg-stone-200 rounded-full h-3 mb-2 overflow-hidden">
+                            <div
+                                role="progressbar"
+                                aria-label="Framvinda upphleðslu"
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-valuenow={uploadProgress}
+                                className="w-full bg-stone-200 rounded-full h-3 mb-2 overflow-hidden"
+                            >
                                 <div
                                     className="bg-gradient-to-r from-amber to-orange-500 h-3 rounded-full transition-all duration-300 ease-out"
                                     style={{ width: `${uploadProgress}%` }}
                                 />
                             </div>
-                            <p className="text-sm text-stone-500 font-medium">{uploadProgress}%</p>
+                            <p role="status" className="text-sm text-stone-500 font-medium">{uploadProgress}%</p>
                         </div>
-                    </div>
+                    </Modal>
                 )
             }
 
@@ -2471,13 +2556,34 @@ export default function SettingsPage() {
                         (!needsNewManager || !!newManagerChoice) &&
                         (!needsTyped || membershipText === 'EYÐA');
                     return (
-                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
-                            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                                <div className="flex items-center gap-3 text-red-600 mb-4">
-                                    <AlertTriangle className="w-8 h-8" />
-                                    <h3 className="text-xl font-bold font-serif">{title}</h3>
-                                </div>
-
+                        <Modal
+                            open
+                            onClose={closeMembershipAction}
+                            title={title}
+                            size="md"
+                            dismissible={!membershipBusy}
+                            footer={
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={closeMembershipAction}
+                                        disabled={membershipBusy}
+                                        className="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-md text-sm font-medium transition-colors"
+                                    >
+                                        Hætta við
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleConfirmMembershipAction}
+                                        disabled={!canConfirm}
+                                        className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                                    >
+                                        {membershipBusy ? 'Augnablik...' : confirmLabel}
+                                    </button>
+                                </>
+                            }
+                        >
+                            <div>
                                 {type === 'leave' && (
                                     <p className="text-stone-600 mb-4 text-sm leading-relaxed">
                                         Þú missir aðgang að húsinu <strong>{house?.name}</strong>. Aðrir meðeigendur halda áfram að hafa aðgang.
@@ -2524,10 +2630,11 @@ export default function SettingsPage() {
 
                                 {needsTyped && (
                                     <>
-                                        <p className="text-xs text-stone-500 mb-2 uppercase font-bold tracking-wide">
+                                        <label htmlFor={`${baseId}-confirm-text`} className="block text-xs text-stone-500 mb-2 uppercase font-bold tracking-wide">
                                             Skrifaðu &quot;EYÐA&quot; til að staðfesta:
-                                        </p>
+                                        </label>
                                         <input
+                                            id={`${baseId}-confirm-text`}
                                             type="text"
                                             className="w-full border border-stone-300 rounded-md px-3 py-2 mb-4 font-mono text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 uppercase"
                                             placeholder="EYÐA"
@@ -2555,29 +2662,12 @@ export default function SettingsPage() {
                                 )}
 
                                 {membershipModalError && (
-                                    <div className="bg-red-100 border border-red-300 text-red-700 px-3 py-2 rounded mb-4 text-sm">
+                                    <div role="alert" className="bg-red-100 border border-red-300 text-red-700 px-3 py-2 rounded mb-4 text-sm">
                                         {membershipModalError}
                                     </div>
                                 )}
-
-                                <div className="flex gap-3 justify-end">
-                                    <button
-                                        onClick={closeMembershipAction}
-                                        disabled={membershipBusy}
-                                        className="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-md text-sm font-medium transition-colors"
-                                    >
-                                        Hætta við
-                                    </button>
-                                    <button
-                                        onClick={handleConfirmMembershipAction}
-                                        disabled={!canConfirm}
-                                        className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                                    >
-                                        {membershipBusy ? 'Augnablik...' : confirmLabel}
-                                    </button>
-                                </div>
                             </div>
-                        </div>
+                        </Modal>
                     );
                 })()
             }
@@ -2585,13 +2675,40 @@ export default function SettingsPage() {
             {/* Ownership Transfer Modal */}
             {
                 memberToTransfer && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                            <div className="flex items-center gap-3 text-red-600 mb-4">
-                                <AlertTriangle className="w-8 h-8" />
-                                <h3 className="text-xl font-bold font-serif">Flytja Eignarhald?</h3>
-                            </div>
-
+                    <Modal
+                        open
+                        onClose={() => {
+                            setMemberToTransfer(null);
+                            setTransferConfirmation('');
+                        }}
+                        title="Flytja Eignarhald?"
+                        size="md"
+                        dismissible={!transferBusy}
+                        footer={
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setMemberToTransfer(null);
+                                        setTransferConfirmation('');
+                                    }}
+                                    disabled={transferBusy}
+                                    className="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-md text-sm font-medium transition-colors"
+                                >
+                                    Hætta við
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleTransferOwnership}
+                                    disabled={transferConfirmation !== 'SAMÞYKKJA' || transferBusy}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                                >
+                                    Staðfesta Flutning
+                                </button>
+                            </>
+                        }
+                    >
+                        <div>
                             <p className="text-stone-600 mb-4 text-sm leading-relaxed">
                                 Þú ert að fara að gera <strong>{memberToTransfer.name || memberToTransfer.email}</strong> að umsjónarmanni hússins.
                             </p>
@@ -2600,38 +2717,21 @@ export default function SettingsPage() {
                                 <strong>Aðvörun:</strong> Þú munt missa umsjónarréttindi (húsupplýsingar, stillingar, o.fl.) og verður venjulegur meðeigandi.
                             </div>
 
-                            <p className="text-xs text-stone-500 mb-2 uppercase font-bold tracking-wide">
+                            <label htmlFor={`${baseId}-transfer-confirm`} className="block text-xs text-stone-500 mb-2 uppercase font-bold tracking-wide">
                                 Skrifaðu "SAMÞYKKJA" til að staðfesta:
-                            </p>
+                            </label>
 
                             <input
+                                id={`${baseId}-transfer-confirm`}
                                 type="text"
-                                className="w-full border border-stone-300 rounded-md px-3 py-2 mb-6 font-mono text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 uppercase"
+                                className="w-full border border-stone-300 rounded-md px-3 py-2 font-mono text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 uppercase"
                                 placeholder="SAMÞYKKJA"
                                 value={transferConfirmation}
                                 onChange={(e) => setTransferConfirmation(e.target.value.toUpperCase())}
+                                autoComplete="off"
                             />
-
-                            <div className="flex gap-3 justify-end">
-                                <button
-                                    onClick={() => {
-                                        setMemberToTransfer(null);
-                                        setTransferConfirmation('');
-                                    }}
-                                    className="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-md text-sm font-medium transition-colors"
-                                >
-                                    Hætta við
-                                </button>
-                                <button
-                                    onClick={handleTransferOwnership}
-                                    disabled={transferConfirmation !== 'SAMÞYKKJA'}
-                                    className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                                >
-                                    Staðfesta Flutning
-                                </button>
-                            </div>
                         </div>
-                    </div>
+                    </Modal>
                 )
             }
             <MobileNav />

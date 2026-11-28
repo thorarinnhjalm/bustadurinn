@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { X, HelpCircle, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { useId, useState } from 'react';
+import { HelpCircle, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
 
 interface QuickHelpModalProps {
     isOpen: boolean;
@@ -42,78 +43,76 @@ const FAQ_ITEMS = [
 ];
 
 export default function QuickHelpModal({ isOpen, onClose }: QuickHelpModalProps) {
+    const baseId = useId();
     const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-
-            {/* Modal */}
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-                {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-stone-100 bg-amber/5">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-amber/20 flex items-center justify-center">
-                            <HelpCircle className="w-5 h-5 text-amber" />
-                        </div>
-                        <div>
-                            <h2 className="font-serif font-bold text-lg text-charcoal">Hjálp</h2>
-                            <p className="text-sm text-stone-500">Algengar spurningar</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="text-stone-400 hover:text-charcoal transition-colors p-2 hover:bg-stone-100 rounded-full"
-                    >
-                        <X size={20} />
-                    </button>
+        <Modal
+            open={isOpen}
+            onClose={onClose}
+            title="Hjálp"
+            size="lg"
+            bodyClassName="!px-0 !pb-0"
+            footer={
+                <a
+                    href="/faq"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center gap-2 text-amber-ink hover:text-amber-700 font-bold text-sm"
+                >
+                    Sjá allar spurningar
+                    <span className="sr-only"> (opnast í nýjum flipa)</span>
+                    <ExternalLink size={14} aria-hidden="true" />
+                </a>
+            }
+        >
+            <div className="flex items-center gap-3 px-6 pb-4 border-b border-stone-100">
+                <div className="w-10 h-10 rounded-full bg-amber/20 flex items-center justify-center">
+                    <HelpCircle className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                 </div>
+                <p className="text-sm text-stone-500">Algengar spurningar</p>
+            </div>
 
-                {/* FAQ List */}
-                <div className="overflow-y-auto max-h-[calc(80vh-180px)]">
-                    <div className="divide-y divide-stone-100">
-                        {FAQ_ITEMS.map((faq, index) => (
-                            <div key={index}>
+            {/* FAQ List */}
+            <div className="divide-y divide-stone-100">
+                {FAQ_ITEMS.map((faq, index) => {
+                    const isOpenItem = openIndex === index;
+                    const buttonId = `${baseId}-q-${index}`;
+                    const panelId = `${baseId}-a-${index}`;
+                    return (
+                        <div key={index}>
+                            <h3 className="m-0">
                                 <button
-                                    onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                                    className="w-full flex items-center justify-between p-4 text-left hover:bg-stone-50 transition-colors"
+                                    type="button"
+                                    id={buttonId}
+                                    aria-expanded={isOpenItem}
+                                    aria-controls={panelId}
+                                    onClick={() => setOpenIndex(isOpenItem ? null : index)}
+                                    className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-stone-50 transition-colors"
                                 >
                                     <span className="font-medium text-charcoal pr-4">{faq.q}</span>
-                                    {openIndex === index ? (
-                                        <ChevronUp size={18} className="text-amber flex-shrink-0" />
+                                    {isOpenItem ? (
+                                        <ChevronUp size={18} className="text-amber-ink flex-shrink-0" aria-hidden="true" />
                                     ) : (
-                                        <ChevronDown size={18} className="text-stone-400 flex-shrink-0" />
+                                        <ChevronDown size={18} className="text-stone-500 flex-shrink-0" aria-hidden="true" />
                                     )}
                                 </button>
-                                <div
-                                    className={`overflow-hidden transition-all duration-200 ${openIndex === index ? 'max-h-48' : 'max-h-0'
-                                        }`}
-                                >
-                                    <p className="px-4 pb-4 text-stone-600 text-sm leading-relaxed">
-                                        {faq.a}
-                                    </p>
-                                </div>
+                            </h3>
+                            <div
+                                id={panelId}
+                                role="region"
+                                aria-labelledby={buttonId}
+                                inert={!isOpenItem}
+                                className={`overflow-hidden transition-all duration-200 ${isOpenItem ? 'max-h-48' : 'max-h-0'}`}
+                            >
+                                <p className="px-6 pb-4 text-stone-600 text-sm leading-relaxed">
+                                    {faq.a}
+                                </p>
                             </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className="p-4 border-t border-stone-100 bg-stone-50/50">
-                    <a
-                        href="/faq"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 text-amber hover:text-amber-600 font-bold text-sm"
-                    >
-                        Sjá allar spurningar
-                        <ExternalLink size={14} />
-                    </a>
-                </div>
+                        </div>
+                    );
+                })}
             </div>
-        </div>
+        </Modal>
     );
 }

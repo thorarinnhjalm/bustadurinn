@@ -1,19 +1,18 @@
 // Declare Google Maps types
 declare const google: any;
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useId } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Home, MapPin, Users, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, doc, arrayUnion, getDoc, runTransaction } from 'firebase/firestore';
-import type { FieldValue } from 'firebase/firestore';
+import { Home, MapPin, Users, CheckCircle, Loader2 } from 'lucide-react';
+import { collection, addDoc, serverTimestamp, doc, arrayUnion, runTransaction } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAppStore } from '@/store/appStore';
 import { searchHMSAddresses, formatHMSAddress } from '@/utils/hmsSearch';
 import { analytics } from '@/utils/analytics';
 import { logger } from '@/utils/logger';
+import { getUserMessage } from '@/utils/userMessages';
 import { trackFunnel, describeError, markInOnboarding } from '@/utils/funnel';
 import AddToHomeScreenPrompt from '@/components/AddToHomeScreenPrompt';
-import type { AppNotification } from '@/types/models';
 import { generateInviteCode } from '@/utils/secureToken';
 
 type OnboardingStep = 'welcome' | 'house' | 'invite' | 'finish';
@@ -44,9 +43,27 @@ export default function OnboardingPage() {
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [debounceTimer, setDebounceTimer] = useState<any>(null); // Store timer
     const [showPwaPrompt, setShowPwaPrompt] = useState(false);
+    const [nameInvalid, setNameInvalid] = useState(false);
+    const nameId = useId();
+    const addressId = useId();
+    const addressHintId = useId();
+    const emailsId = useId();
+    const errorId = useId();
+    const cardRef = useRef<HTMLDivElement>(null);
+    const firstStepRender = useRef(true);
 
-    const [duplicateHouse, setDuplicateHouse] = useState<{ id: string; name: string; manager_id: string } | null>(null);
-    const [joinRequestSent, setJoinRequestSent] = useState(false);
+    // Move focus to the step heading when the step changes (screen reader + keyboard users)
+    useEffect(() => {
+        if (firstStepRender.current) {
+            firstStepRender.current = false;
+            return;
+        }
+        const heading = cardRef.current?.querySelector<HTMLElement>('h2');
+        if (heading) {
+            heading.setAttribute('tabindex', '-1');
+            heading.focus();
+        }
+    }, [currentStep]);
 
     const steps = [
         { id: 'welcome', label: 'Velkomin' },
@@ -114,7 +131,7 @@ export default function OnboardingPage() {
             const loadMaps = async () => {
                 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
                 if (!apiKey) {
-                    console.warn('Google Maps API key not found.');
+                    logger.warn('Google Maps API key not found.');
                     void trackFunnel('maps_key_missing');
                     return;
                 }
@@ -127,7 +144,7 @@ export default function OnboardingPage() {
                     script.defer = true;
                     script.onload = () => setScriptLoaded(true);
                     script.onerror = () => {
-                        console.error('Failed to load Maps');
+                        logger.error('Failed to load Maps');
                         void trackFunnel('maps_load_error');
                     };
                     document.head.appendChild(script);
@@ -141,8 +158,6 @@ export default function OnboardingPage() {
 
     const handleAddressChange = (val: string) => {
         setHouseData(prev => ({ ...prev, address: val }));
-        setDuplicateHouse(null); // Reset duplicate warning on change
-        setJoinRequestSent(false);
 
         // Debounce Search
         if (debounceTimer) clearTimeout(debounceTimer);
@@ -163,7 +178,7 @@ export default function OnboardingPage() {
                         });
                     });
                 } catch (e) {
-                    console.error("HMS search error:", e);
+                    logger.error("HMS search error:", e);
                     void trackFunnel('address_search_error', { source: 'hms', ...describeError(e) });
                 }
 
@@ -191,7 +206,7 @@ export default function OnboardingPage() {
                             });
                         }
                     } catch (e) {
-                        console.error("Google search error:", e);
+                        logger.error("Google search error:", e);
                         void trackFunnel('address_search_error', { source: 'google', ...describeError(e) });
                     }
                 }
@@ -249,65 +264,6 @@ export default function OnboardingPage() {
         }
     };
 
-    const handleSendJoinRequest = async () => {
-        if (!duplicateHouse || !currentUser) return;
-        void trackFunnel('join_request_submitted', { target_house_id: duplicateHouse.id });
-        setLoading(true);
-        setError('');
-
-        try {
-            // 1. Fetch manager email
-            const managerDoc = await getDoc(doc(db, 'users', duplicateHouse.manager_id));
-            if (!managerDoc.exists()) throw new Error('Eigandi fannst ekki');
-            const managerData = managerDoc.data();
-            const managerEmail = managerData.email;
-
-            // 2. Send email via API
-            const token = await auth.currentUser?.getIdToken();
-            await fetch('/api/send-email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    templateId: 'general_notification', // Using generic template for now
-                    to: managerEmail,
-                    variables: {
-                        title: 'Beiðni um aðgang að húsi',
-                        message: `${currentUser.name || currentUser.email} hefur óskað eftir aðgangi að húsinu ${duplicateHouse.name} (${houseData.address}).`,
-                        actionUrl: 'https://www.bustadurinn.is/dashboard' // Ideally link to approvals
-                    }
-                })
-            });
-
-            // 3. Create a notification in DB
-            const joinRequestNotification: Omit<AppNotification, 'id' | 'created_at'> & { created_at: FieldValue } = {
-                user_id: duplicateHouse.manager_id,
-                house_id: duplicateHouse.id,
-                type: 'join_request',
-                title: 'Beiðni um aðgang',
-                message: `${currentUser.name || currentUser.email} vill ganga í húsfélagið fyrir ${duplicateHouse.name}`,
-                data: {
-                    requester_id: currentUser.uid,
-                    requester_email: currentUser.email || undefined,
-                },
-                read: false,
-                created_at: serverTimestamp()
-            };
-            await addDoc(collection(db, 'notifications'), joinRequestNotification);
-
-            setJoinRequestSent(true);
-            void trackFunnel('join_request_sent', { target_house_id: duplicateHouse.id });
-        } catch (err: any) {
-            console.error('Error sending request:', err);
-            void trackFunnel('join_request_error', describeError(err));
-            setError('Ekki tókst að senda beiðni: ' + err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleCreateHouse = async () => {
         // Only name is strictly required now
         void trackFunnel('house_create_submitted', {
@@ -316,7 +272,9 @@ export default function OnboardingPage() {
             has_location: !!(houseData.location?.lat || houseData.location?.lng),
         });
 
+        setNameInvalid(false);
         if (!houseData.name) {
+            setNameInvalid(true);
             setError('Vinsamlegast settu inn nafn á húsið');
             analytics.error('house_creation', 'Missing house name');
             void trackFunnel('house_create_error', { stage: 'validation', code: 'missing_name' });
@@ -415,7 +373,7 @@ export default function OnboardingPage() {
                     created_at: serverTimestamp()
                 });
             } catch (initErr) {
-                console.error("Error initializing default data:", initErr);
+                logger.error("Error initializing default data:", initErr);
                 void trackFunnel('house_init_error', { house_id: houseId!, ...describeError(initErr) });
                 // Non-critical, continue
             }
@@ -434,7 +392,7 @@ export default function OnboardingPage() {
                 house_ids: [...(currentUser.house_ids || []), houseId!]
             });
 
-            console.log("House transaction complete. ID:", houseId!);
+            logger.debug("House transaction complete. ID:", houseId!);
 
             analytics.onboardingCompleted();
 
@@ -460,11 +418,11 @@ export default function OnboardingPage() {
                     if (res.ok) {
                         logger.info('Welcome email sent');
                     } else {
-                        console.error('❌ Failed to send welcome email');
+                        logger.error('Failed to send welcome email');
                         void trackFunnel('onboarding_email_error', { template: 'welcome', status: res.status });
                     }
                 } catch (e) {
-                    console.error("Failed to send welcome email:", e);
+                    logger.error("Failed to send welcome email:", e);
                     void trackFunnel('onboarding_email_error', { template: 'welcome', ...describeError(e) });
                 }
             })();
@@ -494,30 +452,30 @@ export default function OnboardingPage() {
                     if (res.ok) {
                         logger.info('Onboarding completion email sent');
                     } else {
-                        console.error('❌ Failed to send onboarding email');
+                        logger.error('Failed to send onboarding email');
                         void trackFunnel('onboarding_email_error', { template: 'onboarding_complete', status: res.status });
                     }
                 } catch (e) {
-                    console.error("Failed to send onboarding email:", e);
+                    logger.error("Failed to send onboarding email:", e);
                     void trackFunnel('onboarding_email_error', { template: 'onboarding_complete', ...describeError(e) });
                 }
             })();
 
-            console.log("Tracking analytics...");
+            logger.debug("Tracking analytics...");
             analytics.onboardingStep('invite');
             logFunnelEvent('house_created', { house_id: houseId! });
             // Lets the dashboard record the end of the funnel once.
             markInOnboarding();
 
-            console.log("Calling nextStep()...");
+            logger.debug("Calling nextStep()...");
             nextStep();
         } catch (err: any) {
-            console.error('Error creating house:', err);
+            logger.error('Error creating house:', err);
             void trackFunnel('house_create_error', { stage: 'transaction', ...describeError(err) });
             if (err.message && err.message.includes("User does not exist")) {
                 setError('Villa: Notandaskráningu ekki lokið. Vinsamlegast endurhladdu síðuna til að klára uppsetningu.');
             } else {
-                setError('Villa kom upp við að búa til hús: ' + (err.message || 'Óþekkt villa'));
+                setError(getUserMessage(err, 'Villa kom upp við að búa til hús. Reyndu aftur.'));
             }
             analytics.error('house_creation', err.message, err.code);
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -581,16 +539,16 @@ export default function OnboardingPage() {
                 first_error: failures.length > 0 ? describeError((failures[0] as PromiseRejectedResult).reason).message : undefined,
             });
             if (failures.length > 0) {
-                console.error('Some invites failed:', failures);
+                logger.error('Some invites failed:', failures);
                 setError(`Villa: Gat ekki sent boð á ${failures.length} af ${emailList.length} netföngum. Þú getur reynt aftur, eða smellt á 'Sleppa þessu' til að halda áfram og bæta þeim við síðar.`);
                 return; // Block flow so user can see error and retry or skip
             }
 
             nextStep();
         } catch (err: any) {
-            console.error('Error sending invites:', err);
+            logger.error('Error sending invites:', err);
             void trackFunnel('invites_error', describeError(err));
-            setError('Villa við að senda boð: ' + err.message);
+            setError(getUserMessage(err, 'Villa við að senda boð. Reyndu aftur.'));
         } finally {
             setLoading(false);
         }
@@ -604,14 +562,17 @@ export default function OnboardingPage() {
                     <div className="flex justify-between items-center mb-4">
                         {steps.map((step, index) => (
                             <div key={step.id} className="flex items-center flex-1">
-                                <div className={`
+                                <div
+                                    aria-current={index === currentStepIndex ? 'step' : undefined}
+                                    className={`
                   w-10 h-10 rounded-full flex items-center justify-center
                   ${index <= currentStepIndex
                                         ? 'bg-charcoal text-bone'
                                         : 'bg-grey-warm text-grey-mid'
                                     }
                 `}>
-                                    {index + 1}
+                                    <span aria-hidden="true">{index + 1}</span>
+                                    <span className="sr-only">Skref {index + 1} af {steps.length}: {step.label}</span>
                                 </div>
                                 {index < steps.length - 1 && (
                                     <div className={`
@@ -622,7 +583,7 @@ export default function OnboardingPage() {
                             </div>
                         ))}
                     </div>
-                    <div className="flex justify-between text-sm text-grey-mid">
+                    <div className="flex justify-between text-sm text-grey-mid" aria-hidden="true">
                         {steps.map(step => (
                             <span key={step.id} className="flex-1 text-center">
                                 {step.label}
@@ -633,69 +594,18 @@ export default function OnboardingPage() {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500 text-red-700 rounded p-4 mb-6">
+                    <div id={errorId} role="alert" className="bg-red-500/10 border border-red-500 text-red-700 rounded p-4 mb-6">
                         {error}
                     </div>
                 )}
 
                 {/* Step Content */}
-                <div className="card">
-                    {/* Duplicate House Modal/Override */}
-                    {duplicateHouse && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                            <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
-                                <div className="flex items-center gap-3 text-amber mb-4">
-                                    <AlertTriangle className="w-8 h-8" />
-                                    <h3 className="text-xl font-bold text-charcoal m-0">Húsið er þegar skráð</h3>
-                                </div>
-
-                                <p className="text-charcoal mb-4">
-                                    Húsið <strong>{duplicateHouse.name}</strong> á {houseData.address} er þegar skráð í kerfið.
-                                </p>
-
-                                {joinRequestSent ? (
-                                    <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded mb-6 flex items-center gap-3">
-                                        <CheckCircle className="w-5 h-5" />
-                                        <div>
-                                            <p className="font-bold">Beiðni send!</p>
-                                            <p className="text-sm">Eigandi hússins fær tilkynningu um að þú viljir fá aðgang.</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <p className="text-grey-dark mb-6">
-                                        Í stað þess að búa til nýtt hús, viltu senda beiðni á núverandi eiganda um að fá aðgang?
-                                    </p>
-                                )}
-
-                                <div className="flex flex-col gap-3">
-                                    {!joinRequestSent && (
-                                        <button
-                                            onClick={handleSendJoinRequest}
-                                            className="btn btn-primary w-full justify-center"
-                                            disabled={loading}
-                                        >
-                                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Senda aðgangsbeiðni'}
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={() => {
-                                            setDuplicateHouse(null);
-                                            setJoinRequestSent(false);
-                                        }}
-                                        className="btn btn-ghost w-full"
-                                    >
-                                        Loka og breyta skráningu
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
+                <div className="card" ref={cardRef}>
                     {currentStep === 'welcome' && (
                         <div className="text-center py-8 animate-fade-in relative">
                             {/* Removed Urgency Badge */}
 
-                            <Home className="w-16 h-16 mx-auto mb-6 text-amber" />
+                            <Home className="w-16 h-16 mx-auto mb-6 text-amber-ink" aria-hidden="true" />
                             <h2 className="mb-4">Velkomin í Bústaðurinn.is</h2>
                             <p className="text-xl text-grey-dark mb-4 max-w-md mx-auto">
                                 Við skulum setja upp sumarhúsið ykkar í kerfinu.
@@ -704,9 +614,9 @@ export default function OnboardingPage() {
 
                             {/* Removed Launch Offer Info */}
 
-                            <button onClick={nextStep} className="btn btn-primary w-full md:w-auto px-8 relative overflow-hidden group">
+                            <button type="button" onClick={nextStep} className="btn btn-primary w-full md:w-auto px-8 relative overflow-hidden group">
                                 <span className="relative z-10">Byrja uppsetningu</span>
-                                <div className="absolute inset-0 bg-white/20 transform -skew-x-12 translate-x-full group-hover:translate-x-[-150%] transition-transform duration-700 ease-in-out"></div>
+                                <div aria-hidden="true" className="motion-reduce:hidden absolute inset-0 bg-white/20 transform -skew-x-12 translate-x-full group-hover:translate-x-[-150%] transition-transform duration-700 ease-in-out"></div>
                             </button>
                         </div>
                     )}
@@ -714,15 +624,18 @@ export default function OnboardingPage() {
                     {currentStep === 'house' && (
                         <div className="animate-fade-in">
                             <div className="flex items-center gap-3 mb-6">
-                                <MapPin className="w-8 h-8 text-amber" />
+                                <MapPin className="w-8 h-8 text-amber-ink" aria-hidden="true" />
                                 <h2 className="mb-0">Upplýsingar um húsið</h2>
                             </div>
 
                             <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleCreateHouse(); }}>
                                 <div>
-                                    <label className="label">Nafn á húsinu *</label>
+                                    <label htmlFor={nameId} className="label">Nafn á húsinu *</label>
                                     <input
+                                        id={nameId}
                                         type="text"
+                                        aria-invalid={nameInvalid ? true : undefined}
+                                        aria-describedby={nameInvalid ? errorId : undefined}
                                         className="input"
                                         value={houseData.name}
                                         onChange={(e) => setHouseData({ ...houseData, name: e.target.value })}
@@ -732,9 +645,11 @@ export default function OnboardingPage() {
                                 </div>
 
                                 <div className="relative">
-                                    <label className="label">Heimilisfang <span className="font-normal text-gray-500">(má fylla út síðar)</span></label>
+                                    <label htmlFor={addressId} className="label">Heimilisfang <span className="font-normal text-stone-600">(má fylla út síðar)</span></label>
                                     <input
+                                        id={addressId}
                                         type="text"
+                                        aria-describedby={addressHintId}
                                         className="input"
                                         value={houseData.address}
                                         onChange={(e) => handleAddressChange(e.target.value)}
@@ -746,37 +661,42 @@ export default function OnboardingPage() {
                                             {suggestions.map((suggestion) => (
                                                 <li
                                                     key={suggestion.id}
-                                                    onClick={() => handleSelectPrediction(suggestion)}
-                                                    className="px-4 py-3 hover:bg-stone-50 cursor-pointer text-sm border-b last:border-0 border-stone-100 flex items-center justify-between group"
+                                                    className="border-b last:border-0 border-stone-100"
                                                 >
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleSelectPrediction(suggestion)}
+                                                        className="w-full text-left px-4 py-3 hover:bg-stone-50 cursor-pointer text-sm flex items-center justify-between group"
+                                                    >
                                                     <div className="flex items-center gap-3">
                                                         {suggestion.source === 'hms' ? (
                                                             <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                                                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                                                <CheckCircle className="w-4 h-4 text-green-600" aria-hidden="true" />
                                                             </div>
                                                         ) : (
                                                             <div className="w-6 h-6 bg-stone-100 rounded-full flex items-center justify-center">
-                                                                <MapPin className="w-4 h-4 text-stone-400" />
+                                                                <MapPin className="w-4 h-4 text-stone-500" aria-hidden="true" />
                                                             </div>
                                                         )}
                                                         <span className="font-medium">{suggestion.description}</span>
                                                     </div>
                                                     {suggestion.source === 'hms' && (
-                                                        <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200 font-bold uppercase tracking-wider">
+                                                        <span className="text-xs bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200 font-bold uppercase tracking-wider">
                                                             HMS
                                                         </span>
                                                     )}
+                                                    </button>
                                                 </li>
                                             ))}
                                         </ul>
                                     )}
-                                    <p className="text-sm text-grey-mid mt-2">
+                                    <p id={addressHintId} className="text-sm text-grey-mid mt-2">
                                         Þú getur bætt við heimilisfangi síðar til að fá veðurspá og nákvæma staðsetningu.
                                     </p>
 
                                     <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mt-3 flex gap-3 items-start">
                                         <div className="bg-blue-100 p-1.5 rounded-full mt-0.5">
-                                            <MapPin className="w-4 h-4 text-blue-600" />
+                                            <MapPin className="w-4 h-4 text-blue-700" aria-hidden="true" />
                                         </div>
                                         <div>
                                             <p className="text-sm text-blue-900 font-medium mb-0.5">Betri upplifun</p>
@@ -791,10 +711,10 @@ export default function OnboardingPage() {
                                     <button type="button" onClick={prevStep} className="btn btn-ghost" disabled={loading}>
                                         Til baka
                                     </button>
-                                    <button type="submit" className="btn btn-primary" disabled={loading}>
+                                    <button type="submit" className="btn btn-primary" disabled={loading} aria-busy={loading}>
                                         {loading ? (
                                             <>
-                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
                                                 Bý til hús...
                                             </>
                                         ) : (
@@ -809,7 +729,7 @@ export default function OnboardingPage() {
                     {currentStep === 'invite' && (
                         <div className="animate-fade-in">
                             <div className="flex items-center gap-3 mb-6">
-                                <Users className="w-8 h-8 text-amber" />
+                                <Users className="w-8 h-8 text-amber-ink" aria-hidden="true" />
                                 <h2 className="mb-0">Bjóða meðeigendum</h2>
                             </div>
 
@@ -839,8 +759,11 @@ export default function OnboardingPage() {
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="label">Netföng (aðskilin með kommu)</label>
+                                    <label htmlFor={emailsId} className="label">Netföng (aðskilin með kommu)</label>
                                     <textarea
+                                        id={emailsId}
+                                        autoComplete="email"
+                                        aria-describedby={error ? errorId : undefined}
                                         className="input min-h-[100px]"
                                         placeholder="nafn1@netfang.is, nafn2@netfang.is"
                                         value={inviteEmails}
@@ -850,16 +773,16 @@ export default function OnboardingPage() {
                             </div>
 
                             <div className="flex gap-4 justify-end mt-6">
-                                <button onClick={prevStep} className="btn btn-ghost" disabled={loading}>
+                                <button type="button" onClick={prevStep} className="btn btn-ghost" disabled={loading}>
                                     Til baka
                                 </button>
-                                <button onClick={() => { void trackFunnel('invites_skipped', { reason: 'skip_button' }); nextStep(); }} className="btn btn-secondary font-medium border-transparent hover:border-stone-200" disabled={loading}>
+                                <button type="button" onClick={() => { void trackFunnel('invites_skipped', { reason: 'skip_button' }); nextStep(); }} className="btn btn-secondary font-medium border-transparent hover:border-stone-200" disabled={loading}>
                                     Sleppa þessu (Bæta við seinna)
                                 </button>
-                                <button onClick={handleSendInvites} className="btn btn-primary" disabled={loading}>
+                                <button type="button" onClick={handleSendInvites} className="btn btn-primary" disabled={loading} aria-busy={loading}>
                                     {loading ? (
                                         <>
-                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
                                             Sendi boð...
                                         </>
                                     ) : (
@@ -872,13 +795,14 @@ export default function OnboardingPage() {
 
                     {currentStep === 'finish' && (
                         <div className="text-center py-8 animate-fade-in">
-                            <CheckCircle className="w-16 h-16 mx-auto mb-6 text-amber" />
+                            <CheckCircle className="w-16 h-16 mx-auto mb-6 text-amber-ink" aria-hidden="true" />
                             <h2 className="mb-4">Allt tilbúið!</h2>
                             <p className="text-xl text-grey-dark mb-8 max-w-md mx-auto">
                                 Uppsetningu á <strong>{houseData.name || 'sumarhúsinu'}</strong> er
                                 lokið. Njótið þess að nota kerfið!
                             </p>
                             <button
+                                type="button"
                                 onClick={() => {
                                     analytics.onboardingCompleted();
                                     logFunnelEvent('onboarding_completed');

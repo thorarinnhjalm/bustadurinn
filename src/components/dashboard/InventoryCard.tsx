@@ -24,6 +24,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { InventoryItem } from '@/types/models';
+import { logger } from '@/utils/logger';
 
 interface InventoryCardProps {
     houseId: string;
@@ -31,6 +32,8 @@ interface InventoryCardProps {
     currentUserName: string;
     inventoryItems: InventoryItem[];
     onInitialize: () => Promise<void>;
+    /** Initialising the checklist writes manager-only house fields. Defaults to true. */
+    canManage?: boolean;
 }
 
 type CategoryKey = 'pantry' | 'kitchen' | 'bedding' | 'cleaning';
@@ -82,7 +85,8 @@ export default function InventoryCard({
     currentUserId,
     currentUserName,
     inventoryItems,
-    onInitialize
+    onInitialize,
+    canManage = true
 }: InventoryCardProps) {
     const [activeTab, setActiveTab] = useState<CategoryKey>('pantry');
     const [showAddForm, setShowAddForm] = useState(false);
@@ -143,7 +147,7 @@ export default function InventoryCard({
                 }
             }
         } catch (error) {
-            console.error('Error toggling inventory item status:', error);
+            logger.error('Error toggling inventory item status:', error);
         }
     };
 
@@ -170,7 +174,7 @@ export default function InventoryCard({
             setNewItemQuantity('');
             setShowAddForm(false);
         } catch (error) {
-            console.error('Error adding inventory item:', error);
+            logger.error('Error adding inventory item:', error);
         } finally {
             setLoading(false);
         }
@@ -199,7 +203,7 @@ export default function InventoryCard({
             });
             setEditingItemId(null);
         } catch (error) {
-            console.error('Error updating inventory item:', error);
+            logger.error('Error updating inventory item:', error);
         }
     };
 
@@ -209,7 +213,7 @@ export default function InventoryCard({
         try {
             await deleteDoc(doc(db, 'houses', houseId, 'inventory', itemId));
         } catch (error) {
-            console.error('Error deleting inventory item:', error);
+            logger.error('Error deleting inventory item:', error);
         }
     };
 
@@ -228,7 +232,7 @@ export default function InventoryCard({
         <section className="group">
             <div className="flex justify-between items-center mb-4 px-1">
                 <div className="flex items-center gap-2">
-                    <Package className="w-5 h-5 text-amber" />
+                    <Package className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                     <h3 className="font-serif text-xl font-bold text-[#1a1a1a]">Hvað er til</h3>
                 </div>
                 {!isTotalEmpty && (
@@ -238,9 +242,10 @@ export default function InventoryCard({
                             setShowAddForm(!showAddForm);
                             setNewItemQuantity(activeCategoryConfig.defaultQuantity || '');
                         }}
-                        className="text-xs font-bold text-amber hover:underline flex items-center gap-1 bg-amber/10 hover:bg-amber/20 px-3 py-1.5 rounded-full transition-colors"
+                        aria-expanded={showAddForm}
+                        className="text-xs font-bold text-amber-ink hover:underline flex items-center gap-1 bg-amber/10 hover:bg-amber/20 px-3 py-1.5 rounded-full transition-colors"
                     >
-                        <Plus size={14} />
+                        <Plus size={14} aria-hidden="true" />
                         Skrá atriði
                     </button>
                 )}
@@ -249,27 +254,31 @@ export default function InventoryCard({
             <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden min-h-[220px]">
                 {isTotalEmpty ? (
                     <div className="h-full flex flex-col items-center justify-center text-center py-8">
-                        <div className="w-14 h-14 bg-amber/10 text-amber rounded-full flex items-center justify-center mb-4 shadow-sm">
-                            <Package size={26} />
+                        <div className="w-14 h-14 bg-amber/10 text-amber-ink rounded-full flex items-center justify-center mb-4 shadow-sm">
+                            <Package size={26} aria-hidden="true" />
                         </div>
                         <h4 className="font-bold text-base text-[#1a1a1a] mb-1">Ekkert hefur verið skráð</h4>
                         <p className="text-xs text-stone-500 mb-6 max-w-xs leading-relaxed">
                             Búðu til lista yfir það sem er til í bústaðnum — krydd, leirtau, sængur og fleira.
                         </p>
-                        <button
-                            type="button"
-                            onClick={handleInit}
-                            disabled={initializing}
-                            className="btn btn-primary text-xs px-5 py-2.5 font-bold shadow-md flex items-center gap-2"
-                        >
-                            {initializing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                            Virkja sjálfgefinn lista
-                        </button>
+                        {canManage ? (
+                            <button
+                                type="button"
+                                onClick={handleInit}
+                                disabled={initializing}
+                                className="btn btn-primary text-xs px-5 py-2.5 font-bold shadow-md flex items-center gap-2"
+                            >
+                                {initializing ? <Loader2 size={16} className="motion-safe:animate-spin" aria-hidden="true" /> : <Sparkles size={16} aria-hidden="true" />}
+                                Virkja sjálfgefinn lista
+                            </button>
+                        ) : (
+                            <p className="text-xs text-stone-500">Aðeins umsjónarmaður hússins getur virkjað sjálfgefinn lista.</p>
+                        )}
                     </div>
                 ) : (
                     <div className="space-y-4">
                         {/* Subcategory Tabs */}
-                        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none border-b border-stone-100">
+                        <div role="group" aria-label="Flokkar" className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none border-b border-stone-100">
                             {CATEGORIES.map((cat) => {
                                 const Icon = cat.icon;
                                 const count = inventoryItems.filter((i) => i.category === cat.key).length;
@@ -278,6 +287,7 @@ export default function InventoryCard({
                                     <button
                                         key={cat.key}
                                         type="button"
+                                        aria-pressed={isActive}
                                         onClick={() => {
                                             setActiveTab(cat.key);
                                             setShowAddForm(false);
@@ -289,7 +299,7 @@ export default function InventoryCard({
                                                 : 'bg-stone-50 text-stone-600 hover:bg-stone-100'
                                         }`}
                                     >
-                                        <Icon size={14} className={isActive ? 'text-amber' : 'text-stone-400'} />
+                                        <Icon size={14} aria-hidden="true" className={isActive ? 'text-amber' : 'text-stone-500'} />
                                         <span>{cat.label}</span>
                                         {count > 0 && (
                                             <span
@@ -318,14 +328,16 @@ export default function InventoryCard({
                                     <button
                                         type="button"
                                         onClick={() => setShowAddForm(false)}
-                                        className="text-stone-400 hover:text-stone-600"
+                                        className="p-1 text-stone-500 hover:text-stone-700"
+                                        aria-label="Loka"
                                     >
-                                        <X size={14} />
+                                        <X size={14} aria-hidden="true" />
                                     </button>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     <input
                                         type="text"
+                                        aria-label="Heiti atriðis"
                                         value={newItemName}
                                         onChange={(e) => setNewItemName(e.target.value)}
                                         placeholder={activeCategoryConfig.placeholder}
@@ -335,6 +347,7 @@ export default function InventoryCard({
                                     />
                                     <input
                                         type="text"
+                                        aria-label="Magn"
                                         value={newItemQuantity}
                                         onChange={(e) => setNewItemQuantity(e.target.value)}
                                         placeholder="T.d. 12 stk eða Magni"
@@ -354,7 +367,7 @@ export default function InventoryCard({
                                         disabled={loading || !newItemName.trim()}
                                         className="btn btn-primary text-xs py-1.5 px-4 font-bold bg-amber hover:bg-amber-dark text-charcoal"
                                     >
-                                        {loading ? <Loader2 size={12} className="animate-spin mr-1" /> : <Plus size={12} className="mr-1" />}
+                                        {loading ? <Loader2 size={12} className="motion-safe:animate-spin mr-1" aria-hidden="true" /> : <Plus size={12} className="mr-1" aria-hidden="true" />}
                                         Skrá
                                     </button>
                                 </div>
@@ -371,9 +384,9 @@ export default function InventoryCard({
                                         setShowAddForm(true);
                                         setNewItemQuantity(activeCategoryConfig.defaultQuantity || '');
                                     }}
-                                    className="text-xs font-bold text-amber hover:underline inline-flex items-center gap-1"
+                                    className="text-xs font-bold text-amber-ink hover:underline inline-flex items-center gap-1"
                                 >
-                                    <Plus size={12} /> Bæta við {activeCategoryConfig.label.toLowerCase()}
+                                    <Plus size={12} aria-hidden="true" /> Bæta við {activeCategoryConfig.label.toLowerCase()}
                                 </button>
                             </div>
                         ) : (
@@ -390,12 +403,14 @@ export default function InventoryCard({
                                             >
                                                 <input
                                                     type="text"
+                                                    aria-label="Heiti atriðis"
                                                     value={editName}
                                                     onChange={(e) => setEditName(e.target.value)}
                                                     className="input text-xs py-1.5 flex-1 min-w-[120px]"
                                                 />
                                                 <input
                                                     type="text"
+                                                    aria-label="Magn"
                                                     value={editQuantity}
                                                     onChange={(e) => setEditQuantity(e.target.value)}
                                                     placeholder="Magn (t.d. 12 stk)"
@@ -407,16 +422,18 @@ export default function InventoryCard({
                                                         onClick={() => handleSaveEdit(item.id)}
                                                         className="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600"
                                                         title="Vista"
+                                                        aria-label="Vista"
                                                     >
-                                                        <Check size={14} />
+                                                        <Check size={14} aria-hidden="true" />
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => setEditingItemId(null)}
                                                         className="p-1.5 bg-stone-200 text-stone-600 rounded-lg hover:bg-stone-300"
                                                         title="Hætta við"
+                                                        aria-label="Hætta við"
                                                     >
-                                                        <X size={14} />
+                                                        <X size={14} aria-hidden="true" />
                                                     </button>
                                                 </div>
                                             </div>
@@ -448,18 +465,20 @@ export default function InventoryCard({
                                                 <button
                                                     type="button"
                                                     onClick={() => startEditing(item)}
-                                                    className="opacity-0 group-hover/item:opacity-100 p-1 text-stone-400 hover:text-amber transition-opacity"
+                                                    className="opacity-0 group-hover/item:opacity-100 group-focus-within/item:opacity-100 [@media(hover:none)]:opacity-100 p-1.5 text-stone-500 hover:text-amber-ink transition-opacity"
                                                     title="Breyta"
+                                                    aria-label={`Breyta ${item.name}`}
                                                 >
-                                                    <Edit2 size={12} />
+                                                    <Edit2 size={12} aria-hidden="true" />
                                                 </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => handleDeleteItem(item.id)}
-                                                    className="opacity-0 group-hover/item:opacity-100 p-1 text-stone-400 hover:text-red-500 transition-opacity mr-1"
+                                                    className="opacity-0 group-hover/item:opacity-100 group-focus-within/item:opacity-100 [@media(hover:none)]:opacity-100 p-1.5 text-stone-500 hover:text-red-500 transition-opacity mr-1"
                                                     title="Eyða"
+                                                    aria-label={`Eyða ${item.name}`}
                                                 >
-                                                    <Trash2 size={12} />
+                                                    <Trash2 size={12} aria-hidden="true" />
                                                 </button>
 
                                                 {/* Status Button */}
@@ -473,6 +492,7 @@ export default function InventoryCard({
                                                     }`}
                                                 >
                                                     {isOut ? 'Á þrotum' : 'Til'}
+                                                    <span className="sr-only"> – {item.name}</span>
                                                 </button>
                                             </div>
                                         </div>

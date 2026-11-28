@@ -40,7 +40,7 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
                         className="flex items-center gap-3 flex-1 text-left"
                         onClick={() => onToggle(item)}
                     >
-                        <div className="w-5 h-5 rounded border border-stone-300 bg-white flex items-center justify-center hover:border-green-500 transition-colors">
+                        <div aria-hidden="true" className="w-5 h-5 rounded border border-stone-300 bg-white flex items-center justify-center hover:border-green-500 transition-colors">
                             {/* Empty checkbox */}
                         </div>
                         <span className="text-sm text-[#1a1a1a] font-medium">
@@ -48,7 +48,7 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
                         </span>
                     </button>
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
                             {item.added_by_name}
                         </span>
                         <button
@@ -58,9 +58,9 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
                                 onDelete(item);
                             }}
                             aria-label={`Eyða ${item.item}`}
-                            className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                            className="inline-flex items-center justify-center min-w-6 min-h-6 opacity-0 group-hover:opacity-100 focus:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity"
                         >
-                            <Trash2 size={14} className="text-stone-300 hover:text-red-500 transition-colors" />
+                            <Trash2 size={14} aria-hidden="true" className="text-stone-500 hover:text-red-500 transition-colors" />
                         </button>
                     </div>
                 </div>
@@ -82,10 +82,10 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
                                 className="flex items-center gap-3 flex-1 text-left"
                                 onClick={() => onToggle(item)}
                             >
-                                <div className="w-5 h-5 rounded border border-stone-200 bg-stone-200 flex items-center justify-center">
-                                    <Check size={12} className="text-stone-500" />
+                                <div aria-hidden="true" className="w-5 h-5 rounded border border-stone-200 bg-stone-200 flex items-center justify-center">
+                                    <Check size={12} aria-hidden="true" className="text-stone-500" />
                                 </div>
-                                <span className="text-sm text-stone-400 line-through">
+                                <span className="text-sm text-stone-500 line-through">
                                     {item.item}
                                 </span>
                             </button>
@@ -96,9 +96,9 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
                                     onDelete(item);
                                 }}
                                 aria-label={`Eyða ${item.item}`}
-                                className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                                className="inline-flex items-center justify-center min-w-6 min-h-6 opacity-0 group-hover:opacity-100 focus:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity"
                             >
-                                <Trash2 size={14} className="text-stone-300 hover:text-red-500 transition-colors" />
+                                <Trash2 size={14} aria-hidden="true" className="text-stone-500 hover:text-red-500 transition-colors" />
                             </button>
                         </div>
                     ))}
@@ -119,11 +119,13 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
                                 setNewItem('');
                             }
                         }}
+                        aria-label="Ný vara á innkaupalista"
                         placeholder="t.d. Klósettpappír..."
                         className="flex-1 px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-amber"
                         autoFocus
                     />
                     <button
+                        type="button"
                         onClick={handleAdd}
                         className="px-4 py-2 bg-amber text-charcoal rounded-lg text-sm font-bold hover:bg-amber-dark transition-colors"
                     >
@@ -132,10 +134,11 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
                 </div>
             ) : (
                 <button
+                    type="button"
                     onClick={() => setShowInput(true)}
-                    className="w-full mt-2 py-2 text-xs font-bold text-stone-400 border border-dashed border-stone-200 rounded-lg hover:border-amber hover:text-amber flex items-center justify-center gap-1 transition-colors"
+                    className="w-full mt-2 py-2 text-xs font-bold text-stone-500 border border-dashed border-stone-200 rounded-lg hover:border-amber hover:text-amber-ink flex items-center justify-center gap-1 transition-colors"
                 >
-                    <Plus size={14} /> Bæta við vöru
+                    <Plus size={14} aria-hidden="true" /> Bæta við vöru
                 </button>
             )}
         </div>

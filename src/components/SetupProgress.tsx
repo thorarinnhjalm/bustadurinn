@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { CheckCircle, Circle, ChevronRight, X } from 'lucide-react';
 import type { House } from '@/types/models';
 
@@ -49,7 +49,6 @@ const SETUP_ITEMS: SetupItem[] = [
 ];
 
 export default function SetupProgress({ house, onShowWalkthrough }: SetupProgressProps) {
-    const navigate = useNavigate();
     const [isDismissed, setIsDismissed] = useState(false);
 
     // Check localStorage for dismissed state
@@ -90,11 +89,12 @@ export default function SetupProgress({ house, onShowWalkthrough }: SetupProgres
     if (isDismissed) {
         return (
             <button
+                type="button"
                 onClick={handleUndismiss}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] text-stone-400 hover:text-amber bg-stone-50 hover:bg-amber/10 border border-stone-100 rounded-full transition-colors"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] text-stone-500 hover:text-amber-ink bg-stone-50 hover:bg-amber/10 border border-stone-100 rounded-full transition-colors"
                 title="Smelltu til að opna uppsetningarhjálp"
             >
-                <Circle size={6} className="text-amber" />
+                <Circle size={6} aria-hidden="true" className="text-amber" />
                 {percentage}% uppsett
             </button>
         );
@@ -104,11 +104,13 @@ export default function SetupProgress({ house, onShowWalkthrough }: SetupProgres
         <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 mb-6 relative">
             {/* Dismiss button */}
             <button
+                type="button"
                 onClick={handleDismiss}
-                className="absolute top-3 right-3 text-stone-300 hover:text-stone-500 transition-colors p-1"
+                className="absolute top-3 right-3 text-stone-500 hover:text-charcoal transition-colors p-1"
                 title="Fela"
+                aria-label="Fela uppsetningarhjálp"
             >
-                <X size={18} />
+                <X size={18} aria-hidden="true" />
             </button>
 
             <div className="flex items-center justify-between mb-4 pr-6">
@@ -122,8 +124,9 @@ export default function SetupProgress({ house, onShowWalkthrough }: SetupProgres
                 </div>
                 {onShowWalkthrough && (
                     <button
+                        type="button"
                         onClick={onShowWalkthrough}
-                        className="text-amber hover:text-amber-600 text-sm font-bold"
+                        className="text-amber-ink hover:text-amber-700 text-sm font-bold"
                     >
                         Sjá leiðbeiningar
                     </button>
@@ -131,7 +134,14 @@ export default function SetupProgress({ house, onShowWalkthrough }: SetupProgres
             </div>
 
             {/* Progress Bar */}
-            <div className="h-2 bg-stone-100 rounded-full overflow-hidden mb-4">
+            <div
+                role="progressbar"
+                aria-label="Uppsetning húss"
+                aria-valuenow={percentage}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                className="h-2 bg-stone-100 rounded-full overflow-hidden mb-4"
+            >
                 <div
                     className="h-full bg-gradient-to-r from-amber to-amber-500 rounded-full transition-all duration-500"
                     style={{ width: `${percentage}%` }}
@@ -142,29 +152,35 @@ export default function SetupProgress({ house, onShowWalkthrough }: SetupProgres
             <div className="space-y-2">
                 {SETUP_ITEMS.map(item => {
                     const isComplete = item.isComplete(house);
-                    return (
-                        <button
-                            key={item.id}
-                            onClick={() => item.link && navigate(item.link)}
-                            disabled={isComplete}
-                            className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors
+                    const itemClass = `w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors
                                 ${isComplete
-                                    ? 'text-stone-400 cursor-default'
+                                    ? 'text-stone-500 cursor-default'
                                     : 'text-charcoal hover:bg-amber/5 cursor-pointer group'
-                                }`}
-                        >
+                                }`;
+                    const content = (
+                        <>
                             {isComplete ? (
-                                <CheckCircle size={18} className="text-emerald-500 flex-shrink-0" />
+                                <CheckCircle size={18} aria-hidden="true" className="text-emerald-500 flex-shrink-0" />
                             ) : (
-                                <Circle size={18} className="text-stone-300 flex-shrink-0" />
+                                <Circle size={18} aria-hidden="true" className="text-stone-300 flex-shrink-0" />
                             )}
                             <span className={`flex-1 text-sm ${isComplete ? 'line-through' : 'font-medium'}`}>
                                 {item.label}
+                                <span className="sr-only">{isComplete ? ' (lokið)' : ' (ólokið)'}</span>
                             </span>
                             {!isComplete && item.link && (
-                                <ChevronRight size={16} className="text-stone-300 group-hover:text-amber" />
+                                <ChevronRight size={16} aria-hidden="true" className="text-stone-300 group-hover:text-amber-ink" />
                             )}
-                        </button>
+                        </>
+                    );
+                    return !isComplete && item.link ? (
+                        <Link key={item.id} to={item.link} className={itemClass}>
+                            {content}
+                        </Link>
+                    ) : (
+                        <div key={item.id} className={itemClass}>
+                            {content}
+                        </div>
                     );
                 })}
             </div>

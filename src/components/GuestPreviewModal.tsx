@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { X, Wifi, MapPin, Key, Copy, BookOpen, Sun, Phone, Heart, Share2, Tv, Droplets, Flame, Navigation, ArrowRight } from 'lucide-react';
+import { Wifi, MapPin, Key, Copy, BookOpen, Sun, Phone, Heart, Share2, Tv, Droplets, Flame, Navigation, ArrowRight } from 'lucide-react';
 import { fetchWeather } from '@/utils/weather';
 import type { House } from '@/types/models';
+import Modal from '@/components/ui/Modal';
+import { logger } from '@/utils/logger';
 
 // A-Frame Logo
 const CabinLogo = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
         <path d="M12 2L2 22H22L12 2Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M12 15V22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -39,11 +41,9 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
             setCopied(label);
             setTimeout(() => setCopied(''), 2000);
         } catch (err) {
-            console.error('Failed to copy:', err);
+            logger.error('Failed to copy:', err);
         }
     };
-
-    if (!isOpen) return null;
 
     const houseName = house.name || 'Sumarhús';
     const accessCode = house.access_instructions?.match(/\d{4,6}/)?.[0];
@@ -76,34 +76,33 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
     ];
 
     return (
-        <div className="fixed inset-0 z-50 overflow-hidden">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-
-            {/* Modal Container */}
-            <div className="absolute inset-4 md:inset-8 lg:inset-16 bg-[#FDFCF8] rounded-2xl overflow-hidden shadow-2xl flex flex-col">
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 z-50 bg-black/50 backdrop-blur-md text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-                >
-                    <X size={20} />
-                </button>
+        <Modal
+            open={isOpen}
+            onClose={onClose}
+            title="Forskoðun gestasíðu"
+            hideTitle
+            size="full"
+            className="!bg-charcoal"
+            bodyClassName="!p-0 bg-[#FDFCF8]"
+        >
+            <div className="flex flex-col">
+                {/* Copy confirmation for assistive tech */}
+                <p role="status" className="sr-only">{copied ? 'Afritað á klippiborð' : ''}</p>
 
                 {/* Preview Banner */}
-                <div className="bg-amber-500 text-white text-center py-2 text-sm font-medium">
+                <div className="bg-amber-500 text-charcoal text-center py-2 text-sm font-medium">
                     👁️ Forskoðun gestasíðu — Þannig sjá gestir upplýsingarnar
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1">
                     {/* HERO HEADER */}
                     <header className="relative pt-8 pb-24 px-6 rounded-b-[2.5rem] shadow-2xl overflow-hidden min-h-[340px] flex flex-col justify-between">
                         {/* Background Image */}
                         <div className="absolute inset-0 z-0">
                             <img
                                 src={house.image_url || "https://images.unsplash.com/photo-1542718610-a1d656d1884c?q=80&w=2670&auto=format&fit=crop"}
-                                alt="Cabin Background"
+                                alt=""
                                 className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/80"></div>
@@ -115,8 +114,8 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
                                     <CabinLogo size={20} />
                                     <span className="font-serif font-bold tracking-tight text-white text-sm">{houseName}</span>
                                 </div>
-                                <button className="bg-black/30 backdrop-blur-md p-2 rounded-full hover:bg-black/40 transition-colors text-white border border-white/10">
-                                    <Share2 size={18} />
+                                <button type="button" aria-label="Deila" className="bg-black/30 backdrop-blur-md p-2 rounded-full hover:bg-black/40 transition-colors text-white border border-white/10">
+                                    <Share2 size={18} aria-hidden="true" />
                                 </button>
                             </div>
 
@@ -124,13 +123,13 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
                                 <div className="inline-block">
                                     <p className="text-[#e8b058] text-[10px] font-bold uppercase tracking-widest bg-black/40 backdrop-blur-sm px-2 py-1 rounded-md border border-white/5 inline-block">Velkomin</p>
                                 </div>
-                                <h1 className="font-serif text-4xl md:text-5xl font-bold text-white drop-shadow-xl leading-tight">
+                                <h2 className="font-serif text-4xl md:text-5xl font-bold text-white drop-shadow-xl leading-tight">
                                     Góðan daginn!
-                                </h1>
+                                </h2>
 
                                 <div className="flex flex-wrap gap-2">
                                     <div className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
-                                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                                        <div className="w-2 h-2 bg-emerald-400 rounded-full motion-safe:animate-pulse" aria-hidden="true"></div>
                                         <p className="text-stone-200 text-sm font-medium">Dvalaðgangur virkur</p>
                                     </div>
                                 </div>
@@ -145,29 +144,31 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
                             <div className="flex justify-between items-start mb-6 border-b border-stone-100 pb-4">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <Sun size={18} className="text-[#e8b058]" />
+                                        <Sun size={18} className="text-amber-ink" aria-hidden="true" />
                                         <span className="font-bold text-xl">{weather.temp}</span>
                                     </div>
-                                    <p className="text-xs text-stone-400">{weather.condition}</p>
+                                    <p className="text-xs text-stone-500">{weather.condition}</p>
                                 </div>
                                 <div className="bg-stone-50 p-2 rounded-lg">
-                                    <MapPin size={20} className="text-[#1a1a1a]" />
+                                    <MapPin size={20} className="text-[#1a1a1a]" aria-hidden="true" />
                                 </div>
                             </div>
 
                             <div className="space-y-4">
                                 {/* Door Code */}
                                 {accessCode && (
-                                    <div
+                                    <button
+                                        type="button"
                                         onClick={() => copyToClipboard(accessCode, 'code')}
-                                        className="bg-[#1a1a1a] rounded-xl p-4 text-center relative overflow-hidden group cursor-pointer shadow-lg shadow-stone-200"
+                                        aria-label={`Afrita lyklakóða ${accessCode}`}
+                                        className="block w-full bg-[#1a1a1a] rounded-xl p-4 text-center relative overflow-hidden group cursor-pointer shadow-lg shadow-stone-200"
                                     >
-                                        <p className="text-stone-400 text-[10px] uppercase tracking-widest mb-1">Lyklabox / Kóði</p>
+                                        <p className="text-stone-300 text-[10px] uppercase tracking-widest mb-1">Lyklabox / Kóði</p>
                                         <p className="text-white font-mono text-3xl font-bold tracking-[0.2em]">{accessCode}</p>
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-600 group-hover:text-[#e8b058] transition-colors">
-                                            {copied === 'code' ? <span className="text-xs">✓</span> : <Copy size={16} />}
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 group-hover:text-[#e8b058] transition-colors">
+                                            {copied === 'code' ? <span className="text-xs">✓</span> : <Copy size={16} aria-hidden="true" />}
                                         </div>
-                                    </div>
+                                    </button>
                                 )}
 
                                 {/* WiFi */}
@@ -175,25 +176,27 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
                                     <div className="flex gap-3">
                                         {house.wifi_ssid && (
                                             <div className="flex-1 bg-stone-50 rounded-xl p-3 border border-stone-100">
-                                                <div className="flex items-center gap-2 mb-1 text-stone-400">
-                                                    <Wifi size={14} /> <span className="text-[10px] uppercase font-bold">Netið</span>
+                                                <div className="flex items-center gap-2 mb-1 text-stone-500">
+                                                    <Wifi size={14} aria-hidden="true" /> <span className="text-[10px] uppercase font-bold">Netið</span>
                                                 </div>
                                                 <p className="font-bold text-sm text-[#1a1a1a] truncate">{house.wifi_ssid}</p>
                                             </div>
                                         )}
                                         {house.wifi_password && (
-                                            <div
+                                            <button
+                                                type="button"
                                                 onClick={() => copyToClipboard(house.wifi_password!, 'wifi')}
-                                                className="flex-1 bg-stone-50 rounded-xl p-3 border border-stone-100 cursor-pointer hover:border-[#e8b058] transition-colors relative group"
+                                                aria-label="Afrita wifi lykilorð"
+                                                className="flex-1 text-left bg-stone-50 rounded-xl p-3 border border-stone-100 cursor-pointer hover:border-[#e8b058] transition-colors relative group"
                                             >
-                                                <div className="flex items-center gap-2 mb-1 text-stone-400">
-                                                    <Key size={14} /> <span className="text-[10px] uppercase font-bold">Lykilorð</span>
+                                                <div className="flex items-center gap-2 mb-1 text-stone-500">
+                                                    <Key size={14} aria-hidden="true" /> <span className="text-[10px] uppercase font-bold">Lykilorð</span>
                                                 </div>
                                                 <p className="font-bold text-sm text-[#1a1a1a] truncate">{house.wifi_password}</p>
-                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    {copied === 'wifi' ? <span className="text-xs text-[#e8b058]">✓</span> : <Copy size={12} className="text-[#e8b058]" />}
+                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
+                                                    {copied === 'wifi' ? <span className="text-xs text-amber-ink">✓</span> : <Copy size={12} className="text-amber-ink" aria-hidden="true" />}
                                                 </div>
-                                            </div>
+                                            </button>
                                         )}
                                     </div>
                                 )}
@@ -205,14 +208,15 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
                             <div className="bg-white p-1 rounded-2xl shadow-xl shadow-stone-200 border border-stone-100 overflow-hidden">
                                 <div className="px-5 py-4 flex justify-between items-center">
                                     <h3 className="font-serif text-lg font-bold">Myndir</h3>
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">{house.gallery_urls.length} myndir</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">{house.gallery_urls.length} myndir</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-1 p-1">
                                     {house.gallery_urls.slice(0, 4).map((url: string, i: number) => (
                                         <div key={i} className="relative overflow-hidden aspect-square">
                                             <img
                                                 src={url}
-                                                alt={`House view ${i + 1}`}
+                                                alt={`Mynd ${i + 1} úr myndasafni`}
+                                                loading="lazy"
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>
@@ -226,18 +230,18 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
                             {house.location?.lat && house.location?.lng && (
                                 <div className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 group text-left col-span-2 flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                        <Navigation size={20} />
+                                        <Navigation size={20} aria-hidden="true" />
                                     </div>
                                     <div>
                                         <span className="font-bold text-sm text-[#1a1a1a] block">Rata í hús</span>
                                         <span className="text-xs text-stone-500">Opna í Google Maps</span>
                                     </div>
-                                    <ArrowRight size={16} className="ml-auto text-stone-300" />
+                                    <ArrowRight size={16} className="ml-auto text-stone-300" aria-hidden="true" />
                                 </div>
                             )}
 
                             {guides.map(guide => (
-                                <button key={guide.id} className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 group text-left">
+                                <button type="button" key={guide.id} className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 group text-left">
                                     <div className="w-10 h-10 rounded-full bg-stone-50 text-[#1a1a1a] flex items-center justify-center mb-3">
                                         {guide.icon}
                                     </div>
@@ -252,14 +256,14 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
                                 <div className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
-                                            <Phone size={18} />
+                                            <Phone size={18} aria-hidden="true" />
                                         </div>
                                         <div>
                                             <p className="font-bold text-sm text-[#1a1a1a]">Hringja í eiganda</p>
                                             <p className="text-xs text-stone-500">{house.emergency_contact}</p>
                                         </div>
                                     </div>
-                                    <ArrowRight size={16} className="text-stone-300" />
+                                    <ArrowRight size={16} className="text-stone-300" aria-hidden="true" />
                                 </div>
                             )}
                         </div>
@@ -268,7 +272,7 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
                         <div className="pt-4">
                             <div className="bg-[#e8b058]/10 rounded-xl p-6 border border-[#e8b058]/30">
                                 <div className="flex justify-center mb-3">
-                                    <Heart className="fill-[#e8b058] text-[#e8b058]" size={32} />
+                                    <Heart className="fill-[#e8b058] text-[#e8b058]" size={32} aria-hidden="true" />
                                 </div>
                                 <h3 className="font-serif text-lg font-bold text-[#1a1a1a] mb-2 text-center">Skrifaðu í gestabókina</h3>
                                 <p className="text-sm text-stone-600 text-center">
@@ -279,6 +283,6 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
                     </main>
                 </div>
             </div>
-        </div>
+        </Modal>
     );
 }

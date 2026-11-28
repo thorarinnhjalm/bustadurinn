@@ -1,10 +1,8 @@
 import MarketingLayout from '@/components/MarketingLayout';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { CheckSquare, ChevronLeft, ArrowRight } from 'lucide-react';
 
 export default function VidhaldPage() {
-    const navigate = useNavigate();
-
     // Explanatory content about task/maintenance features (task lifecycle,
     // seasonal checklists) — not literal Q&A and not a single procedure the
     // reader performs step-by-step, so marked up as WebPage.
@@ -41,9 +39,9 @@ export default function VidhaldPage() {
                 <div className="container max-w-4xl mx-auto px-6">
                     <Link
                         to="/handbok"
-                        className="flex items-center text-grey-mid hover:text-amber transition-colors text-sm"
+                        className="flex items-center text-grey-mid hover:text-amber-ink transition-colors text-sm"
                     >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft aria-hidden="true" className="w-4 h-4" />
                         <span>Til baka í handbók</span>
                     </Link>
                 </div>
@@ -54,7 +52,7 @@ export default function VidhaldPage() {
                 <div className="container max-w-4xl mx-auto px-6">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-14 h-14 rounded-full bg-blue-600/10 flex items-center justify-center">
-                            <CheckSquare className="w-7 h-7 text-blue-600" />
+                            <CheckSquare aria-hidden="true" className="w-7 h-7 text-blue-600" />
                         </div>
                         <h1 className="text-4xl md:text-5xl font-serif font-bold">
                             Viðhald og verkefnastjórnun
@@ -83,25 +81,25 @@ export default function VidhaldPage() {
                             <h3 className="text-xl font-bold mb-4">Hvað er hægt að gera:</h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Búa til verkefni:</strong> Hver sem er getur bætt við verkefni sem þarf að klára
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Úthluta verkefnum:</strong> Getur úthlutað verkefni til ákveðinna eigenda
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Fylgjast með stöðu:</strong> Hvert verkefni fer í gegnum stöðurnar í bið, í vinnslu og lokið — og hægt er að merkja verkefni sem hætt við
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Kostnaðarskráning:</strong> Hægt er að skrá kostnað við verkefni og bæta honum sjálfkrafa við hússjóðsbókhaldið
                                     </div>
@@ -129,7 +127,7 @@ export default function VidhaldPage() {
                             {/* Vor-opnun */}
                             <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-200 rounded-xl p-6">
                                 <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg aria-hidden="true" className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                     </svg>
                                     Vor-opnun (apríl-maí)
@@ -161,7 +159,7 @@ export default function VidhaldPage() {
                             {/* Vetrarfrágangur */}
                             <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-6">
                                 <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg aria-hidden="true" className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07" />
                                     </svg>
                                     Vetrarfrágangur (september-október)
@@ -222,7 +220,7 @@ export default function VidhaldPage() {
                                 <div className="flex items-start gap-4 p-5 bg-stone-50 rounded-lg">
                                     <div className="w-3 h-3 rounded-full bg-grey-mid mt-2"></div>
                                     <div>
-                                        <h4 className="font-bold mb-1">Í bið (Pending)</h4>
+                                        <h3 className="text-2xl font-bold mb-1">Í bið (Pending)</h3>
                                         <p className="text-sm text-grey-dark">Verkefni sem bíða eftir að einhver taki þau að sér</p>
                                     </div>
                                 </div>
@@ -230,7 +228,7 @@ export default function VidhaldPage() {
                                 <div className="flex items-start gap-4 p-5 bg-blue-50 rounded-lg">
                                     <div className="w-3 h-3 rounded-full bg-blue-500 mt-2"></div>
                                     <div>
-                                        <h4 className="font-bold mb-1">Í vinnslu (In Progress)</h4>
+                                        <h3 className="text-2xl font-bold mb-1">Í vinnslu (In Progress)</h3>
                                         <p className="text-sm text-grey-dark">Verkefni sem einhver er að vinna að núna</p>
                                     </div>
                                 </div>
@@ -238,7 +236,7 @@ export default function VidhaldPage() {
                                 <div className="flex items-start gap-4 p-5 bg-green-50 rounded-lg">
                                     <div className="w-3 h-3 rounded-full bg-green-500 mt-2"></div>
                                     <div>
-                                        <h4 className="font-bold mb-1">Lokið (Completed)</h4>
+                                        <h3 className="text-2xl font-bold mb-1">Lokið (Completed)</h3>
                                         <p className="text-sm text-grey-dark">Verkefni sem eru kláruð og þarfnast ekki frekari athygli</p>
                                     </div>
                                 </div>
@@ -246,7 +244,7 @@ export default function VidhaldPage() {
                                 <div className="flex items-start gap-4 p-5 bg-stone-100 rounded-lg">
                                     <div className="w-3 h-3 rounded-full bg-stone-400 mt-2"></div>
                                     <div>
-                                        <h4 className="font-bold mb-1">Hætt við (Cancelled)</h4>
+                                        <h3 className="text-2xl font-bold mb-1">Hætt við (Cancelled)</h3>
                                         <p className="text-sm text-grey-dark">Verkefni sem hætt var við og þarf ekki að klára</p>
                                     </div>
                                 </div>
@@ -257,7 +255,7 @@ export default function VidhaldPage() {
                     {/* Pro tips */}
                     <div className="bg-blue-50 rounded-xl p-8 border-2 border-blue-200">
                         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg aria-hidden="true" className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                             </svg>
                             Góð ráð fyrir verkefnastjórnun
@@ -317,13 +315,13 @@ export default function VidhaldPage() {
                     <p className="text-xl text-stone-300 mb-8">
                         Byrjaðu að nota verkefnalistann í Bústaðnum.
                     </p>
-                    <button
-                        onClick={() => navigate('/signup')}
+                    <Link
+                        to="/signup"
                         className="btn btn-primary bg-amber text-charcoal hover:bg-amber/90 px-8 py-4 text-lg inline-flex items-center gap-2"
                     >
                         Byrja núna
-                        <ArrowRight className="w-5 h-5" />
-                    </button>
+                        <ArrowRight aria-hidden="true" className="w-5 h-5" />
+                    </Link>
                 </div>
             </section>
         </MarketingLayout>

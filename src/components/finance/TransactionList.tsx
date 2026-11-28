@@ -28,13 +28,14 @@ export default function TransactionList({ entries, onDelete, onEdit, currentUser
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-left">
+                <caption className="sr-only">Færslur í bókhaldi</caption>
                 <thead className="text-xs text-grey-mid uppercase border-b border-grey-warm">
                     <tr>
-                        <th className="pb-3 pl-2">Dags</th>
-                        <th className="pb-3">Flokkur</th>
-                        <th className="pb-3">Lýsing</th>
-                        <th className="pb-3 text-right">Upphæð</th>
-                        <th className="pb-3 w-20"></th>
+                        <th scope="col" className="pb-3 pl-0 sm:pl-2 pr-2">Dags</th>
+                        <th scope="col" className="pb-3">Flokkur</th>
+                        <th scope="col" className="pb-3 hidden sm:table-cell">Lýsing</th>
+                        <th scope="col" className="pb-3 text-right">Upphæð</th>
+                        <th scope="col" className="pb-3 w-20"><span className="sr-only">Aðgerðir</span></th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-grey-warm/50">
@@ -47,20 +48,29 @@ export default function TransactionList({ entries, onDelete, onEdit, currentUser
 
                         return (
                             <tr key={entry.id} className="group hover:bg-bone/50 transition-colors">
-                                <td className="py-3 pl-2 text-sm text-grey-mid whitespace-nowrap">
+                                <td className="py-3 pl-0 sm:pl-2 pr-2 text-sm text-grey-mid whitespace-nowrap">
                                     {format(new Date(entry.date), 'dd. MMM', { locale: is })}
                                 </td>
                                 <td className="py-3 text-sm font-medium text-charcoal">
                                     <div className="flex items-center gap-2">
                                         {isExpense ? (
-                                            <TrendingDown className="w-4 h-4 text-red-500/50" />
+                                            <TrendingDown className="w-4 h-4 shrink-0 hidden sm:block text-red-500/50" aria-hidden="true" />
                                         ) : (
-                                            <TrendingUp className="w-4 h-4 text-green-500/50" />
+                                            <TrendingUp className="w-4 h-4 shrink-0 hidden sm:block text-green-500/50" aria-hidden="true" />
                                         )}
                                         {entry.category}
                                     </div>
+                                    {/* Phones: the description column is hidden, so it moves under the category */}
+                                    {(entry.description || entry.paid_by_name) && (
+                                        <div className="sm:hidden text-xs font-normal text-grey-mid mt-0.5 [overflow-wrap:anywhere]">
+                                            {entry.description}
+                                            {entry.paid_by_name && (
+                                                <span className="block opacity-60">Skráð af: {entry.paid_by_name}</span>
+                                            )}
+                                        </div>
+                                    )}
                                 </td>
-                                <td className="py-3 text-sm text-grey-mid">
+                                <td className="py-3 text-sm text-grey-mid hidden sm:table-cell">
                                     {entry.description}
                                     {entry.paid_by_name && (
                                         <span className="text-xs opacity-60 block">
@@ -70,16 +80,18 @@ export default function TransactionList({ entries, onDelete, onEdit, currentUser
                                 </td>
                                 <td className={`py-3 text-sm font-bold text-right whitespace-nowrap ${isExpense ? 'text-charcoal' : 'text-green-600'
                                     }`}>
+                                    <span className="sr-only">{isExpense ? 'Útgjöld: ' : 'Tekjur: '}</span>
                                     {isExpense ? '- ' : '+ '}
                                     {entry.amount.toLocaleString()} kr.
                                 </td>
-                                <td className="py-3 text-right flex items-center justify-end gap-3">
+                                <td className="py-3 text-right">
+                                  <div className="flex items-center justify-end gap-3">
                                     {canEdit && (
                                         <>
                                             <button
                                                 onClick={() => onEdit(entry)}
                                                 type="button"
-                                                className="p-1.5 -m-1 text-grey-mid hover:text-amber focus-visible:opacity-100 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-all"
+                                                className="p-1.5 -m-1 text-grey-mid hover:text-amber-ink focus-visible:opacity-100 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-all"
                                                 aria-label="Breyta færslu"
                                                 title="Breyta færslu"
                                             >
@@ -99,6 +111,7 @@ export default function TransactionList({ entries, onDelete, onEdit, currentUser
                                             <Trash2 className="w-4 h-4" aria-hidden="true" />
                                         </button>
                                     )}
+                                  </div>
                                 </td>
                             </tr>
                         );

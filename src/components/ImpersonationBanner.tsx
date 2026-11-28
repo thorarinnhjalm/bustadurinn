@@ -7,6 +7,7 @@ import { X, AlertTriangle } from 'lucide-react';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import type { House } from '@/types/models';
+import { logger } from '@/utils/logger';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -27,7 +28,7 @@ export default function ImpersonationBanner() {
                 useAppStore.getState().setCurrentHouse(adminHouse);
                 localStorage.removeItem('admin_original_house');
             } catch (error) {
-                console.error('Failed to restore admin house:', error);
+                logger.error('Failed to restore admin house:', error);
             }
         }
 
@@ -39,25 +40,26 @@ export default function ImpersonationBanner() {
     };
 
     return (
-        <div className="bg-red-600 text-white px-6 py-3 shadow-lg relative z-50">
+        <div role="region" aria-label="Notendahermir" className="bg-red-700 text-white px-6 py-3 shadow-lg relative z-50">
             <div className="container mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <AlertTriangle className="w-5 h-5 animate-pulse" />
+                    <AlertTriangle className="w-5 h-5 animate-pulse" aria-hidden="true" />
                     <div>
                         <p className="font-bold font-mono text-sm">
-                            ⚠️ IMPERSONATION MODE ACTIVE
+                            NOTENDAHERMIR VIRKUR
                         </p>
                         <p className="text-xs opacity-90">
-                            Viewing as: {impersonatedUser.name} ({impersonatedUser.email})
+                            Þú ert að skoða kerfið sem: {impersonatedUser.name} ({impersonatedUser.email})
                         </p>
                     </div>
                 </div>
                 <button
+                    type="button"
                     onClick={handleExit}
-                    className="flex items-center gap-2 px-4 py-2 bg-white text-red-600 rounded font-medium text-sm hover:bg-red-50 transition-colors"
+                    className="focus-on-dark flex items-center gap-2 px-4 py-2 bg-white text-red-700 rounded font-medium text-sm hover:bg-red-50 transition-colors"
                 >
-                    <X className="w-4 h-4" />
-                    Exit God Mode
+                    <X className="w-4 h-4" aria-hidden="true" />
+                    Hætta hermun
                 </button>
             </div>
         </div>

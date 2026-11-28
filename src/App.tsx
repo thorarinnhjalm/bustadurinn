@@ -66,8 +66,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
+        <div className="text-center" role="status">
+          <div aria-hidden="true" className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-grey-mid">Hleð...</p>
         </div>
       </div>
@@ -87,8 +87,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   if (isLoading || roleLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
+        <div className="text-center" role="status">
+          <div aria-hidden="true" className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-grey-mid">Hleð...</p>
         </div>
       </div>
@@ -106,9 +106,10 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-bone p-6">
         <div className="card max-w-md text-center">
-          <h2 className="text-2xl font-serif mb-4">Aðgangur bannaður</h2>
+          <h1 className="text-2xl font-serif mb-4">Aðgangur bannaður</h1>
           <p className="text-grey-dark mb-6">Þú hefur ekki réttindi til að skoða þessa síðu.</p>
           <button
+            type="button"
             onClick={() => window.location.href = '/dashboard'}
             className="btn btn-primary"
           >
@@ -128,8 +129,8 @@ import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 // Loading fallback component
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen bg-bone">
-    <div className="text-center">
-      <div className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
+    <div className="text-center" role="status">
+      <div aria-hidden="true" className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
       <p className="text-grey-mid">Hleð síðu...</p>
     </div>
   </div>
@@ -179,7 +180,14 @@ function App() {
                 <Route path="/skilmalar" element={<TermsPage />} />
                 <Route path="/data-deletion" element={<DataDeletionPage />} />
                 <Route path="/gogn-eyding" element={<DataDeletionPage />} />
-                <Route path="/sentry-example-page" element={<SentryTestPage />} />
+                <Route
+                  path="/sentry-example-page"
+                  element={
+                    <AdminRoute>
+                      <SentryTestPage />
+                    </AdminRoute>
+                  }
+                />
                 <Route path="/verktakar" element={<ForProvidersPage />} />
                 <Route path="/torgid" element={<MarketplacePage />} />
 

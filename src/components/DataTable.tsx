@@ -3,7 +3,7 @@
  * Sortable, searchable, professional
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { ChevronUp, ChevronDown, Search } from 'lucide-react';
 
 interface Column<T> {
@@ -18,14 +18,17 @@ interface DataTableProps<T> {
     data: T[];
     searchKeys?: string[];
     actions?: (row: T) => React.ReactNode;
+    caption?: string;
 }
 
 export default function DataTable<T extends Record<string, any>>({
     columns,
     data,
     searchKeys = [],
-    actions
+    actions,
+    caption = 'Gagnatafla'
 }: DataTableProps<T>) {
+    const searchId = useId();
     const [sortKey, setSortKey] = useState<string>('');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [searchTerm, setSearchTerm] = useState('');
@@ -67,12 +70,14 @@ export default function DataTable<T extends Record<string, any>>({
             {/* Search */}
             {searchKeys.length > 0 && (
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" aria-hidden="true" />
+                    <label htmlFor={searchId} className="sr-only">Leita í töflu</label>
                     <input
+                        id={searchId}
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Search..."
+                        placeholder="Leita..."
                         className="w-full pl-10 pr-4 py-2 border border-stone-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent"
                     />
                 </div>
@@ -81,23 +86,27 @@ export default function DataTable<T extends Record<string, any>>({
             {/* Table */}
             <div className="border border-stone-200 rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
+                    <caption className="sr-only">{caption}</caption>
                     <thead className="bg-stone-50 border-b border-stone-200">
                         <tr>
                             {columns.map((column) => (
                                 <th
                                     key={column.key}
+                                    scope="col"
+                                    aria-sort={column.sortable ? (sortKey === column.key ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none') : undefined}
                                     className="px-4 py-3 text-left font-medium text-stone-700"
                                 >
                                     {column.sortable ? (
                                         <button
+                                            type="button"
                                             onClick={() => handleSort(column.key)}
-                                            className="flex items-center gap-1 hover:text-amber transition-colors"
+                                            className="flex items-center gap-1 hover:text-amber-ink transition-colors"
                                         >
                                             {column.label}
                                             {sortKey === column.key && (
                                                 sortDirection === 'asc' ?
-                                                    <ChevronUp className="w-4 h-4" /> :
-                                                    <ChevronDown className="w-4 h-4" />
+                                                    <ChevronUp className="w-4 h-4" aria-hidden="true" /> :
+                                                    <ChevronDown className="w-4 h-4" aria-hidden="true" />
                                             )}
                                         </button>
                                     ) : (
@@ -105,14 +114,14 @@ export default function DataTable<T extends Record<string, any>>({
                                     )}
                                 </th>
                             ))}
-                            {actions && <th className="px-4 py-3 text-left font-medium text-stone-700">Actions</th>}
+                            {actions && <th scope="col" className="px-4 py-3 text-left font-medium text-stone-700">Aðgerðir</th>}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-100">
                         {sortedData.length === 0 ? (
                             <tr>
-                                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-4 py-8 text-center text-stone-400">
-                                    No data found
+                                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-4 py-8 text-center text-stone-500">
+                                    Engin gögn fundust
                                 </td>
                             </tr>
                         ) : (
@@ -137,7 +146,7 @@ export default function DataTable<T extends Record<string, any>>({
 
             {/* Results count */}
             <p className="text-xs text-stone-500">
-                Showing {sortedData.length} of {data.length} results
+                Sýni {sortedData.length} af {data.length} niðurstöðum
             </p>
         </div>
     );

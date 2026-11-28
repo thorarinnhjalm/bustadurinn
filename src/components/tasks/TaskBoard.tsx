@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
+import { Trash2 } from 'lucide-react';
 import type { Task, TaskStatus } from '@/types/models';
 
 interface TaskBoardProps {
@@ -15,6 +16,7 @@ const COLUMNS: { id: TaskStatus; label: string; color: string }[] = [
 ];
 
 export default function TaskBoard({ tasks, onStatusChange, onDelete }: TaskBoardProps) {
+    const baseId = useId();
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
 
     const handleDragStart = (e: React.DragEvent, taskId: string) => {
@@ -55,7 +57,7 @@ export default function TaskBoard({ tasks, onStatusChange, onDelete }: TaskBoard
                     {/* Column Header */}
                     <div className="p-4 flex items-center justify-between border-b border-grey-warm/50">
                         <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${col.id === 'completed' ? 'bg-green-500' :
+                            <div aria-hidden="true" className={`w-3 h-3 rounded-full ${col.id === 'completed' ? 'bg-green-500' :
                                 col.id === 'in_progress' ? 'bg-amber' : 'bg-grey-mid'
                                 }`} />
                             <h3 className="font-medium text-charcoal">{col.label}</h3>
@@ -81,12 +83,30 @@ export default function TaskBoard({ tasks, onStatusChange, onDelete }: TaskBoard
                                 <div className="flex justify-between items-start mb-2">
                                     <h4 className="font-medium text-charcoal text-sm">{task.title}</h4>
                                     <button
+                                        type="button"
                                         onClick={() => onDelete(task)}
-                                        className="text-grey-warm hover:text-red-500 transition-colors p-1 -mr-2 -mt-2"
+                                        className="text-grey-mid hover:text-red-500 transition-colors p-1 -mr-2 -mt-2"
                                     >
-                                        <div className="sr-only">Delete</div>
-                                        <div className="w-4 h-4 rounded-full border-2 border-current" />
+                                        <span className="sr-only">Eyða verkefni: {task.title}</span>
+                                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                                     </button>
+                                </div>
+
+                                {/* Keyboard / touch alternative to dragging */}
+                                <div className="mb-2">
+                                    <label htmlFor={`${baseId}-${task.id}`} className="sr-only">
+                                        Staða verkefnis: {task.title}
+                                    </label>
+                                    <select
+                                        id={`${baseId}-${task.id}`}
+                                        value={task.status}
+                                        onChange={(e) => onStatusChange(task, e.target.value as TaskStatus)}
+                                        className="text-xs border border-grey-warm rounded px-1.5 py-1 bg-white text-charcoal"
+                                    >
+                                        {COLUMNS.map(c => (
+                                            <option key={c.id} value={c.id}>{c.label}</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 {task.description && (
@@ -98,7 +118,7 @@ export default function TaskBoard({ tasks, onStatusChange, onDelete }: TaskBoard
                                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-bone">
                                     <div className="flex items-center gap-2">
                                         {task.assigned_to_names && task.assigned_to_names.length > 0 && (
-                                            <div className="w-6 h-6 rounded-full bg-charcoal text-white text-[10px] flex items-center justify-center" title={task.assigned_to_names[0]}>
+                                            <div className="w-6 h-6 rounded-full bg-charcoal text-white text-[10px] flex items-center justify-center" title={task.assigned_to_names[0]} role="img" aria-label={`Ábyrgðarmaður: ${task.assigned_to_names[0]}`}>
                                                 {task.assigned_to_names[0][0]}
                                             </div>
                                         )}

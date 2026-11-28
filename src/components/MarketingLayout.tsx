@@ -2,7 +2,7 @@ import { useLocation, Link } from 'react-router-dom';
 import Logo from '@/components/Logo';
 import SEO from '@/components/SEO';
 import NewsletterSignup from '@/components/NewsletterSignup';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Menu, X } from 'lucide-react';
 
 interface MarketingLayoutProps {
@@ -31,16 +31,22 @@ export default function MarketingLayout({
         setIsMenuOpen(false);
     }, [location.pathname]);
 
-    // Prevent scrolling when menu is open
+    const toggleRef = useRef<HTMLButtonElement>(null);
+
+    // Close the mobile menu with Escape and return focus to the toggle
     useEffect(() => {
-        if (isMenuOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
-        }
+        if (!isMenuOpen) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsMenuOpen(false);
+                toggleRef.current?.focus();
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
     }, [isMenuOpen]);
 
-    const isCurrent = (path: string) => location.pathname === path ? 'text-amber' : 'text-charcoal hover:text-amber';
+    const isCurrent = (path: string) => location.pathname === path ? 'text-amber-ink' : 'text-charcoal hover:text-amber-ink';
 
     const navLinks = [
         { name: 'Eiginleikar', path: '/eiginleikar' },
@@ -59,8 +65,15 @@ export default function MarketingLayout({
                 canonical={canonical}
             />
 
-            <nav className="fixed top-0 left-0 right-0 bg-bone/95 backdrop-blur-md z-[100] border-b border-grey-warm h-20 flex items-center">
-                <div className="container mx-auto px-6 flex justify-between items-center relative">
+            <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[300] focus:bg-charcoal focus:text-white focus:px-4 focus:py-2 focus:rounded"
+            >
+                Fara beint í efni
+            </a>
+
+            <header className="fixed top-0 left-0 right-0 bg-bone/95 backdrop-blur-md z-[100] border-b border-grey-warm h-20 flex items-center">
+                <nav aria-label="Aðalvalmynd" className="container mx-auto px-6 flex justify-between items-center relative">
                     <Link to="/" className="flex items-center gap-2 z-[110]">
                         <Logo size={28} className="text-charcoal" />
                         <span className="text-xl font-serif font-bold tracking-tight">Bústaðurinn.is</span>
@@ -72,6 +85,7 @@ export default function MarketingLayout({
                             <Link
                                 key={link.path}
                                 to={link.path}
+                                aria-current={location.pathname === link.path ? 'page' : undefined}
                                 className={`font-medium transition-colors text-sm uppercase tracking-wide ${isCurrent(link.path)}`}
                             >
                                 {link.name}
@@ -98,17 +112,26 @@ export default function MarketingLayout({
 
                         {/* Mobile Menu Toggle */}
                         <button
+                            ref={toggleRef}
+                            type="button"
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="md:hidden p-2 text-charcoal focus:outline-none z-[110] -mr-2"
-                            aria-label="Valmynd"
+                            className="md:hidden p-2 text-charcoal z-[110] -mr-2"
+                            aria-label={isMenuOpen ? 'Loka valmynd' : 'Opna valmynd'}
+                            aria-expanded={isMenuOpen}
+                            aria-controls="mobile-menu"
                         >
-                            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                            {isMenuOpen ? <X size={28} aria-hidden="true" /> : <Menu size={28} aria-hidden="true" />}
                         </button>
                     </div>
-                </div>
+                </nav>
+            </header>
 
-                {/* Mobile Menu Overlay */}
-                <div className={`fixed inset-0 bg-white z-[105] transition-transform duration-300 md:hidden flex flex-col ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                {/* Mobile Menu Overlay (outside the header: its backdrop-filter would otherwise confine position:fixed to the 80px bar) */}
+                <div
+                    id="mobile-menu"
+                    inert={!isMenuOpen}
+                    className={`fixed inset-0 pt-20 bg-white z-[99] transition-transform duration-300 md:hidden flex flex-col overflow-y-auto overscroll-contain ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+                >
                     <div className="flex flex-col items-center justify-center flex-1 gap-8 px-6 text-center">
                         {navLinks.map((link, idx) => (
                             <Link
@@ -125,16 +148,15 @@ export default function MarketingLayout({
                         <Link
                             to="/login"
                             onClick={() => setIsMenuOpen(false)}
-                            className={`text-lg font-semibold text-charcoal hover:text-amber transition-all duration-300 transform ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                            className={`text-lg font-semibold text-charcoal hover:text-amber-ink transition-all duration-300 transform ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
                             style={{ transitionDelay: `${navLinks.length * 50}ms` }}
                         >
                             Innskrá
                         </Link>
                     </div>
                 </div>
-            </nav >
 
-            <main className="flex-1 pt-20">
+            <main id="main" className="flex-1 pt-20">
                 {children}
             </main>
 
@@ -154,14 +176,14 @@ export default function MarketingLayout({
 
                         {/* Newsletter Mini */}
                         <div className="bg-white/5 p-8 rounded-2xl border border-white/10 backdrop-blur-sm">
-                            <h4 className="text-lg font-bold mb-2 text-white">Fréttabréf og ráð</h4>
+                            <h2 className="text-lg font-bold mb-2 text-white">Fréttabréf og ráð</h2>
                             <p className="text-stone-200 text-sm mb-6 opacity-90">Fáðu tilkynningu þegar við bætum við nýjum eiginleikum.</p>
                             <NewsletterSignup variant="compact" />
                         </div>
                     </div>
 
                     <div className="border-t border-white/20 pt-12">
-                        <div className="grid grid-cols-2 md:flex md:flex-wrap justify-center gap-x-12 gap-y-6 mb-12">
+                        <nav aria-label="Síðufótur" className="grid grid-cols-2 md:flex md:flex-wrap justify-center gap-x-12 gap-y-6 mb-12">
                             <Link to="/eiginleikar" className="text-white hover:text-amber transition-colors text-base font-bold">Eiginleikar</Link>
                             <Link to="/handbok" className="text-white hover:text-amber transition-colors text-base font-bold">Handbók</Link>
                             <Link to="/spurt-og-svarad" className="text-white hover:text-amber transition-colors text-base font-bold whitespace-nowrap">Algengar spurningar</Link>
@@ -171,7 +193,7 @@ export default function MarketingLayout({
                             <Link to="/skilmalar" className="text-white hover:text-amber transition-colors text-base font-bold">Skilmálar</Link>
                             <Link to="/torgid" className="text-white hover:text-amber transition-colors text-base font-bold">Torgið</Link>
                             <Link to="/verktakar" className="text-amber-400 hover:text-amber-300 transition-colors text-base font-bold">Fyrir Verktaka</Link>
-                        </div>
+                        </nav>
 
                         <div className="text-center space-y-12">
                             {/* Social Media Links */}
@@ -180,29 +202,29 @@ export default function MarketingLayout({
                                     href="https://www.facebook.com/bustadurinn.is/"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="group flex items-center gap-3 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 hover:border-amber/50 transition-all duration-300 hover:scale-105"
-                                    aria-label="Fylgdu okkur á Facebook"
+                                    className="group flex items-center gap-3 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 hover:border-amber/50 transition-all duration-300 motion-safe:hover:scale-105"
                                 >
-                                    <svg className="w-5 h-5 text-white group-hover:text-amber transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                                    <svg aria-hidden="true" className="w-5 h-5 text-white group-hover:text-amber transition-colors" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                                     </svg>
                                     <span className="text-white font-semibold group-hover:text-amber transition-colors">
                                         Fylgdu okkur á Facebook
                                     </span>
+                                    <span className="sr-only">(opnast í nýjum flipa)</span>
                                 </a>
                                 <a
                                     href="https://www.linkedin.com/company/bústaðurinn-is/"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="group flex items-center gap-3 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 hover:border-amber/50 transition-all duration-300 hover:scale-105"
-                                    aria-label="Fylgdu okkur á LinkedIn"
+                                    className="group flex items-center gap-3 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 hover:border-amber/50 transition-all duration-300 motion-safe:hover:scale-105"
                                 >
-                                    <svg className="w-5 h-5 text-white group-hover:text-amber transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                                    <svg aria-hidden="true" className="w-5 h-5 text-white group-hover:text-amber transition-colors" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
                                     </svg>
                                     <span className="text-white font-semibold group-hover:text-amber transition-colors">
                                         Fylgdu okkur á LinkedIn
                                     </span>
+                                    <span className="sr-only">(opnast í nýjum flipa)</span>
                                 </a>
                             </div>
 

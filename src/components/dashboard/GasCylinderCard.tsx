@@ -74,11 +74,11 @@ export default function GasCylinderCard({ gasCylinder, onRecordChange }: GasCyli
     return (
         <div className="bg-white border border-stone-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex items-start gap-3 flex-1">
-                <div className="w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center flex-shrink-0 text-amber">
-                    <Flame size={18} />
+                <div className="w-10 h-10 rounded-full bg-amber/10 flex items-center justify-center flex-shrink-0 text-amber-ink">
+                    <Flame size={18} aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">
+                    <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1">
                         Gaskútur
                     </p>
                     <p className="font-medium text-charcoal">
@@ -99,11 +99,11 @@ export default function GasCylinderCard({ gasCylinder, onRecordChange }: GasCyli
                     </p>
 
                     {gasCylinder.notes && (
-                        <p className="text-xs text-stone-400 mt-1">{gasCylinder.notes}</p>
+                        <p className="text-xs text-stone-500 mt-1">{gasCylinder.notes}</p>
                     )}
 
                     {failed && (
-                        <p className="text-xs text-red-600 mt-2">
+                        <p role="alert" className="text-xs text-red-600 mt-2">
                             Ekki tókst að skrá skiptin. Reyndu aftur.
                         </p>
                     )}
@@ -111,11 +111,12 @@ export default function GasCylinderCard({ gasCylinder, onRecordChange }: GasCyli
             </div>
 
             <button
+                type="button"
                 onClick={handleClick}
                 disabled={saving}
                 className="btn btn-secondary text-sm whitespace-nowrap disabled:opacity-50 flex items-center gap-2 justify-center"
             >
-                {saving && <Loader2 size={14} className="animate-spin" />}
+                {saving && <Loader2 size={14} className="motion-safe:animate-spin" aria-hidden="true" />}
                 Skipti um kút
             </button>
         </div>

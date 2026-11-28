@@ -3,7 +3,7 @@
  * Desktop-first, high-density data tables, real impersonation
  */
 
-import { Fragment, useState, useEffect, useCallback } from 'react';
+import { Fragment, useId, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Home, Users, BarChart2, Mail, FileSearch, Settings, Send,
@@ -12,7 +12,7 @@ import {
     Edit, MapPin, UserCog, Zap, Building2, Eye, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { db, auth } from '@/lib/firebase';
-import { collection, collectionGroup, getCountFromServer, getDocs, getDoc, deleteDoc, doc, updateDoc, setDoc, query, where, limit } from 'firebase/firestore';
+import { collection, collectionGroup, getCountFromServer, getDocs, getDoc, deleteDoc, deleteField, writeBatch, doc, updateDoc, setDoc, query, where, limit } from 'firebase/firestore';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useAppStore } from '@/store/appStore';
 import { seedDemoData } from '@/utils/seedDemoData';
@@ -24,6 +24,8 @@ import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
 import BusinessIntelligenceDashboard from '@/components/analytics/BusinessIntelligenceDashboard';
 import FunnelTimeline from '@/components/analytics/FunnelTimeline';
 import { logger } from '@/utils/logger';
+import { getUserMessage } from '@/utils/userMessages';
+import Modal from '@/components/ui/Modal';
 import { feedbackService } from '@/services/feedbackService';
 import { getAllOrganizations } from '@/services/organizationService';
 
@@ -70,6 +72,13 @@ let statsCache: { data: Stats; timestamp: number } | null = null;
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
+    const fieldBaseId = useId();
+    const tplSubjectId = `${fieldBaseId}-tpl-subject`;
+    const tplHtmlId = `${fieldBaseId}-tpl-html`;
+    const houseNameId = `${fieldBaseId}-house-name`;
+    const houseAddressId = `${fieldBaseId}-house-address`;
+    const houseManagerId = `${fieldBaseId}-house-manager`;
+    const replyTextId = `${fieldBaseId}-reply-text`;
     const [activeTab, setActiveTab] = useState<'overview' | 'data' | 'communications' | 'analytics' | 'system'>('overview');
 
     // Sub-tab states for consolidated tabs
@@ -183,7 +192,7 @@ export default function SuperAdminPage() {
                     return null;
                 });
 
-            const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, subSnap, feedbackSnap, providersSnap, organizationsData, sandboxVisitsSnap] = await Promise.all([
+            const [housesSnap, usersSnap, bookingsSnap, tasksSnap, contactsSnap, subSnap, feedbackSnap, providersSnap, providerContactsSnap, organizationsData, sandboxVisitsSnap] = await Promise.all([
                 safeFetch('houses'),
                 safeFetch('users'),
                 safeFetchGroup('bookings', 500),
@@ -192,6 +201,7 @@ export default function SuperAdminPage() {
                 safeFetch('newsletter_subscribers', 2000),
                 safeFetch('feedback', 500),
                 safeFetch('service_providers', 500),
+                safeFetch('service_provider_contacts', 500),
                 getAllOrganizations().catch((e) => {
                     logger.error('Error fetching organizations:', e);
                     warnings.push('Gat ekki sótt gögn fyrir "organizations"');
@@ -246,7 +256,15 @@ export default function SuperAdminPage() {
                 allContacts: contacts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
                 allSubscribers: subscribers.sort((a, b) => b.created_at.getTime() - a.created_at.getTime()),
                 allFeedback: feedback.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
-                allProviders: providersSnap?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceProvider)) || [],
+                // Contact fields come from service_provider_contacts; legacy fields on the provider doc are the fallback.
+                allProviders: providersSnap?.docs.map(doc => {
+                    const c = providerContactsSnap?.docs.find(x => x.id === doc.id)?.data();
+                    return {
+                        id: doc.id,
+                        ...doc.data(),
+                        ...(c ? { contact_email: c.contact_email, contact_phone: c.contact_phone, address: c.address } : {})
+                    } as ServiceProvider;
+                }) || [],
                 allOrganizations: organizationsData || [],
             };
             statsCache = { data: newStats, timestamp: Date.now() };
@@ -289,7 +307,8 @@ export default function SuperAdminPage() {
             // Refresh data instead of reloading page
             window.location.reload();
         } catch (error: any) {
-            alert(`❌ Error: ${error.message}`);
+            logger.error('Seed demo error:', error);
+            alert(`❌ Villa: ${getUserMessage(error)}`);
         } finally {
             setSeeding(false);
         }
@@ -487,10 +506,10 @@ export default function SuperAdminPage() {
             await setDoc(doc(db, 'email_templates', 'finish_setup'), finishSetupTpl);
 
             await fetchTemplates();
-            alert('Templates seeded!');
+            alert('Sniðmát búin til!');
         } catch (e) {
             logger.error(e);
-            alert('Error seeding');
+            alert('Villa við gerð sniðmáta');
         } finally {
             setLoading(false);
         }
@@ -503,7 +522,8 @@ export default function SuperAdminPage() {
             setTemplates(prev => prev.map(t => t.id === tpl.id ? tpl : t));
             setEditingTemplate(null);
         } catch (e: any) {
-            alert('Error saving: ' + e.message);
+            logger.error('Error saving template:', e);
+            alert('Villa við vistun: ' + getUserMessage(e));
         } finally {
             setActionLoading(null);
         }
@@ -551,7 +571,7 @@ export default function SuperAdminPage() {
             }
         } catch (error: any) {
             logger.error('Test email error:', error);
-            alert(`❌ Villa: ${error.message}`);
+            alert(`❌ Villa: ${getUserMessage(error)}`);
         } finally {
             setActionLoading(null);
         }
@@ -615,7 +635,7 @@ export default function SuperAdminPage() {
             navigate('/dashboard');
         } catch (error: any) {
             logger.error('Impersonation error:', error);
-            alert('Failed to impersonate user: ' + error.message);
+            alert('Ekki tókst að setja þig í spor notandans: ' + getUserMessage(error));
         } finally {
             setActionLoading(null);
         }
@@ -669,7 +689,7 @@ export default function SuperAdminPage() {
             alert('✅ Notanda eytt!');
         } catch (error: any) {
             logger.error('Error deleting user:', error);
-            alert(`❌ Villa: ${error.message}`);
+            alert(`❌ Villa: ${getUserMessage(error)}`);
         } finally {
             setActionLoading(null);
         }
@@ -681,10 +701,10 @@ export default function SuperAdminPage() {
         setActionLoading(`sync-name-${user.uid}`);
         try {
             await updateUserNameInAllCollections(user.uid, user.name, user.house_ids || []);
-            alert('✅ User name synced successfully across all collections.');
+            alert('✅ Nafn notanda samstillt í öllum söfnum.');
         } catch (error: any) {
             logger.error('Error syncing name:', error);
-            alert(`❌ Error: ${error.message}`);
+            alert(`❌ Villa: ${getUserMessage(error)}`);
         } finally {
             setActionLoading(null);
         }
@@ -848,7 +868,57 @@ export default function SuperAdminPage() {
             }));
         } catch (error: any) {
             logger.error('Error toggling featured status:', error);
-            alert('Error: ' + error.message);
+            alert('Villa: ' + getUserMessage(error));
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleSyncFeaturedFeedback = async () => {
+        setActionLoading('sync-featured');
+        try {
+            const { created, removed } = await feedbackService.syncFeaturedCopies();
+            alert(`Lokið! ${created} birtar umsagnir samstilltar, ${removed} fjarlægðar.`);
+        } catch (error: any) {
+            logger.error('Error syncing featured feedback:', error);
+            alert('Villa: ' + getUserMessage(error));
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    // One-off: move contact fields from service_providers docs to service_provider_contacts.
+    const handleMigrateProviderContacts = async () => {
+        if (!confirm('Færa tengiliðaupplýsingar verktaka í sér safn og fjarlægja þær af opinberu skránni?')) return;
+        setActionLoading('migrate-provider-contacts');
+        try {
+            const snap = await getDocs(collection(db, 'service_providers'));
+            const legacy = snap.docs.filter(d => {
+                const x = d.data();
+                return x.contact_email !== undefined || x.contact_phone !== undefined || x.address !== undefined;
+            });
+            for (let i = 0; i < legacy.length; i += 200) {
+                const batch = writeBatch(db);
+                legacy.slice(i, i + 200).forEach(d => {
+                    const x = d.data();
+                    batch.set(doc(db, 'service_provider_contacts', d.id), {
+                        contact_email: x.contact_email ?? '',
+                        contact_phone: x.contact_phone ?? '',
+                        address: x.address ?? '',
+                        owner_uid: x.owner_uid ?? null
+                    });
+                    batch.update(d.ref, {
+                        contact_email: deleteField(),
+                        contact_phone: deleteField(),
+                        address: deleteField()
+                    });
+                });
+                await batch.commit();
+            }
+            alert(`Lokið! ${legacy.length} verktakar fluttir.`);
+        } catch (error: any) {
+            logger.error('Error migrating provider contacts:', error);
+            alert('Villa: ' + getUserMessage(error));
         } finally {
             setActionLoading(null);
         }
@@ -865,7 +935,7 @@ export default function SuperAdminPage() {
             }));
         } catch (error: any) {
             logger.error('Error deleting feedback:', error);
-            alert('Error: ' + error.message);
+            alert('Villa: ' + getUserMessage(error));
         } finally {
             setActionLoading(null);
         }
@@ -891,7 +961,7 @@ export default function SuperAdminPage() {
             alert(`✅ Staða uppfærð: ${newStatus}`);
         } catch (error: any) {
             logger.error('Error updating provider:', error);
-            alert('Villa: ' + error.message);
+            alert('Villa: ' + getUserMessage(error));
         } finally {
             setActionLoading(null);
         }
@@ -901,7 +971,10 @@ export default function SuperAdminPage() {
         if (!confirm('Ertu viss um að þú viljir eyða þessum verktaka?')) return;
         setActionLoading(`delete-provider-${providerId}`);
         try {
-            await deleteDoc(doc(db, 'service_providers', providerId));
+            const delBatch = writeBatch(db);
+            delBatch.delete(doc(db, 'service_providers', providerId));
+            delBatch.delete(doc(db, 'service_provider_contacts', providerId));
+            await delBatch.commit();
             setStats(prev => ({
                 ...prev,
                 allProviders: prev.allProviders.filter(p => p.id !== providerId)
@@ -909,7 +982,7 @@ export default function SuperAdminPage() {
             alert('✅ Verktaka eytt!');
         } catch (error: any) {
             logger.error('Error deleting provider:', error);
-            alert('Villa: ' + error.message);
+            alert('Villa: ' + getUserMessage(error));
         } finally {
             setActionLoading(null);
         }
@@ -939,7 +1012,8 @@ export default function SuperAdminPage() {
                 throw new Error(data.error || 'Failed to fetch orphans');
             }
         } catch (e: any) {
-            alert('Audit Error: ' + e.message);
+            logger.error('Audit error:', e);
+            alert('Villa í úttekt: ' + getUserMessage(e));
         } finally {
             setAuditLoading(false);
         }
@@ -968,7 +1042,8 @@ export default function SuperAdminPage() {
                 throw new Error(data.error || 'Failed to repair');
             }
         } catch (e: any) {
-            alert('Repair Error: ' + e.message);
+            logger.error('Repair error:', e);
+            alert('Villa við viðgerð: ' + getUserMessage(e));
         } finally {
             setActionLoading(null);
         }
@@ -1014,9 +1089,9 @@ export default function SuperAdminPage() {
                 onHouseSelect={handleHouseSwitch}
             >
                 <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                        <div className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
-                        <p className="text-stone-500 font-mono text-sm">Loading system data...</p>
+                    <div className="text-center" role="status">
+                        <div className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4" aria-hidden="true"></div>
+                        <p className="text-stone-500 font-mono text-sm">Hleð kerfisgögnum...</p>
                     </div>
                 </div>
             </AdminLayout>
@@ -1034,14 +1109,14 @@ export default function SuperAdminPage() {
                 onHouseSelect={handleHouseSwitch}
             >
                 <div className="flex items-center justify-center h-full">
-                    <div className="text-center max-w-md">
+                    <div className="text-center max-w-md" role="alert">
                         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="text-4xl">⚠️</span>
+                            <span className="text-4xl" aria-hidden="true">⚠️</span>
                         </div>
-                        <h2 className="text-xl font-serif font-bold text-charcoal mb-2">Failed to Load Data</h2>
+                        <h2 className="text-xl font-serif font-bold text-charcoal mb-2">Ekki tókst að sækja gögn</h2>
                         <p className="text-stone-600 mb-4">{error}</p>
-                        <button onClick={() => window.location.reload()} className="btn btn-primary">
-                            Retry
+                        <button type="button" onClick={() => window.location.reload()} className="btn btn-primary">
+                            Reyna aftur
                         </button>
                     </div>
                 </div>
@@ -1063,34 +1138,36 @@ export default function SuperAdminPage() {
                 <div className="flex items-center justify-center h-full">
                     <div className="text-center max-w-md">
                         <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Database className="w-8 h-8 text-stone-400" />
+                            <Database className="w-8 h-8 text-stone-400" aria-hidden="true" />
                         </div>
-                        <h2 className="text-xl font-serif font-bold text-charcoal mb-2">No Data Found</h2>
-                        <p className="text-stone-600 mb-6">Database seems empty or access was denied.</p>
+                        <h2 className="text-xl font-serif font-bold text-charcoal mb-2">Engin gögn fundust</h2>
+                        <p className="text-stone-600 mb-6">Gagnagrunnurinn virðist tómur eða aðgangi var hafnað.</p>
 
                         <div className="bg-stone-50 p-4 rounded-lg mb-6 text-left text-xs font-mono text-stone-500 break-all border border-stone-200">
-                            <p className="font-bold text-stone-700 mb-2">Debug Info:</p>
+                            <p className="font-bold text-stone-700 mb-2">Villuleitarupplýsingar:</p>
                             <p>UID: {currentUser?.uid}</p>
-                            <p>Email: {currentUser?.email}</p>
-                            <p className="mt-2 text-amber-600">
-                                Verify this UID exists in firestore.rules "isSuperAdmin()" function.
+                            <p>Netfang: {currentUser?.email}</p>
+                            <p className="mt-2 text-amber-700">
+                                Athugaðu að þetta UID sé í firestore.rules í fallinu "isSuperAdmin()".
                             </p>
                         </div>
 
                         <div className="flex gap-3 justify-center">
                             <button
+                                type="button"
                                 onClick={handleSeedDemo}
                                 disabled={seeding}
                                 className="btn btn-primary flex items-center gap-2"
                             >
-                                <Database className="w-4 h-4" />
-                                {seeding ? 'Seeding...' : 'Seed Demo Data'}
+                                <Database className="w-4 h-4" aria-hidden="true" />
+                                {seeding ? 'Bý til gögn...' : 'Búa til sýnigögn'}
                             </button>
                             <button
+                                type="button"
                                 onClick={() => fetchStats(true)}
                                 className="px-4 py-2 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors font-medium text-stone-600"
                             >
-                                Refresh Page
+                                Endurhlaða
                             </button>
                         </div>
                     </div>
@@ -1116,8 +1193,8 @@ export default function SuperAdminPage() {
                         ))}
                     </ul>
                     <p className="mt-3 text-xs text-amber-700 bg-amber/10 inline-block px-2 py-1 rounded-md">Aðgerðir eða greiningar gætu verið ófullkomnar. Athugaðu Firebase öryggisreglur (Firestore Rules).</p>
-                    <button onClick={() => setFetchWarnings([])} className="absolute top-2 right-2 p-1.5 hover:bg-amber/20 rounded-lg transition-colors">
-                        <XCircle size={20} className="text-amber-700"/>
+                    <button type="button" aria-label="Loka viðvörun" onClick={() => setFetchWarnings([])} className="absolute top-2 right-2 p-1.5 hover:bg-amber/20 rounded-lg transition-colors">
+                        <XCircle size={20} className="text-amber-700" aria-hidden="true"/>
                     </button>
                 </div>
             )}
@@ -1130,12 +1207,13 @@ export default function SuperAdminPage() {
                 </h3>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
+                        <caption className="sr-only">Nýskráningar síðustu 24 klukkustundir</caption>
                         <thead>
                             <tr className="border-b border-stone-100 text-grey-dark">
-                                <th className="pb-2">Tími</th>
-                                <th className="pb-2">Nafn / Netfang</th>
-                                <th className="pb-2">Staða</th>
-                                <th className="pb-2">Hús</th>
+                                <th scope="col" className="pb-2">Tími</th>
+                                <th scope="col" className="pb-2">Nafn / Netfang</th>
+                                <th scope="col" className="pb-2">Staða</th>
+                                <th scope="col" className="pb-2">Hús</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1157,15 +1235,20 @@ export default function SuperAdminPage() {
                                     return (
                                         <Fragment key={user.uid}>
                                         <tr
-                                            onClick={() => setExpandedSignupUid(expanded ? null : user.uid)}
-                                            title="Smelltu til að sjá skrefin"
-                                            className="border-b border-stone-50 last:border-0 hover:bg-stone-50 cursor-pointer"
+                                            className="relative border-b border-stone-50 last:border-0 hover:bg-stone-50"
                                         >
                                             <td className="py-2 text-grey-mid">
-                                                <span className="flex items-center gap-1">
-                                                    {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setExpandedSignupUid(expanded ? null : user.uid)}
+                                                    aria-expanded={expanded}
+                                                    aria-label={`Sýna skref notanda ${user.name || user.email}`}
+                                                    title="Smelltu til að sjá skrefin"
+                                                    className="flex items-center gap-1 after:absolute after:inset-0 after:content-['']"
+                                                >
+                                                    {expanded ? <ChevronDown className="w-4 h-4" aria-hidden="true" /> : <ChevronRight className="w-4 h-4" aria-hidden="true" />}
                                                     {createdDate.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
+                                                </button>
                                             </td>
                                             <td className="py-2 font-medium text-charcoal">
                                                 <div>{user.name || 'Nafnlaust'}</div>
@@ -1178,7 +1261,7 @@ export default function SuperAdminPage() {
                                                     </span>
                                                 ) : (
                                                     <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit">
-                                                        <AlertTriangle className="w-3 h-3" />
+                                                        <AlertTriangle className="w-3 h-3" aria-hidden="true" />
                                                         Festist?
                                                     </span>
                                                 )}
@@ -1220,15 +1303,15 @@ export default function SuperAdminPage() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between py-4 md:h-20 gap-4 md:gap-0">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3 md:gap-4">
-                                <div className={`p-2.5 rounded-xl bg-gradient-to-br from-charcoal to-stone-800 text-white shadow-lg shadow-charcoal/20 transition-transform duration-500 hover:rotate-180`}>
-                                    <Shield className={`w-5 h-5 md:w-6 md:h-6`} />
+                                <div className={`p-2.5 rounded-xl bg-gradient-to-br from-charcoal to-stone-800 text-white shadow-lg shadow-charcoal/20 transition-transform duration-500 motion-safe:hover:rotate-180`}>
+                                    <Shield className={`w-5 h-5 md:w-6 md:h-6`} aria-hidden="true" />
                                 </div>
                                 <div>
                                     <h1 className="text-xl md:text-2xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-charcoal to-stone-600">
                                         Super Admin
                                     </h1>
                                     <p className="text-[10px] md:text-xs text-stone-500 font-medium tracking-wide">
-                                        v1.2.0 • <span className="text-green-600 flex-inline items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block"></span>Online</span>
+                                        v1.2.0 • <span className="text-green-600 flex-inline items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 motion-safe:animate-pulse inline-block" aria-hidden="true"></span>Online</span>
                                     </p>
                                 </div>
                             </div>
@@ -1236,10 +1319,12 @@ export default function SuperAdminPage() {
                             {/* Mobile Actions */}
                             <div className="flex md:hidden gap-2">
                                 <button
+                                    type="button"
                                     onClick={() => window.location.href = '/'}
-                                    className="p-2 text-stone-400 hover:text-charcoal transition-colors"
+                                    aria-label="Hætta"
+                                    className="p-2 text-stone-500 hover:text-charcoal transition-colors"
                                 >
-                                    <LogOut className="w-5 h-5" />
+                                    <LogOut className="w-5 h-5" aria-hidden="true" />
                                 </button>
                             </div>
                         </div>
@@ -1247,28 +1332,30 @@ export default function SuperAdminPage() {
                         {/* Desktop Actions */}
                         <div className="hidden md:flex items-center gap-3">
                             <button
+                                type="button"
                                 onClick={handleSeedDemo}
                                 disabled={actionLoading === 'seed'}
-                                className="flex items-center gap-2 px-4 py-2 bg-stone-100/50 hover:bg-stone-100 text-stone-600 rounded-lg text-sm font-medium transition-all hover:scale-105 active:scale-95"
+                                className="flex items-center gap-2 px-4 py-2 bg-stone-100/50 hover:bg-stone-100 text-stone-600 rounded-lg text-sm font-medium transition-all motion-safe:hover:scale-105 motion-safe:active:scale-95"
                             >
-                                <Database className={`w-4 h-4 ${actionLoading === 'seed' ? 'animate-spin' : ''}`} />
+                                <Database className={`w-4 h-4 ${actionLoading === 'seed' ? 'animate-spin' : ''}`} aria-hidden="true" />
                                 <span className="font-bold">Seed Data</span>
                             </button>
 
                             <div className="h-8 w-px bg-stone-200 mx-2"></div>
 
                             <button
+                                type="button"
                                 onClick={() => window.location.href = '/'}
                                 className="group flex items-center gap-2 px-4 py-2 text-stone-500 hover:text-red-600 transition-colors"
                             >
                                 <span className="text-sm font-medium group-hover:underline decoration-red-600/30 underline-offset-4">Hætta</span>
-                                <LogOut className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                <LogOut className="w-4 h-4 motion-safe:group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                             </button>
                         </div>
                     </div>
 
                     {/* Streamlined 5-Tab Navigation */}
-                    <div className="flex items-center gap-1 md:gap-2 pb-0 overflow-x-auto no-scrollbar">
+                    <div className="flex items-center gap-1 md:gap-2 pb-0 overflow-x-auto no-scrollbar" role="tablist" aria-label="Flipar stjórnborðs">
                         {[
                             { id: 'overview', icon: LayoutDashboard, label: 'Yfirlit' },
                             { id: 'data', icon: Database, label: 'Gögn' },
@@ -1277,6 +1364,9 @@ export default function SuperAdminPage() {
                             { id: 'system', icon: Settings, label: 'Kerfi' }
                         ].map(tab => (
                             <button
+                                type="button"
+                                role="tab"
+                                aria-selected={activeTab === tab.id}
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={`
@@ -1288,7 +1378,7 @@ export default function SuperAdminPage() {
                                     }
                                 `}
                             >
-                                <tab.icon className={`w-4 h-4 transition-transform duration-300 ${activeTab === tab.id ? 'scale-110 text-amber' : 'group-hover:scale-110'}`} />
+                                <tab.icon className={`w-4 h-4 transition-transform duration-300 ${activeTab === tab.id ? 'scale-110 text-amber-ink' : 'motion-safe:group-hover:scale-110'}`} aria-hidden="true" />
                                 {tab.label}
 
                                 {/* Active Indicator Line */}
@@ -1302,13 +1392,15 @@ export default function SuperAdminPage() {
             </div>
 
             {/* Content */}
-            <div className="p-4 md:p-8">
+            <div className="p-4 md:p-8" role="tabpanel" aria-label={{ overview: 'Yfirlit', data: 'Gögn', communications: 'Samskipti', analytics: 'Greining', system: 'Kerfi' }[activeTab as string]}>
                 {/* Analytics Tab - Consolidated */}
                 {activeTab === 'analytics' && (
                     <div className="space-y-6">
                         {/* Sub-tab Navigation */}
                         <div className="flex gap-2 border-b border-stone-200">
                             <button
+                                type="button"
+                                aria-current={analyticsSubTab === 'bi' ? 'page' : undefined}
                                 onClick={() => setAnalyticsSubTab('bi')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors ${analyticsSubTab === 'bi'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1321,6 +1413,8 @@ export default function SuperAdminPage() {
                                 </div>
                             </button>
                             <button
+                                type="button"
+                                aria-current={analyticsSubTab === 'analytics' ? 'page' : undefined}
                                 onClick={() => setAnalyticsSubTab('analytics')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors ${analyticsSubTab === 'analytics'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1353,6 +1447,8 @@ export default function SuperAdminPage() {
                         {/* Sub-tab Navigation */}
                         <div className="flex gap-2 border-b border-stone-200 overflow-x-auto">
                             <button
+                                type="button"
+                                aria-current={dataSubTab === 'houses' ? 'page' : undefined}
                                 onClick={() => setDataSubTab('houses')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'houses'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1365,6 +1461,8 @@ export default function SuperAdminPage() {
                                 </div>
                             </button>
                             <button
+                                type="button"
+                                aria-current={dataSubTab === 'users' ? 'page' : undefined}
                                 onClick={() => setDataSubTab('users')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'users'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1377,6 +1475,8 @@ export default function SuperAdminPage() {
                                 </div>
                             </button>
                             <button
+                                type="button"
+                                aria-current={dataSubTab === 'organizations' ? 'page' : undefined}
                                 onClick={() => setDataSubTab('organizations')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'organizations'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1389,6 +1489,8 @@ export default function SuperAdminPage() {
                                 </div>
                             </button>
                             <button
+                                type="button"
+                                aria-current={dataSubTab === 'providers' ? 'page' : undefined}
                                 onClick={() => setDataSubTab('providers')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'providers'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1412,6 +1514,8 @@ export default function SuperAdminPage() {
                         {/* Sub-tab Navigation */}
                         <div className="flex gap-2 border-b border-stone-200 overflow-x-auto">
                             <button
+                                type="button"
+                                aria-current={communicationsSubTab === 'contacts' ? 'page' : undefined}
                                 onClick={() => setCommunicationsSubTab('contacts')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'contacts'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1424,6 +1528,8 @@ export default function SuperAdminPage() {
                                 </div>
                             </button>
                             <button
+                                type="button"
+                                aria-current={communicationsSubTab === 'emails' ? 'page' : undefined}
                                 onClick={() => setCommunicationsSubTab('emails')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'emails'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1436,6 +1542,8 @@ export default function SuperAdminPage() {
                                 </div>
                             </button>
                             <button
+                                type="button"
+                                aria-current={communicationsSubTab === 'newsletter' ? 'page' : undefined}
                                 onClick={() => setCommunicationsSubTab('newsletter')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'newsletter'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1448,6 +1556,8 @@ export default function SuperAdminPage() {
                                 </div>
                             </button>
                             <button
+                                type="button"
+                                aria-current={communicationsSubTab === 'feedback' ? 'page' : undefined}
                                 onClick={() => setCommunicationsSubTab('feedback')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'feedback'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1471,6 +1581,8 @@ export default function SuperAdminPage() {
                         {/* Sub-tab Navigation */}
                         <div className="flex gap-2 border-b border-stone-200 overflow-x-auto">
                             <button
+                                type="button"
+                                aria-current={systemSubTab === 'audit' ? 'page' : undefined}
                                 onClick={() => setSystemSubTab('audit')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${systemSubTab === 'audit'
                                     ? 'text-charcoal border-b-2 border-amber'
@@ -1492,13 +1604,13 @@ export default function SuperAdminPage() {
                 {activeTab === 'system' && systemSubTab === 'audit' && (
                     <div className="space-y-6">
                         <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
-                            <h3 className="text-lg font-bold text-charcoal mb-2">User Audit</h3>
-                            <p className="text-stone-500 mb-6">Checking for consistency between Auth and Firestore.</p>
+                            <h3 className="text-lg font-bold text-charcoal mb-2">Úttekt notenda</h3>
+                            <p className="text-stone-500 mb-6">Athugar samræmi milli auðkenningar (Auth) og Firestore.</p>
 
                             {auditLoading ? (
-                                <div className="text-center py-10">
-                                    <div className="animate-spin w-8 h-8 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
-                                    <p>Scanning database...</p>
+                                <div className="text-center py-10" role="status">
+                                    <div className="animate-spin w-8 h-8 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4" aria-hidden="true"></div>
+                                    <p>Skanna gagnagrunn...</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1507,25 +1619,26 @@ export default function SuperAdminPage() {
                                         <div className="flex items-center justify-between mb-4">
                                             <h4 className="font-bold text-red-700 flex items-center gap-2">
                                                 <AlertTriangle className="w-4 h-4" />
-                                                Orphan Users ({orphans.length})
+                                                Munaðarlausir notendur ({orphans.length})
                                             </h4>
-                                            <button onClick={exportOrphansCSV} className="text-xs text-stone-500 underline">Export CSV</button>
+                                            <button type="button" onClick={exportOrphansCSV} className="text-xs text-stone-500 underline px-2 py-1">Flytja út CSV</button>
                                         </div>
                                         <p className="text-sm text-stone-600 mb-4">
-                                            Users who exist in Authentication but have <strong>NO Firestore Profile</strong>.
-                                            This usually means the signup process crashed after account creation but before profile creation.
+                                            Notendur sem eru til í auðkenningu en hafa <strong>engan Firestore-prófíl</strong>.
+                                            Þetta þýðir yfirleitt að nýskráning hrundi eftir að aðgangur var stofnaður en áður en prófíll var búinn til.
                                         </p>
 
                                         <div className="max-h-60 overflow-y-auto bg-white rounded border border-red-100">
                                             {orphans.length === 0 ? (
-                                                <div className="p-4 text-center text-stone-400 text-sm">No orphans found. ✅</div>
+                                                <div className="p-4 text-center text-stone-500 text-sm">Engir munaðarlausir notendur fundust. ✅</div>
                                             ) : (
                                                 <table className="w-full text-left text-xs">
+                                                    <caption className="sr-only">Munaðarlausir notendur</caption>
                                                     <thead className="bg-stone-50 sticky top-0">
                                                         <tr>
-                                                            <th className="p-2">Email</th>
-                                                            <th className="p-2">Created</th>
-                                                            <th className="p-2">Action</th>
+                                                            <th scope="col" className="p-2">Netfang</th>
+                                                            <th scope="col" className="p-2">Stofnað</th>
+                                                            <th scope="col" className="p-2">Aðgerð</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -1536,16 +1649,18 @@ export default function SuperAdminPage() {
                                                                 <td className="p-2">
                                                                     <div className="flex gap-2">
                                                                         <button
+                                                                            type="button"
                                                                             onClick={() => handleRepairOrphan(u.uid)}
                                                                             className="px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100"
                                                                         >
-                                                                            Repair
+                                                                            Laga
                                                                         </button>
                                                                         <button
+                                                                            type="button"
                                                                             onClick={() => handleDeleteUser({ uid: u.uid, name: u.name || 'Unknown', email: u.email } as any)}
                                                                             className="px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-100"
                                                                         >
-                                                                            Delete
+                                                                            Eyða
                                                                         </button>
                                                                     </div>
                                                                 </td>
@@ -1562,23 +1677,24 @@ export default function SuperAdminPage() {
                                         <div className="flex items-center justify-between mb-4">
                                             <h4 className="font-bold text-orange-700 flex items-center gap-2">
                                                 <AlertTriangle className="w-4 h-4" />
-                                                Stuck Users (No House) ({stuckUsers.length})
+                                                Fastir notendur (án húss) ({stuckUsers.length})
                                             </h4>
                                         </div>
                                         <p className="text-sm text-stone-600 mb-4">
-                                            Users who have a profile but <strong>no house linked</strong>.
-                                            They likely dropped off during the "Create House" step.
+                                            Notendur sem eru með prófíl en <strong>ekkert hús tengt</strong>.
+                                            Þeir hættu líklega við í skrefinu „Stofna hús“.
                                         </p>
                                         <div className="max-h-60 overflow-y-auto bg-white rounded border border-orange-100">
                                             {stuckUsers.length === 0 ? (
-                                                <div className="p-4 text-center text-stone-400 text-sm">No stuck users found. ✅</div>
+                                                <div className="p-4 text-center text-stone-500 text-sm">Engir fastir notendur fundust. ✅</div>
                                             ) : (
                                                 <table className="w-full text-left text-xs">
+                                                    <caption className="sr-only">Fastir notendur án húss</caption>
                                                     <thead className="bg-stone-50 sticky top-0">
                                                         <tr>
-                                                            <th className="p-2">Name / Email</th>
-                                                            <th className="p-2">Created</th>
-                                                            <th className="p-2">Action</th>
+                                                            <th scope="col" className="p-2">Nafn / Netfang</th>
+                                                            <th scope="col" className="p-2">Stofnað</th>
+                                                            <th scope="col" className="p-2">Aðgerð</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -1592,9 +1708,11 @@ export default function SuperAdminPage() {
                                                                 <td className="p-2">
                                                                     <div className="flex gap-2">
                                                                         <button
+                                                                            type="button"
                                                                             onClick={() => handleDeleteUser({ uid: u.uid, email: u.email, name: u.name || 'Prufuaðgangur' } as any)}
-                                                                            className="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded"
-                                                                            title="Delete user profile"
+                                                                            className="text-red-600 hover:text-red-700 bg-red-50 p-1.5 rounded"
+                                                                            aria-label={`Eyða notandaprófíl ${u.email}`}
+                                                                            title="Eyða notandaprófíl"
                                                                         >
                                                                             <Trash2 className="w-4 h-4" />
                                                                         </button>
@@ -1613,7 +1731,7 @@ export default function SuperAdminPage() {
                                         <div className="flex items-center justify-between mb-4">
                                             <h4 className="font-bold flex items-center gap-2 text-purple-900 m-0">
                                                 <AlertTriangle className="w-4 h-4" />
-                                                Prufuaðgangar (Test Users) ({testUsers.length})
+                                                Prufuaðgangar ({testUsers.length})
                                             </h4>
                                         </div>
                                         <p className="text-sm text-purple-700 mb-4">
@@ -1622,15 +1740,16 @@ export default function SuperAdminPage() {
                                         </p>
                                         <div className="max-h-60 overflow-y-auto bg-white rounded border border-purple-100">
                                             {testUsers.length === 0 ? (
-                                                <div className="p-4 text-center text-purple-400 text-sm">Engir prufuaðgangar fundust. ✅</div>
+                                                <div className="p-4 text-center text-purple-700 text-sm">Engir prufuaðgangar fundust. ✅</div>
                                             ) : (
                                                 <table className="w-full text-left text-xs">
+                                                    <caption className="sr-only">Prufuaðgangar</caption>
                                                     <thead className="bg-purple-50 sticky top-0">
                                                         <tr>
-                                                            <th className="p-2">Name / Email</th>
-                                                            <th className="p-2">Hús</th>
-                                                            <th className="p-2">Created</th>
-                                                            <th className="p-2">Action</th>
+                                                            <th scope="col" className="p-2">Nafn / Netfang</th>
+                                                            <th scope="col" className="p-2">Hús</th>
+                                                            <th scope="col" className="p-2">Stofnað</th>
+                                                            <th scope="col" className="p-2">Aðgerð</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -1642,7 +1761,7 @@ export default function SuperAdminPage() {
                                                                 </td>
                                                                 <td className="p-2 text-stone-500">
                                                                     {u.houseIds && u.houseIds.length > 0 ? (
-                                                                        <span className="text-red-500 font-bold">{u.houseIds.length} hús</span>
+                                                                        <span className="text-red-600 font-bold">{u.houseIds.length} hús</span>
                                                                     ) : (
                                                                         "0"
                                                                     )}
@@ -1651,19 +1770,21 @@ export default function SuperAdminPage() {
                                                                 <td className="p-2">
                                                                     <div className="flex gap-2">
                                                                         <button
+                                                                            type="button"
                                                                             onClick={() => handleImpersonate(u as any)}
-                                                                            className="px-2 py-1 bg-amber/10 text-amber rounded hover:bg-amber hover:text-charcoal"
-                                                                            title="Start onboarding for them"
+                                                                            className="px-2 py-1 bg-amber/10 text-amber-ink rounded hover:bg-amber hover:text-charcoal"
+                                                                            title="Hefja uppsetningu fyrir notandann"
                                                                         >
-                                                                            Impersonate
+                                                                            Setja sig í spor notanda
                                                                         </button>
                                                                         <button
+                                                                            type="button"
                                                                             onClick={() => handleSendRecoveryEmail(u as any)}
                                                                             disabled={actionLoading === `recovery-${u.uid}`}
                                                                             className="px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100"
-                                                                            title="Send Finish Setup email"
+                                                                            title="Senda tölvupóst um að klára uppsetningu"
                                                                         >
-                                                                            Contact
+                                                                            Hafa samband
                                                                         </button>
                                                                     </div>
                                                                 </td>
@@ -1707,7 +1828,7 @@ export default function SuperAdminPage() {
                                         <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Hús</p>
                                     </div>
                                     <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalHouses}</p>
-                                    <p className="text-[10px] md:text-xs text-stone-400">Skráð hús</p>
+                                    <p className="text-[10px] md:text-xs text-stone-500">Skráð hús</p>
                                 </div>
 
                                 {/* Total Users */}
@@ -1719,7 +1840,7 @@ export default function SuperAdminPage() {
                                         <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Notendur</p>
                                     </div>
                                     <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalUsers}</p>
-                                    <p className="text-[10px] md:text-xs text-stone-400">
+                                    <p className="text-[10px] md:text-xs text-stone-500">
                                         {stats.totalHouses > 0 ? (stats.totalUsers / stats.totalHouses).toFixed(1) : 0} að meðaltali
                                     </p>
                                 </div>
@@ -1733,7 +1854,7 @@ export default function SuperAdminPage() {
                                         <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Póstlisti</p>
                                     </div>
                                     <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalSubscribers}</p>
-                                    <p className="text-[10px] md:text-xs text-stone-400">
+                                    <p className="text-[10px] md:text-xs text-stone-500">
                                         Væntanlegir viðskiptavinir
                                     </p>
                                 </div>
@@ -1742,12 +1863,12 @@ export default function SuperAdminPage() {
                                 <div className="bg-white border border-stone-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all">
                                     <div className="flex items-center gap-2 mb-3">
                                         <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
-                                            <UserCog className="w-4 h-4 text-amber" />
+                                            <UserCog className="w-4 h-4 text-amber-ink" />
                                         </div>
                                         <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Verktakar</p>
                                     </div>
                                     <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalProviders}</p>
-                                    <p className="text-[10px] md:text-xs text-stone-400">
+                                    <p className="text-[10px] md:text-xs text-stone-500">
                                         Skráðir þjónustuaðilar
                                     </p>
                                 </div>
@@ -1761,7 +1882,7 @@ export default function SuperAdminPage() {
                                         <p className="text-[10px] md:text-xs text-stone-500 font-bold uppercase tracking-wider">Félög</p>
                                     </div>
                                     <p className="text-2xl md:text-4xl font-serif font-bold text-charcoal mb-1">{stats.totalOrganizations}</p>
-                                    <p className="text-[10px] md:text-xs text-stone-400">
+                                    <p className="text-[10px] md:text-xs text-stone-500">
                                         Skráð félög og fyrirtæki
                                     </p>
                                 </div>
@@ -1776,7 +1897,7 @@ export default function SuperAdminPage() {
                                 <div className="space-y-4">
                                     {unifiedActivity.map((item: any, idx: number) => (
                                         <div key={idx} className="flex items-start gap-3 pb-4 border-b border-stone-100 last:border-0 last:pb-0">
-                                            <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center ${item.type === 'house' ? 'bg-amber/10 text-amber' : 'bg-blue-50 text-blue-600'
+                                            <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center ${item.type === 'house' ? 'bg-amber/10 text-amber-ink' : 'bg-blue-50 text-blue-600'
                                                 }`}>
                                                 {item.type === 'house' ? <Home className="w-4 h-4" /> : <Users className="w-4 h-4" />}
                                             </div>
@@ -1885,14 +2006,25 @@ export default function SuperAdminPage() {
                 {/* Feedback Tab */}
                 {activeTab === 'communications' && communicationsSubTab === 'feedback' && (
                     <div className="bg-white border border-stone-200 rounded-lg p-6">
-                        <h2 className="text-lg font-serif font-semibold mb-6">Umsagnir</h2>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-lg font-serif font-semibold">Umsagnir</h2>
+                            <button
+                                type="button"
+                                onClick={handleSyncFeaturedFeedback}
+                                disabled={actionLoading === 'sync-featured'}
+                                className="btn btn-secondary text-sm"
+                            >
+                                Samstilla birtar umsagnir
+                            </button>
+                        </div>
                         <DataTable
+                            caption="Umsagnir notenda"
                             columns={[
                                 {
                                     key: 'rating', label: 'Hvað finnst þér?', sortable: true, render: (row) => (
-                                        <div className="flex text-amber">
+                                        <div className="flex text-amber-ink" role="img" aria-label={`${row.rating} af 5 stjörnum`}>
                                             {[...Array(5)].map((_, i) => (
-                                                <span key={i} className={i < row.rating ? 'fill-amber' : 'text-stone-300'}>★</span>
+                                                <span key={i} aria-hidden="true" className={i < row.rating ? 'fill-amber' : 'text-stone-300'}>★</span>
                                             ))}
                                         </div>
                                     )
@@ -1912,7 +2044,7 @@ export default function SuperAdminPage() {
                                 },
                                 {
                                     key: 'canContact', label: 'Má hafa samband?', render: (row) => (
-                                        row.canContact ? <span className="text-green-600 bg-green-50 px-2 py-1 rounded text-xs">Já</span> : <span className="text-stone-400 text-xs">Nei</span>
+                                        row.canContact ? <span className="text-green-600 bg-green-50 px-2 py-1 rounded text-xs">Já</span> : <span className="text-stone-500 text-xs">Nei</span>
                                     )
                                 },
                                 { key: 'createdAt', label: 'Dags', sortable: true, render: (row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString('is-IS') : '-' },
@@ -1922,16 +2054,21 @@ export default function SuperAdminPage() {
                             actions={(row) => (
                                 <div className="flex gap-2">
                                     <button
+                                        type="button"
                                         onClick={() => handleToggleFeatured(row)}
-                                        className={`p-2 rounded hover:bg-stone-50 transition-colors ${row.featured ? 'text-amber bg-amber/10' : 'text-stone-400'}`}
-                                        title={row.featured ? "Unfeature" : "Feature on Landing Page"}
+                                        className={`p-2 rounded hover:bg-stone-50 transition-colors ${row.featured ? 'text-amber-ink bg-amber/10' : 'text-stone-500'}`}
+                                        title={row.featured ? "Hætta að birta" : "Birta á forsíðu"}
+                                        aria-label={row.featured ? "Hætta að birta umsögn á forsíðu" : "Birta umsögn á forsíðu"}
+                                        aria-pressed={!!row.featured}
                                     >
                                         <Star className={`w-4 h-4 ${row.featured ? 'fill-amber' : ''}`} />
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => handleDeleteFeedback(row.id)}
-                                        className="p-2 text-stone-400 hover:text-red-600 hover:bg-stone-50 rounded transition-colors"
-                                        title="Delete"
+                                        className="p-2 text-stone-500 hover:text-red-600 hover:bg-stone-50 rounded transition-colors"
+                                        title="Eyða"
+                                        aria-label="Eyða umsögn"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -1946,6 +2083,7 @@ export default function SuperAdminPage() {
                     <div className="bg-white border border-stone-200 rounded-lg p-6">
                         <h2 className="text-lg font-serif font-semibold mb-6">Skráð félög</h2>
                         <DataTable
+                            caption="Skráð félög"
                             columns={[
                                 { key: 'name', label: 'Nafn', sortable: true },
                                 {
@@ -1989,16 +2127,19 @@ export default function SuperAdminPage() {
                             actions={(row) => (
                                 <div className="flex gap-2">
                                     <button
+                                        type="button"
                                         onClick={() => {
                                             // Navigate to organization dashboard or show details
                                             window.open(`/organizations/${row.id}/admin`, '_blank');
                                         }}
-                                        className="p-2 text-stone-400 hover:text-charcoal hover:bg-stone-50 rounded transition-colors"
+                                        className="p-2 text-stone-500 hover:text-charcoal hover:bg-stone-50 rounded transition-colors"
                                         title="Skoða félag"
+                                        aria-label={`Skoða félag ${row.name}`}
                                     >
                                         <Eye className="w-4 h-4" />
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={async () => {
                                             if (window.confirm(`Ertu viss um að þú viljir eyða ${row.name}?`)) {
                                                 try {
@@ -2014,8 +2155,9 @@ export default function SuperAdminPage() {
                                                 }
                                             }
                                         }}
-                                        className="p-2 text-stone-400 hover:text-red-600 hover:bg-stone-50 rounded transition-colors"
+                                        className="p-2 text-stone-500 hover:text-red-600 hover:bg-stone-50 rounded transition-colors"
                                         title="Eyða félagi"
+                                        aria-label={`Eyða félagi ${row.name}`}
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -2028,8 +2170,19 @@ export default function SuperAdminPage() {
                 {/* Providers Tab */}
                 {activeTab === 'data' && dataSubTab === 'providers' && (
                     <div className="bg-white border border-stone-200 rounded-lg p-6">
-                        <h2 className="text-lg font-serif font-semibold mb-6">Skráðir Verktakar</h2>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-lg font-serif font-semibold">Skráðir Verktakar</h2>
+                            <button
+                                type="button"
+                                onClick={handleMigrateProviderContacts}
+                                disabled={actionLoading === 'migrate-provider-contacts'}
+                                className="btn btn-secondary text-sm"
+                            >
+                                Færa tengiliðaupplýsingar
+                            </button>
+                        </div>
                         <DataTable
+                            caption="Skráðir verktakar"
                             columns={[
                                 { key: 'name', label: 'Nafn', sortable: true },
                                 { key: 'category', label: 'Flokkur', sortable: true },
@@ -2070,16 +2223,20 @@ export default function SuperAdminPage() {
                             actions={(row) => (
                                 <div className="flex gap-2">
                                     <button
+                                        type="button"
                                         onClick={() => handleToggleProviderStatus(row)}
-                                        className={`p-2 rounded hover:bg-stone-50 transition-colors ${row.status === 'active' ? 'text-amber hover:text-amber-600' : 'text-green-600 hover:text-green-700'}`}
-                                        title={row.status === 'active' ? 'Gera Pending' : 'Samþykkja (Active)'}
+                                        className={`p-2 rounded hover:bg-stone-50 transition-colors ${row.status === 'active' ? 'text-amber-ink hover:text-amber-700' : 'text-green-600 hover:text-green-700'}`}
+                                        title={row.status === 'active' ? 'Setja í bið' : 'Samþykkja'}
+                                        aria-label={row.status === 'active' ? `Setja verktaka ${row.name} í bið` : `Samþykkja verktaka ${row.name}`}
                                     >
                                         {row.status === 'active' ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => handleDeleteProvider(row.id)}
-                                        className="p-2 text-stone-400 hover:text-red-600 hover:bg-stone-50 rounded transition-colors"
+                                        className="p-2 text-stone-500 hover:text-red-600 hover:bg-stone-50 rounded transition-colors"
                                         title="Eyða verktaka"
+                                        aria-label={`Eyða verktaka ${row.name}`}
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -2097,6 +2254,7 @@ export default function SuperAdminPage() {
                             <div className="hidden md:block bg-white border border-stone-200 rounded-lg p-6">
                                 <h2 className="text-lg font-serif font-semibold mb-6">Húsaskrá</h2>
                                 <DataTable
+                                    caption="Húsaskrá"
                                     columns={[
                                         { key: 'name', label: 'Nafn hús', sortable: true },
                                         {
@@ -2137,17 +2295,21 @@ export default function SuperAdminPage() {
                                     actions={(row) => (
                                         <div className="flex gap-2">
                                             <button
+                                                type="button"
                                                 onClick={() => setEditingHouse(row)}
-                                                className="p-1 hover:bg-stone-100 rounded"
+                                                className="p-1.5 hover:bg-stone-100 rounded"
                                                 title="Breyta"
+                                                aria-label={`Breyta húsi ${row.name}`}
                                             >
                                                 <Edit className="w-4 h-4 text-stone-500" />
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleDeleteHouse(row.id!)}
                                                 disabled={actionLoading === row.id}
-                                                className="p-1 hover:bg-red-100 rounded disabled:opacity-50"
+                                                className="p-1.5 hover:bg-red-100 rounded disabled:opacity-50"
                                                 title="Eyða húsi"
+                                                aria-label={`Eyða húsi ${row.name}`}
                                             >
                                                 <Trash2 className="w-4 h-4 text-red-600" />
                                             </button>
@@ -2169,19 +2331,23 @@ export default function SuperAdminPage() {
                                             </p>
                                         </div>
                                         <div className="text-sm mb-4">
-                                            <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Stjórnandi</p>
+                                            <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider mb-0.5">Stjórnandi</p>
                                             <p className="font-medium truncate">{stats.allUsers.find(u => u.uid === house.manager_id)?.email || '—'}</p>
                                         </div>
                                         <div className="flex gap-2 pt-3 border-t border-stone-100">
                                             <button
+                                                type="button"
                                                 onClick={() => setEditingHouse(house)}
                                                 className="px-3 py-2 bg-stone-100 text-stone-600 rounded-lg"
+                                                aria-label={`Breyta húsi ${house.name}`}
                                             >
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleDeleteHouse(house.id!)}
                                                 className="px-3 py-2 bg-red-50 text-red-600 rounded-lg"
+                                                aria-label={`Eyða húsi ${house.name}`}
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -2201,6 +2367,7 @@ export default function SuperAdminPage() {
                             <div className="hidden md:block bg-white border border-stone-200 rounded-lg p-6">
                                 <h2 className="text-lg font-serif font-semibold mb-6">Notendaskrá</h2>
                                 <DataTable
+                                    caption="Notendaskrá"
                                     columns={[
                                         { key: 'name', label: 'Nafn', sortable: true },
                                         {
@@ -2233,26 +2400,30 @@ export default function SuperAdminPage() {
                                     actions={(row) => (
                                         <div className="flex gap-2">
                                             <button
+                                                type="button"
                                                 onClick={() => handleImpersonate(row)}
-                                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber hover:bg-amber hover:text-charcoal rounded transition-colors"
+                                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-amber/30 text-amber-ink hover:bg-amber hover:text-charcoal rounded transition-colors"
                                             >
                                                 <UserCog className="w-3 h-3" />
                                                 Líkja eftir
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleSyncName(row)}
                                                 disabled={actionLoading === `sync-name-${row.uid}`}
                                                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                                 title="Samstilla nafn í öllu kerfinu"
                                             >
                                                 <RefreshCw className={`w-3 h-3 ${actionLoading === `sync-name-${row.uid}` ? 'animate-spin' : ''}`} />
-                                                Sync
+                                                Samstilla
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleDeleteUser(row)}
                                                 disabled={actionLoading === `delete-user-${row.uid}`}
-                                                className="p-1.5 hover:bg-red-50 text-stone-400 hover:text-red-600 rounded transition-colors"
+                                                className="p-1.5 hover:bg-red-50 text-stone-500 hover:text-red-600 rounded transition-colors"
                                                 title="Eyða notanda"
+                                                aria-label={`Eyða notanda ${row.name}`}
                                             >
                                                 {actionLoading === `delete-user-${row.uid}` ? (
                                                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -2261,10 +2432,12 @@ export default function SuperAdminPage() {
                                                 )}
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleSendRecoveryEmail(row)}
                                                 disabled={actionLoading === `recovery-${row.uid}`}
-                                                className="p-1.5 hover:bg-purple-50 text-stone-400 hover:text-purple-600 rounded transition-colors"
-                                                title="Senda 'Finish Setup' póst"
+                                                className="p-1.5 hover:bg-purple-50 text-stone-500 hover:text-purple-600 rounded transition-colors"
+                                                title="Senda póst um að klára uppsetningu"
+                                                aria-label={`Senda ${row.name} póst um að klára uppsetningu`}
                                             >
                                                 {actionLoading === `recovery-${row.uid}` ? (
                                                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -2298,32 +2471,37 @@ export default function SuperAdminPage() {
 
                                             <div className="grid grid-cols-2 gap-4 text-sm mb-4 border-t border-stone-100 pt-3">
                                                 <div>
-                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Hús</p>
+                                                    <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider mb-0.5">Hús</p>
                                                     <p className="font-mono">{user.house_ids?.length || 0}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Skráður</p>
+                                                    <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider mb-0.5">Skráður</p>
                                                     <p className="font-mono text-xs">{timestamp.toLocaleDateString('is-IS')}</p>
                                                 </div>
                                             </div>
 
                                             <div className="flex flex-wrap gap-2">
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleImpersonate(user)}
-                                                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-amber/10 text-amber border border-amber/20 rounded-lg text-xs font-bold hover:bg-amber hover:text-charcoal transition-colors"
+                                                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-amber/10 text-amber-ink border border-amber/20 rounded-lg text-xs font-bold hover:bg-amber hover:text-charcoal transition-colors"
                                                 >
                                                     <UserCog className="w-3 h-3" />
                                                     Líkja eftir
                                                 </button>
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleSyncName(user)}
                                                     className="w-10 h-10 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg"
+                                                    aria-label={`Samstilla nafn ${user.name}`}
                                                 >
                                                     <RefreshCw className={`w-4 h-4 ${actionLoading === `sync-name-${user.uid}` ? 'animate-spin' : ''}`} />
                                                 </button>
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleDeleteUser(user)}
                                                     className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 rounded-lg"
+                                                    aria-label={`Eyða notanda ${user.name}`}
                                                 >
                                                     {actionLoading === `delete-user-${user.uid}` ? (
                                                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -2346,6 +2524,7 @@ export default function SuperAdminPage() {
                         <div>
                             <h2 className="text-2xl font-serif mb-6">Samskipti frá síðu</h2>
                             <DataTable
+                                caption="Samskipti frá síðu"
                                 columns={[
                                     { key: 'name', label: 'Nafn' },
                                     { key: 'email', label: 'Netfang' },
@@ -2390,6 +2569,7 @@ export default function SuperAdminPage() {
                                 searchKeys={['name', 'email', 'message']}
                                 actions={(row) => (
                                     <button
+                                        type="button"
                                         onClick={() => setReplyingTo(row)}
                                         className="btn btn-secondary btn-sm flex items-center gap-2"
                                     >
@@ -2414,6 +2594,7 @@ export default function SuperAdminPage() {
                             </div>
 
                             <DataTable
+                                caption="Póstlisti"
                                 columns={[
                                     {
                                         key: 'email',
@@ -2451,9 +2632,11 @@ export default function SuperAdminPage() {
                                     },
                                     {
                                         key: 'actions',
-                                        label: '',
+                                        label: 'Aðgerðir',
                                         render: (row) => (
                                             <button
+                                                type="button"
+                                                aria-label={`Eyða ${row.email} af póstlista`}
                                                 onClick={async () => {
                                                     if (!confirm(`Eyða ${row.email} af póstlista?`)) return;
                                                     await deleteDoc(doc(db, 'newsletter_subscribers', row.id));
@@ -2463,7 +2646,7 @@ export default function SuperAdminPage() {
                                                         totalSubscribers: prev.totalSubscribers - 1
                                                     }));
                                                 }}
-                                                className="text-stone-400 hover:text-red-500 transition-colors p-1"
+                                                className="text-stone-500 hover:text-red-600 transition-colors p-1.5"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -2482,18 +2665,18 @@ export default function SuperAdminPage() {
                     activeTab === 'communications' && communicationsSubTab === 'emails' && (
                         <div className="max-w-4xl space-y-8">
                             <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-serif">Email Templates</h2>
+                                <h2 className="text-2xl font-serif">Tölvupóstsniðmát</h2>
                                 <div className="flex gap-2">
-                                    <button onClick={handleSeedTemplates} className="btn btn-secondary btn-sm">Seed Defaults</button>
-                                    <button onClick={fetchTemplates} className="btn btn-ghost btn-sm">Refresh</button>
+                                    <button type="button" onClick={handleSeedTemplates} className="btn btn-secondary btn-sm">Búa til sjálfgefin</button>
+                                    <button type="button" onClick={fetchTemplates} className="btn btn-ghost btn-sm">Endurhlaða</button>
                                 </div>
                             </div>
 
                             {templates.length === 0 && !loading ? (
                                 <div className="text-center py-12 bg-white rounded-lg border border-stone-200">
-                                    <p className="text-stone-500 mb-4">No templates found.</p>
-                                    <button onClick={handleSeedTemplates} className="btn btn-secondary">
-                                        Seed Default Templates
+                                    <p className="text-stone-500 mb-4">Engin sniðmát fundust.</p>
+                                    <button type="button" onClick={handleSeedTemplates} className="btn btn-secondary">
+                                        Búa til sjálfgefin sniðmát
                                     </button>
                                 </div>
                             ) : (
@@ -2506,11 +2689,11 @@ export default function SuperAdminPage() {
                                                         <h3 className="font-bold text-lg">{tpl.id}</h3>
                                                         {tpl.active ? (
                                                             <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                                                                <CheckCircle className="w-3 h-3" /> Active
+                                                                <CheckCircle className="w-3 h-3" /> Virkt
                                                             </span>
                                                         ) : (
                                                             <span className="bg-stone-100 text-stone-500 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                                                                <XCircle className="w-3 h-3" /> Inactive
+                                                                <XCircle className="w-3 h-3" /> Óvirkt
                                                             </span>
                                                         )}
                                                     </div>
@@ -2518,10 +2701,12 @@ export default function SuperAdminPage() {
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleSendTestEmail(tpl)}
                                                         disabled={actionLoading === `test-email-${tpl.id}`}
-                                                        className="btn btn-ghost btn-sm text-stone-500 hover:text-amber border border-stone-200"
+                                                        className="btn btn-ghost btn-sm text-stone-500 hover:text-amber-ink border border-stone-200"
                                                         title="Senda prufupóst á sjálfan þig"
+                                                        aria-label={`Senda prufupóst úr sniðmáti ${tpl.id} á sjálfan þig`}
                                                     >
                                                         {actionLoading === `test-email-${tpl.id}` ? (
                                                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -2530,21 +2715,22 @@ export default function SuperAdminPage() {
                                                         )}
                                                     </button>
                                                     <button
+                                                        type="button"
                                                         onClick={() => setEditingTemplate(tpl)}
                                                         className="btn btn-secondary btn-sm"
                                                     >
-                                                        Edit
+                                                        Breyta
                                                     </button>
                                                 </div>
                                             </div>
 
                                             <div className="space-y-2 mb-4">
                                                 <div className="text-sm">
-                                                    <span className="font-bold text-stone-700">Subject:</span> {tpl.subject}
+                                                    <span className="font-bold text-stone-700">Efnislína:</span> {tpl.subject}
                                                 </div>
                                                 {tpl.variables && tpl.variables.length > 0 && (
                                                     <div className="text-sm">
-                                                        <span className="font-bold text-stone-700">Variables:</span>
+                                                        <span className="font-bold text-stone-700">Breytur:</span>
                                                         <span className="font-mono text-xs bg-stone-100 px-1 ml-1 rounded text-stone-600">
                                                             {tpl.variables.join(', ')}
                                                         </span>
@@ -2558,81 +2744,84 @@ export default function SuperAdminPage() {
 
                             {/* Edit Modal / Overlay */}
                             {editingTemplate && (
-                                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                                    <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-                                        <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-stone-50 rounded-t-lg">
-                                            <h3 className="font-bold text-xl">Edit Template: {editingTemplate.id}</h3>
-                                            <button onClick={() => setEditingTemplate(null)} className="text-stone-400 hover:text-stone-600">
-                                                <XCircle className="w-6 h-6" />
-                                            </button>
-                                        </div>
-
-                                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                                            <div className="flex items-center gap-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm">
-                                                <div className="flex-1">
-                                                    <strong>Status:</strong> {editingTemplate.active ? 'Ready to Send' : 'Draft (Not sending)'}
-                                                </div>
-                                                <button
-                                                    onClick={() => setEditingTemplate({ ...editingTemplate, active: !editingTemplate.active })}
-                                                    className={`px-3 py-1 rounded text-xs font-bold transition-colors ${editingTemplate.active ? 'bg-green-600 text-white' : 'bg-stone-300 text-stone-600'}`}
-                                                >
-                                                    {editingTemplate.active ? 'Active' : 'Set Active'}
-                                                </button>
-                                            </div>
-
-                                            <div>
-                                                <label className="label">Subject Line</label>
-                                                <input
-                                                    type="text"
-                                                    className="input font-bold"
-                                                    value={editingTemplate.subject}
-                                                    onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
-                                                />
-                                            </div>
-
-                                            <div className="flex-1 flex flex-col">
-                                                <label className="label flex justify-between">
-                                                    <span>HTML Content</span>
-                                                    <span className="text-xs font-normal text-stone-500">Supports standard HTML tags</span>
-                                                </label>
-                                                <textarea
-                                                    className="input font-mono text-xs leading-relaxed min-h-[300px]"
-                                                    value={editingTemplate.html_content}
-                                                    onChange={(e) => setEditingTemplate({ ...editingTemplate, html_content: e.target.value })}
-                                                />
-                                            </div>
-
-                                            <div className="bg-stone-100 p-4 rounded text-xs">
-                                                <strong>Available Variables:</strong> {editingTemplate.variables?.map(v => `{${v}}`).join(', ') || 'None'}
-                                            </div>
-                                        </div>
-
-                                        <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-between items-center">
+                                <Modal
+                                    open
+                                    onClose={() => setEditingTemplate(null)}
+                                    title={`Breyta sniðmáti: ${editingTemplate.id}`}
+                                    size="xl"
+                                    footer={
+                                        <div className="flex w-full flex-wrap justify-between items-center gap-3">
                                             <button
+                                                type="button"
                                                 onClick={() => handleSendTestEmail(editingTemplate)}
                                                 disabled={actionLoading === `test-email-${editingTemplate.id}`}
-                                                className="btn btn-ghost text-amber hover:bg-amber/5 font-bold flex items-center gap-2"
+                                                className="btn btn-ghost text-amber-ink hover:bg-amber/5 font-bold flex items-center gap-2"
                                             >
                                                 {actionLoading === `test-email-${editingTemplate.id}` ? (
                                                     <Loader2 className="w-4 h-4 animate-spin" />
                                                 ) : (
                                                     <Send className="w-4 h-4" />
                                                 )}
-                                                {actionLoading === `test-email-${editingTemplate.id}` ? 'Sending...' : 'Send Test to Me'}
+                                                {actionLoading === `test-email-${editingTemplate.id}` ? 'Sendi...' : 'Senda prufu á mig'}
                                             </button>
                                             <div className="flex gap-3">
-                                                <button onClick={() => setEditingTemplate(null)} className="btn btn-ghost">Cancel</button>
+                                                <button type="button" onClick={() => setEditingTemplate(null)} className="btn btn-ghost">Hætta við</button>
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleSaveTemplate(editingTemplate)}
                                                     className="btn btn-primary"
                                                     disabled={actionLoading === 'saving-template'}
                                                 >
-                                                    {actionLoading === 'saving-template' ? 'Saving...' : 'Save Changes'}
+                                                    {actionLoading === 'saving-template' ? 'Vistar...' : 'Vista breytingar'}
                                                 </button>
                                             </div>
                                         </div>
+                                    }
+                                >
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm">
+                                            <div className="flex-1">
+                                                <strong>Staða:</strong> {editingTemplate.active ? 'Tilbúið til sendingar' : 'Drög (ekki í sendingu)'}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                aria-pressed={!!editingTemplate.active}
+                                                onClick={() => setEditingTemplate({ ...editingTemplate, active: !editingTemplate.active })}
+                                                className={`px-3 py-1 rounded text-xs font-bold transition-colors ${editingTemplate.active ? 'bg-green-700 text-white' : 'bg-stone-300 text-stone-700'}`}
+                                            >
+                                                {editingTemplate.active ? 'Virkt' : 'Virkja'}
+                                            </button>
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor={tplSubjectId} className="label">Efnislína</label>
+                                            <input
+                                                id={tplSubjectId}
+                                                type="text"
+                                                className="input font-bold"
+                                                value={editingTemplate.subject}
+                                                onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="flex-1 flex flex-col">
+                                            <label htmlFor={tplHtmlId} className="label flex justify-between">
+                                                <span>HTML efni</span>
+                                                <span className="text-xs font-normal text-stone-500">Styður venjuleg HTML merki</span>
+                                            </label>
+                                            <textarea
+                                                id={tplHtmlId}
+                                                className="input font-mono text-xs leading-relaxed min-h-[300px]"
+                                                value={editingTemplate.html_content}
+                                                onChange={(e) => setEditingTemplate({ ...editingTemplate, html_content: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="bg-stone-100 p-4 rounded text-xs">
+                                            <strong>Tiltækar breytur:</strong> {editingTemplate.variables?.map(v => `{${v}}`).join(', ') || 'Engar'}
+                                        </div>
                                     </div>
-                                </div>
+                                </Modal>
                             )}
                         </div>
                     )
@@ -2641,18 +2830,30 @@ export default function SuperAdminPage() {
                 {/* Edit House Modal */}
                 {
                     editingHouse && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-                                <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-stone-50 rounded-t-lg">
-                                    <h3 className="font-bold text-xl">Breyta húsi</h3>
-                                    <button onClick={() => setEditingHouse(null)} className="text-stone-400 hover:text-stone-600">
-                                        <XCircle className="w-6 h-6" />
+                        <Modal
+                            open
+                            onClose={() => setEditingHouse(null)}
+                            title="Breyta húsi"
+                            size="md"
+                            footer={
+                                <>
+                                    <button type="button" onClick={() => setEditingHouse(null)} className="btn btn-ghost">Hætta við</button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleUpdateHouse(editingHouse)}
+                                        className="btn btn-primary"
+                                        disabled={actionLoading === 'updating-house'}
+                                    >
+                                        {actionLoading === 'updating-house' ? 'Vistar...' : 'Vista breytingar'}
                                     </button>
-                                </div>
-                                <div className="p-6 space-y-4">
+                                </>
+                            }
+                        >
+                                <div className="space-y-4">
                                     <div>
-                                        <label className="text-xs font-bold text-stone-500 uppercase">Nafn húss</label>
+                                        <label htmlFor={houseNameId} className="text-xs font-bold text-stone-500 uppercase">Nafn húss</label>
                                         <input
+                                            id={houseNameId}
                                             type="text"
                                             className="input mt-1"
                                             value={editingHouse.name}
@@ -2660,8 +2861,9 @@ export default function SuperAdminPage() {
                                         />
                                     </div>
                                     <div className="relative">
-                                        <label className="text-xs font-bold text-stone-500 uppercase">Heimilisfang (HMS Leit)</label>
+                                        <label htmlFor={houseAddressId} className="text-xs font-bold text-stone-500 uppercase">Heimilisfang (HMS Leit)</label>
                                         <input
+                                            id={houseAddressId}
                                             type="text"
                                             className="input mt-1"
                                             value={editingHouse.address || ''}
@@ -2674,6 +2876,7 @@ export default function SuperAdminPage() {
                                             <div className="absolute z-50 w-full bg-white border border-stone-200 mt-1 rounded-lg shadow-xl max-h-48 overflow-y-auto">
                                                 {addressSuggestions.map((item, idx) => (
                                                     <button
+                                                        type="button"
                                                         key={idx}
                                                         className="w-full text-left px-4 py-2 hover:bg-amber/10 text-sm border-b border-stone-50 last:border-0 transition-colors flex items-center justify-between group"
                                                         onClick={() => selectCMSAddress(item)}
@@ -2685,13 +2888,14 @@ export default function SuperAdminPage() {
                                             </div>
                                         )}
                                         {/* Lat/Lng Indicator */}
-                                        <div className="absolute right-2 top-0 text-[10px] font-mono text-stone-400 mt-1">
-                                            {editingHouse.location?.lat ? '📍 GPS Found' : '❌ No GPS'}
+                                        <div className="absolute right-2 top-0 text-[10px] font-mono text-stone-500 mt-1">
+                                            {editingHouse.location?.lat ? '📍 GPS fannst' : '❌ Ekkert GPS'}
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-bold text-stone-500 uppercase">Stjórnandi (UID)</label>
+                                        <label htmlFor={houseManagerId} className="text-xs font-bold text-stone-500 uppercase">Stjórnandi (UID)</label>
                                         <input
+                                            id={houseManagerId}
                                             type="text"
                                             className="input mt-1 font-mono text-xs"
                                             value={editingHouse.manager_id}
@@ -2699,37 +2903,38 @@ export default function SuperAdminPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-xs font-bold text-stone-500 uppercase">Staða</label>
+                                        <span className="text-xs font-bold text-stone-500 uppercase">Staða</span>
                                         <p className="mt-1 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2">Frítt (öll hús)</p>
                                     </div>
                                 </div>
-                                <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-end gap-3">
-                                    <button onClick={() => setEditingHouse(null)} className="btn btn-ghost">Hætta við</button>
-                                    <button
-                                        onClick={() => handleUpdateHouse(editingHouse)}
-                                        className="btn btn-primary"
-                                        disabled={actionLoading === 'updating-house'}
-                                    >
-                                        {actionLoading === 'updating-house' ? 'Vistar...' : 'Vista breytingar'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        </Modal>
                     )
                 }
 
                 {/* Reply to Contact Modal */}
                 {
                     replyingTo && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
-                                <div className="p-6 border-b border-stone-200 flex justify-between items-center bg-stone-50 rounded-t-lg">
-                                    <h3 className="font-bold text-xl font-serif">Svara Erindi</h3>
-                                    <button onClick={() => setReplyingTo(null)} className="text-stone-400 hover:text-stone-600">
-                                        <XCircle className="w-6 h-6" />
+                        <Modal
+                            open
+                            onClose={() => setReplyingTo(null)}
+                            title="Svara erindi"
+                            size="xl"
+                            footer={
+                                <>
+                                    <button type="button" onClick={() => setReplyingTo(null)} className="btn btn-ghost">Loka</button>
+                                    <button
+                                        type="button"
+                                        onClick={handleSendReply}
+                                        className="btn btn-primary flex items-center gap-2"
+                                        disabled={actionLoading === 'sending-reply' || !replyText.trim()}
+                                    >
+                                        {actionLoading === 'sending-reply' ? 'Sendi...' : 'Senda svar'}
+                                        <Send className="w-4 h-4" />
                                     </button>
-                                </div>
-                                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                                </>
+                            }
+                        >
+                                <div className="space-y-6">
                                     {/* Original Message */}
                                     <div className="bg-stone-50 p-4 rounded-lg border border-stone-100">
                                         <div className="flex justify-between items-start mb-2">
@@ -2743,7 +2948,7 @@ export default function SuperAdminPage() {
                                     {/* Previous Replies */}
                                     {replyingTo.replies && replyingTo.replies.length > 0 && (
                                         <div className="pl-6 border-l-2 border-stone-200 space-y-4">
-                                            <h5 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Samskiptasaga</h5>
+                                            <h5 className="text-xs font-bold text-stone-500 uppercase tracking-widest">Samskiptasaga</h5>
                                             {replyingTo.replies.map((reply, idx) => (
                                                 <div key={idx} className={`text-sm p-3 rounded-lg ${reply.is_admin_reply ? 'bg-blue-50 ml-4' : 'bg-stone-50 mr-4'}`}>
                                                     <div className="flex justify-between text-xs text-stone-500 mb-1">
@@ -2758,8 +2963,9 @@ export default function SuperAdminPage() {
 
                                     {/* Reply Form */}
                                     <div>
-                                        <label className="text-xs font-bold text-stone-500 uppercase mb-2 block">Svar</label>
+                                        <label htmlFor={replyTextId} className="text-xs font-bold text-stone-500 uppercase mb-2 block">Svar</label>
                                         <textarea
+                                            id={replyTextId}
                                             className="w-full h-40 p-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber focus:border-transparent font-sans"
                                             placeholder="Skrifaðu svar..."
                                             value={replyText}
@@ -2768,53 +2974,46 @@ export default function SuperAdminPage() {
                                         />
                                     </div>
                                 </div>
-                                <div className="p-6 border-t border-stone-200 bg-stone-50 rounded-b-lg flex justify-end gap-3">
-                                    <button onClick={() => setReplyingTo(null)} className="btn btn-ghost">Loka</button>
-                                    <button
-                                        onClick={handleSendReply}
-                                        className="btn btn-primary flex items-center gap-2"
-                                        disabled={actionLoading === 'sending-reply' || !replyText.trim()}
-                                    >
-                                        {actionLoading === 'sending-reply' ? 'Sendi...' : 'Senda Svar'}
-                                        <Send className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        </Modal>
                     )
                 }
 
                 {/* Custom Confirmation Modal */}
                 {
                     confirmModal && confirmModal.isOpen && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-                            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100">
-                                <div className={`p-6 flex flex-col items-center text-center ${confirmModal.type === 'danger' ? 'bg-red-50' : confirmModal.type === 'success' ? 'bg-green-50' : 'bg-stone-50'
-                                    }`}>
-                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-sm ${confirmModal.type === 'danger' ? 'bg-white text-red-500' : confirmModal.type === 'success' ? 'bg-white text-green-600' : 'bg-white text-amber'
-                                        }`}>
-                                        {confirmModal.type === 'success' ? <CheckCircle className="w-8 h-8" /> : <AlertTriangle className="w-8 h-8" />}
-                                    </div>
-                                    <h3 className="text-xl font-serif font-bold text-charcoal mb-2">{confirmModal.title}</h3>
-                                    <p className="text-sm text-stone-600 leading-relaxed">{confirmModal.message}</p>
-                                </div>
-                                <div className="p-4 bg-white border-t border-stone-100 flex gap-3">
+                        <Modal
+                            open
+                            onClose={() => setConfirmModal(null)}
+                            title={confirmModal.title}
+                            size="sm"
+                            footer={
+                                <div className="flex w-full gap-3">
                                     <button
+                                        type="button"
                                         onClick={() => setConfirmModal(null)}
-                                        className="flex-1 py-3 px-4 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-lg transition-colors"
+                                        className="flex-1 py-3 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-lg transition-colors"
                                     >
                                         Hætta við
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={confirmModal.onConfirm}
-                                        className={`flex-1 py-3 px-4 font-bold rounded-lg text-white shadow-md transition-transform active:scale-95 ${confirmModal.type === 'danger' ? 'bg-red-500 hover:bg-red-600' : confirmModal.type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-amber hover:bg-amber-600'
+                                        className={`flex-1 py-3 px-4 font-bold rounded-lg shadow-md transition-transform motion-safe:active:scale-95 ${confirmModal.type === 'danger' ? 'bg-red-700 hover:bg-red-800 text-white' : confirmModal.type === 'success' ? 'bg-green-700 hover:bg-green-800 text-white' : 'bg-amber hover:bg-amber-600 text-charcoal'
                                             }`}
                                     >
                                         Staðfesta
                                     </button>
                                 </div>
+                            }
+                        >
+                            <div className="flex flex-col items-center text-center">
+                                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-sm ${confirmModal.type === 'danger' ? 'bg-red-50 text-red-600' : confirmModal.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-stone-50 text-amber-ink'
+                                    }`}>
+                                    {confirmModal.type === 'success' ? <CheckCircle className="w-8 h-8" /> : <AlertTriangle className="w-8 h-8" />}
+                                </div>
+                                <p className="text-sm text-stone-600 leading-relaxed">{confirmModal.message}</p>
                             </div>
-                        </div>
+                        </Modal>
                     )
                 }
 
@@ -2827,6 +3026,7 @@ export default function SuperAdminPage() {
                             </div>
                             <div className="flex gap-4">
                                 <button
+                                    type="button"
                                     onClick={exportOrphansCSV}
                                     disabled={orphans.length === 0}
                                     className="btn border-stone-200 bg-white text-charcoal hover:bg-stone-50 flex items-center gap-2"
@@ -2835,6 +3035,7 @@ export default function SuperAdminPage() {
                                     Flytja út CSV
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={fetchOrphans}
                                     disabled={auditLoading}
                                     className="btn btn-primary flex items-center gap-2"
@@ -2847,19 +3048,20 @@ export default function SuperAdminPage() {
 
                         <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
                             <table className="w-full text-left">
+                                <caption className="sr-only">Munaðarlausir notendur</caption>
                                 <thead className="bg-stone-50 border-b border-stone-200">
                                     <tr>
-                                        <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Stofnað</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Netfang</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Nafn</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Tegund</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Aðgerðir</th>
+                                        <th scope="col" className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Stofnað</th>
+                                        <th scope="col" className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Netfang</th>
+                                        <th scope="col" className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Nafn</th>
+                                        <th scope="col" className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Tegund</th>
+                                        <th scope="col" className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Aðgerðir</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-stone-100">
                                     {auditLoading ? (
                                         <tr>
-                                            <td colSpan={5} className="px-6 py-12 text-center text-stone-400">
+                                            <td colSpan={5} className="px-6 py-12 text-center text-stone-500" role="status">
                                                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
                                                 Sæki gögn og athuga Firestore...
                                             </td>
@@ -2880,26 +3082,29 @@ export default function SuperAdminPage() {
                                                 <td className="px-6 py-4 text-sm text-stone-500">{o.displayName || '-'}</td>
                                                 <td className="px-6 py-4">
                                                     {o.isTest ? (
-                                                        <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-500 text-[10px] uppercase font-bold tracking-wider">Test Account</span>
+                                                        <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-500 text-[10px] uppercase font-bold tracking-wider">Prufuaðgangur</span>
                                                     ) : (
-                                                        <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] uppercase font-bold tracking-wider">Potential Real User</span>
+                                                        <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] uppercase font-bold tracking-wider">Mögulega raunverulegur notandi</span>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex gap-2">
                                                         <button
+                                                            type="button"
                                                             onClick={() => handleRepairOrphan(o.uid)}
                                                             disabled={actionLoading === `repair-${o.uid}`}
-                                                            className="px-3 py-1 text-xs bg-amber/10 text-amber-dark border border-amber/20 rounded hover:bg-amber/20 flex items-center gap-1"
+                                                            className="px-3 py-1 text-xs bg-amber/10 text-amber-ink border border-amber/20 rounded hover:bg-amber/20 flex items-center gap-1"
                                                         >
                                                             {actionLoading === `repair-${o.uid}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                                                             Gera við
                                                         </button>
                                                         <button
+                                                            type="button"
                                                             onClick={() => handleDeleteUser({ uid: o.uid, email: o.email, name: o.displayName || 'Munaðarlaus' } as any)}
                                                             disabled={actionLoading === `delete-user-${o.uid}`}
-                                                            className="p-1.5 hover:bg-red-50 text-stone-400 hover:text-red-500 rounded transition-colors"
+                                                            className="p-1.5 hover:bg-red-50 text-stone-500 hover:text-red-600 rounded transition-colors"
                                                             title="Eyða notanda"
+                                                            aria-label={`Eyða notanda ${o.email}`}
                                                         >
                                                             {actionLoading === `delete-user-${o.uid}` ? (
                                                                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -2920,7 +3125,7 @@ export default function SuperAdminPage() {
                             <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex gap-3 text-blue-800">
                                 <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                                 <div className="text-sm">
-                                    <p className="font-bold">Hvað eru "Orphan Users"?</p>
+                                    <p className="font-bold">Hvað eru „munaðarlausir notendur“?</p>
                                     <p className="mt-1 opacity-90">
                                         Þetta eru notendur sem hafa tekist að stofna aðgang (Firebase Auth) en vegna villu tókst ekki að búa til prófíl í gagnagrunninum (Firestore).
                                         Með því að smella á "Gera við" býrðu til lágmarks prófíl svo þeir geti skráð sig inn og haldið áfram.
@@ -2937,6 +3142,7 @@ export default function SuperAdminPage() {
                                 </div>
                                 {stuckUsers.length > 0 && (
                                     <button
+                                        type="button"
                                         onClick={handleBulkRecoveryEmails}
                                         disabled={actionLoading === 'bulk-recovery'}
                                         className="btn bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2"
@@ -2949,18 +3155,19 @@ export default function SuperAdminPage() {
 
                             <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
                                 <table className="w-full text-left">
+                                    <caption className="sr-only">Notendur án húss</caption>
                                     <thead className="bg-stone-50 border-b border-stone-200">
                                         <tr>
-                                            <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Stofnað</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Netfang</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Nafn</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Aðgerðir</th>
+                                            <th scope="col" className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Stofnað</th>
+                                            <th scope="col" className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Netfang</th>
+                                            <th scope="col" className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Nafn</th>
+                                            <th scope="col" className="px-6 py-4 text-xs font-bold text-stone-500 uppercase">Aðgerðir</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-stone-100">
                                         {auditLoading ? (
                                             <tr>
-                                                <td colSpan={4} className="px-6 py-12 text-center text-stone-400">
+                                                <td colSpan={4} className="px-6 py-12 text-center text-stone-500" role="status">
                                                     <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
                                                     Sæki gögn...
                                                 </td>
@@ -2982,6 +3189,7 @@ export default function SuperAdminPage() {
                                                     <td className="px-6 py-4">
                                                         <div className="flex gap-2">
                                                             <button
+                                                                type="button"
                                                                 onClick={() => handleSendRecoveryEmail(u)}
                                                                 disabled={actionLoading === `recovery-${u.uid}`}
                                                                 className="px-3 py-1 text-xs bg-indigo-50 text-indigo-700 border border-indigo-100 rounded hover:bg-indigo-100 flex items-center gap-1"
@@ -2990,10 +3198,12 @@ export default function SuperAdminPage() {
                                                                 Senda tölvupóst
                                                             </button>
                                                             <button
+                                                                type="button"
                                                                 onClick={() => handleDeleteUser({ uid: u.uid, email: u.email, name: u.name || 'Óþekktur' } as any)}
                                                                 disabled={actionLoading === `delete-user-${u.uid}`}
-                                                                className="p-1.5 hover:bg-red-50 text-stone-400 hover:text-red-500 rounded transition-colors"
+                                                                className="p-1.5 hover:bg-red-50 text-stone-500 hover:text-red-600 rounded transition-colors"
                                                                 title="Eyða notanda"
+                                                                aria-label={`Eyða notanda ${u.email}`}
                                                             >
                                                                 {actionLoading === `delete-user-${u.uid}` ? (
                                                                     <Loader2 className="w-3 h-3 animate-spin" />

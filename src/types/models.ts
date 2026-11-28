@@ -141,7 +141,7 @@ export interface House {
      */
     recurring_costs?: RecurringCost[];
 
-    // Subscription
+    // Legacy: the platform is fully free; onboarding still writes 'free' and old scripts filter on it.
     subscription_status?: 'free';
 
     created_at: Date;
@@ -191,6 +191,9 @@ export interface Booking {
     user_name: string;
     start: Date;
     end: Date;
+    /** Local calendar days ('yyyy-MM-dd'); optional, absent on older bookings. */
+    start_date?: string;
+    end_date?: string;
     type: BookingType;
     notes?: string;
     created_at: Date;
@@ -328,19 +331,6 @@ export interface GuestAccess {
     booking_id?: string;
     used?: boolean;
     created_by: string;
-    created_at: Date;
-}
-
-export interface Coupon {
-    id: string;
-    code: string; // e.g., "SUMAR2025"
-    discount_type: 'percent' | 'fixed'; // 20% off vs. 2000 kr off
-    discount_value: number; // 20 vs 2000
-    description: string;
-    valid_until?: Date;
-    max_uses?: number; // Total usages across system
-    used_count: number;
-    active: boolean;
     created_at: Date;
 }
 
@@ -501,11 +491,12 @@ export interface Organization {
     logo_url?: string;
     primary_color?: string;
     secondary_color?: string;
-    subscription_tier: SubscriptionTier;
-    subscription_status: SubscriptionStatus;
-    subscription_start: Date;
-    subscription_end: Date;
-    billing_email: string;
+    // Legacy billing fields (platform is free); may still exist on old documents and be read by admin tooling.
+    subscription_tier?: SubscriptionTier;
+    subscription_status?: SubscriptionStatus;
+    subscription_start?: Date;
+    subscription_end?: Date;
+    billing_email?: string;
     settings: OrganizationSettings;
     admin_user_ids: string[];
     stats: OrganizationStats;
@@ -533,6 +524,7 @@ export interface AccessRequest {
     denial_reason?: string;
     requested_at: Date;
     ip_address?: string;
+    user_id?: string;
 }
 
 export type MemberStatus = 'pending' | 'approved' | 'active' | 'suspended';
@@ -548,6 +540,7 @@ export interface OrganizationMember {
     hire_date?: Date;
     status: MemberStatus;
     access_level: AccessLevel;
+    role?: 'admin' | 'member';
     approved_by?: string;
     approved_at?: Date;
     approval_method?: 'manual' | 'auto';

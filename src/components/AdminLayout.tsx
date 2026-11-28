@@ -57,23 +57,30 @@ export default function AdminLayout({
                     <h1 className="text-lg font-mono font-bold text-amber">STJÓRNBORÐ</h1>
                 </div>
                 <button
+                    type="button"
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     className="p-2 text-stone-300 hover:text-white"
+                    aria-label={isMobileMenuOpen ? 'Loka valmynd' : 'Opna valmynd'}
+                    aria-expanded={isMobileMenuOpen}
+                    aria-controls="admin-sidebar"
                 >
-                    {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                    {isMobileMenuOpen ? <X className="w-6 h-6" aria-hidden="true" /> : <Menu className="w-6 h-6" aria-hidden="true" />}
                 </button>
             </div>
 
             {/* Overlay for mobile */}
             {isMobileMenuOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                <button
+                    type="button"
+                    aria-label="Loka valmynd"
+                    className="fixed inset-0 bg-black/50 z-30 md:hidden cursor-default"
                     onClick={() => setIsMobileMenuOpen(false)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setIsMobileMenuOpen(false); }}
                 />
             )}
 
             {/* Sidebar */}
-            <aside className={`
+            <aside id="admin-sidebar" aria-label="Stjórnborð" className={`
                 fixed inset-y-0 left-0 z-50 w-64 bg-charcoal text-bone flex flex-col border-r border-stone-800 transition-transform duration-300 ease-in-out
                 md:translate-x-0 md:relative md:inset-auto
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -89,9 +96,10 @@ export default function AdminLayout({
                     {/* If user has houses, list them */}
                     {userHouses.length > 0 ? (
                         <div className="space-y-2">
-                            <p className="text-[10px] uppercase tracking-wider text-stone-500 font-bold px-1">Mín Hús</p>
+                            <p className="text-[10px] uppercase tracking-wider text-stone-400 font-bold px-1">Mín Hús</p>
                             {userHouses.map(house => (
                                 <button
+                                    type="button"
                                     key={house.id}
                                     onClick={() => onHouseSelect?.(house)}
                                     className="w-full flex items-center gap-2 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white px-3 py-2 rounded text-sm transition-colors border border-stone-700 text-left truncate"
@@ -99,7 +107,7 @@ export default function AdminLayout({
                                 >
                                     <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
                                     <span className="truncate">{house.name}</span>
-                                    <LogOut className="w-3 h-3 ml-auto opacity-50" />
+                                    <LogOut className="w-3 h-3 ml-auto opacity-50" aria-hidden="true" />
                                 </button>
                             ))}
                         </div>
@@ -107,10 +115,11 @@ export default function AdminLayout({
                         /* Fallback if no houses found */
                         onBackClick && (
                             <button
+                                type="button"
                                 onClick={onBackClick}
                                 className="w-full flex items-center justify-center gap-2 bg-stone-800 text-stone-200 hover:bg-stone-700 hover:text-white px-3 py-2 rounded text-sm transition-colors border border-stone-700 top-button"
                             >
-                                <ArrowLeft className="w-4 h-4" />
+                                <ArrowLeft className="w-4 h-4" aria-hidden="true" />
                                 Til baka í App
                             </button>
                         )
@@ -118,17 +127,19 @@ export default function AdminLayout({
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                <nav aria-label="Aðalvalmynd" className="flex-1 p-4 space-y-1 overflow-y-auto">
                     {navigation.map((item) => (
                         <button
+                            type="button"
                             key={item.id}
+                            aria-current={activeTab === item.id ? 'page' : undefined}
                             onClick={() => handleTabClick(item.id)}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === item.id
                                 ? 'bg-amber text-charcoal'
                                 : 'text-stone-300 hover:bg-stone-800 hover:text-white'
                                 }`}
                         >
-                            <item.icon className="w-5 h-5" />
+                            <item.icon className="w-5 h-5" aria-hidden="true" />
                             {item.name}
                         </button>
                     ))}
@@ -156,7 +167,7 @@ export default function AdminLayout({
                 {/* Footer */}
                 <div className="p-4 border-t border-stone-800">
                     <div className="flex items-center gap-2 text-xs text-stone-400">
-                        <Database className="w-4 h-4" />
+                        <Database className="w-4 h-4" aria-hidden="true" />
                         <span className="font-mono">v1.0</span>
                     </div>
                 </div>

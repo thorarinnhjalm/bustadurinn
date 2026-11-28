@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Bústaðurinn.is is a free platform for managing shared Icelandic summer houses (sumarhús). All user-facing text is in Icelandic. Private, proprietary product owned by Neðri Hóll Hugmyndahús ehf.
 
-**The platform is fully free** — there are no subscriptions, trials, or payment gates. All houses have `subscription_status: 'free'`. Do not introduce subscription/payment logic. The Áskell integration (payment processor) is decommissioned; any remaining references are legacy code to be removed.
+**The platform is fully free** — there are no subscriptions, trials, or payment gates. All houses have `subscription_status: 'free'`. Do not introduce subscription/payment logic.
 
 ## Commands
 
@@ -15,6 +15,8 @@ npm run dev          # Vite dev server on port 5173
 npm run build        # Production build via SWC → dist/ (drops console.* and debugger)
 npm run preview      # Preview production build locally
 npm run lint         # ESLint (flat config format)
+npm run typecheck    # tsc for tsconfig.app.json, tsconfig.node.json and tsconfig.api.json (api/, non-strict)
+npm run verify       # lint + typecheck + test (what CI runs before building)
 npm run test         # Vitest (single run)
 npm run test:ui      # Vitest with browser UI
 npm run test:watch   # Vitest in watch mode
@@ -25,7 +27,7 @@ npm run test:e2e     # Playwright E2E tests (requires dev server running)
 npm run test:e2e:ui  # Playwright with interactive UI
 ```
 
-There is no CI. Before pushing run `npm run lint`, `npx tsc -p tsconfig.app.json --noEmit` and `npm run test`. `api/` is outside every tsconfig and must be type-checked explicitly: `npx tsc --noEmit --skipLibCheck --module nodenext --moduleResolution nodenext --target es2022 --types node api/<file>.ts`.
+CI: `.github/workflows/ci.yml` runs on pull requests and pushes to `main` (Node 24): `npm ci`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` (with Chrome for the postbuild prerender via `PRERENDER_CHROMIUM_PATH`), then `node scripts/verify-dist.js`. It does not deploy anything; Vercel deploys from `main` and `firestore.rules`/`storage.rules` are published by hand. Run `npm run verify` before pushing. `api/` is checked by `tsconfig.api.json` (nodenext, `strict: false`, tests excluded).
 
 Utility scripts in `scripts/`:
 ```bash
@@ -33,6 +35,8 @@ npm run seed-email-templates  # Seed email templates to Firestore
 npm run generate-sitemap      # Generate sitemap.xml
 npm run migrate-admin-rbac    # Migrate admin to RBAC system
 ```
+
+Past one-off debugging/migration scripts (they run against production Firebase) live in `scripts/one-off/` and are not maintained. Historical session notes and status reports live in `docs/archive/` and are not a source of truth; current docs are this file and `docs/engineering/`.
 
 ## Architecture
 
@@ -166,7 +170,22 @@ Tailwind CSS 3.4 with a custom "Scandi-Minimalist" design system defined in `src
 
 Vitest + @testing-library/react with jsdom. Globals enabled (`describe`, `it`, `expect` don't need imports). Firebase is globally mocked in `src/test/setup.ts`. Test files are collocated next to source (e.g., `utils/rbac.test.ts`). Config is in `vite.config.ts` (no separate vitest config).
 
+Security rules (`firestore.rules`, `storage.rules`) have their own suite in `tests/rules/` (files are `*.rules.ts`, so `npm test` does not run them): `npm run test:rules` starts the Firestore and Storage emulators via `firebase emulators:exec` and runs `vitest.rules.config.ts`. It needs Java (JDK 11+) and downloads the emulator JARs to `~/.cache/firebase/emulators` on first run. The project id is `demo-bustadurinn`, so it can never reach the real Firebase project. When you change a rule, add allow and deny cases there, and copy the exact `where`/`orderBy` shape of the client query for list rules.
+
 E2E tests use Playwright (Chromium only). Tests live in `tests/e2e/`. The dev server must be running on `http://127.0.0.1:5173` before running E2E tests.
+
+**Emulator e2e suite** (`tests/e2e-emulator/`, config `playwright.emulator.config.ts`): drives the real app in Chromium against the Firebase emulators (Auth/Firestore/Storage, loading the real `firestore.rules`/`storage.rules`) as a normal, non-admin user, at 1280x800 (`desktop` project) and 390x844 (`mobile` project, specs tagged `@mobile`). Nothing talks to the real Firebase project or the production API: every `/api/*` call is answered by a mock in `tests/e2e-emulator/support/fixtures.ts` (an un-mocked `/api` call, a request to a real host, an uncaught page error, a `console.error` or a Firestore `permission-denied` fails the test), third parties are blocked, and data is seeded through the emulators' REST endpoints (`support/seed.ts`). The client only connects to the emulators when built with `VITE_USE_EMULATORS=true` (`src/config/firebase.ts`, `src/lib/firebase.ts`); production builds without the flag contain no emulator hosts. Three terminals:
+```bash
+# 1. emulators (the sandbox proxy vars break emulator-to-emulator calls, so unset them)
+env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy -u GLOBAL_AGENT_HTTP_PROXY -u GLOBAL_AGENT_HTTPS_PROXY \
+  npx firebase emulators:start --only auth,firestore,storage --project demo-bustadurinn
+# 2. dev server on the emulators (port 5197; /api is mocked by the tests, never reaches production)
+VITE_USE_EMULATORS=true npx vite --port 5197 --host 127.0.0.1
+# 3. the suite (screenshots land in the git-ignored tests/e2e-emulator/screenshots/)
+npm run test:e2e:emulator            # add `-- -g finance` or `--project=mobile` to narrow
+```
+Set `PW_CHROMIUM_PATH` if the Chromium pinned by `@playwright/test` is not installed (the config falls back to `/opt/pw-browsers/chromium`). The API handlers that change data (join-house, leave-house, remove-member, transfer-manager, guestbook-entry) are simulated against the emulator by the mock, not run for real.
+
 
 ## Deployment
 

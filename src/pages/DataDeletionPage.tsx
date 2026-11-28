@@ -11,21 +11,27 @@ export default function DataDeletionPage() {
                 canonical="https://www.bustadurinn.is/data-deletion"
             />
 
+            <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[300] focus:bg-charcoal focus:text-white focus:px-4 focus:py-2 focus:rounded"
+            >
+                Fara beint í efni
+            </a>
             {/* Header */}
             <header className="bg-white border-b border-stone-100 py-4 px-6 sticky top-0 z-10">
                 <div className="max-w-3xl mx-auto flex items-center gap-4">
-                    <Link to="/" className="text-stone-500 hover:text-charcoal transition-colors">
-                        <ArrowLeft size={20} />
+                    <Link to="/" aria-label="Til baka á forsíðu" className="inline-flex items-center justify-center min-w-6 min-h-6 text-stone-500 hover:text-charcoal transition-colors">
+                        <ArrowLeft size={20} aria-hidden="true" />
                     </Link>
                     <div className="flex items-center gap-2">
-                        <Trash2 className="text-amber" size={20} />
+                        <Trash2 aria-hidden="true" className="text-amber-ink" size={20} />
                         <h1 className="font-serif font-bold text-lg">Eyðing gagna</h1>
                     </div>
                 </div>
             </header>
 
             {/* Content */}
-            <main className="max-w-3xl mx-auto px-6 py-12">
+            <main id="main" className="max-w-3xl mx-auto px-6 py-12">
                 <div className="prose prose-stone max-w-none">
                     <p className="text-stone-500 mb-8">
                         Síðast uppfært: {new Date().toLocaleDateString('is-IS')}
@@ -59,7 +65,7 @@ export default function DataDeletionPage() {
                     </p>
                     <p>
                         <strong>Netfang:</strong>{' '}
-                        <a href="mailto:hallo@bustadurinn.is" className="text-amber hover:underline">
+                        <a href="mailto:hallo@bustadurinn.is" className="text-amber-ink hover:underline">
                             hallo@bustadurinn.is
                         </a>
                     </p>
@@ -102,14 +108,14 @@ export default function DataDeletionPage() {
                     <p>
                         Ef þú hefur spurningar um eyðingu gagna eða persónuverndarstefnu okkar,
                         hafðu samband við okkur á{' '}
-                        <a href="mailto:hallo@bustadurinn.is" className="text-amber hover:underline">
+                        <a href="mailto:hallo@bustadurinn.is" className="text-amber-ink hover:underline">
                             hallo@bustadurinn.is
                         </a>
                     </p>
 
                     <p className="text-sm text-stone-500 mt-8">
                         Sjá einnig:{' '}
-                        <Link to="/privacy" className="text-amber hover:underline">
+                        <Link to="/privacy" className="text-amber-ink hover:underline">
                             Persónuverndarstefna
                         </Link>
                     </p>

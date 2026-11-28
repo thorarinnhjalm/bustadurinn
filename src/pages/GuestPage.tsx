@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
     Wifi, MapPin, Key, Copy, BookOpen,
     Sun, Phone, Heart, Share2, Mail,
-    Tv, Droplets, Flame, ArrowRight, Loader2, Navigation, X
+    Tv, Droplets, Flame, ArrowRight, Loader2, Navigation
 } from 'lucide-react';
 import { fetchWeather } from '@/utils/weather';
 import { logger } from '@/utils/logger';
+import Modal from '@/components/ui/Modal';
 
 // A-Frame Logo
 const CabinLogo = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
         <path d="M12 2L2 22H22L12 2Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M12 15V22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -20,12 +21,14 @@ const CabinLogo = ({ size = 24, className = "" }: { size?: number; className?: s
 
 export default function GuestPage() {
     const { token } = useParams();
+    const formId = useId();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [copied, setCopied] = useState('');
     const [weather, setWeather] = useState<{ temp: number | string, condition: string }>({ temp: '—', condition: 'Hleður...' });
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [showRules, setShowRules] = useState(false);
     const [sending, setSending] = useState(false);
     const [formStatus, setFormStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -126,7 +129,8 @@ export default function GuestPage() {
     if (loading) {
         return (
             <div className="flex h-screen items-center justify-center bg-[#FDFCF8]">
-                <Loader2 className="animate-spin text-[#1a1a1a]" size={32} />
+                <Loader2 className="animate-spin text-[#1a1a1a]" size={32} aria-hidden="true" />
+                <span role="status" className="sr-only">Hleð…</span>
             </div>
         );
     }
@@ -135,7 +139,7 @@ export default function GuestPage() {
         return (
             <div className="flex h-screen items-center justify-center p-6 text-center bg-[#FDFCF8]">
                 <div className="bg-white p-8 rounded-xl shadow-sm border border-stone-200">
-                    <h2 className="text-xl font-serif mb-2 text-[#1a1a1a]">Upplýsingar fannst ekki</h2>
+                    <h1 className="text-xl font-serif mb-2 text-[#1a1a1a]">Upplýsingar fannst ekki</h1>
                     <p className="text-stone-600">{error}</p>
                 </div>
             </div>
@@ -157,7 +161,7 @@ export default function GuestPage() {
                 <div className="absolute inset-0 z-0">
                     <img
                         src={data.image_url || "https://images.unsplash.com/photo-1542718610-a1d656d1884c?q=80&w=2670&auto=format&fit=crop"}
-                        alt="Mynd af sumarhúsinu"
+                        alt={`Mynd af ${houseName}`}
                         className="w-full h-full object-cover"
                     />
                     {/* Gradient Overlay - Darkened top for visibility */}
@@ -172,6 +176,7 @@ export default function GuestPage() {
                             <span className="font-serif font-bold tracking-tight text-white text-sm">{houseName}</span>
                         </div>
                         <button
+                            type="button"
                             onClick={() => {
                                 if (navigator.share) {
                                     navigator.share({
@@ -182,7 +187,7 @@ export default function GuestPage() {
                             }}
                             aria-label="Deila síðunni" className="bg-black/30 backdrop-blur-md p-2 rounded-full hover:bg-black/40 transition-colors text-white border border-white/10"
                         >
-                            <Share2 size={18} />
+                            <Share2 size={18} aria-hidden="true" />
                         </button>
                     </div>
 
@@ -198,7 +203,7 @@ export default function GuestPage() {
                         {/* Information Pills */}
                         <div className="flex flex-wrap gap-2">
                             <div className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
-                                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                                <div className="w-2 h-2 bg-emerald-400 rounded-full motion-safe:animate-pulse" aria-hidden="true"></div>
                                 <p className="text-stone-200 text-sm font-medium">Dvalaðgangur virkur</p>
                             </div>
 
@@ -227,17 +232,18 @@ export default function GuestPage() {
             <main className="px-4 -mt-16 relative z-20 space-y-4 max-w-md mx-auto">
 
                 {/* ACCESS CARD */}
-                <div className="bg-white p-6 rounded-2xl shadow-xl shadow-stone-200 border border-stone-100">
+                <section aria-labelledby={`${formId}-access`} className="bg-white p-6 rounded-2xl shadow-xl shadow-stone-200 border border-stone-100">
+                    <h2 id={`${formId}-access`} className="sr-only">Aðgangur og upplýsingar</h2>
                     <div className="flex justify-between items-start mb-6 border-b border-stone-100 pb-4">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <Sun size={18} className="text-[#e8b058]" />
+                                <Sun size={18} className="text-amber-ink" aria-hidden="true" />
                                 <span className="font-bold text-xl">{weather.temp}</span>
                             </div>
-                            <p className="text-xs text-stone-400">{weather.condition}</p>
+                            <p className="text-xs text-stone-500">{weather.condition}</p>
                         </div>
                         <div className="bg-stone-50 p-2 rounded-lg">
-                            <MapPin size={20} className="text-[#1a1a1a]" />
+                            <MapPin size={20} className="text-[#1a1a1a]" aria-hidden="true" />
                         </div>
                     </div>
 
@@ -246,16 +252,18 @@ export default function GuestPage() {
                         {(() => {
                             const accessCode = data.access_instructions?.match(/\d{4,6}/)?.[0];
                             return accessCode ? (
-                                <div
+                                <button
+                                    type="button"
                                     onClick={() => copyToClipboard(accessCode, 'code')}
-                                    className="bg-[#1a1a1a] rounded-xl p-4 text-center relative overflow-hidden group cursor-pointer shadow-lg shadow-stone-200"
+                                    className="block w-full bg-[#1a1a1a] rounded-xl p-4 text-center relative overflow-hidden group cursor-pointer shadow-lg shadow-stone-200"
                                 >
-                                    <p className="text-stone-400 text-[10px] uppercase tracking-widest mb-1">Lyklabox / Kóði</p>
-                                    <p className="text-white font-mono text-3xl font-bold tracking-[0.2em]">{accessCode}</p>
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-600 group-hover:text-[#e8b058] transition-colors">
+                                    <span className="block text-stone-300 text-[10px] uppercase tracking-widest mb-1">Lyklabox / Kóði</span>
+                                    <span className="block text-white font-mono text-3xl font-bold tracking-[0.2em]">{accessCode}</span>
+                                    <span className="sr-only">Ýttu til að afrita kóðann</span>
+                                    <span aria-hidden="true" className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 group-hover:text-[#e8b058] transition-colors">
                                         {copied === 'code' ? <span className="text-xs">✓</span> : <Copy size={16} />}
-                                    </div>
-                                </div>
+                                    </span>
+                                </button>
                             ) : null;
                         })()}
 
@@ -264,48 +272,59 @@ export default function GuestPage() {
                             <div className="flex gap-3">
                                 {data.wifi_ssid && (
                                     <div className="flex-1 bg-stone-50 rounded-xl p-3 border border-stone-100">
-                                        <div className="flex items-center gap-2 mb-1 text-stone-400">
-                                            <Wifi size={14} /> <span className="text-[10px] uppercase font-bold">Netið</span>
+                                        <div className="flex items-center gap-2 mb-1 text-stone-500">
+                                            <Wifi size={14} aria-hidden="true" /> <span className="text-[10px] uppercase font-bold">Netið</span>
                                         </div>
                                         <p className="font-bold text-sm text-[#1a1a1a] truncate">{data.wifi_ssid}</p>
                                     </div>
                                 )}
                                 {data.wifi_password && (
-                                    <div
+                                    <button
+                                        type="button"
                                         onClick={() => copyToClipboard(data.wifi_password, 'wifi')}
-                                        className="flex-1 bg-stone-50 rounded-xl p-3 border border-stone-100 cursor-pointer hover:border-[#e8b058] transition-colors relative group"
+                                        className="flex-1 min-w-0 text-left bg-stone-50 rounded-xl p-3 border border-stone-100 cursor-pointer hover:border-[#e8b058] transition-colors relative group"
                                     >
-                                        <div className="flex items-center gap-2 mb-1 text-stone-400">
-                                            <Key size={14} /> <span className="text-[10px] uppercase font-bold">Lykilorð</span>
-                                        </div>
-                                        <p className="font-bold text-sm text-[#1a1a1a] truncate">{data.wifi_password}</p>
-                                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {copied === 'wifi' ? <span className="text-xs text-[#e8b058]">✓</span> : <Copy size={12} className="text-[#e8b058]" />}
-                                        </div>
-                                    </div>
+                                        <span className="flex items-center gap-2 mb-1 text-stone-500">
+                                            <Key size={14} aria-hidden="true" /> <span className="text-[10px] uppercase font-bold">Wi-Fi lykilorð</span>
+                                        </span>
+                                        <span className="block font-bold text-sm text-[#1a1a1a] truncate">{data.wifi_password}</span>
+                                        <span className="sr-only">Ýttu til að afrita lykilorðið</span>
+                                        <span aria-hidden="true" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
+                                            {copied === 'wifi' ? <span className="text-xs text-amber-ink">✓</span> : <Copy size={12} className="text-amber-ink" />}
+                                        </span>
+                                    </button>
                                 )}
                             </div>
                         )}
                     </div>
-                </div>
+                    <p role="status" className="sr-only">
+                        {copied === 'code' ? 'Kóði afritaður' : copied === 'wifi' ? 'Lykilorð afritað' : ''}
+                    </p>
+                </section>
 
                 {/* GALLERY SECTION */}
                 {data.gallery_urls && data.gallery_urls.length > 0 && (
                     <div className="bg-white p-1 rounded-2xl shadow-xl shadow-stone-200 border border-stone-100 overflow-hidden">
                         <div className="px-5 py-4 flex justify-between items-center">
-                            <h3 className="font-serif text-lg font-bold">Myndir</h3>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 underline decoration-amber underline-offset-4">{data.gallery_urls.length} myndir</span>
+                            <h2 className="font-serif text-lg font-bold">Myndir</h2>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 underline decoration-amber underline-offset-4">{data.gallery_urls.length} myndir</span>
                         </div>
                         <div className="grid grid-cols-2 gap-1 p-1">
                             {data.gallery_urls.map((url: string, i: number) => (
                                 <div key={i} className={`relative overflow-hidden ${i === 0 && data.gallery_urls.length % 2 !== 0 ? 'col-span-2 aspect-video' : 'aspect-square'}`}>
-                                    <img
-                                        src={url}
-                                        alt={`Mynd ${i + 1} af húsinu`}
-                                        loading="lazy"
-                                        className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-500"
+                                    <button
+                                        type="button"
                                         onClick={() => setSelectedImage(url)}
-                                    />
+                                        aria-label={`Opna mynd ${i + 1} í fullri stærð`}
+                                        className="block w-full h-full"
+                                    >
+                                        <img
+                                            src={url}
+                                            alt={`Mynd ${i + 1} úr myndasafni`}
+                                            loading="lazy"
+                                            className="w-full h-full object-cover cursor-pointer motion-safe:hover:scale-105 transition-transform duration-500"
+                                        />
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -313,7 +332,8 @@ export default function GuestPage() {
                 )}
 
                 {/* GUIDES GRID */}
-                <div className="grid grid-cols-2 gap-3">
+                <section aria-labelledby={`${formId}-guides`} className="grid grid-cols-2 gap-3">
+                    <h2 id={`${formId}-guides`} className="sr-only">Leiðbeiningar og leiðarlýsing</h2>
                     {/* Directions Button (Dynamic based on GPS) */}
                     {data.location?.lat && data.location?.lng && (
                         <a
@@ -323,28 +343,42 @@ export default function GuestPage() {
                             className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 hover:border-[#e8b058] transition-all group text-left col-span-2 flex items-center gap-4"
                         >
                             <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                                <Navigation size={20} />
+                                <Navigation size={20} aria-hidden="true" />
                             </div>
                             <div>
                                 <span className="font-bold text-sm text-[#1a1a1a] block">Rata í hús</span>
-                                <span className="text-xs text-stone-500">Opna í Google Maps</span>
+                                <span className="text-xs text-stone-500">Opna í Google Maps<span className="sr-only"> (opnast í nýjum glugga)</span></span>
                             </div>
-                            <ArrowRight size={16} className="ml-auto text-stone-300 group-hover:text-emerald-600" />
+                            <ArrowRight size={16} aria-hidden="true" className="ml-auto text-stone-300 group-hover:text-emerald-600" />
                         </a>
                     )}
 
-                    {guides.map(guide => (
-                        <button key={guide.id} className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 hover:border-[#e8b058] transition-all group text-left">
+                    {guides.map(guide => guide.id === 'rules' ? (
+                        // The house rules tile opens the rules text; amenity tiles below are informational only.
+                        <button
+                            type="button"
+                            key={guide.id}
+                            onClick={() => setShowRules(true)}
+                            className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 hover:border-[#e8b058] transition-all group text-left"
+                        >
                             <div className="w-10 h-10 rounded-full bg-stone-50 text-[#1a1a1a] flex items-center justify-center mb-3 group-hover:bg-[#1a1a1a] group-hover:text-white transition-colors">
                                 {guide.icon}
                             </div>
                             <span className="font-bold text-sm text-[#1a1a1a]">{guide.title}</span>
                         </button>
+                    ) : (
+                        <div key={guide.id} className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 text-left">
+                            <div className="w-10 h-10 rounded-full bg-stone-50 text-[#1a1a1a] flex items-center justify-center mb-3">
+                                {guide.icon}
+                            </div>
+                            <span className="font-bold text-sm text-[#1a1a1a]">{guide.title}</span>
+                        </div>
                     ))}
-                </div>
+                </section>
 
                 {/* CONTACT OWNER / EMERGENCY */}
-                <div className="space-y-3">
+                <section aria-labelledby={`${formId}-contact`} className="space-y-3">
+                    <h2 id={`${formId}-contact`} className="sr-only">Hafa samband</h2>
                     {data.emergency_contact && (
                         <a
                             href={`tel:${data.emergency_contact}`}
@@ -352,14 +386,14 @@ export default function GuestPage() {
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors">
-                                    <Phone size={18} />
+                                    <Phone size={18} aria-hidden="true" />
                                 </div>
                                 <div>
                                     <p className="font-bold text-sm text-[#1a1a1a]">Hringja í eiganda</p>
                                     <p className="text-xs text-stone-500">{data.emergency_contact}</p>
                                 </div>
                             </div>
-                            <ArrowRight size={16} className="text-stone-300 group-hover:text-red-600" />
+                            <ArrowRight size={16} aria-hidden="true" className="text-stone-300 group-hover:text-red-600" />
                         </a>
                     )}
 
@@ -370,25 +404,25 @@ export default function GuestPage() {
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                    <Mail size={18} />
+                                    <Mail size={18} aria-hidden="true" />
                                 </div>
                                 <div>
                                     <p className="font-bold text-sm text-[#1a1a1a]">Hafa samband við eiganda</p>
                                     <p className="text-xs text-stone-500 truncate max-w-[200px]">{data.owner_email}</p>
                                 </div>
                             </div>
-                            <ArrowRight size={16} className="text-stone-300 group-hover:text-blue-600" />
+                            <ArrowRight size={16} aria-hidden="true" className="text-stone-300 group-hover:text-blue-600" />
                         </a>
                     )}
-                </div>
+                </section>
 
                 {/* GUESTBOOK CTA */}
                 <div className="pt-4 pb-8">
                     <div className="bg-[#e8b058]/10 rounded-xl p-6 border border-[#e8b058]/30">
                         <div className="flex justify-center mb-3">
-                            <Heart className="fill-[#e8b058] text-[#e8b058]" size={32} />
+                            <Heart className="fill-[#e8b058] text-[#e8b058]" size={32} aria-hidden="true" />
                         </div>
-                        <h3 className="font-serif text-lg font-bold text-[#1a1a1a] mb-2 text-center">Skrifaðu í gestabókina</h3>
+                        <h2 className="font-serif text-lg font-bold text-[#1a1a1a] mb-2 text-center">Skrifaðu í gestabókina</h2>
                         <p className="text-sm text-stone-600 mb-4 text-center">
                             Deildu hugsunum og minningum frá dvöl þinni
                         </p>
@@ -423,7 +457,9 @@ export default function GuestPage() {
                                 setSending(false);
                             }
                         }} className="space-y-3">
+                            <label htmlFor={`${formId}-author`} className="sr-only">Nafn þitt</label>
                             <input
+                                id={`${formId}-author`}
                                 type="text"
                                 name="author"
                                 placeholder="Nafn þitt"
@@ -431,7 +467,9 @@ export default function GuestPage() {
                                 maxLength={80}
                                 className="w-full px-4 py-2 rounded-lg border border-stone-200 focus:border-[#e8b058] focus:outline-none text-sm"
                             />
+                            <label htmlFor={`${formId}-message`} className="sr-only">Skilaboð í gestabókina</label>
                             <textarea
+                                id={`${formId}-message`}
                                 name="message"
                                 placeholder="Skrifaðu hér..."
                                 required
@@ -443,7 +481,7 @@ export default function GuestPage() {
                                 {sending ? 'Sendi...' : 'Senda inn'}
                             </button>
                             {formStatus && (
-                                <p role="status" className={`text-sm text-center ${formStatus.type === 'success' ? 'text-emerald-700' : 'text-red-600'}`}>
+                                <p role={formStatus.type === 'error' ? 'alert' : 'status'} className={`text-sm text-center ${formStatus.type === 'success' ? 'text-emerald-700' : 'text-red-700'}`}>
                                     {formStatus.text}
                                 </p>
                             )}
@@ -453,22 +491,29 @@ export default function GuestPage() {
 
             </main>
 
-            {/* Image Modal */}
-            {selectedImage && (
-                <div
-                    className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
-                    onClick={() => setSelectedImage(null)}
-                >
-                    <button className="absolute top-6 right-6 text-white p-2" aria-label="Loka mynd">
-                        <X size={28} />
-                    </button>
+            {/* House rules */}
+            <Modal open={showRules} onClose={() => setShowRules(false)} title="Húsreglur" size="md">
+                <p className="text-sm text-stone-700 whitespace-pre-line leading-relaxed">{data?.house_rules}</p>
+            </Modal>
+
+            {/* Image lightbox */}
+            <Modal
+                open={selectedImage !== null}
+                onClose={() => setSelectedImage(null)}
+                title="Mynd í fullri stærð"
+                hideTitle
+                size="full"
+                className="!bg-black !text-white"
+                bodyClassName="flex items-center justify-center !p-4"
+            >
+                {selectedImage && (
                     <img
                         src={selectedImage}
-                        alt="Mynd í fullri stærð"
-                        className="max-w-full max-h-full rounded-lg shadow-2xl object-contain"
+                        alt="Mynd úr myndasafni í fullri stærð"
+                        className="max-w-full max-h-[calc(100dvh-8rem)] rounded-lg shadow-2xl object-contain"
                     />
-                </div>
-            )}
+                )}
+            </Modal>
         </div>
     );
 }

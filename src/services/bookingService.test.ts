@@ -260,6 +260,44 @@ describe('createBooking', () => {
         expect(mockedAddDoc).toHaveBeenCalledTimes(1);
     });
 
+    it('stores start_date/end_date as local calendar days next to start/end', async () => {
+        mockedAddDoc.mockResolvedValueOnce({ id: 'new-booking-id' } as any);
+
+        await createBooking({
+            houseId: 'house-1',
+            userId: 'me',
+            userName: 'Me',
+            start: new Date(2026, 6, 10),
+            end: new Date(2026, 6, 15),
+            type: 'personal',
+            allowConflicts: true,
+        });
+
+        const payload = mockedAddDoc.mock.calls[0][1] as any;
+        expect(payload.start_date).toBe('2026-07-10');
+        expect(payload.end_date).toBe('2026-07-15');
+        expect(payload.start).toEqual(new Date(2026, 6, 10));
+        expect(payload.end).toEqual(new Date(2026, 6, 15));
+    });
+
+    it('normalises a same-day pick: end_date is the next day', async () => {
+        mockedAddDoc.mockResolvedValueOnce({ id: 'new-booking-id' } as any);
+
+        await createBooking({
+            houseId: 'house-1',
+            userId: 'me',
+            userName: 'Me',
+            start: new Date(2026, 6, 10),
+            end: new Date(2026, 6, 10),
+            type: 'personal',
+            allowConflicts: true,
+        });
+
+        const payload = mockedAddDoc.mock.calls[0][1] as any;
+        expect(payload.start_date).toBe('2026-07-10');
+        expect(payload.end_date).toBe('2026-07-11');
+    });
+
     it('writes the booking and returns its id when there are no conflicts', async () => {
         mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([])); // conflict check: none
         mockedGetDocs.mockResolvedValueOnce(bookingsSnapshot([])); // post-write re-check: none

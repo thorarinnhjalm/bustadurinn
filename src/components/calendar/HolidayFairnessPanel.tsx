@@ -13,7 +13,7 @@
  * house has 2+ owners).
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { ChevronDown, ChevronUp, Trophy, Unlock, Sparkles } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { is } from 'date-fns/locale';
@@ -60,6 +60,7 @@ function formatHistoryLine(priority: HolidayPriority): string {
 }
 
 export default function HolidayFairnessPanel({ houseId, ownerIds, onClaimWindow }: HolidayFairnessPanelProps) {
+    const baseId = useId();
     const [collapsed, setCollapsed] = useState(false);
     const [loading, setLoading] = useState(true);
     const [rows, setRows] = useState<WindowRow[]>([]);
@@ -118,25 +119,31 @@ export default function HolidayFairnessPanel({ houseId, ownerIds, onClaimWindow 
             <button
                 type="button"
                 onClick={() => setCollapsed((c) => !c)}
+                aria-expanded={!collapsed}
+                aria-controls={`${baseId}-panel`}
                 className="w-full flex items-center justify-between gap-2"
             >
                 <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-amber" />
+                    <Sparkles className="w-5 h-5 text-amber-ink" aria-hidden="true" />
                     <h3 className="text-lg font-serif">Stórhelgar</h3>
                 </div>
                 {collapsed ? (
-                    <ChevronDown className="w-5 h-5 text-grey-mid" />
+                    <ChevronDown className="w-5 h-5 text-grey-mid" aria-hidden="true" />
                 ) : (
-                    <ChevronUp className="w-5 h-5 text-grey-mid" />
+                    <ChevronUp className="w-5 h-5 text-grey-mid" aria-hidden="true" />
                 )}
             </button>
 
             {!collapsed && (
-                <div className="mt-4 space-y-3">
-                    {loading &&
-                        [0, 1].map((i) => (
-                            <div key={i} className="animate-pulse bg-stone-100 rounded-md h-20" />
-                        ))}
+                <div id={`${baseId}-panel`} className="mt-4 space-y-3">
+                    {loading && (
+                        <div role="status">
+                            <span className="sr-only">Hleð…</span>
+                            {[0, 1].map((i) => (
+                                <div key={i} className="motion-safe:animate-pulse bg-stone-100 rounded-md h-20 mb-3" />
+                            ))}
+                        </div>
+                    )}
 
                     {!loading &&
                         rows.map(({ window, priority }) => {
@@ -175,11 +182,11 @@ export default function HolidayFairnessPanel({ houseId, ownerIds, onClaimWindow 
                                             >
                                                 {isOpenToAll ? (
                                                     <span className="flex items-center gap-1">
-                                                        <Unlock className="w-3 h-3" /> Opið öllum
+                                                        <Unlock className="w-3 h-3" aria-hidden="true" /> Opið öllum
                                                     </span>
                                                 ) : (
                                                     <span className="flex items-center gap-1">
-                                                        <Trophy className="w-3 h-3" /> Forgangur: {topUserName ?? '—'}
+                                                        <Trophy className="w-3 h-3" aria-hidden="true" /> Forgangur: {topUserName ?? '—'}
                                                     </span>
                                                 )}
                                             </span>

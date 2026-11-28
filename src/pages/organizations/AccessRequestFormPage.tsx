@@ -3,18 +3,20 @@
  * For employees to request access to organization
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
+import { useState, useEffect, useCallback, useId } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { UserPlus, Mail, User, Briefcase, Phone, Building2, CheckCircle } from 'lucide-react';
 import { getOrganization, submitAccessRequest } from '@/services/organizationService';
 import type { Organization } from '@/types/models';
 import SEO from '@/components/SEO';
 import { useAppStore } from '@/store/appStore';
 import { logger } from '@/utils/logger';
+import { getUserMessage } from '@/utils/userMessages';
 
 export default function AccessRequestFormPage() {
     const { orgId } = useParams<{ orgId: string }>();
-    const navigate = useNavigate();
+    const uid = useId();
+    const fieldId = (name: string) => `${uid}-${name}`;
     const location = useLocation();
     const currentUser = useAppStore((state) => state.currentUser);
     const isAuthLoading = useAppStore((state) => state.isLoading);
@@ -66,6 +68,7 @@ export default function AccessRequestFormPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
         setError('');
 
         if (!orgId || !organization || !currentUser) {
@@ -91,9 +94,9 @@ export default function AccessRequestFormPage() {
         try {
             await submitAccessRequest(orgId, { ...formData, user_id: currentUser.uid });
             setSubmitted(true);
-        } catch (err: any) {
+        } catch (err: unknown) {
             logger.error('Error submitting access request:', err);
-            setError(err.message || 'Villa kom upp við að senda beiðni');
+            setError(getUserMessage(err, 'Villa kom upp við að senda beiðni'));
         } finally {
             setIsSubmitting(false);
         }
@@ -101,23 +104,23 @@ export default function AccessRequestFormPage() {
 
     if (isLoading || isAuthLoading) {
         return (
-            <div className="min-h-screen bg-bone flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
+            <main id="main" className="min-h-screen bg-bone flex items-center justify-center">
+                <div role="status" className="text-center">
+                    <div aria-hidden="true" className="animate-spin w-12 h-12 border-4 border-charcoal border-t-transparent rounded-full mx-auto mb-4"></div>
                     <p className="text-grey-mid">Hleð...</p>
                 </div>
-            </div>
+            </main>
         );
     }
 
     if (!currentUser) {
         const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
         return (
-            <div className="min-h-screen bg-bone flex items-center justify-center p-6">
+            <main id="main" className="min-h-screen bg-bone flex items-center justify-center p-6">
                 <SEO title="Óska eftir aðgangi" description="Skráðu þig inn til að óska eftir aðgangi" />
                 <div className="card max-w-md text-center">
-                    <UserPlus className="w-16 h-16 mx-auto mb-4 text-charcoal" />
-                    <h2 className="text-2xl font-serif mb-4">Skráðu þig inn til að halda áfram</h2>
+                    <UserPlus aria-hidden="true" className="w-16 h-16 mx-auto mb-4 text-charcoal" />
+                    <h1 className="text-2xl font-serif mb-4">Skráðu þig inn til að halda áfram</h1>
                     <p className="text-grey-dark mb-6">
                         Til að óska eftir aðgangi að sumarhúsum félagsins þarftu að vera skráð(ur) inn.
                         Ef þú átt ekki aðgang getur þú stofnað hann á augabragði og kemur svo hingað
@@ -132,42 +135,42 @@ export default function AccessRequestFormPage() {
                         </Link>
                     </div>
                 </div>
-            </div>
+            </main>
         );
     }
 
     if (!organization) {
         return (
-            <div className="min-h-screen bg-bone flex items-center justify-center p-6">
+            <main id="main" className="min-h-screen bg-bone flex items-center justify-center p-6">
                 <div className="card max-w-md text-center">
-                    <Building2 className="w-16 h-16 mx-auto mb-4 text-grey-mid" />
-                    <h2 className="text-2xl font-serif mb-4">Félag fannst ekki</h2>
+                    <Building2 aria-hidden="true" className="w-16 h-16 mx-auto mb-4 text-grey-mid" />
+                    <h1 className="text-2xl font-serif mb-4">Félag fannst ekki</h1>
                     <p className="text-grey-dark mb-6">
                         Þetta félag er ekki til eða hefur verið eytt.
                     </p>
-                    <button onClick={() => navigate('/')} className="btn btn-primary">
+                    <Link to="/" className="btn btn-primary">
                         Fara á forsíðu
-                    </button>
+                    </Link>
                 </div>
-            </div>
+            </main>
         );
     }
 
     if (submitted) {
         return (
-            <div className="min-h-screen bg-bone flex items-center justify-center p-6">
+            <main id="main" className="min-h-screen bg-bone flex items-center justify-center p-6">
                 <SEO
                     title={`Aðgangsbeiðni send - ${organization.name}`}
                     description="Beiðni þín hefur verið móttekin"
                 />
-                <div className="card max-w-md text-center">
-                    <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-600" />
-                    <h2 className="text-2xl font-serif mb-4">Beiðni móttekin!</h2>
+                <div role="status" className="card max-w-md text-center">
+                    <CheckCircle aria-hidden="true" className="w-16 h-16 mx-auto mb-4 text-green-600" />
+                    <h1 className="text-2xl font-serif mb-4">Beiðni móttekin!</h1>
                     <p className="text-grey-dark mb-6">
                         Þakka þér fyrir að sækja um aðgang að sumarhúsum {organization.name}.
                     </p>
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
-                        <h3 className="font-semibold mb-2">Næstu skref:</h3>
+                        <h2 className="text-3xl font-semibold mb-2">Næstu skref:</h2>
                         <ol className="text-sm text-grey-dark space-y-2 list-decimal list-inside">
                             <li>Stjórnandi félags mun fara yfir beiðni þína</li>
                             <li>Þú færð tölvupóst þegar beiðni hefur verið samþykkt</li>
@@ -178,11 +181,11 @@ export default function AccessRequestFormPage() {
                         Athugaðu tölvupóstinn þinn á{' '}
                         <span className="font-semibold">{formData.email}</span>
                     </p>
-                    <button onClick={() => navigate('/')} className="btn btn-secondary">
+                    <Link to="/" className="btn btn-secondary">
                         Fara á forsíðu
-                    </button>
+                    </Link>
                 </div>
-            </div>
+            </main>
         );
     }
 
@@ -192,7 +195,7 @@ export default function AccessRequestFormPage() {
     const isAllowedDomain = allowedDomains.includes(emailDomain);
 
     return (
-        <div className="min-h-screen bg-bone">
+        <main id="main" className="min-h-screen bg-bone">
             <SEO
                 title={`Óska eftir aðgangi - ${organization.name}`}
                 description={`Sæktu um aðgang að sumarhúsum ${organization.name}`}
@@ -201,7 +204,7 @@ export default function AccessRequestFormPage() {
             <div className="max-w-2xl mx-auto px-6 py-12">
                 {/* Header */}
                 <div className="text-center mb-12">
-                    <UserPlus className="w-16 h-16 mx-auto mb-4 text-charcoal" />
+                    <UserPlus aria-hidden="true" className="w-16 h-16 mx-auto mb-4 text-charcoal" />
                     <h1 className="text-4xl font-serif mb-2">Óska eftir aðgangi</h1>
                     <p className="text-xl text-grey-dark mb-6">{organization.name}</p>
                     <p className="text-grey-mid max-w-lg mx-auto">
@@ -210,23 +213,30 @@ export default function AccessRequestFormPage() {
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="card">
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                            <p className="text-red-800">{error}</p>
-                        </div>
-                    )}
+                <form onSubmit={handleSubmit} className="card" aria-busy={isSubmitting}>
+                    <div role="alert">
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                                <p className="text-red-800">{error}</p>
+                            </div>
+                        )}
+                    </div>
 
                     <div className="space-y-6">
+                        <p className="text-sm text-grey-dark">
+                            Reitir merktir með <span aria-hidden="true">*</span><span className="sr-only">stjörnu</span> eru nauðsynlegir.
+                        </p>
                         {/* Name */}
                         <div>
-                            <label className="block text-sm font-medium text-charcoal mb-2">
-                                Fullt nafn <span className="text-red-500">*</span>
+                            <label htmlFor={fieldId('name')} className="block text-sm font-medium text-charcoal mb-2">
+                                Fullt nafn <span aria-hidden="true" className="text-red-700">*</span>
                             </label>
                             <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-grey-mid" />
+                                <User aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-grey-mid" />
                                 <input
+                                    id={fieldId('name')}
                                     type="text"
+                                    autoComplete="name"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     className="input w-full pl-10"
@@ -238,13 +248,16 @@ export default function AccessRequestFormPage() {
 
                         {/* Email */}
                         <div>
-                            <label className="block text-sm font-medium text-charcoal mb-2">
-                                Netfang <span className="text-red-500">*</span>
+                            <label htmlFor={fieldId('email')} className="block text-sm font-medium text-charcoal mb-2">
+                                Netfang <span aria-hidden="true" className="text-red-700">*</span>
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-grey-mid" />
+                                <Mail aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-grey-mid" />
                                 <input
+                                    id={fieldId('email')}
                                     type="email"
+                                    autoComplete="email"
+                                    inputMode="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     className="input w-full pl-10"
@@ -252,12 +265,14 @@ export default function AccessRequestFormPage() {
                                     required
                                 />
                             </div>
-                            {formData.email && isAllowedDomain && (
-                                <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
-                                    <CheckCircle className="w-4 h-4" />
-                                    Netfangslén er á leyfilegum lista - beiðni þín verður sjálfkrafa samþykkt
-                                </p>
-                            )}
+                            <div role="status">
+                                {formData.email && isAllowedDomain && (
+                                    <p className="text-sm text-green-700 mt-1 flex items-center gap-1">
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4" />
+                                        Netfangslén er á leyfilegum lista - beiðni þín verður sjálfkrafa samþykkt
+                                    </p>
+                                )}
+                            </div>
                             {allowedDomains.length > 0 && (
                                 <p className="text-sm text-grey-mid mt-1">
                                     Leyfileg netfangslén:{' '}
@@ -268,13 +283,15 @@ export default function AccessRequestFormPage() {
 
                         {/* Employee ID */}
                         <div>
-                            <label className="block text-sm font-medium text-charcoal mb-2">
+                            <label htmlFor={fieldId('employee')} className="block text-sm font-medium text-charcoal mb-2">
                                 Starfsmannanúmer
                             </label>
                             <div className="relative">
-                                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-grey-mid" />
+                                <Briefcase aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-grey-mid" />
                                 <input
+                                    id={fieldId('employee')}
                                     type="text"
+                                    autoComplete="off"
                                     value={formData.employee_id}
                                     onChange={(e) =>
                                         setFormData({ ...formData, employee_id: e.target.value })
@@ -287,13 +304,15 @@ export default function AccessRequestFormPage() {
 
                         {/* Department */}
                         <div>
-                            <label className="block text-sm font-medium text-charcoal mb-2">
+                            <label htmlFor={fieldId('department')} className="block text-sm font-medium text-charcoal mb-2">
                                 Deild
                             </label>
                             <div className="relative">
-                                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-grey-mid" />
+                                <Building2 aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-grey-mid" />
                                 <input
+                                    id={fieldId('department')}
                                     type="text"
+                                    autoComplete="organization-title"
                                     value={formData.department}
                                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                                     className="input w-full pl-10"
@@ -304,13 +323,16 @@ export default function AccessRequestFormPage() {
 
                         {/* Phone */}
                         <div>
-                            <label className="block text-sm font-medium text-charcoal mb-2">
+                            <label htmlFor={fieldId('phone')} className="block text-sm font-medium text-charcoal mb-2">
                                 Símanúmer
                             </label>
                             <div className="relative">
-                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-grey-mid" />
+                                <Phone aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-grey-mid" />
                                 <input
+                                    id={fieldId('phone')}
                                     type="tel"
+                                    autoComplete="tel"
+                                    inputMode="tel"
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                     className="input w-full pl-10"
@@ -321,10 +343,11 @@ export default function AccessRequestFormPage() {
 
                         {/* Reason */}
                         <div>
-                            <label className="block text-sm font-medium text-charcoal mb-2">
+                            <label htmlFor={fieldId('reason')} className="block text-sm font-medium text-charcoal mb-2">
                                 Ástæða beiðni (valkvæmt)
                             </label>
                             <textarea
+                                id={fieldId('reason')}
                                 value={formData.reason}
                                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                                 className="input w-full min-h-[100px] resize-y"
@@ -334,7 +357,7 @@ export default function AccessRequestFormPage() {
 
                         {/* Info Box */}
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <h3 className="font-semibold mb-2">Hvað gerist næst?</h3>
+                            <h2 className="text-3xl font-semibold mb-2">Hvað gerist næst?</h2>
                             <ul className="text-sm text-grey-dark space-y-1 list-disc list-inside">
                                 {organization.settings?.require_access_approval ? (
                                     <>
@@ -361,16 +384,19 @@ export default function AccessRequestFormPage() {
                         <button
                             type="submit"
                             className="btn btn-primary w-full"
-                            disabled={isSubmitting}
+                            aria-busy={isSubmitting}
                         >
                             {isSubmitting ? (
                                 <>
-                                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                                    <span role="status">
+                                        <span aria-hidden="true" className="block animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                                        <span className="sr-only">Hleð…</span>
+                                    </span>
                                     <span>Sendi beiðni...</span>
                                 </>
                             ) : (
                                 <>
-                                    <UserPlus className="w-5 h-5" />
+                                    <UserPlus aria-hidden="true" className="w-5 h-5" />
                                     <span>Senda beiðni</span>
                                 </>
                             )}
@@ -390,6 +416,6 @@ export default function AccessRequestFormPage() {
                     </div>
                 </form>
             </div>
-        </div>
+        </main>
     );
 }

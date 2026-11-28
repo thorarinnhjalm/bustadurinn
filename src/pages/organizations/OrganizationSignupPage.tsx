@@ -3,13 +3,16 @@
  * Companies, unions, and municipalities get in touch about using the platform
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Building2, Mail, Phone, Users, CheckCircle, Send } from 'lucide-react';
 import MarketingLayout from '@/components/MarketingLayout';
 import SEO from '@/components/SEO';
 import { analytics } from '@/utils/analytics';
+import { logger } from '@/utils/logger';
 
 export default function OrganizationSignupPage() {
+    const uid = useId();
+    const fieldId = (name: string) => `${uid}-${name}`;
     const [formData, setFormData] = useState({
         org_name: '',
         contact_name: '',
@@ -23,6 +26,7 @@ export default function OrganizationSignupPage() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (status === 'loading') return;
         setStatus('loading');
 
         try {
@@ -42,7 +46,8 @@ export default function OrganizationSignupPage() {
 
             setStatus('success');
             analytics.contactFormSubmitted('organization_inquiry');
-        } catch {
+        } catch (error) {
+            logger.error('Organization inquiry error:', error);
             setStatus('error');
         }
     };
@@ -58,9 +63,9 @@ export default function OrganizationSignupPage() {
                     description="Við höfum samband við þig fljótlega"
                 />
                 <div className="min-h-[60vh] flex items-center justify-center px-6">
-                    <div className="text-center max-w-md">
+                    <div role="status" className="text-center max-w-md">
                         <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6">
-                            <CheckCircle className="w-10 h-10 text-green-600" />
+                            <CheckCircle aria-hidden="true" className="w-10 h-10 text-green-600" />
                         </div>
                         <h1 className="text-3xl font-serif mb-4">Takk fyrir!</h1>
                         <p className="text-grey-dark text-lg leading-relaxed">
@@ -108,7 +113,7 @@ export default function OrganizationSignupPage() {
             {/* Hero */}
             <div className="bg-charcoal text-bone py-20 px-6">
                 <div className="max-w-3xl mx-auto text-center">
-                    <Building2 className="w-14 h-14 mx-auto mb-6 text-amber opacity-90" />
+                    <Building2 aria-hidden="true" className="w-14 h-14 mx-auto mb-6 text-amber opacity-90" />
                     <h1 className="text-4xl md:text-5xl font-serif mb-6 leading-tight">
                         Starfsmannafélag?<br />
                         <span className="text-amber">Við höfum lausnina.</span>
@@ -129,9 +134,9 @@ export default function OrganizationSignupPage() {
                     ].map(({ icon: Icon, title, desc }) => (
                         <div key={title} className="text-center">
                             <div className="w-12 h-12 rounded-full bg-charcoal/10 flex items-center justify-center mx-auto mb-4">
-                                <Icon className="w-6 h-6 text-charcoal" />
+                                <Icon aria-hidden="true" className="w-6 h-6 text-charcoal" />
                             </div>
-                            <h3 className="font-bold text-charcoal mb-2">{title}</h3>
+                            <h2 className="text-3xl font-bold text-charcoal mb-2">{title}</h2>
                             <p className="text-grey-dark text-sm leading-relaxed">{desc}</p>
                         </div>
                     ))}
@@ -143,17 +148,23 @@ export default function OrganizationSignupPage() {
                         <h2 className="text-2xl font-serif mb-2">Hafðu samband</h2>
                         <p className="text-grey-dark mb-8">Fylltu út og við höfum samband innan 1-2 virkra daga.</p>
 
-                        {status === 'error' && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-red-700 text-sm">
-                                Eitthvað fór úrskeiðis. Vinsamlegast reyndu aftur eða sendu okkur tölvupóst.
-                            </div>
-                        )}
+                        <div role="alert">
+                            {status === 'error' && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-red-700 text-sm">
+                                    Eitthvað fór úrskeiðis. Vinsamlegast reyndu aftur eða sendu okkur tölvupóst.
+                                </div>
+                            )}
+                        </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
+                        <form onSubmit={handleSubmit} className="space-y-5" aria-busy={status === 'loading'}>
+                            <p className="text-sm text-grey-dark">
+                                Reitir merktir með <span aria-hidden="true">*</span><span className="sr-only">stjörnu</span> eru nauðsynlegir.
+                            </p>
                             {/* Org Type */}
                             <div>
-                                <label className="block text-sm font-medium text-charcoal mb-2">Tegund</label>
+                                <label htmlFor={fieldId('type')} className="block text-sm font-medium text-charcoal mb-2">Tegund</label>
                                 <select
+                                    id={fieldId('type')}
                                     value={formData.org_type}
                                     onChange={(e) => setFormData({ ...formData, org_type: e.target.value })}
                                     className="input w-full"
@@ -166,13 +177,15 @@ export default function OrganizationSignupPage() {
 
                             {/* Org Name */}
                             <div>
-                                <label className="block text-sm font-medium text-charcoal mb-2">
-                                    Nafn félags eða fyrirtækis <span className="text-red-500">*</span>
+                                <label htmlFor={fieldId('org')} className="block text-sm font-medium text-charcoal mb-2">
+                                    Nafn félags eða fyrirtækis <span aria-hidden="true" className="text-red-700">*</span>
                                 </label>
                                 <div className="relative">
-                                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-grey-mid" />
+                                    <Building2 aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-grey-mid" />
                                     <input
+                                        id={fieldId('org')}
                                         type="text"
+                                        autoComplete="organization"
                                         value={formData.org_name}
                                         onChange={(e) => setFormData({ ...formData, org_name: e.target.value })}
                                         className="input w-full pl-10"
@@ -185,11 +198,13 @@ export default function OrganizationSignupPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {/* Contact Name */}
                                 <div>
-                                    <label className="block text-sm font-medium text-charcoal mb-2">
-                                        Tengiliður <span className="text-red-500">*</span>
+                                    <label htmlFor={fieldId('contact')} className="block text-sm font-medium text-charcoal mb-2">
+                                        Tengiliður <span aria-hidden="true" className="text-red-700">*</span>
                                     </label>
                                     <input
+                                        id={fieldId('contact')}
                                         type="text"
+                                        autoComplete="name"
                                         value={formData.contact_name}
                                         onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
                                         className="input w-full"
@@ -200,13 +215,15 @@ export default function OrganizationSignupPage() {
 
                                 {/* Employee Count */}
                                 <div>
-                                    <label className="block text-sm font-medium text-charcoal mb-2">
+                                    <label htmlFor={fieldId('count')} className="block text-sm font-medium text-charcoal mb-2">
                                         Fjöldi starfsmanna
                                     </label>
                                     <div className="relative">
-                                        <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-grey-mid" />
+                                        <Users aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-grey-mid" />
                                         <input
+                                            id={fieldId('count')}
                                             type="text"
+                                            inputMode="numeric"
                                             value={formData.employee_count}
                                             onChange={(e) => setFormData({ ...formData, employee_count: e.target.value })}
                                             className="input w-full pl-10"
@@ -219,13 +236,16 @@ export default function OrganizationSignupPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {/* Email */}
                                 <div>
-                                    <label className="block text-sm font-medium text-charcoal mb-2">
-                                        Netfang <span className="text-red-500">*</span>
+                                    <label htmlFor={fieldId('email')} className="block text-sm font-medium text-charcoal mb-2">
+                                        Netfang <span aria-hidden="true" className="text-red-700">*</span>
                                     </label>
                                     <div className="relative">
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-grey-mid" />
+                                        <Mail aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-grey-mid" />
                                         <input
+                                            id={fieldId('email')}
                                             type="email"
+                                            autoComplete="email"
+                                            inputMode="email"
                                             value={formData.email}
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                             className="input w-full pl-10"
@@ -237,11 +257,14 @@ export default function OrganizationSignupPage() {
 
                                 {/* Phone */}
                                 <div>
-                                    <label className="block text-sm font-medium text-charcoal mb-2">Símanúmer</label>
+                                    <label htmlFor={fieldId('phone')} className="block text-sm font-medium text-charcoal mb-2">Símanúmer</label>
                                     <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-grey-mid" />
+                                        <Phone aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-grey-mid" />
                                         <input
+                                            id={fieldId('phone')}
                                             type="tel"
+                                            autoComplete="tel"
+                                            inputMode="tel"
                                             value={formData.phone}
                                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                             className="input w-full pl-10"
@@ -253,10 +276,11 @@ export default function OrganizationSignupPage() {
 
                             {/* Message */}
                             <div>
-                                <label className="block text-sm font-medium text-charcoal mb-2">
+                                <label htmlFor={fieldId('message')} className="block text-sm font-medium text-charcoal mb-2">
                                     Hvað er á huganum? <span className="text-grey-mid font-normal">(valfrjálst)</span>
                                 </label>
                                 <textarea
+                                    id={fieldId('message')}
                                     value={formData.message}
                                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                     className="input w-full resize-none"
@@ -267,17 +291,20 @@ export default function OrganizationSignupPage() {
 
                             <button
                                 type="submit"
-                                disabled={status === 'loading'}
+                                aria-busy={status === 'loading'}
                                 className="btn btn-primary w-full flex items-center justify-center gap-2 py-3"
                             >
                                 {status === 'loading' ? (
                                     <>
-                                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                                        <span role="status">
+                                            <span aria-hidden="true" className="block animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                                            <span className="sr-only">Hleð…</span>
+                                        </span>
                                         Sendi...
                                     </>
                                 ) : (
                                     <>
-                                        <Send className="w-4 h-4" />
+                                        <Send aria-hidden="true" className="w-4 h-4" />
                                         Senda fyrirspurn
                                     </>
                                 )}

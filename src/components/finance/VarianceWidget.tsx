@@ -67,7 +67,15 @@ export default function VarianceWidget({ budgetItems, entries }: VarianceWidgetP
                         {comparison.totalActual.toLocaleString()} / {comparison.totalBudget.toLocaleString()} kr.
                     </span>
                 </div>
-                <div className="h-4 bg-bone rounded-full overflow-hidden">
+                <div
+                    role="progressbar"
+                    aria-label="Heildarnýting áætlunar"
+                    aria-valuenow={Math.round(comparison.totalPercent)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuetext={`${Math.round(comparison.totalPercent)}% af áætlun nýtt`}
+                    className="h-4 bg-bone rounded-full overflow-hidden"
+                >
                     <div
                         className={`h-full transition-all duration-500 ${comparison.totalPercent > 100 ? 'bg-red-400' : 'bg-green-500'
                             }`}
@@ -87,7 +95,15 @@ export default function VarianceWidget({ budgetItems, entries }: VarianceWidgetP
                                 {row.actual.toLocaleString()} / {row.budget.toLocaleString()}
                             </span>
                         </div>
-                        <div className="h-2 bg-bone rounded-full overflow-hidden">
+                        <div
+                            role="progressbar"
+                            aria-label={`Nýting áætlunar: ${row.category}`}
+                            aria-valuenow={Math.round(row.percent)}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuetext={`${Math.round(row.percent)}% af áætlun nýtt`}
+                            className="h-2 bg-bone rounded-full overflow-hidden"
+                        >
                             <div
                                 className={`h-full transition-all duration-500 ${row.status === 'over' ? 'bg-red-400' :
                                     row.status === 'warning' ? 'bg-amber' : 'bg-green-500'
@@ -97,8 +113,14 @@ export default function VarianceWidget({ budgetItems, entries }: VarianceWidgetP
                         </div>
                         {row.status === 'over' && (
                             <div className="flex items-center gap-1 mt-1 text-xs text-red-500">
-                                <AlertCircle className="w-3 h-3" />
+                                <AlertCircle className="w-3 h-3" aria-hidden="true" />
                                 <span>Farið fram úr áætlun (+{(row.actual - row.budget).toLocaleString()} kr.)</span>
+                            </div>
+                        )}
+                        {row.status === 'warning' && (
+                            <div className="flex items-center gap-1 mt-1 text-xs text-amber-ink">
+                                <AlertCircle className="w-3 h-3" aria-hidden="true" />
+                                <span>Nálgast áætlun ({Math.round(row.percent)}% nýtt)</span>
                             </div>
                         )}
                     </div>

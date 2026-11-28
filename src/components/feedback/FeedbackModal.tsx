@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Star, X, Loader2, Send } from 'lucide-react';
+import { useId, useState } from 'react';
+import { Star, Loader2, Send } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
+import { logger } from '@/utils/logger';
 import { feedbackService } from '@/services/feedbackService';
 import { useAppStore } from '@/store/appStore';
 import { useLocation } from 'react-router-dom';
@@ -21,7 +23,8 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    if (!isOpen) return null;
+    const ratingLabelId = useId();
+    const commentId = useId();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -57,7 +60,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
             }, 2000);
 
         } catch (err) {
-            console.error(err);
+            logger.error('Feedback submit failed', err);
             setError('Eitthvað fór úrskeiðis. Reyndu aftur síðar.');
         } finally {
             setIsSubmitting(false);
@@ -65,47 +68,42 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 relative"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="bg-[#1a1a1a] p-4 flex justify-between items-center text-white">
-                    <h3 className="font-serif font-bold text-lg">Gefa umsögn</h3>
-                    <button
-                        onClick={onClose}
-                        className="p-1 hover:bg-white/10 rounded-full transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-
+        <Modal
+            open={isOpen}
+            onClose={onClose}
+            title="Gefa umsögn"
+            size="md"
+            dismissible={!isSubmitting}
+        >
+            <div>
                 {submitSuccess ? (
-                    <div className="p-8 text-center bg-stone-50">
-                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-in zoom-in spin-in-90 duration-300">
-                            <Send size={32} />
+                    <div role="status" className="p-8 text-center bg-stone-50">
+                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 motion-safe:animate-in motion-safe:zoom-in motion-safe:spin-in-90 duration-300">
+                            <Send size={32} aria-hidden="true" />
                         </div>
                         <h4 className="text-xl font-bold text-[#1a1a1a] mb-2">Takk fyrir!</h4>
                         <p className="text-stone-600">Ábendingin þín hjálpar okkur að gera betur.</p>
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                    <form onSubmit={handleSubmit} className="pt-1 space-y-6">
                         {/* Rating */}
                         <div className="text-center">
-                            <p className="text-sm font-bold text-stone-500 uppercase tracking-widest mb-3">Hvað finnst þér?</p>
-                            <div className="flex justify-center gap-2">
+                            <p id={ratingLabelId} className="text-sm font-bold text-stone-500 uppercase tracking-widest mb-3">Hvað finnst þér?</p>
+                            <div role="group" aria-labelledby={ratingLabelId} className="flex justify-center gap-2">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <button
                                         key={star}
                                         type="button"
+                                        aria-label={`${star} af 5 stjörnum`}
+                                        aria-pressed={rating === star}
                                         onMouseEnter={() => setHoverRating(star)}
                                         onMouseLeave={() => setHoverRating(0)}
                                         onClick={() => setRating(star)}
-                                        className="transition-transform hover:scale-110 active:scale-95 focus:outline-none"
+                                        className="transition-transform motion-safe:hover:scale-110 active:scale-95 rounded-md"
                                     >
                                         <Star
                                             size={32}
+                                            aria-hidden="true"
                                             className={`${(hoverRating || rating) >= star ? 'fill-amber text-amber' : 'text-stone-300'} transition-colors`}
                                             strokeWidth={1.5}
                                         />
@@ -116,10 +114,11 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
                         {/* Comment */}
                         <div>
-                            <label className="block text-sm font-bold text-[#1a1a1a] mb-2">
-                                Hvað má betur fara? <span className="text-stone-400 font-normal">(valfrjálst)</span>
+                            <label htmlFor={commentId} className="block text-sm font-bold text-[#1a1a1a] mb-2">
+                                Hvað má betur fara? <span className="text-stone-500 font-normal">(valfrjálst)</span>
                             </label>
                             <textarea
+                                id={commentId}
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
                                 placeholder="Segðu okkur hvað þér finnst..."
@@ -129,21 +128,21 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
                         {/* Contact Permission */}
                         <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-stone-50 cursor-pointer transition-colors border border-transparent hover:border-stone-100">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${canContact ? 'bg-amber border-amber text-white' : 'border-stone-300 bg-white'}`}>
-                                {canContact && <Send size={12} />}
-                            </div>
                             <input
                                 type="checkbox"
                                 checked={canContact}
                                 onChange={(e) => setCanContact(e.target.checked)}
-                                className="hidden"
+                                className="peer sr-only"
                             />
+                            <div aria-hidden="true" className={`w-5 h-5 rounded border flex items-center justify-center transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-charcoal peer-focus-visible:ring-offset-2 ${canContact ? 'bg-amber border-amber text-charcoal' : 'border-stone-300 bg-white'}`}>
+                                {canContact && <Send size={12} />}
+                            </div>
                             <span className="text-sm text-stone-600 select-none">Má hafa samband við mig ef þarf?</span>
                         </label>
 
                         {/* Error Message */}
                         {error && (
-                            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg text-center animate-in fade-in slide-in-from-top-2">
+                            <div role="alert" className="bg-red-50 text-red-600 text-sm p-3 rounded-lg text-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2">
                                 {error}
                             </div>
                         )}
@@ -161,7 +160,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                         >
                             {isSubmitting ? (
                                 <>
-                                    <Loader2 size={20} className="animate-spin" />
+                                    <Loader2 size={20} className="motion-safe:animate-spin" aria-hidden="true" />
                                     Sendi...
                                 </>
                             ) : (
@@ -171,6 +170,6 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                     </form>
                 )}
             </div>
-        </div>
+        </Modal>
     );
 }

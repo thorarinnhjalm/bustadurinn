@@ -110,8 +110,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     summary.bookingsEvaluated++;
 
                     try {
-                        const bookingStart: Date = booking.start.toDate();
-                        const bookingEnd: Date = booking.end ? booking.end.toDate() : bookingStart;
+                        // Prefer the zone-independent 'yyyy-MM-dd' strings; they become UTC
+                        // midnights so UTC-based day keys/labels match the calendar day.
+                        // Old bookings (no strings) keep the stored-instant behaviour.
+                        const startDay = parseDayToUtc(booking.start_date);
+                        const endDay = parseDayToUtc(booking.end_date);
+                        const bookingStart: Date = startDay ?? booking.start.toDate();
+                        const bookingEnd: Date = endDay ?? (booking.end ? booking.end.toDate() : bookingStart);
 
                         const forecastResponse = await fetch(
                             `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lng}`,
@@ -210,8 +215,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 }
 
+/** 'yyyy-MM-dd' -> Date at UTC midnight of that calendar day, or null if absent/invalid. */
+function parseDayToUtc(v: unknown): Date | null {
+    if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+    const [y, m, d] = v.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d ? dt : null;
+}
+
 function formatDateRangeIS(start: Date, end: Date): string {
-    const fmt = (d: Date) => d.toLocaleDateString('is-IS', { day: 'numeric', month: 'long' });
-    if (start.toDateString() === end.toDateString()) return fmt(start);
+    const fmt = (d: Date) => d.toLocaleDateString('is-IS', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+    if (fmt(start) === fmt(end)) return fmt(start);
     return `${fmt(start)} – ${fmt(end)}`;
 }

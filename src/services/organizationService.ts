@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase';
+import { toDateInputValue } from '@/utils/localDate';
 import {
     collection,
     doc,
@@ -508,14 +509,21 @@ export const approveBookingRequest = async (
 
     // Create actual booking in house's bookings subcollection
     const bookingsRef = collection(db, 'houses', requestData.house_id, 'bookings');
+    // Raw Firestore data holds Timestamps here (the BookingRequest type says Date).
+    const toJsDate = (v: unknown): Date => (v as { toDate?: () => Date })?.toDate?.() ?? (v as Date);
+    const startDay = toJsDate(requestData.start_date);
+    const endDay = toJsDate(requestData.end_date);
     const bookingDoc = await addDoc(bookingsRef, {
         house_id: requestData.house_id,
         organization_id: orgId,
         user_id: requestData.user_id,
         user_name: requestData.user_name,
         user_email: requestData.user_email,
-        start: Timestamp.fromDate(requestData.start_date),
-        end: Timestamp.fromDate(requestData.end_date),
+        start: Timestamp.fromDate(startDay),
+        end: Timestamp.fromDate(endDay),
+        // Zone-independent calendar days (see api/booking-notification.ts)
+        start_date: toDateInputValue(startDay),
+        end_date: toDateInputValue(endDay),
         num_nights: requestData.num_nights,
         num_guests: requestData.num_guests,
         type: requestData.purpose,

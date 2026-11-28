@@ -35,6 +35,10 @@
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
     media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
+  </noscript>
 
 
   <!-- Analytics privacy: /guest/<token>, /join... and any ?token= / ?returnUrl= URL carry
@@ -98,6 +102,7 @@
     window.addEventListener('load', function () {
       var script = document.createElement('script');
       script.async = true;
+      script.fetchPriority = 'low';
       script.src = 'https://www.googletagmanager.com/gtag/js?id=G-ZK96M9074D';
       document.head.appendChild(script);
     });
@@ -111,6 +116,7 @@
       };
       if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
       n.queue = []; t = b.createElement(e); t.async = !0;
+      t.fetchPriority = 'low';
       t.src = v; s = b.getElementsByTagName(e)[0];
       s.parentNode.insertBefore(t, s)
     }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');

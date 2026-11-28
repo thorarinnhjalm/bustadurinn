@@ -29,11 +29,11 @@ export default function TaskList({ tasks, onStatusChange, onDelete }: TaskListPr
     const getStatusIcon = (status: TaskStatus) => {
         switch (status) {
             case 'completed':
-                return <CheckCircle className="w-5 h-5 text-green-500" />;
+                return <CheckCircle className="w-5 h-5 text-green-500" aria-hidden="true" />;
             case 'in_progress':
-                return <Clock className="w-5 h-5 text-amber" />;
+                return <Clock className="w-5 h-5 text-amber-ink" aria-hidden="true" />;
             default:
-                return <Circle className="w-5 h-5 text-grey-mid" />;
+                return <Circle className="w-5 h-5 text-grey-mid" aria-hidden="true" />;
         }
     };
 
@@ -55,14 +55,16 @@ export default function TaskList({ tasks, onStatusChange, onDelete }: TaskListPr
                 >
                     {/* Status Button */}
                     <button
+                        type="button"
                         onClick={() => {
                             const nextStatus = task.status === 'pending' ? 'in_progress'
                                 : task.status === 'in_progress' ? 'completed'
                                     : 'pending';
                             onStatusChange(task, nextStatus);
                         }}
-                        className="flex-shrink-0 hover:scale-110 transition-transform"
+                        className="flex-shrink-0 p-1 motion-safe:hover:scale-110 transition-transform"
                         title={`Breyta stöðu: ${getStatusLabel(task.status)}`}
+                        aria-label={`Staða: ${getStatusLabel(task.status)}. Breyta stöðu verkefnis: ${task.title}`}
                     >
                         {getStatusIcon(task.status)}
                     </button>
@@ -86,13 +88,13 @@ export default function TaskList({ tasks, onStatusChange, onDelete }: TaskListPr
                                     ? 'text-red-500 font-medium'
                                     : ''
                                     }`}>
-                                    <CalendarIcon className="w-3 h-3" />
+                                    <CalendarIcon className="w-3 h-3" aria-hidden="true" />
                                     {format(new Date(task.due_date), 'd. MMM', { locale: is })}
                                 </div>
                             )}
                             {task.assigned_to_names && task.assigned_to_names.length > 0 && (
                                 <div className="flex items-center gap-1">
-                                    <UserIcon className="w-3 h-3" />
+                                    <UserIcon className="w-3 h-3" aria-hidden="true" />
                                     {task.assigned_to_names[0]}
                                 </div>
                             )}
@@ -100,12 +102,14 @@ export default function TaskList({ tasks, onStatusChange, onDelete }: TaskListPr
                     </div>
 
                     {/* Actions */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
                         <button
+                            type="button"
                             onClick={() => onDelete(task)}
+                            aria-label={`Eyða verkefni: ${task.title}`}
                             className="p-2 text-grey-mid hover:text-red-500 rounded-full hover:bg-bone transition-colors"
                         >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" aria-hidden="true" />
                         </button>
                     </div>
                 </div>

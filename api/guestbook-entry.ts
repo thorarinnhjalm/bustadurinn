@@ -19,6 +19,9 @@ const MAX_TOKEN_LENGTH = 128;
 const MAX_NAME_LENGTH = 80;
 const MAX_MESSAGE_LENGTH = 2000;
 
+const FLOOD_WINDOW_MS = 10 * 60 * 1000;
+const MAX_GUEST_ENTRIES_PER_WINDOW = 10;
+
 const NOT_FOUND = { error: 'Invalid or expired guest link' };
 const BAD_REQUEST = { error: 'Invalid request' };
 
@@ -99,6 +102,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json(NOT_FOUND);
         }
         const house = houseSnap.data() || {};
+
+        // Flood guard without Redis: at most MAX_GUEST_ENTRIES_PER_WINDOW guest-link
+        // entries per house per window. Uses the (house_id, created_at) index;
+        // `source` is filtered in memory so no extra index is needed. Each entry
+        // also triggers owner notifications, so this bounds notification spam.
+        const windowStart = admin.firestore.Timestamp.fromMillis(Date.now() - FLOOD_WINDOW_MS);
+        const recentSnap = await db.collection('guestbook')
+            .where('house_id', '==', houseId)
+            .where('created_at', '>=', windowStart)
+            .limit(100)
+            .get();
+        const recentGuestEntries = recentSnap.docs.filter((d) => d.data().source === 'guest_link').length;
+        if (recentGuestEntries >= MAX_GUEST_ENTRIES_PER_WINDOW) {
+            return res.status(429).json({ error: 'Too many entries, try again later' });
+        }
 
         await db.collection('guestbook').add({
             house_id: houseId,
