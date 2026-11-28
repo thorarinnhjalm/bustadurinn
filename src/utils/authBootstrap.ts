@@ -79,6 +79,15 @@ export function hasPersistedFirebaseAuth(): Promise<boolean> {
             resolve(value);
         };
         try {
+            // Firebase falls back to localStorage when IndexedDB is unusable (Safari private mode,
+            // blocked storage), and there the IndexedDB probe below would wrongly say "nobody".
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    if (localStorage.key(i)?.startsWith('firebase:authUser:')) return done(true);
+                }
+            } catch {
+                return done(true); // storage blocked: cannot tell
+            }
             if (typeof indexedDB === 'undefined' || typeof indexedDB.databases !== 'function') return done(true);
             indexedDB
                 .databases()

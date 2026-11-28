@@ -25,7 +25,10 @@ test('e: create a task for A, list/board, status select, "Mín verkefni", delete
   const created = (await listDocs(`houses/${H1}/tasks`)).find((t) => t.title === 'Þrífa skorsteininn');
   expect(created!.assigned_to).toEqual([A.uid]);
   expect(created!.created_by).toBe(B.uid);
-  expect(mocks.calls.some((c) => c.path === 'house-notification' && c.body?.assigneeUids?.includes(A.uid))).toBe(true);
+  // The notification request is fired after the task write resolves, so it can land after the document is visible: poll for it.
+  await expect
+    .poll(() => mocks.calls.some((c) => c.path === 'house-notification' && c.body?.assigneeUids?.includes(A.uid)))
+    .toBe(true);
 
   // --- Board view + the status select
   await page.getByRole('button', { name: 'Töfluyfirlit' }).click();

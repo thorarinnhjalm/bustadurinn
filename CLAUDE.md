@@ -44,7 +44,7 @@ Past one-off debugging/migration scripts (they run against production Firebase) 
 
 ### Key Layers
 
-- **Pages** (`src/pages/`): Route-level components. Critical pages (Landing, Login, Signup, Onboarding, Dashboard) eagerly loaded; all others lazy-loaded via `React.lazy`.
+- **Pages** (`src/pages/`): Route-level components. Only `LandingPage` is eagerly loaded; every other page (including Login, Signup, Onboarding, Dashboard) is lazy-loaded via `React.lazy`, because those import the Firebase SDK and must stay off the first load of public pages. `App.tsx` starts the chunk of the page being opened before React renders (`ROUTE_CHUNKS`).
 - **Components** (`src/components/`): Reusable UI, organized by feature subdirectories (`finance/`, `tasks/`, `calendar/`, etc.).
 - **Services** (`src/services/`): Thin async functions wrapping direct Firestore SDK calls. No classes, no ORM. All services convert Firestore `Timestamp` → JS `Date` on reads.
 - **Store** (`src/store/appStore.ts`): Single Zustand store for global state (currentUser, currentHouse, auth state). No selectors or computed values — derivation happens in hooks. `logout()` resets store state but does NOT call Firebase `signOut()` — the calling component must do that. Does not persist to localStorage.
@@ -69,7 +69,7 @@ React Router DOM v7 with `BrowserRouter` in `src/App.tsx`. Public pages use Icel
 
 **Provider order in App.tsx (outermost first):** `ErrorBoundary` → `ImpersonationProvider` → `HelmetProvider` → `Router` → `ImpersonationBanner` → `Suspense` → `Routes`. `FeedbackWidget` is mounted outside `<Routes>` and is visible on every page.
 
-`AuthHandler` is a renderless component (returns `null`) placed outside `<Router>`. It handles the Firebase `onAuthStateChanged` subscription, populates the Zustand store, and auto-repairs "orphan" users (Firebase Auth account exists but no Firestore profile). It waits 15 seconds post-signup before self-repairing to avoid racing with `SignupPage`.
+`AuthHandler` is a renderless component (returns `null`) loaded lazily by `AuthBootstrap` (`src/components/AuthBootstrap.tsx`, rendered inside `<Router>`; helpers in `src/utils/authBootstrap.ts`), because it is what pulls in the Firebase SDK. App routes (login, signup, onboarding, dashboard, ...) start it immediately; public marketing routes (`isDeferredAuthPath`) start it when the page is usable (load + idle, or first interaction, via `window.__whenPageUsable` from `index.html`), at once when `hasPersistedFirebaseAuth()` finds a persisted sign-in, and as soon as the user navigates to an app route. The store's `isLoading` stays `true` until it reports, so `ProtectedRoute` shows its spinner meanwhile. `AdminRoute` is its own lazy file. `funnel.ts`, `pushNotifications.ts` and `ImpersonationContext` import Firebase dynamically; do not add static `@/lib/firebase` / `firebase/*` imports to modules used by marketing pages (`NewsletterSignup`, `LandingPage`, `ForProvidersPage` load Firestore on submit/idle). `scripts/prerender.js` sets `window.__PRERENDER__`, which skips all deferred starts. It handles the Firebase `onAuthStateChanged` subscription, populates the Zustand store, and auto-repairs "orphan" users (Firebase Auth account exists but no Firestore profile). It waits 15 seconds post-signup before self-repairing to avoid racing with `SignupPage`.
 
 ### Authentication & RBAC
 
@@ -162,7 +162,8 @@ From address is always `Bústaðurinn <hallo@bustadurinn.is>`. Run `npm run seed
 Tailwind CSS 3.4 with a custom "Scandi-Minimalist" design system defined in `src/index.css`. Key design tokens:
 
 - Colors: `bone` (#fdfcf8), `charcoal` (#1a1a1a), `amber` (#e8b058), warm greys
-- Fonts: `font-serif` = Fraunces (headings), `font-sans` = Inter (body)
+- Fonts: `font-serif` = Fraunces (headings), `font-sans` = Inter (body), self-hosted variable fonts via `@fontsource-variable` (`src/styles/fonts.css`, woff2 preloads injected by a Vite plugin; no Google Fonts request; `Inter Fallback` is a metric-matched Arial face listed after Inter)
+- Page chrome: use `PageHeader`/`PageContainer` (`src/components/PageHeader.tsx`) for app pages; border radius is capped at 6px in `tailwind.config.js`
 - Sharp corners (max 6px radius), high whitespace, 200ms transitions
 - Pre-built classes: `.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.card`, `.input`, `.badge`, `.toast`
 
