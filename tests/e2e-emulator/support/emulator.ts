@@ -71,6 +71,10 @@ export async function listDocs(collectionPath: string): Promise<Array<Record<str
   }));
 }
 
+export async function deleteDocByPath(path: string) {
+  await check(await fetch(`${FS}/${path}`, { method: 'DELETE', headers: OWNER }), `deleteDoc ${path}`);
+}
+
 export async function addToArray(path: string, field: string, value: string) {
   const doc = (await getDoc(path)) ?? {};
   const arr: string[] = Array.isArray(doc[field]) ? doc[field] : [];

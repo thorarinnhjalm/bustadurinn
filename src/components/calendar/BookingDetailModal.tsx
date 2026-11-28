@@ -2,6 +2,7 @@ import { Calendar, User, Clock, AlignLeft } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
+import { bookingNights } from '@/utils/localDate';
 import type { Booking, House, User as AppUser } from '@/types/models';
 
 interface BookingDetailModalProps {
@@ -17,7 +18,7 @@ export default function BookingDetailModal({ isOpen, onClose, booking, currentHo
     const endDate = booking.end instanceof Date ? booking.end : new Date(booking.end);
 
     // Calculate nights
-    const nights = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const nights = bookingNights(startDate, endDate);
 
     return (
         <Modal

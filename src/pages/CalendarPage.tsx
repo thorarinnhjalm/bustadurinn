@@ -4,283 +4,34 @@
  * Supports multiple languages and highlights Icelandic holidays
  */
 
-import { useState, useCallback, useEffect, useId, useMemo } from 'react';
-import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
-import 'react-big-calendar/lib/css/react-big-calendar.css'; // Add base styles
-import { format, parse, startOfWeek, getDay } from 'date-fns';
-import { is } from 'date-fns/locale';
-import { Plus, AlertCircle, Calendar as CalendarIcon, ArrowLeft, ChevronLeft, ChevronRight, Clock, Trash2, Check } from 'lucide-react';
-import { collection, query, getDocs, doc, getDoc, limit, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { Plus, Calendar as CalendarIcon, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
-import type { Booking, BookingType, House } from '@/types/models';
-import { dateLocales, calendarMessages, bookingTypeLabels, type SupportedLanguage } from '@/utils/i18n';
-import { getIcelandicHolidays, isHoliday } from '@/utils/icelandicHolidays';
-import type { ContestedHolidayWindow } from '@/utils/icelandicHolidays';
-import { analytics } from '@/utils/analytics';
-import { rangesOverlap, createBooking, deleteBooking, BookingConflictError } from '@/services/bookingService';
-import { checkFairnessForBooking } from '@/services/fairnessService';
+import type { Booking } from '@/types/models';
+import { bookingTypeLabels, type SupportedLanguage } from '@/utils/i18n';
+import { getIcelandicHolidays } from '@/utils/icelandicHolidays';
+import { deleteBooking } from '@/services/bookingService';
 import { logger } from '@/utils/logger';
-import { toDateInputValue, fromDateInputValue } from '@/utils/localDate';
 import MobileNav from '@/components/MobileNav';
-import EmptyState from '@/components/EmptyState';
-import Modal from '@/components/ui/Modal';
 import HolidayFairnessPanel from '@/components/calendar/HolidayFairnessPanel';
-import confetti from 'canvas-confetti';
-
-// View type derived from string as generic View type import is tricky
-type CalendarView = 'month' | 'week' | 'work_week' | 'day' | 'agenda';
-
-interface CustomToolbarProps {
-    date: Date;
-    view: CalendarView;
-    views: CalendarView[];
-    label: string;
-    onNavigate: (action: 'PREV' | 'NEXT' | 'TODAY' | 'DATE', newDate?: Date) => void;
-
-    onView: (view: any) => void;
-
-    localizer: { messages: any };
-}
-
-// Simplified toolbar - only navigation since view toggle is now external
-const CustomToolbar = ({ label, onNavigate }: CustomToolbarProps) => {
-    return (
-        <div className="flex flex-col gap-4 mb-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        className="p-2 h-10 w-10 rounded-full flex items-center justify-center border border-stone-300 hover:bg-stone-100 bg-white shadow-md active:scale-95 transition-all"
-                        onClick={() => onNavigate('PREV')}
-                        aria-label="Fyrra tímabil"
-                    >
-                        <ChevronLeft className="w-6 h-6 text-stone-800" aria-hidden="true" />
-                    </button>
-                    <button
-                        type="button"
-                        className="p-2 h-10 w-10 rounded-full flex items-center justify-center border border-stone-300 hover:bg-stone-100 bg-white shadow-md active:scale-95 transition-all"
-                        onClick={() => onNavigate('NEXT')}
-                        aria-label="Næsta tímabil"
-                    >
-                        <ChevronRight className="w-6 h-6 text-stone-800" aria-hidden="true" />
-                    </button>
-                    <h2 aria-live="polite" className="text-xl font-serif font-bold text-charcoal ml-2 capitalize">
-                        {label}
-                    </h2>
-                </div>
-
-                <button
-                    type="button"
-                    className="btn btn-secondary text-sm hidden md:flex"
-                    onClick={() => onNavigate('TODAY')}
-                    aria-label="Fara á daginn í dag"
-                >
-                    Í dag
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// Custom Booking Card for the list view - shows ONE card per booking with full date range
-const BookingCard = ({ booking, onClick, getTypeLabel }: {
-    booking: Booking;
-    onClick: (booking: Booking) => void;
-    getTypeLabel: (type: BookingType) => string;
-}) => {
-    // Format date range nicely: "17. - 20. júní"
-    const formatDateRange = (start: Date, end: Date) => {
-        const startDay = start.getDate();
-        const endDay = end.getDate();
-        const sameMonth = start.getMonth() === end.getMonth();
-        const sameYear = start.getFullYear() === end.getFullYear();
-
-        if (sameMonth && sameYear) {
-            const month = start.toLocaleDateString('is-IS', { month: 'long' });
-            if (startDay === endDay) {
-                return `${startDay}. ${month}`;
-            }
-            return `${startDay}. - ${endDay}. ${month}`;
-        } else if (sameYear) {
-            const startMonth = start.toLocaleDateString('is-IS', { month: 'short' });
-            const endMonth = end.toLocaleDateString('is-IS', { month: 'short' });
-            return `${startDay}. ${startMonth} - ${endDay}. ${endMonth}`;
-        } else {
-            return `${start.toLocaleDateString('is-IS')} - ${end.toLocaleDateString('is-IS')}`;
-        }
-    };
-
-    // Calculate number of nights
-    const nights = Math.max(1, Math.ceil((booking.end.getTime() - booking.start.getTime()) / (1000 * 60 * 60 * 24)));
-
-    const typeColors = {
-        personal: { bg: 'bg-amber/10', text: 'text-amber-700', border: 'border-l-amber' },
-        rental: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-l-green-500' },
-        maintenance: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-l-red-500' },
-        guest: { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-l-indigo-500' }
-    };
-
-    const colors = typeColors[booking.type] || typeColors.personal;
-
-    return (
-        <button
-            type="button"
-            onClick={() => onClick(booking)}
-            className={`block w-full text-left bg-white rounded-lg border border-stone-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all border-l-4 ${colors.border}`}
-        >
-            <div className="flex items-start justify-between mb-3">
-                <div>
-                    <h3 className="font-bold text-charcoal text-lg">{booking.user_name}</h3>
-                    <span className={`inline-block text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider mt-1 ${colors.bg} ${colors.text}`}>
-                        {getTypeLabel(booking.type)}
-                    </span>
-                </div>
-                <div className="text-right">
-                    <span className="text-2xl font-bold text-charcoal">{nights}</span>
-                    <span className="text-xs text-stone-500 block">{nights === 1 ? 'nótt' : 'nætur'}</span>
-                </div>
-            </div>
-
-            {/* Date Range - Prominent */}
-            <div className="flex items-center gap-2 mb-2 bg-stone-50 rounded-lg p-3">
-                <CalendarIcon className="w-5 h-5 text-amber-ink flex-shrink-0" aria-hidden="true" />
-                <span className="text-base font-semibold text-stone-700">
-                    {formatDateRange(booking.start, booking.end)}
-                </span>
-            </div>
-
-            {booking.notes && (
-                <p className="text-sm text-stone-600 bg-stone-50 rounded p-2 mb-2 mt-2">
-                    {booking.notes}
-                </p>
-            )}
-
-            {/* Created date */}
-            {booking.created_at && (
-                <div className="flex items-center text-xs text-stone-500 mt-2">
-                    <Clock className="w-3 h-3 mr-1" aria-hidden="true" />
-                    Bókað: {booking.created_at.toLocaleDateString('is-IS', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </div>
-            )}
-        </button>
-    );
-};
-
-// Custom Bookings List View - shows all bookings as cards (one per booking)
-const BookingsListView = ({
-    bookings,
-    onSelectBooking,
-    getTypeLabel
-}: {
-    bookings: Booking[];
-    onSelectBooking: (booking: Booking) => void;
-    getTypeLabel: (type: BookingType) => string;
-}) => {
-    // Sort bookings by start date
-    // Upcoming: Nearest first
-    const now = new Date();
-    // Reset time to start of today so bookings ending today aren't "past" yet
-    now.setHours(0, 0, 0, 0);
-
-    const upcoming = bookings
-        .filter(b => b.end >= now)
-        .sort((a, b) => a.start.getTime() - b.start.getTime());
-
-    // Group helper
-    const groupBookings = (list: Booking[]) => {
-        const grouped: { [key: string]: Booking[] } = {};
-        list.forEach(booking => {
-            const monthKey = booking.start.toLocaleDateString('is-IS', { month: 'long', year: 'numeric' });
-            if (!grouped[monthKey]) {
-                grouped[monthKey] = [];
-            }
-            grouped[monthKey].push(booking);
-        });
-        return grouped;
-    };
-
-    const upcomingGroups = groupBookings(upcoming);
-
-    if (bookings.length === 0) {
-        return (
-            <EmptyState
-                icon={CalendarIcon}
-                title="Engar bókanir ennþá"
-                description="Dagatalið bíður þín! Bókaðu fyrstu dvölina og haltu utan um hverjir nýta húsið."
-            />
-        );
-    }
-
-    if (upcoming.length === 0) {
-        return (
-            <div className="text-center py-12 bg-stone-50 rounded-lg border border-stone-200">
-                <CalendarIcon className="w-12 h-12 text-stone-300 mx-auto mb-3" aria-hidden="true" />
-                <p className="text-stone-500 font-medium">Engar framtíðarbókanir</p>
-                <p className="text-sm text-stone-500 mt-1">Gamlari bókanir eru ekki sýndar í þessum lista.</p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-6">
-            {Object.entries(upcomingGroups).map(([month, monthBookings]) => (
-                <div key={month}>
-                    <h3 className="text-lg font-serif font-bold text-charcoal mb-3 capitalize sticky top-0 bg-white py-2 z-10 border-b border-stone-100">
-                        {month}
-                    </h3>
-                    <div className="space-y-3">
-                        {monthBookings.map(booking => (
-                            <BookingCard
-                                key={booking.id}
-                                booking={booking}
-                                onClick={onSelectBooking}
-                                getTypeLabel={getTypeLabel}
-                            />
-                        ))}
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-};
-
-
-interface BookingEvent {
-    id: string;
-    booking: Booking;
-    title: string;
-    start: Date;
-    end: Date;
-    allDay?: boolean;
-
-    resource?: any;
-}
-
-/** Today at local midnight (bookings are whole-day ranges). */
-const startOfToday = (): Date => {
-    const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-};
+import BookingListView from './calendar/BookingListView';
+import BookingMonthView from './calendar/BookingMonthView';
+import NewBookingDialog from './calendar/NewBookingDialog';
+import ConflictDialog from './calendar/ConflictDialog';
+import BookingDetailDialog from './calendar/BookingDetailDialog';
+import BookingSuccessDialog from './calendar/BookingSuccessDialog';
+import { useBookings } from './calendar/useBookings';
+import { useBookingForm } from './calendar/useBookingForm';
+import type { BookingEvent, CalendarView } from './calendar/calendarTypes';
 
 export default function CalendarPage() {
-    const bookingFormId = useId();
     const { user: currentUser } = useEffectiveUser();
     const currentHouse = useAppStore((state) => state.currentHouse);
     const houseId = currentHouse?.id || currentUser?.house_ids?.[0];
-    const [bookings, setBookings] = useState<Booking[]>([]);
-    const [events, setEvents] = useState<BookingEvent[]>([]);
-    const [showModal, setShowModal] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [successBooking, setSuccessBooking] = useState<{ user_name: string, start: Date, end: Date } | null>(null);
-    // Conflicting bookings surfaced to the user as a warning-with-override, not a hard block
-    const [conflictWarning, setConflictWarning] = useState<Booking[] | null>(null);
 
     // Language preference (default to Icelandic, but can be changed)
     const [language] = useState<SupportedLanguage>('is');
@@ -310,120 +61,28 @@ export default function CalendarPage() {
         setDate(newDate);
     };
 
-    // Touch handling for pull-to-refresh only
-    // Touch handling for pull-to-refresh removed for now to cleanup
+    const { bookings, events, getBookingTypeLabel } = useBookings(houseId, language);
 
-    // House Settings for Booking Rules
-    const [houseSettings, setHouseSettings] = useState<any>(null);
-
-    useEffect(() => {
-        if (!houseId) return;
-
-        const fetchSettings = async () => {
-            try {
-                const docRef = doc(db, 'houses', houseId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-
-                    const houseData = docSnap.data() as any;
-                    setHouseSettings(houseData);
-                }
-
-            } catch (e) {
-                logger.error("Error fetching house settings", e);
-            }
-        };
-        fetchSettings();
-    }, [houseId]);
-
-    // New booking form state
-    const [newBooking, setNewBooking] = useState({
-        start: startOfToday(),
-        end: startOfToday(),
-        type: 'personal' as BookingType,
-        notes: ''
-    });
-
-    // Create localizer with current language
-    const localizer = useMemo(() => {
-        const locale = dateLocales[language];
-        return dateFnsLocalizer({
-            format: (date: Date, formatStr: string) => format(date, formatStr, { locale }),
-            parse: (str: string, formatStr: string) => parse(str, formatStr, new Date(), { locale }),
-            startOfWeek: (date: Date) => startOfWeek(date, { locale }),
-            getDay,
-            locales: { [language]: locale },
-        });
-    }, [language]);
-
-    // Helper functions
-    const getBookingTypeLabel = useCallback((type: BookingType): string => {
-        return bookingTypeLabels[language][type] || type;
-    }, [language]);
-
-    const loadBookings = useCallback(async () => {
-        if (!houseId) return;
-
-        try {
-            const q = query(
-                collection(db, 'houses', houseId, 'bookings'),
-                orderBy('start', 'desc'),
-                limit(500)
-            );
-            const snapshot = await getDocs(q);
-
-            const bookingsData = snapshot.docs.map(doc => {
-                const data = doc.data();
-                const start = data.start.toDate();
-                let end = data.end.toDate();
-
-                // Sanitize dates: If end is before start, fix it for display
-                if (end < start) {
-                    logger.warn(`Booking ${doc.id} has invalid dates (end < start). Fixing for display.`);
-                    // Swap them or just set end to start + 1 hour as fallback, 
-                    // but usually swapping is what happened (wrong order picked)
-                    // or just user error. Let's force end to be at least start.
-                    end = new Date(start.getTime() + 60 * 60 * 1000);
-                }
-
-                return {
-                    id: doc.id,
-                    ...data,
-                    start,
-                    end,
-                    created_at: data.created_at?.toDate() || new Date()
-                } as Booking;
-            });
-
-            setBookings(bookingsData);
-
-            // Convert to calendar events - mark as all-day events
-            const calendarEvents: BookingEvent[] = bookingsData.map(booking => ({
-                id: booking.id,
-                title: `${booking.user_name} - ${getBookingTypeLabel(booking.type)}`,
-                start: booking.start,
-                end: booking.end,
-                allDay: true,
-                booking
-            }));
-
-            setEvents(calendarEvents);
-        } catch (err) {
-            logger.error('Error loading bookings:', err);
-        }
-    }, [houseId, getBookingTypeLabel]);
-
-    // Fast client-side conflict pre-check against already-loaded bookings (instant UX).
-    // This is NOT authoritative — createBooking() re-checks against a fresh Firestore
-    // read right before writing, since this component's `bookings` state can be stale.
-    const findLocalConflicts = useCallback((start: Date, end: Date): Booking[] => {
-        return bookings.filter(booking => rangesOverlap(start, end, booking.start, booking.end));
-    }, [bookings]);
-
-    // Load bookings from Firestore
-    useEffect(() => {
-        loadBookings();
-    }, [loadBookings]);
+    const {
+        newBooking,
+        setNewBooking,
+        showModal,
+        openModal,
+        closeModal,
+        error,
+        setError,
+        loading,
+        setLoading,
+        conflictWarning,
+        dismissConflict,
+        showSuccess,
+        successBooking,
+        closeSuccess,
+        handleCreateBooking,
+        handleConfirmConflictingBooking,
+        handleSelectSlot,
+        handleClaimWindow,
+    } = useBookingForm({ houseId, currentUser, currentHouse, bookings });
 
     // Get Icelandic holidays for current year
     const holidays = useMemo(() => {
@@ -431,160 +90,15 @@ export default function CalendarPage() {
         return getIcelandicHolidays(currentYear);
     }, []);
 
-    const handleCreateBooking = async (overrideConflicts: boolean = false) => {
-        if (!currentUser) {
-            setError('Engin notandi skráður inn');
-            return;
-        }
-
-        if (!houseId) {
-            setError('Ekkert hús valið. Vinsamlegast veldu hús fyrst.');
-            return;
-        }
-
-        // Validate dates. Same first and last day is a valid one-day booking
-        // (normalised to [d, d+1) by bookingService); only a reversed range is rejected.
-        if (newBooking.end < newBooking.start) {
-            setError('Lokadagur getur ekki verið á undan upphafsdegi.');
-            return;
-        }
-
-        // Fast client-side pre-check for instant UX. Not authoritative — skipped
-        // entirely when the user has already chosen to override (Bóka samt).
-        if (!overrideConflicts) {
-            const localConflicts = findLocalConflicts(newBooking.start, newBooking.end);
-            if (localConflicts.length > 0) {
-                setConflictWarning(localConflicts);
-                return;
-            }
-        }
-
-        setLoading(true);
-        setError('');
-
-        try {
-            // Check Fairness (Sanngirnisregla) - a hard block when it returns
-            // not-allowed, even on the conflict-override path. Self-guards
-            // internally: zero reads unless the house is in 'fairness' mode, has
-            // 2+ owners, and the dates hit a contested window that hasn't opened
-            // to everyone yet. The check itself is advisory: if it fails (network
-            // etc.) we log it and carry on with the booking.
-            const fairnessHouse = currentHouse ?? (houseSettings as House | null);
-            if (fairnessHouse) {
-                try {
-                    const fairness = await checkFairnessForBooking(
-                        houseId,
-                        currentUser.uid,
-                        newBooking.start,
-                        newBooking.end,
-                        fairnessHouse.owner_ids || [],
-                        fairnessHouse
-                    );
-                    if (!fairness.allowed) {
-                        setError(fairness.reason);
-                        return;
-                    }
-                } catch (fairnessError) {
-                    logger.warn('Fairness check failed, continuing with booking:', fairnessError);
-                }
-            }
-
-            await createBooking({
-                houseId,
-                userId: currentUser.uid,
-                userName: currentUser.name || currentUser.email || '',
-                start: newBooking.start,
-                end: newBooking.end,
-                type: newBooking.type,
-                notes: newBooking.notes,
-                allowConflicts: overrideConflicts
-            });
-
-            // Reload bookings
-            await loadBookings();
-
-            // Track in Google Analytics
-            analytics.bookingCreated(newBooking.type);
-
-            // Store booking info for success modal
-            setSuccessBooking({
-                user_name: currentUser.name || currentUser.email || 'Þú',
-                start: newBooking.start,
-                end: newBooking.end
-            });
-
-            // Close booking modal and show success
-            setConflictWarning(null);
-            setShowModal(false);
-            setShowSuccess(true);
-
-            // Confetti celebration! (skipped for users who prefer reduced motion)
-            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                });
-            }
-
-            setNewBooking({
-                start: startOfToday(),
-                end: startOfToday(),
-                type: 'personal',
-                notes: ''
-            });
-        } catch (err: any) {
-            if (err instanceof BookingConflictError) {
-                // Fresh conflicts appeared between page load and submit (or the
-                // client-side pre-check missed them) - surface the same warning dialog.
-                setConflictWarning(err.conflicts);
-            } else {
-                logger.error('Error creating booking:', err);
-                setError('Villa kom upp við að búa til bókun. Reyndu aftur.');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleConfirmConflictingBooking = () => {
-        setConflictWarning(null);
-        handleCreateBooking(true);
-    };
-
-    const handleSelectSlot = useCallback((slotInfo: any) => {
-        const { start, end } = slotInfo;
-        if (!start || !end) return;
-
-        // Whole-day booking: snap both to local midnight (end stays the
-        // exclusive checkout day react-big-calendar reports).
-        const s0 = new Date(start);
-        const e0 = new Date(end);
-        setNewBooking(prev => ({
-            ...prev,
-            start: new Date(s0.getFullYear(), s0.getMonth(), s0.getDate()),
-            end: new Date(e0.getFullYear(), e0.getMonth(), e0.getDate())
-        }));
-        setShowModal(true);
+    // Opening or closing the detail dialog always starts without the delete confirmation showing.
+    const openBooking = useCallback((booking: Booking | null) => {
+        setSelectedBooking(booking);
+        setShowDeleteConfirm(false);
     }, []);
 
     const handleSelectEvent = useCallback((event: BookingEvent) => {
-        setSelectedBooking(event.booking);
-    }, []);
-
-    // Pre-fills the new-booking form with a contested-holiday window's dates
-    // (same exclusive-end semantics as newBooking.end already uses) and opens
-    // the booking modal, mirroring handleSelectSlot above.
-    const handleClaimWindow = useCallback((window: ContestedHolidayWindow) => {
-        setNewBooking(prev => ({
-            ...prev,
-            start: window.start,
-            end: window.end
-        }));
-        setError('');
-        setConflictWarning(null);
-        setShowModal(true);
-    }, []);
+        openBooking(event.booking);
+    }, [openBooking]);
 
     const handleDeleteBooking = async () => {
         if (!selectedBooking || !houseId) return;
@@ -596,12 +110,11 @@ export default function CalendarPage() {
         try {
             await deleteBooking(houseId, selectedBooking.id);
 
-            // Reload bookings
-            await loadBookings();
+            // The bookings listener removes it from the calendar
             setSelectedBooking(null);
 
             // Track analytics
-            // analytics.bookingDeleted(); 
+            // analytics.bookingDeleted();
         } catch (err: any) {
             logger.error('Error deleting booking:', err);
 
@@ -621,48 +134,6 @@ export default function CalendarPage() {
             setLoading(false);
         }
     };
-
-    // Custom day cell style to highlight holidays AND booked days
-    const dayPropGetter = useCallback((date: Date) => {
-        // Check if this day has any bookings
-        const dayStart = new Date(date);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(date);
-        dayEnd.setHours(23, 59, 59, 999);
-
-        const hasBooking = bookings.some(booking => {
-            const bookingStart = new Date(booking.start);
-            bookingStart.setHours(0, 0, 0, 0);
-            const bookingEnd = new Date(booking.end);
-            bookingEnd.setHours(23, 59, 59, 999);
-            // Check if this date falls within the booking range
-            return dayStart >= bookingStart && dayStart <= bookingEnd;
-        });
-
-        const holiday = isHoliday(date);
-
-        // Priority: Holiday styles take precedence, then booked days
-        if (holiday) {
-            return {
-                style: {
-                    backgroundColor: holiday.importance === 'high' ? '#fef3c7' : '#fef9e7',
-                    border: '1px solid #f59e0b'
-                }
-            };
-        }
-
-        // If the day has a booking, give it a subtle background
-        if (hasBooking) {
-            return {
-                style: {
-                    backgroundColor: '#f0fdf4', // Very light green to indicate occupied
-                    borderLeft: '3px solid #22c55e'
-                }
-            };
-        }
-
-        return {};
-    }, [bookings]);
 
     return (
         <main className="min-h-screen bg-bone">
@@ -684,7 +155,7 @@ export default function CalendarPage() {
                         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                             <button
                                 type="button"
-                                onClick={() => setShowModal(true)}
+                                onClick={openModal}
                                 className="btn btn-primary flex items-center gap-2 whitespace-nowrap"
                             >
                                 <Plus className="w-5 h-5" aria-hidden="true" />
@@ -730,44 +201,15 @@ export default function CalendarPage() {
                     >
                         {/* Show Month Calendar OR List View based on selected view */}
                         {view === 'month' ? (
-                            <BigCalendar
-                                localizer={localizer}
+                            <BookingMonthView
+                                language={language}
                                 events={events}
-                                startAccessor="start"
-                                endAccessor="end"
-                                className="font-sans"
-                                style={{ height: '100%', minHeight: '600px' }}
-                                onSelectSlot={handleSelectSlot}
-                                onSelectEvent={handleSelectEvent}
-                                selectable={true}
-                                popup={true}
-                                components={{
-                                    toolbar: CustomToolbar
-                                }}
-                                views={['month']}
-                                view="month"
-                                onView={handleViewChange}
+                                bookings={bookings}
                                 date={date}
                                 onNavigate={handleNavigate}
-                                culture={language}
-                                messages={calendarMessages[language]}
-                                dayPropGetter={dayPropGetter}
-                                eventPropGetter={(event: BookingEvent) => ({
-                                    style: {
-                                        backgroundColor: event.booking.type === 'personal' ? '#e8b058' :
-                                            event.booking.type === 'rental' ? '#10b981' :
-                                                event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1',
-                                        borderRadius: '4px',
-                                        opacity: 1,
-                                        color: 'white',
-                                        border: '0px',
-                                        display: 'block',
-                                        padding: '2px 5px',
-                                        fontSize: '13px',
-                                        fontWeight: 500,
-                                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                                    }
-                                })}
+                                onView={handleViewChange}
+                                onSelectSlot={handleSelectSlot}
+                                onSelectEvent={handleSelectEvent}
                             />
                         ) : (
                             /* Custom List View - Shows one card per booking with full date range */
@@ -775,9 +217,9 @@ export default function CalendarPage() {
                                 <h2 className="text-xl font-serif font-bold text-charcoal mb-4">
                                     Allar bókanir
                                 </h2>
-                                <BookingsListView
+                                <BookingListView
                                     bookings={bookings}
-                                    onSelectBooking={(booking) => setSelectedBooking(booking)}
+                                    onSelectBooking={openBooking}
                                     getTypeLabel={getBookingTypeLabel}
                                 />
                             </div>
@@ -840,301 +282,41 @@ export default function CalendarPage() {
                 )}
             </div>
 
-            {/* Booking Modal */}
-            <Modal
+            <NewBookingDialog
                 open={showModal}
-                onClose={() => { setShowModal(false); setConflictWarning(null); }}
-                title="Ný bókun"
-                size="md"
-                dismissible={!loading}
-                footer={
-                    <div className="flex gap-3 w-full">
-                        <button
-                            type="button"
-                            onClick={() => { setShowModal(false); setConflictWarning(null); }}
-                            className="btn btn-ghost flex-1"
-                            disabled={loading}
-                        >
-                            Hætta við
-                        </button>
-                        <button
-                            type="submit"
-                            form={bookingFormId}
-                            className="btn btn-primary flex-1"
-                            disabled={loading}
-                        >
-                            {loading ? 'Bý til...' : 'Búa til bókun'}
-                        </button>
-                    </div>
-                }
-            >
-                <div>
-                            {error && (
-                                <div role="alert" className="bg-red-500/10 border border-red-500 text-red-700 rounded p-4 mb-6 flex items-start gap-3">
-                                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                                    <span className="text-sm">{error}</span>
-                                </div>
-                            )}
+                onClose={closeModal}
+                loading={loading}
+                error={error}
+                newBooking={newBooking}
+                setNewBooking={setNewBooking}
+                onSubmit={() => handleCreateBooking()}
+            />
 
-                            <form id={bookingFormId} className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleCreateBooking(); }}>
-                                <div>
-                                    <label htmlFor={`${bookingFormId}-start`} className="label">Upphafsdagur</label>
-                                    <input
-                                        id={`${bookingFormId}-start`}
-                                        type="date"
-                                        className="input"
-                                        value={toDateInputValue(newBooking.start)}
-                                        onChange={(e) => {
-                                            const newStart = fromDateInputValue(e.target.value);
-                                            if (!newStart) return;
+            <ConflictDialog
+                conflictWarning={conflictWarning}
+                loading={loading}
+                onCancel={dismissConflict}
+                onConfirm={handleConfirmConflictingBooking}
+            />
 
-                                            // If new start is after current end, update end to match start
-                                            let newEnd = newBooking.end;
-                                            if (newStart > newBooking.end) {
-                                                newEnd = newStart;
-                                            }
-                                            setNewBooking({ ...newBooking, start: newStart, end: newEnd });
-                                        }}
-                                        required
-                                    />
-                                </div>
+            <BookingDetailDialog
+                selectedBooking={selectedBooking}
+                onClose={() => openBooking(null)}
+                loading={loading}
+                error={error}
+                currentUserId={currentUser?.uid}
+                currentHouse={currentHouse}
+                showDeleteConfirm={showDeleteConfirm}
+                setShowDeleteConfirm={setShowDeleteConfirm}
+                onDelete={handleDeleteBooking}
+                getTypeLabel={getBookingTypeLabel}
+            />
 
-                                <div>
-                                    <label htmlFor={`${bookingFormId}-end`} className="label">Lokadagur</label>
-                                    <input
-                                        id={`${bookingFormId}-end`}
-                                        type="date"
-                                        className="input"
-                                        value={toDateInputValue(newBooking.end)}
-                                        onChange={(e) => {
-                                            const newEnd = fromDateInputValue(e.target.value);
-                                            // Cleared/invalid input: keep the previous value
-                                            if (!newEnd) return;
-                                            setNewBooking({ ...newBooking, end: newEnd });
-                                        }}
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label htmlFor={`${bookingFormId}-type`} className="label">Tegund bókunar</label>
-                                    <select
-                                        id={`${bookingFormId}-type`}
-                                        className="input"
-                                        value={newBooking.type}
-                                        onChange={(e) => setNewBooking({ ...newBooking, type: e.target.value as BookingType })}
-                                    >
-                                        <option value="personal">Persónuleg (fjölskyldan mín)</option>
-                                        <option value="guest">Gestur</option>
-                                        <option value="rental">Útleiga</option>
-                                        <option value="maintenance">Viðhald</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label htmlFor={`${bookingFormId}-notes`} className="label">Athugasemd (valfrjálst)</label>
-                                    <textarea
-                                        id={`${bookingFormId}-notes`}
-                                        className="input min-h-[80px]"
-                                        placeholder="t.d. Fjölskyldusamkoma, páskahátíð..."
-                                        value={newBooking.notes}
-                                        onChange={(e) => setNewBooking({ ...newBooking, notes: e.target.value })}
-                                    />
-                                </div>
-
-                            </form>
-                </div>
-            </Modal>
-
-            {/* Conflict Warning Modal - warn instead of hard-block, offer override */}
-            <Modal
-                open={!!conflictWarning && conflictWarning.length > 0}
-                onClose={() => setConflictWarning(null)}
-                title="Skörun bókana"
-                size="md"
-                dismissible={!loading}
-                footer={
-                    <div className="flex gap-3 w-full">
-                        <button
-                            type="button"
-                            onClick={() => setConflictWarning(null)}
-                            className="btn btn-ghost flex-1"
-                            disabled={loading}
-                        >
-                            Hætta við
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleConfirmConflictingBooking}
-                            className="btn btn-primary flex-1"
-                            disabled={loading}
-                        >
-                            {loading ? 'Bý til...' : 'Bóka samt'}
-                        </button>
-                    </div>
-                }
-            >
-                <div role="alert" className="bg-amber/10 border border-amber text-amber-800 rounded p-4 mb-4 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                    <span className="text-sm">Þessi bókun skarast á við:</span>
-                </div>
-
-                <ul className="space-y-2 mb-6 list-none p-0">
-                    {(conflictWarning ?? []).map((conflict) => (
-                        <li key={conflict.id} className="bg-stone-50 rounded p-3 border border-stone-200">
-                            <p className="font-medium text-charcoal">{conflict.user_name}</p>
-                            <p className="text-sm text-stone-500">
-                                {format(conflict.start, 'd. MMMM yyyy', { locale: is })} - {format(conflict.end, 'd. MMMM yyyy', { locale: is })}
-                            </p>
-                        </li>
-                    ))}
-                </ul>
-
-                <p className="text-sm text-stone-500">
-                    Þú getur samt bókað ef þið eruð sammála um að deila húsinu þessa daga.
-                </p>
-            </Modal>
-
-            {/* View/Delete Booking Modal */}
-            <Modal
-                open={!!selectedBooking}
-                onClose={() => setSelectedBooking(null)}
-                title="Bókun"
-                size="md"
-                dismissible={!loading}
-            >
-                {selectedBooking && (
-                    <div>
-                        {error && (
-                            <div role="alert" className="bg-red-500/10 border border-red-500 text-red-700 rounded p-4 mb-4 flex items-start gap-3">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                                <span className="text-sm">{error}</span>
-                            </div>
-                        )}
-
-                        <div className="space-y-4 mb-6">
-                            <div>
-                                <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Bókað af</p>
-                                <p className="text-lg font-medium">{selectedBooking.user_name}</p>
-                                {/* Added Created At Date */}
-                                {selectedBooking.created_at && (
-                                    <p className="text-xs text-stone-500 mt-1">
-                                        Bókað þann: {selectedBooking.created_at.toLocaleDateString('is-IS')}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Frá</p>
-                                    <p>{selectedBooking.start.toLocaleDateString('is-IS')}</p>
-                                    <p className="text-sm text-stone-500">{selectedBooking.start.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Til</p>
-                                    <p>{selectedBooking.end.toLocaleDateString('is-IS')}</p>
-                                    <p className="text-sm text-stone-500">{selectedBooking.end.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}</p>
-                                </div>
-                            </div>
-
-                            <div>
-                                <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Tegund</p>
-                                <span className={`inline-block mt-1 px-2 py-1 rounded text-sm font-medium ${selectedBooking.type === 'personal' ? 'bg-amber/10 text-amber-dark' :
-                                    selectedBooking.type === 'rental' ? 'bg-green-100 text-green-700' :
-                                        selectedBooking.type === 'maintenance' ? 'bg-red-100 text-red-700' :
-                                            'bg-indigo-100 text-indigo-700'
-                                    }`}>
-                                    {getBookingTypeLabel(selectedBooking.type)}
-                                </span>
-                            </div>
-
-                            {selectedBooking.notes && (
-                                <div>
-                                    <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Athugasemd</p>
-                                    <p className="text-stone-700 bg-stone-50 p-3 rounded mt-1">{selectedBooking.notes}</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Allow deletion if user owns the booking OR is house member (manager or co-owner) */}
-                        {(currentUser?.uid === selectedBooking.user_id || currentHouse?.manager_id === currentUser?.uid || currentHouse?.owner_ids?.includes(currentUser?.uid || '')) && (
-                            <div className="pt-4 border-t border-stone-100">
-                                {!showDeleteConfirm ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowDeleteConfirm(true)}
-                                        className="btn bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 w-full flex items-center justify-center gap-2"
-                                        disabled={loading}
-                                    >
-                                        <Trash2 className="w-4 h-4" aria-hidden="true" />
-                                        Eyða Bókun
-                                    </button>
-                                ) : (
-                                    <div>
-                                        <p className="text-sm text-red-600 font-medium mb-3 text-center">Ertu viss um að þú viljir eyða þessari bókun?</p>
-                                        <div className="flex gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowDeleteConfirm(false)}
-                                                className="btn btn-ghost flex-1"
-                                                disabled={loading}
-                                            >
-                                                Hætta við
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDeleteBooking()}
-                                                className="btn bg-red-600 text-white hover:bg-red-700 flex-1 flex items-center justify-center gap-2"
-                                                disabled={loading}
-                                            >
-                                                <Trash2 className="w-4 h-4" aria-hidden="true" />
-                                                {loading ? 'Eyði...' : 'Já, eyða'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </Modal>
-
-            {/* Success Modal */}
-            <Modal
-                open={showSuccess && !!successBooking}
-                onClose={() => setShowSuccess(false)}
-                title="Bókun staðfest!"
-                size="md"
-                footer={
-                    <button
-                        type="button"
-                        onClick={() => setShowSuccess(false)}
-                        className="w-full px-6 py-3 bg-gradient-to-r from-charcoal to-stone-800 text-white rounded-xl font-bold hover:from-stone-800 hover:to-charcoal transition-all shadow-lg active:scale-[0.98]"
-                    >
-                        Loka
-                    </button>
-                }
-            >
-                {successBooking && (
-                    <div role="status" className="text-center">
-                        {/* Success Icon */}
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 mb-4">
-                            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 relative" aria-hidden="true">
-                                <Check className="w-10 h-10 text-green-600" strokeWidth={3} />
-                                <div className="absolute inset-0 rounded-full bg-green-400 motion-safe:animate-ping opacity-20"></div>
-                            </div>
-                            <p className="text-stone-600">
-                                <span className="font-bold">{successBooking.user_name}</span>
-                                <br />
-                                {successBooking.start.toLocaleDateString('is-IS', { day: 'numeric', month: 'long' })} - {successBooking.end.toLocaleDateString('is-IS', { day: 'numeric', month: 'long' })}
-                            </p>
-                        </div>
-                        <p className="text-sm text-stone-500">
-                            Staðfesting hefur verið send í tölvupósti til allra meðeigenda
-                        </p>
-                    </div>
-                )}
-            </Modal>
+            <BookingSuccessDialog
+                showSuccess={showSuccess}
+                successBooking={successBooking}
+                onClose={closeSuccess}
+            />
             <MobileNav />
         </main>
     );

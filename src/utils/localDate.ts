@@ -7,6 +7,8 @@
  * UTC, so date inputs must go through these helpers instead.
  */
 
+import { differenceInCalendarDays } from 'date-fns';
+
 const pad = (n: number, width = 2): string => String(n).padStart(width, '0');
 
 /** Formats a Date as 'yyyy-MM-dd' using its LOCAL year/month/day. */
@@ -34,4 +36,13 @@ export function fromDateInputValue(s: string): Date | null {
         return null;
     }
     return date;
+}
+
+/**
+ * Number of nights of a whole-day booking [start, end): calendar days between the two local
+ * midnights. Never use millisecond maths for this: a stay across a DST change is 23 or 25 hours
+ * longer/shorter than N * 24 h.
+ */
+export function bookingNights(start: Date, end: Date): number {
+    return differenceInCalendarDays(end, start);
 }

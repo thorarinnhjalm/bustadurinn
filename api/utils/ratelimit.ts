@@ -304,3 +304,20 @@ export function getUnverifiedEmailRateLimit(): Ratelimit {
     }
     return _unverifiedEmailRateLimit;
 }
+
+/**
+ * Rate limiter for CSP violation reports (api/csp-report.ts), unauthenticated.
+ * Limit: 60 requests per hour per IP
+ */
+let _cspReportRateLimit: Ratelimit | null = null;
+export function getCspReportRateLimit(): Ratelimit {
+    if (!_cspReportRateLimit) {
+        _cspReportRateLimit = new Ratelimit({
+            redis: getRedis(),
+            limiter: Ratelimit.slidingWindow(60, '1 h'),
+            analytics: true,
+            prefix: 'ratelimit:csp-report',
+        });
+    }
+    return _cspReportRateLimit;
+}

@@ -6,6 +6,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { collectHashes } from './csp-hashes.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
@@ -59,10 +60,28 @@ check('SW navigation fallback is bound to app-shell.html', /\(\s*"app-shell\.htm
 check('SW still wires FCM background messages', /onBackgroundMessage/.test(sw) || /showNotification/.test(sw));
 
 // vercel.json.
-const vercel = JSON.parse(read(join(ROOT, 'vercel.json')));
+// VERCEL_JSON can point at an alternative file (used to test the CSP drift check).
+const vercel = JSON.parse(read(process.env.VERCEL_JSON || join(ROOT, 'vercel.json')));
 const fallback = vercel.rewrites.find((r) => r.source.includes('(?!api'));
 check('vercel.json fallback destination equals /app-shell.html', fallback?.destination === '/app-shell.html', String(fallback?.destination));
 check('fallback target exists in dist', existsSync(join(DIST, fallback?.destination?.slice(1) ?? '__none__')));
+
+// CSP report-only policy: every executable inline script must be hashed in it, and its
+// script-src must stay free of 'unsafe-inline' / 'unsafe-eval'. See docs/engineering/CSP.md.
+const globalHeaders = vercel.headers?.find((h) => h.source === '/(.*)')?.headers ?? [];
+const cspRo = globalHeaders.find((h) => h.key === 'Content-Security-Policy-Report-Only')?.value ?? '';
+check('vercel.json sends Content-Security-Policy-Report-Only', cspRo !== '');
+const roScriptSrc = (cspRo.split(';').map((d) => d.trim()).find((d) => d.startsWith('script-src ')) ?? '');
+check("report-only script-src has no 'unsafe-inline' / 'unsafe-eval'", roScriptSrc !== '' && !/'unsafe-(inline|eval)'/.test(roScriptSrc), roScriptSrc.slice(0, 80));
+check('report-only policy has report-uri /api/csp-report', /report-uri \/api\/csp-report/.test(cspRo));
+let unhashed = 0;
+for (const [hash, { text, files }] of collectHashes(DIST)) {
+    if (cspRo.includes(hash)) continue;
+    unhashed++;
+    check(`inline script in ${files[0]}${files.length > 1 ? ` (+${files.length - 1} more)` : ''} is hashed in the report-only CSP`, false,
+        `"${text.trim().slice(0, 60).replace(/\s+/g, ' ')}" -> add ${hash} to script-src of Content-Security-Policy-Report-Only in vercel.json (node scripts/csp-hashes.js --header prints them all)`);
+}
+if (!unhashed) check('all executable inline scripts are hashed in the report-only CSP', true);
 
 // No duplicated third-party tags in prerendered output.
 const count = (s, re) => (s.match(re) || []).length;
