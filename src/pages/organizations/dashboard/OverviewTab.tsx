@@ -89,7 +89,7 @@ export default function OverviewTab({
                             <span className="font-semibold">{activeMembers.length}</span>
                         </div>
                         <div className="flex items-center justify-between py-2 border-b">
-                            <span className="text-sm">Með guest aðgang</span>
+                            <span className="text-sm">Með gestaaðgang</span>
                             <span className="font-semibold">
                                 {members.filter((m) => m.access_level === 'guest').length}
                             </span>
@@ -191,9 +191,9 @@ export default function OverviewTab({
                         {pendingAccessRequests.slice(0, 5).map((request) => (
                             <div
                                 key={request.id}
-                                className="flex items-center justify-between p-3 bg-grey-lightest rounded-lg"
+                                className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 bg-grey-lightest rounded-lg"
                             >
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                     <p className="font-medium">{request.name}</p>
                                     <p className="text-sm text-grey-mid">{request.email}</p>
                                 </div>

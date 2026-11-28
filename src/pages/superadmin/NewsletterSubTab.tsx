@@ -4,6 +4,7 @@ import { deleteDoc, doc } from 'firebase/firestore';
 import DataTable from '@/components/DataTable';
 
 import type { SetStats, Stats } from './types';
+import { invalidateStatsCache } from './useSuperAdminData';
 
 interface NewsletterSubTabProps {
     stats: Stats;
@@ -67,6 +68,7 @@ export default function NewsletterSubTab({ stats, setStats }: NewsletterSubTabPr
                                 onClick={async () => {
                                     if (!confirm(`Eyða ${row.email} af póstlista?`)) return;
                                     await deleteDoc(doc(db, 'newsletter_subscribers', row.id));
+                                    invalidateStatsCache();
                                     setStats(prev => ({
                                         ...prev,
                                         allSubscribers: prev.allSubscribers.filter(s => s.id !== row.id),

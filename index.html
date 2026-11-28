@@ -29,17 +29,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-  <!-- Performance: Preload critical fonts with font-display swap -->
-  <link rel="preload" as="style"
-    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
+  <!-- Fonts: a plain stylesheet link (no inline onload handler, so a strict CSP can forbid inline
+       event handlers). display=swap in the URL makes text render in fallback fonts until the
+       web fonts arrive; the preconnect hints above shorten that wait. -->
   <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
-    media="print" onload="this.media='all'" />
-  <noscript>
-    <link rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
-  </noscript>
-
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
 
   <!-- Analytics privacy: /guest/<token>, /join... and any ?token= / ?returnUrl= URL carry
        bearer secrets (guest links, invitations). Never report those URLs to third parties. -->

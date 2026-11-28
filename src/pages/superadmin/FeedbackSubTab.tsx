@@ -6,6 +6,7 @@ import { feedbackService } from '@/services/feedbackService';
 
 import type { Feedback } from '@/types/models';
 import type { SetActionLoading, SetStats, Stats } from './types';
+import { invalidateStatsCache } from './useSuperAdminData';
 
 interface FeedbackSubTabProps {
     stats: Stats;
@@ -19,6 +20,7 @@ export default function FeedbackSubTab({ stats, setStats, actionLoading, setActi
         setActionLoading(`feature-${feedback.id}`);
         try {
             await feedbackService.toggleFeatured(feedback.id, !feedback.featured);
+            invalidateStatsCache();
             setStats(prev => ({
                 ...prev,
                 allFeedback: prev.allFeedback.map(f => f.id === feedback.id ? { ...f, featured: !f.featured } : f)
@@ -49,6 +51,7 @@ export default function FeedbackSubTab({ stats, setStats, actionLoading, setActi
         setActionLoading(`delete-feedback-${id}`);
         try {
             await feedbackService.deleteFeedback(id);
+            invalidateStatsCache();
             setStats(prev => ({
                 ...prev,
                 allFeedback: prev.allFeedback.filter(f => f.id !== id)

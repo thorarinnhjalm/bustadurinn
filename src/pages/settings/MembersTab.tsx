@@ -228,7 +228,7 @@ export default function MembersTab({
                                         </div>
                                         <div>
                                             <p className="font-semibold text-sm text-stone-600">{invite.email}</p>
-                                            <p className="text-xs text-stone-500">Boðið {new Date(invite.created_at?.seconds * 1000).toLocaleDateString('is-IS')}</p>
+                                            <p className="text-xs text-stone-500">Boðið {invite.created_at?.seconds ? new Date(invite.created_at.seconds * 1000).toLocaleDateString('is-IS') : '—'}</p>
                                         </div>
                                     </div>
                                     <button

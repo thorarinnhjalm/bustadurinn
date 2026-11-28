@@ -3,6 +3,7 @@ import { Calendar, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
 import type { Booking } from '@/types/models';
+import { bookingNights } from '@/utils/localDate';
 
 interface NextBookingCardProps {
     nextBooking: Booking | null;
@@ -77,7 +78,7 @@ export default function NextBookingCard({ nextBooking, onOpenDetails }: NextBook
                                 <div className="text-center flex-1">
                                     <p className="text-[10px] uppercase text-stone-500 font-bold tracking-widest mb-0.5">Nætur</p>
                                     <p className="font-bold text-lg text-[#1a1a1a]">
-                                        {Math.ceil((nextBooking.end.getTime() - nextBooking.start.getTime()) / (1000 * 60 * 60 * 24))}
+                                        {bookingNights(nextBooking.start, nextBooking.end)}
                                     </p>
                                 </div>
                             </div>

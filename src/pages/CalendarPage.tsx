@@ -61,7 +61,7 @@ export default function CalendarPage() {
         setDate(newDate);
     };
 
-    const { bookings, events, loadBookings, getBookingTypeLabel } = useBookings(houseId, language);
+    const { bookings, events, getBookingTypeLabel } = useBookings(houseId, language);
 
     const {
         newBooking,
@@ -82,7 +82,7 @@ export default function CalendarPage() {
         handleConfirmConflictingBooking,
         handleSelectSlot,
         handleClaimWindow,
-    } = useBookingForm({ houseId, currentUser, currentHouse, bookings, loadBookings });
+    } = useBookingForm({ houseId, currentUser, currentHouse, bookings });
 
     // Get Icelandic holidays for current year
     const holidays = useMemo(() => {
@@ -90,9 +90,15 @@ export default function CalendarPage() {
         return getIcelandicHolidays(currentYear);
     }, []);
 
-    const handleSelectEvent = useCallback((event: BookingEvent) => {
-        setSelectedBooking(event.booking);
+    // Opening or closing the detail dialog always starts without the delete confirmation showing.
+    const openBooking = useCallback((booking: Booking | null) => {
+        setSelectedBooking(booking);
+        setShowDeleteConfirm(false);
     }, []);
+
+    const handleSelectEvent = useCallback((event: BookingEvent) => {
+        openBooking(event.booking);
+    }, [openBooking]);
 
     const handleDeleteBooking = async () => {
         if (!selectedBooking || !houseId) return;
@@ -104,8 +110,7 @@ export default function CalendarPage() {
         try {
             await deleteBooking(houseId, selectedBooking.id);
 
-            // Reload bookings
-            await loadBookings();
+            // The bookings listener removes it from the calendar
             setSelectedBooking(null);
 
             // Track analytics
@@ -214,7 +219,7 @@ export default function CalendarPage() {
                                 </h2>
                                 <BookingListView
                                     bookings={bookings}
-                                    onSelectBooking={(booking) => setSelectedBooking(booking)}
+                                    onSelectBooking={openBooking}
                                     getTypeLabel={getBookingTypeLabel}
                                 />
                             </div>
@@ -296,7 +301,7 @@ export default function CalendarPage() {
 
             <BookingDetailDialog
                 selectedBooking={selectedBooking}
-                onClose={() => setSelectedBooking(null)}
+                onClose={() => openBooking(null)}
                 loading={loading}
                 error={error}
                 currentUserId={currentUser?.uid}

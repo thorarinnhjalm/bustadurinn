@@ -61,12 +61,10 @@ export default function BookingDetailDialog({
                             <div>
                                 <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Frá</p>
                                 <p>{selectedBooking.start.toLocaleDateString('is-IS')}</p>
-                                <p className="text-sm text-stone-500">{selectedBooking.start.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
                             <div>
                                 <p className="text-xs text-stone-500 uppercase tracking-wider font-bold">Til</p>
                                 <p>{selectedBooking.end.toLocaleDateString('is-IS')}</p>
-                                <p className="text-sm text-stone-500">{selectedBooking.end.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
                         </div>
 

@@ -172,6 +172,7 @@ export default function GuestsTab({
                                         onClick={() => {
                                             navigator.clipboard.writeText(`${window.location.origin}/guest/${house.guest_token}`);
                                             setSuccess('Hlekkur afritaður!');
+                                            setTimeout(() => setSuccess(''), 2000);
                                         }}
                                         className="p-2 hover:bg-green-100 rounded-lg text-green-700 transition-colors"
                                         aria-label="Afrita gestahlekk"
@@ -223,10 +224,7 @@ export default function GuestsTab({
                                     {isManager && (
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            const input = document.querySelector('input[type="file"][data-upload-type="gallery"]') as HTMLInputElement;
-                                            input?.click();
-                                        }}
+                                        onClick={() => handleGenerateGuestToken(true)}
                                         className="btn btn-ghost text-stone-500 hover:text-charcoal text-sm"
                                     >
                                         <RefreshCw size={14} className="mr-2" aria-hidden="true" />

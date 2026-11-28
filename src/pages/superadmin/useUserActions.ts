@@ -8,6 +8,7 @@ import { getUserMessage } from '@/utils/userMessages';
 
 import type { House, User } from '@/types/models';
 import type { AuditState, SetActionLoading, SetStats, UserActions } from './types';
+import { invalidateStatsCache } from './useSuperAdminData';
 
 /**
  * Handlers on a single user that are reachable from more than one tab
@@ -121,6 +122,7 @@ export function useUserActions(
                 throw new Error(errorMessage);
             }
 
+            invalidateStatsCache();
             setStats(prev => ({
                 ...prev,
                 totalUsers: prev.totalUsers - 1,

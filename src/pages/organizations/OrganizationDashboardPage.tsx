@@ -106,7 +106,7 @@ export default function OrganizationDashboardPage() {
                     <div
                         role="tablist"
                         aria-label="Hlutar stjórnborðs"
-                        className="flex gap-8"
+                        className="flex gap-6 sm:gap-8 overflow-x-auto pt-2 pr-3"
                         onKeyDown={(e) => {
                             // Arrow-key navigation between tabs (roving tabindex)
                             const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
@@ -143,7 +143,7 @@ export default function OrganizationDashboardPage() {
                                 aria-controls={fieldId('tabpanel')}
                                 tabIndex={activeTab === id ? 0 : -1}
                                 onClick={() => setActiveTab(id)}
-                                className={`flex items-center gap-2 py-4 border-b-2 transition-colors relative ${
+                                className={`flex items-center gap-2 py-4 border-b-2 transition-colors relative shrink-0 whitespace-nowrap ${
                                     activeTab === id
                                         ? 'border-charcoal text-charcoal'
                                         : 'border-transparent text-grey-mid hover:text-charcoal'

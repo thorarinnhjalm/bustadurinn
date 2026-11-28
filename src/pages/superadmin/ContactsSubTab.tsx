@@ -10,6 +10,7 @@ import { logger } from '@/utils/logger';
 
 import type { ContactSubmission } from '@/types/models';
 import type { SetActionLoading, SetStats, Stats } from './types';
+import { invalidateStatsCache } from './useSuperAdminData';
 
 interface ContactsSubTabProps {
     stats: Stats;
@@ -25,6 +26,12 @@ export default function ContactsSubTab({ stats, setStats, actionLoading, setActi
     const replyTextId = `${useId()}-reply-text`;
     const currentUser = useAppStore((state) => state.currentUser);
     const [replyingTo, setReplyingTo] = useState<ContactSubmission | null>(null);
+
+    // The draft belongs to one contact: drop it whenever the dialog closes.
+    const closeReply = () => {
+        setReplyingTo(null);
+        setReplyText('');
+    };
 
     const handleSendReply = async () => {
         if (!replyingTo || !replyText.trim()) return;
@@ -97,8 +104,8 @@ export default function ContactsSubTab({ stats, setStats, actionLoading, setActi
                 )
             }));
 
-            setReplyingTo(null);
-            setReplyText('');
+            invalidateStatsCache();
+            closeReply();
             alert('✅ Svar sent!');
 
         } catch (error: any) {
@@ -175,12 +182,12 @@ export default function ContactsSubTab({ stats, setStats, actionLoading, setActi
                 replyingTo && (
                     <Modal
                         open
-                        onClose={() => setReplyingTo(null)}
+                        onClose={closeReply}
                         title="Svara erindi"
                         size="xl"
                         footer={
                             <>
-                                <button type="button" onClick={() => setReplyingTo(null)} className="btn btn-ghost">Loka</button>
+                                <button type="button" onClick={closeReply} className="btn btn-ghost">Loka</button>
                                 <button
                                     type="button"
                                     onClick={handleSendReply}

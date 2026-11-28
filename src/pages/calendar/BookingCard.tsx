@@ -1,5 +1,6 @@
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import type { Booking, BookingType } from '@/types/models';
+import { bookingNights } from '@/utils/localDate';
 
 // Custom Booking Card for the list view - shows ONE card per booking with full date range
 const BookingCard = ({ booking, onClick, getTypeLabel }: {
@@ -30,7 +31,7 @@ const BookingCard = ({ booking, onClick, getTypeLabel }: {
     };
 
     // Calculate number of nights
-    const nights = Math.max(1, Math.ceil((booking.end.getTime() - booking.start.getTime()) / (1000 * 60 * 60 * 24)));
+    const nights = Math.max(1, bookingNights(booking.start, booking.end));
 
     const typeColors = {
         personal: { bg: 'bg-amber/10', text: 'text-amber-700', border: 'border-l-amber' },

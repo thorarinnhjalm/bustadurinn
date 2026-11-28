@@ -429,6 +429,7 @@ export default function ProfileTab({
                             tekur næsti meðeigandi við.
                         </p>
                         <button
+                            type="button"
                             onClick={() => onOpenMembershipAction({ type: 'delete_account' })}
                             className="btn btn-secondary text-red-600 border-red-200 hover:bg-red-50"
                         >

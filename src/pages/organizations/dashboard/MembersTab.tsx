@@ -49,8 +49,8 @@ export default function MembersTab({ members }: { members: OrganizationMember[] 
                                                     : member.status === 'approved'
                                                     ? 'Samþykkt'
                                                     : member.status === 'suspended'
-                                                    ? 'Frysta'
-                                                    : 'Pending'}
+                                                    ? 'Frystur'
+                                                    : 'Í bið'}
                                             </span>
                                         </td>
                                         <td className="py-3 px-4">

@@ -37,7 +37,7 @@ From reading the code (`index.html`, `src/`), before any real data:
 
 | Source | Likely report | Verdict |
 |---|---|---|
-| `onload="this.media='all'"` on the Google Fonts `<link>` in `index.html` | `script-src-attr`, blocked `inline` (seen in the local run on every page) | expected, needs fixing: it also breaks font loading under an enforced policy. Replace with a script-free pattern, or allow with `'unsafe-hashes'` plus the hash of the handler |
+| `onload="this.media='all'"` on the Google Fonts `<link>` in `index.html` | `script-src-attr`, blocked `inline` (was seen in the local run on every page) | fixed: the inline handler, the `media="print"` trick, the `rel="preload"` hint and the `<noscript>` duplicate are gone. The fonts are a plain `<link rel="stylesheet">` (the URL has `display=swap`, so text shows in fallback fonts first) with the `preconnect` hints kept. Nothing needs allowing in the policy, and an enforced policy no longer leaves the stylesheet stuck on `print` |
 | Inline scripts of `index.html` (GA, Pixel, helpers, FB IAB fix, umsognin loader) | none while hashes match | expected, needs allowlisting (done by hash; `verify-dist` guards drift) |
 | `gtag.js` from googletagmanager.com, injected on `load` | none (host allowed); may fetch more scripts from the same hosts | expected, needs allowlisting (host) |
 | Meta Pixel `fbevents.js`, may inject further code and `eval`-like helpers | `script-src` `eval` or other `connect.facebook.net` paths | unknown: check reports; Pixel is the main candidate for `unsafe-eval` |
@@ -51,7 +51,7 @@ From reading the code (`index.html`, `src/`), before any real data:
 | Browser extensions, injected translators | `chrome-extension:` etc. are dropped server-side; others (`inline`/`eval` from extensions) remain | expected, ignore: low-count, single browser |
 | Any `eval`/`new Function` in the bundle or dependencies | `script-src` `eval`, with `sample` | unknown: check reports (none found in `src/`) |
 
-Local Playwright run of the built site (all third parties blocked) saw only the `script-src-attr` font-onload violation on `/`, `/login` and `/eiginleikar`.
+Local Playwright run of the built site (all third parties blocked) saw only the `script-src-attr` font-onload violation on `/`, `/login` and `/eiginleikar` (since fixed, see the first row of the table above).
 
 ## Tightening procedure
 

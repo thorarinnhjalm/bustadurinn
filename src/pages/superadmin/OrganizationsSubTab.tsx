@@ -5,6 +5,7 @@ import DataTable from '@/components/DataTable';
 import { logger } from '@/utils/logger';
 
 import type { SetStats, Stats } from './types';
+import { invalidateStatsCache } from './useSuperAdminData';
 
 interface OrganizationsSubTabProps {
     stats: Stats;
@@ -27,21 +28,21 @@ export default function OrganizationsSubTab({ stats, setStats }: OrganizationsSu
                         )
                     },
                     {
-                        key: 'stats', label: 'Hús', render: (row) => (
+                        key: 'stats_houses', label: 'Hús', render: (row) => (
                             <span className="text-sm font-medium">
                                 {row.stats?.total_properties || 0}
                             </span>
                         )
                     },
                     {
-                        key: 'stats', label: 'Meðlimir', render: (row) => (
+                        key: 'stats_members', label: 'Meðlimir', render: (row) => (
                             <span className="text-sm font-medium">
                                 {row.stats?.total_members || 0}
                             </span>
                         )
                     },
                     {
-                        key: 'stats', label: 'Bókanir', render: (row) => (
+                        key: 'stats_bookings', label: 'Bókanir', render: (row) => (
                             <span className="text-sm font-medium">
                                 {row.stats?.total_bookings || 0}
                             </span>
@@ -77,6 +78,7 @@ export default function OrganizationsSubTab({ stats, setStats }: OrganizationsSu
                                 if (window.confirm(`Ertu viss um að þú viljir eyða ${row.name}?`)) {
                                     try {
                                         await deleteDoc(doc(db, 'organizations', row.id));
+                                        invalidateStatsCache();
                                         setStats(prev => ({
                                             ...prev,
                                             allOrganizations: prev.allOrganizations.filter(org => org.id !== row.id),

@@ -21,8 +21,8 @@ export default function BookingRequestsTab({ bookingRequests, onApproveBooking, 
                 <div className="space-y-4">
                     {bookingRequests.map((request) => (
                         <div key={request.id} className="card">
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3 mb-2">
                                         <h3 className="text-lg font-semibold">{request.house_name}</h3>
                                         <span
@@ -78,7 +78,7 @@ export default function BookingRequestsTab({ bookingRequests, onApproveBooking, 
                                     )}
                                 </div>
                                 {request.status === 'pending' && (
-                                    <div className="flex gap-2 ml-4">
+                                    <div className="flex flex-wrap gap-2 sm:ml-4">
                                         <button
                                             onClick={() => onApproveBooking(request.id)}
                                             className="btn bg-green-600 hover:bg-green-700 text-white"

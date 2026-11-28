@@ -7,6 +7,7 @@ import { getUserMessage } from '@/utils/userMessages';
 
 import type { ServiceProvider } from '@/types/models';
 import type { SetActionLoading, SetStats, Stats } from './types';
+import { invalidateStatsCache } from './useSuperAdminData';
 
 interface ProvidersSubTabProps {
     stats: Stats;
@@ -44,6 +45,7 @@ export default function ProvidersSubTab({ stats, setStats, actionLoading, setAct
                 });
                 await batch.commit();
             }
+            invalidateStatsCache();
             alert(`Lokið! ${legacy.length} verktakar fluttir.`);
         } catch (error: any) {
             logger.error('Error migrating provider contacts:', error);
@@ -64,6 +66,7 @@ export default function ProvidersSubTab({ stats, setStats, actionLoading, setAct
                 status: newStatus
             });
 
+            invalidateStatsCache();
             setStats(prev => ({
                 ...prev,
                 allProviders: prev.allProviders.map(p =>
@@ -87,6 +90,7 @@ export default function ProvidersSubTab({ stats, setStats, actionLoading, setAct
             delBatch.delete(doc(db, 'service_providers', providerId));
             delBatch.delete(doc(db, 'service_provider_contacts', providerId));
             await delBatch.commit();
+            invalidateStatsCache();
             setStats(prev => ({
                 ...prev,
                 allProviders: prev.allProviders.filter(p => p.id !== providerId)

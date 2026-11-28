@@ -16,7 +16,6 @@ interface UseBookingFormArgs {
     currentUser: User | null;
     currentHouse: House | null;
     bookings: Booking[];
-    loadBookings: () => Promise<void>;
 }
 
 /**
@@ -24,7 +23,7 @@ interface UseBookingFormArgs {
  * success dialog. `error`/`loading` are shared with the delete flow, so the
  * setters are exposed.
  */
-export function useBookingForm({ houseId, currentUser, currentHouse, bookings, loadBookings }: UseBookingFormArgs) {
+export function useBookingForm({ houseId, currentUser, currentHouse, bookings }: UseBookingFormArgs) {
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -140,8 +139,7 @@ export function useBookingForm({ houseId, currentUser, currentHouse, bookings, l
                 allowConflicts: overrideConflicts
             });
 
-            // Reload bookings
-            await loadBookings();
+            // (The bookings listener delivers the new booking; no reload needed.)
 
             // Track in Google Analytics
             analytics.bookingCreated(newBooking.type);

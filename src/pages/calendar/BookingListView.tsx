@@ -53,7 +53,7 @@ const BookingListView = ({
             <div className="text-center py-12 bg-stone-50 rounded-lg border border-stone-200">
                 <CalendarIcon className="w-12 h-12 text-stone-300 mx-auto mb-3" aria-hidden="true" />
                 <p className="text-stone-500 font-medium">Engar framtíðarbókanir</p>
-                <p className="text-sm text-stone-500 mt-1">Gamlari bókanir eru ekki sýndar í þessum lista.</p>
+                <p className="text-sm text-stone-500 mt-1">Eldri bókanir eru ekki sýndar í þessum lista.</p>
             </div>
         );
     }

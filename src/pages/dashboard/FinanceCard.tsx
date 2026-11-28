@@ -92,7 +92,7 @@ export default function FinanceCard({ currentHouse, currentUser, finances, budge
                     ) : (
                         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
                             <div className="flex items-center gap-3 text-sm">
-                                <div aria-hidden="true" className={`w-2 h-2 rounded-full ${finances.lastAction.includes('Greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_rgba(239, 68, 68, 0.6)]`}></div>
+                                <div aria-hidden="true" className={`w-2 h-2 rounded-full ${finances.lastAction.toLowerCase().includes('greiddi') ? 'bg-red-500' : 'bg-green-500'} shadow-[0_0_8px_rgba(239,68,68,0.6)]`}></div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-stone-300 text-xs uppercase tracking-wide font-bold mb-0.5">Síðasta færsla</p>
                                     <p className="text-white font-medium truncate">{finances.lastAction}</p>

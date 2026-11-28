@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { collection, query, getDocs, limit, orderBy } from 'firebase/firestore';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { collection, query, onSnapshot, limit, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Booking, BookingType } from '@/types/models';
 import { bookingTypeLabels, type SupportedLanguage } from '@/utils/i18n';
@@ -7,31 +7,29 @@ import { logger } from '@/utils/logger';
 import type { BookingEvent } from './calendarTypes';
 
 /**
- * Loads a house's bookings (Timestamp -> Date) and the matching calendar events.
- * Dates follow the [start, end) local-midnight convention documented at the top
- * of `src/services/bookingService.ts`. Loads on mount / when houseId changes and
- * exposes `loadBookings` to reload after a write.
+ * Subscribes to a house's bookings (Timestamp -> Date) and derives the matching calendar events.
+ * Dates follow the [start, end) local-midnight convention documented at the top of
+ * `src/services/bookingService.ts`. The listener keeps the calendar current when a co-owner
+ * books or deletes something, and also delivers this user's own writes, so there is no
+ * separate reload after a create or delete.
  */
 export function useBookings(houseId: string | undefined, language: SupportedLanguage) {
     const [bookings, setBookings] = useState<Booking[]>([]);
-    const [events, setEvents] = useState<BookingEvent[]>([]);
 
     // Helper functions
     const getBookingTypeLabel = useCallback((type: BookingType): string => {
         return bookingTypeLabels[language][type] || type;
     }, [language]);
 
-    const loadBookings = useCallback(async () => {
+    useEffect(() => {
         if (!houseId) return;
 
-        try {
-            const q = query(
-                collection(db, 'houses', houseId, 'bookings'),
-                orderBy('start', 'desc'),
-                limit(500)
-            );
-            const snapshot = await getDocs(q);
-
+        const q = query(
+            collection(db, 'houses', houseId, 'bookings'),
+            orderBy('start', 'desc'),
+            limit(500)
+        );
+        const unsubscribe = onSnapshot(q, (snapshot) => {
             const bookingsData = snapshot.docs.map(doc => {
                 const data = doc.data();
                 const start = data.start.toDate();
@@ -56,28 +54,22 @@ export function useBookings(houseId: string | undefined, language: SupportedLang
             });
 
             setBookings(bookingsData);
-
-            // Convert to calendar events - mark as all-day events
-            const calendarEvents: BookingEvent[] = bookingsData.map(booking => ({
-                id: booking.id,
-                title: `${booking.user_name} - ${getBookingTypeLabel(booking.type)}`,
-                start: booking.start,
-                end: booking.end,
-                allDay: true,
-                booking
-            }));
-
-            setEvents(calendarEvents);
-        } catch (err) {
+        }, (err) => {
             logger.error('Error loading bookings:', err);
-        }
-    }, [houseId, getBookingTypeLabel]);
+        });
 
-    // Load bookings from Firestore
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        loadBookings();
-    }, [loadBookings]);
+        return unsubscribe;
+    }, [houseId]);
 
-    return { bookings, events, loadBookings, getBookingTypeLabel };
+    // Convert to calendar events - mark as all-day events
+    const events: BookingEvent[] = useMemo(() => bookings.map(booking => ({
+        id: booking.id,
+        title: `${booking.user_name} - ${getBookingTypeLabel(booking.type)}`,
+        start: booking.start,
+        end: booking.end,
+        allDay: true,
+        booking
+    })), [bookings, getBookingTypeLabel]);
+
+    return { bookings, events, getBookingTypeLabel };
 }

@@ -32,7 +32,7 @@ export default function HousesSubTab({ stats, setStats, actionLoading, setAction
         const house = stats.allHouses.find(h => h.id === houseId);
         if (!house) return;
 
-        const confirmText = `EYÐA "${house.name}"?\n\nÞETTA EYÐIR:\n- Húsinu\n- Öllum bókunum, verkefnum, fjármálum og innkaupalistanum\n- Gestatenglum, boðum, gestabók og tilkynningum\n- Húsinu af notendum\n\nÞetta er ÓAFTURKRÆFT!\n\nSkrifaðu nafn hússins til að sta staðfesta:`;
+        const confirmText = `EYÐA "${house.name}"?\n\nÞETTA EYÐIR:\n- Húsinu\n- Öllum bókunum, verkefnum, fjármálum og innkaupalistanum\n- Gestatenglum, boðum, gestabók og tilkynningum\n- Húsinu af notendum\n\nÞetta er ÓAFTURKRÆFT!\n\nSkrifaðu nafn hússins til að staðfesta:`;
         const userInput = prompt(confirmText);
 
         if (userInput !== house.name) {
@@ -87,6 +87,7 @@ export default function HousesSubTab({ stats, setStats, actionLoading, setAction
                 ...prev,
                 allHouses: prev.allHouses.map(h => h.id === houseData.id ? houseData : h)
             }));
+            invalidateStatsCache();
             setEditingHouse(null);
             alert('Hús uppfært!');
         } catch (e: any) {
