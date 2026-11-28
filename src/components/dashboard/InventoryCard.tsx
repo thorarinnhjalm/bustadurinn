@@ -328,7 +328,7 @@ export default function InventoryCard({
                                     <button
                                         type="button"
                                         onClick={() => setShowAddForm(false)}
-                                        className="p-1 text-stone-500 hover:text-stone-700"
+                                        className="p-1 text-grey-mid hover:text-stone-700"
                                         aria-label="Loka"
                                     >
                                         <X size={14} aria-hidden="true" />
@@ -488,7 +488,7 @@ export default function InventoryCard({
                                                     className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${
                                                         isOut
                                                             ? 'bg-amber text-[#1a1a1a] shadow-sm'
-                                                            : 'bg-emerald-500 text-white shadow-sm hover:bg-emerald-600'
+                                                            : 'bg-emerald-700 text-white shadow-sm hover:bg-emerald-800'
                                                     }`}
                                                 >
                                                     {isOut ? 'Á þrotum' : 'Til'}

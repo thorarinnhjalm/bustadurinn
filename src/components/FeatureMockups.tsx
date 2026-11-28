@@ -18,14 +18,14 @@ export const CalendarMockup = () => (
         </div>
 
         {/* Days Grid */}
-        <div className="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-bold text-stone-400 uppercase tracking-wider">
+        <div className="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-bold text-grey-mid uppercase tracking-wider">
             <div>Mán</div><div>Þri</div><div>Mið</div><div>Fim</div><div>Fös</div><div>Lau</div><div>Sun</div>
         </div>
         <div className="grid grid-cols-7 gap-2 flex-1 relative">
             {/* Empty Days */}
             {Array.from({ length: 30 }).map((_, i) => (
                 <div key={i} className="aspect-square rounded-lg bg-stone-50 border border-stone-100 relative group hover:border-amber/50 transition-colors">
-                    <span className="absolute top-1 left-2 text-xs text-stone-400 font-medium">{i + 1}</span>
+                    <span className="absolute top-1 left-2 text-xs text-grey-mid font-medium">{i + 1}</span>
 
                     {/* Mock Bookings */}
                     {i === 14 && (
@@ -63,7 +63,7 @@ export const CalendarMockup = () => (
                     <div className="w-8 h-8 rounded-full bg-amber flex items-center justify-center font-bold text-xs">Jón</div>
                     <div>
                         <p className="text-xs font-bold">Helgarferð</p>
-                        <p className="text-[10px] text-stone-400">15. - 17. Júlí</p>
+                        <p className="text-[10px] text-grey-mid">15. - 17. Júlí</p>
                     </div>
                 </div>
                 <div className="w-full h-1 bg-stone-100 rounded-full overflow-hidden">
@@ -87,36 +87,36 @@ export const FairnessMockup = () => (
                 <div>
                     <div className="flex justify-between text-xs font-bold mb-1">
                         <span>Sigga</span>
-                        <span className="text-green-600">Hár forgangur</span>
+                        <span className="text-green-700">Hár forgangur</span>
                     </div>
                     <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
                         <div className="h-full w-[85%] bg-green-500 rounded-full"></div>
                     </div>
-                    <p className="text-[10px] text-stone-400 mt-1">Hefur bókað 2 helgar á árinu</p>
+                    <p className="text-[10px] text-grey-mid mt-1">Hefur bókað 2 helgar á árinu</p>
                 </div>
 
                 {/* User 2 */}
                 <div>
                     <div className="flex justify-between text-xs font-bold mb-1">
                         <span>Palli</span>
-                        <span className="text-yellow-600">Meðal forgangur</span>
+                        <span className="text-yellow-700">Meðal forgangur</span>
                     </div>
                     <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
                         <div className="h-full w-[60%] bg-yellow-500 rounded-full"></div>
                     </div>
-                    <p className="text-[10px] text-stone-400 mt-1">Hefur bókað 4 helgar á árinu</p>
+                    <p className="text-[10px] text-grey-mid mt-1">Hefur bókað 4 helgar á árinu</p>
                 </div>
 
                 {/* User 3 */}
                 <div>
                     <div className="flex justify-between text-xs font-bold mb-1">
                         <span>Jón (Þú)</span>
-                        <span className="text-red-500">Lágur forgangur</span>
+                        <span className="text-red-600">Lágur forgangur</span>
                     </div>
                     <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
                         <div className="h-full w-[30%] bg-red-500 rounded-full"></div>
                     </div>
-                    <p className="text-[10px] text-stone-400 mt-1">Hefur bókað 6 helgar á árinu</p>
+                    <p className="text-[10px] text-grey-mid mt-1">Hefur bókað 6 helgar á árinu</p>
                 </div>
             </div>
 
@@ -156,7 +156,7 @@ export const FinanceMockup = () => (
                         </div>
                         <div>
                             <p className="font-bold text-sm">Innborganir</p>
-                            <p className="text-xs text-stone-500">Júlí mánuður</p>
+                            <p className="text-xs text-stone-400">Júlí mánuður</p>
                         </div>
                     </div>
                     <span className="font-bold text-green-400">+45.000 kr</span>
@@ -169,7 +169,7 @@ export const FinanceMockup = () => (
                         </div>
                         <div>
                             <p className="font-bold text-sm">Rafmagnsreikningur</p>
-                            <p className="text-xs text-stone-500">Orkusalan</p>
+                            <p className="text-xs text-stone-400">Orkusalan</p>
                         </div>
                     </div>
                     <span className="font-bold text-white">-12.450 kr</span>
@@ -204,17 +204,17 @@ export const RolesMockup = () => (
         </div>
 
         <div className="flex items-center gap-4 p-4 border border-stone-100 rounded-xl shadow-sm hover:border-amber/30 transition-colors">
-            <div className="w-12 h-12 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center font-bold text-lg">S</div>
+            <div className="w-12 h-12 rounded-full bg-stone-100 text-grey-mid flex items-center justify-center font-bold text-lg">S</div>
             <div className="flex-1">
                 <div className="flex justify-between items-center">
                     <h4 className="font-bold text-[#1a1a1a]">Sigga</h4>
-                    <span className="bg-stone-100 text-stone-500 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Meðeigandi</span>
+                    <span className="bg-stone-100 text-grey-mid text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Meðeigandi</span>
                 </div>
                 <p className="text-xs text-stone-500">Getur bókað og skráð verkefni</p>
             </div>
         </div>
 
-        <div className="w-full py-3 border-2 border-dashed border-stone-200 rounded-xl text-stone-400 font-bold text-sm flex items-center justify-center gap-2">
+        <div className="w-full py-3 border-2 border-dashed border-stone-200 rounded-xl text-grey-mid font-bold text-sm flex items-center justify-center gap-2">
             <Plus size={16} />
             Bæta við meðeiganda
         </div>
@@ -233,7 +233,7 @@ export const GuestLinkMockup = () => (
             <div className="px-6 pb-8 space-y-6">
                 <div className="text-center">
                     <h4 className="font-serif font-bold text-xl mb-1">Velkomin í Bústaðinn!</h4>
-                    <p className="text-xs text-stone-400">Hlekkur rennur út eftir 3 daga</p>
+                    <p className="text-xs text-grey-mid">Hlekkur rennur út eftir 3 daga</p>
                 </div>
 
                 <div className="space-y-3">
@@ -247,7 +247,7 @@ export const GuestLinkMockup = () => (
                     <div className="bg-stone-50 p-3 rounded-xl flex items-center gap-3">
                         <Shield className="w-5 h-5 text-stone-400" />
                         <div>
-                            <p className="text-[10px] font-bold uppercase text-stone-400">Lykilbox</p>
+                            <p className="text-[10px] font-bold uppercase text-grey-mid">Lykilbox</p>
                             <p className="text-xs font-bold">4492</p>
                         </div>
                     </div>

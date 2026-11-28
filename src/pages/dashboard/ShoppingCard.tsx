@@ -59,7 +59,7 @@ export default function ShoppingCard({ currentHouse, currentUser, shoppingItems 
             <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300 min-h-[200px]">
                 {shoppingItems.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center py-6">
-                        <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-3" aria-hidden="true">
+                        <div className="w-12 h-12 bg-green-100 text-green-700 rounded-full flex items-center justify-center mb-3" aria-hidden="true">
                             <ShoppingCart size={20} />
                         </div>
                         <p className="font-bold text-[#1a1a1a]">Allt til alls!</p>

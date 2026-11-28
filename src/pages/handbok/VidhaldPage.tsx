@@ -81,25 +81,25 @@ export default function VidhaldPage() {
                             <h3 className="text-xl font-bold mb-4">Hvað er hægt að gera:</h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Búa til verkefni:</strong> Hver sem er getur bætt við verkefni sem þarf að klára
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Úthluta verkefnum:</strong> Getur úthlutað verkefni til ákveðinna eigenda
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Fylgjast með stöðu:</strong> Hvert verkefni fer í gegnum stöðurnar í bið, í vinnslu og lokið — og hægt er að merkja verkefni sem hætt við
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Kostnaðarskráning:</strong> Hægt er að skrá kostnað við verkefni og bæta honum sjálfkrafa við hússjóðsbókhaldið
                                     </div>
@@ -127,30 +127,30 @@ export default function VidhaldPage() {
                             {/* Vor-opnun */}
                             <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-200 rounded-xl p-6">
                                 <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                                    <svg aria-hidden="true" className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg aria-hidden="true" className="w-8 h-8 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                     </svg>
                                     Vor-opnun (apríl-maí)
                                 </h3>
                                 <ul className="space-y-2 text-grey-dark">
                                     <li className="flex items-start gap-2">
-                                        <span className="text-green-600 mt-1">•</span>
+                                        <span className="text-green-700 mt-1">•</span>
                                         Opna vatn og athuga lagnir
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <span className="text-green-600 mt-1">•</span>
+                                        <span className="text-green-700 mt-1">•</span>
                                         Klippa gras í fyrsta skipti
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <span className="text-green-600 mt-1">•</span>
+                                        <span className="text-green-700 mt-1">•</span>
                                         Mála pallinn og skoða viðhald
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <span className="text-green-600 mt-1">•</span>
+                                        <span className="text-green-700 mt-1">•</span>
                                         Taka út garðhúsgögn
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <span className="text-green-600 mt-1">•</span>
+                                        <span className="text-green-700 mt-1">•</span>
                                         Opna sumarhúsið eftir vetur
                                     </li>
                                 </ul>

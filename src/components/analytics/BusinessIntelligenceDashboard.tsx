@@ -72,7 +72,7 @@ const MetricCard = ({
 
     const getTrendColor = () => {
         if (trend === 'neutral') return 'text-stone-500';
-        return trend === 'up' ? 'text-green-600' : 'text-red-600';
+        return trend === 'up' ? 'text-green-700' : 'text-red-600';
     };
 
     const TrendIcon = change && change > 0 ? ArrowUp : ArrowDown;

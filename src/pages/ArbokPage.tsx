@@ -20,6 +20,7 @@ import EmptyState from '@/components/EmptyState';
 import { buildYearbook } from '@/services/arbokService';
 import type { Yearbook } from '@/services/arbokService';
 import { logger } from '@/utils/logger';
+import PageTitle from '@/components/PageTitle';
 
 const PRINT_STYLES = `
 @media print {
@@ -118,6 +119,7 @@ export default function ArbokPage() {
 
     return (
         <main className="min-h-screen bg-bone pb-24 arbok-print-bg">
+            <PageTitle title="Árbók" />
             <style>{PRINT_STYLES}</style>
 
             {/* Header */}

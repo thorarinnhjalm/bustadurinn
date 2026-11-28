@@ -109,11 +109,12 @@ export default function BookingMonthView({
             eventPropGetter={(event: BookingEvent) => ({
                 style: {
                     backgroundColor: event.booking.type === 'personal' ? '#e8b058' :
-                        event.booking.type === 'rental' ? '#10b981' :
-                            event.booking.type === 'maintenance' ? '#ef4444' : '#6366f1',
+                        event.booking.type === 'rental' ? '#047857' :
+                            event.booking.type === 'maintenance' ? '#dc2626' : '#4f46e5',
                     borderRadius: '4px',
                     opacity: 1,
-                    color: 'white',
+                    // White on amber is 1.9:1; the other three fills are dark enough for white (>= 4.8:1)
+                    color: event.booking.type === 'personal' ? '#1a1a1a' : 'white',
                     border: '0px',
                     display: 'block',
                     padding: '2px 5px',

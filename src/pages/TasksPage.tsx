@@ -28,6 +28,7 @@ import MobileNav from '@/components/MobileNav';
 import { notifyTaskAssignment } from '@/services/inAppNotifications';
 import { logger } from '@/utils/logger';
 import { getHouseMembers } from '@/services/houseMembersService';
+import PageTitle from '@/components/PageTitle';
 
 export default function TasksPage() {
     const { user: currentUser } = useEffectiveUser();
@@ -161,6 +162,7 @@ export default function TasksPage() {
 
     return (
         <main className="min-h-screen bg-bone p-6 pb-24">
+            <PageTitle title="Verkefni" />
             {/* Header */}
             <div className="max-w-5xl mx-auto mb-8">
                 <Link

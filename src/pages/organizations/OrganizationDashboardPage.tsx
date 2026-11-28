@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { useEffectiveUser } from '@/hooks/useEffectiveUser';
-import SEO from '@/components/SEO';
+import PageTitle from '@/components/PageTitle';
 import { useOrganizationDashboard } from './dashboard/useOrganizationDashboard';
 import { useRequestActions } from './dashboard/useRequestActions';
 import OverviewTab from './dashboard/OverviewTab';
@@ -80,10 +80,7 @@ export default function OrganizationDashboardPage() {
 
     return (
         <main id="main" className="min-h-screen bg-bone">
-            <SEO
-                title={`Stjórnborð - ${organization.name}`}
-                description="Stjórna félagi og bókunum"
-            />
+            <PageTitle title={`Stjórnborð - ${organization.name}`} />
 
             {/* Header */}
             <header className="bg-white border-b">

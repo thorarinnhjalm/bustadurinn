@@ -78,7 +78,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
             <div>
                 {submitSuccess ? (
                     <div role="status" className="p-8 text-center bg-stone-50">
-                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 motion-safe:animate-in motion-safe:zoom-in motion-safe:spin-in-90 duration-300">
+                        <div className="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto mb-4 motion-safe:animate-in motion-safe:zoom-in motion-safe:spin-in-90 duration-300">
                             <Send size={32} aria-hidden="true" />
                         </div>
                         <h4 className="text-xl font-bold text-[#1a1a1a] mb-2">Takk fyrir!</h4>

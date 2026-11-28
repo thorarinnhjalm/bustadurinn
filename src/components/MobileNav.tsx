@@ -25,7 +25,7 @@ export default function MobileNav() {
                         key={item.path}
                         to={item.path}
                         aria-current={active ? 'page' : undefined}
-                        className={`flex flex-col items-center gap-1 transition-colors duration-200 w-16 ${active ? 'text-amber-ink' : 'text-stone-500 hover:text-stone-700'
+                        className={`flex flex-col items-center gap-1 transition-colors duration-200 w-16 ${active ? 'text-amber-ink' : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         <Icon

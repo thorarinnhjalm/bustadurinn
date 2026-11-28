@@ -136,23 +136,23 @@ export default function BokunarkerfiPage() {
                             <h3 className="text-xl font-bold mb-4">Helstu eiginleikar:</h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <span><strong>Rauntíma uppfærslur:</strong> Þegar einhver bókar, sjá allir það strax</span>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <span><strong>Árekstraviðvörun:</strong> Kerfið varar þig við ef bókunin skarast við aðra og sýnir hver á hana — kerfið hindrar ekki sjálfvirkt, heldur lætur þig taka upplýsta ákvörðun</span>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <span><strong>Sjálfvirkar tilkynningar:</strong> Email, tilkynningar (push) og í kerfinu þegar nýjar bókanir fara fram</span>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <span><strong>Mismunandi bókunartegundir:</strong> Persónuleg, Gestur, Útleiga eða Viðhald</span>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <span><strong>Íslenskir hátíðisdagar:</strong> Sjálfkrafa auðkenndir í dagatalinu</span>
                                 </li>
                             </ul>
@@ -253,19 +253,19 @@ export default function BokunarkerfiPage() {
                                     </p>
                                     <ul className="space-y-2 text-sm text-grey-dark">
                                         <li className="flex items-start gap-2">
-                                            <span aria-hidden="true" className="text-green-600 mt-0.5">✓</span>
+                                            <span aria-hidden="true" className="text-green-700 mt-0.5">✓</span>
                                             <span>Varar við ef dagsetningar skarast við aðra bókun (þú getur samt bókað ef það er vísvitandi)</span>
                                         </li>
                                         <li className="flex items-start gap-2">
-                                            <span aria-hidden="true" className="text-green-600 mt-0.5">✓</span>
+                                            <span aria-hidden="true" className="text-green-700 mt-0.5">✓</span>
                                             <span>Athugar sanngirnisreglu (ef hún er virk)</span>
                                         </li>
                                         <li className="flex items-start gap-2">
-                                            <span aria-hidden="true" className="text-green-600 mt-0.5">✓</span>
+                                            <span aria-hidden="true" className="text-green-700 mt-0.5">✓</span>
                                             <span>Vistar bókun í rauntíma</span>
                                         </li>
                                         <li className="flex items-start gap-2">
-                                            <span aria-hidden="true" className="text-green-600 mt-0.5">✓</span>
+                                            <span aria-hidden="true" className="text-green-700 mt-0.5">✓</span>
                                             <span>Sendir tilkynningar á alla eigendur (email + tilkynningar)</span>
                                         </li>
                                     </ul>

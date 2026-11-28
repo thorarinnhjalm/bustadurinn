@@ -141,7 +141,7 @@ export default function ForProvidersPage() {
                     <div className="card bg-white shadow-xl p-8 md:p-12">
                         {success ? (
                             <div role="status" className="text-center py-12">
-                                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <div className="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <Check aria-hidden="true" className="w-8 h-8" />
                                 </div>
                                 <h2 className="text-2xl font-serif font-bold text-charcoal mb-4">Umsókn móttekin!</h2>

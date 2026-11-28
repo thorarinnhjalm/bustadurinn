@@ -65,7 +65,7 @@ export default function OrganizationSignupPage() {
                 <div className="min-h-[60vh] flex items-center justify-center px-6">
                     <div role="status" className="text-center max-w-md">
                         <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6">
-                            <CheckCircle aria-hidden="true" className="w-10 h-10 text-green-600" />
+                            <CheckCircle aria-hidden="true" className="w-10 h-10 text-green-700" />
                         </div>
                         <h1 className="text-3xl font-serif mb-4">Takk fyrir!</h1>
                         <p className="text-grey-dark text-lg leading-relaxed">

@@ -104,7 +104,7 @@ export default function FeedbackSubTab({ stats, setStats, actionLoading, setActi
                     },
                     {
                         key: 'canContact', label: 'Má hafa samband?', render: (row) => (
-                            row.canContact ? <span className="text-green-600 bg-green-50 px-2 py-1 rounded text-xs">Já</span> : <span className="text-stone-500 text-xs">Nei</span>
+                            row.canContact ? <span className="text-green-700 bg-green-50 px-2 py-1 rounded text-xs">Já</span> : <span className="text-stone-500 text-xs">Nei</span>
                         )
                     },
                     { key: 'createdAt', label: 'Dags', sortable: true, render: (row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString('is-IS') : '-' },

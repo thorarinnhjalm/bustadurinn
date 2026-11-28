@@ -103,7 +103,7 @@ export default function AuditHealthPanel({
                             </tr>
                         ) : orphans.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-6 py-12 text-center text-green-600 font-medium">
+                                <td colSpan={5} className="px-6 py-12 text-center text-green-700 font-medium">
                                     ✅ Engir munaðarlausir notendur fundust! Allt í góðu.
                                 </td>
                             </tr>
@@ -117,7 +117,7 @@ export default function AuditHealthPanel({
                                     <td className="px-6 py-4 text-sm text-stone-500">{o.displayName || '-'}</td>
                                     <td className="px-6 py-4">
                                         {o.isTest ? (
-                                            <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-500 text-[10px] uppercase font-bold tracking-wider">Prufuaðgangur</span>
+                                            <span className="px-2 py-0.5 rounded-full bg-stone-100 text-grey-mid text-[10px] uppercase font-bold tracking-wider">Prufuaðgangur</span>
                                         ) : (
                                             <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] uppercase font-bold tracking-wider">Mögulega raunverulegur notandi</span>
                                         )}
@@ -209,7 +209,7 @@ export default function AuditHealthPanel({
                                 </tr>
                             ) : stuckUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-green-600 font-medium">
+                                    <td colSpan={4} className="px-6 py-12 text-center text-green-700 font-medium">
                                         ✅ Engir notendur fastir í onboarding!
                                     </td>
                                 </tr>

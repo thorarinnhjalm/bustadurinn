@@ -161,7 +161,7 @@ export default function ProvidersSubTab({ stats, setStats, actionLoading, setAct
                         <button
                             type="button"
                             onClick={() => handleToggleProviderStatus(row)}
-                            className={`p-2 rounded hover:bg-stone-50 transition-colors ${row.status === 'active' ? 'text-amber-ink hover:text-amber-700' : 'text-green-600 hover:text-green-700'}`}
+                            className={`p-2 rounded hover:bg-stone-50 transition-colors ${row.status === 'active' ? 'text-amber-ink hover:text-amber-700' : 'text-green-700 hover:text-green-700'}`}
                             title={row.status === 'active' ? 'Setja í bið' : 'Samþykkja'}
                             aria-label={row.status === 'active' ? `Setja verktaka ${row.name} í bið` : `Samþykkja verktaka ${row.name}`}
                         >

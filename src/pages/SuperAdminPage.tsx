@@ -33,6 +33,7 @@ import AnalyticsTab from './superadmin/AnalyticsTab';
 import SystemTab from './superadmin/SystemTab';
 import ConfirmModal from './superadmin/ConfirmModal';
 import type { ConfirmModalState } from './superadmin/ConfirmModal';
+import PageTitle from '@/components/PageTitle';
 
 export default function SuperAdminPage() {
     const navigate = useNavigate();
@@ -189,6 +190,7 @@ export default function SuperAdminPage() {
             userHouses={userHouses}
             onHouseSelect={handleHouseSwitch}
         >
+            <PageTitle title="Super Admin" />
             {fetchWarnings.length > 0 && (
                 <div className="bg-amber/10 border border-amber/30 text-amber-900 px-4 py-3 rounded-xl mb-6 relative shadow-sm" role="alert">
                     <strong className="font-bold flex items-center gap-2"><AlertTriangle size={18} className="text-amber-600"/> Athugið: Sum gögn hlóðust ekki rétt</strong>
@@ -222,7 +224,7 @@ export default function SuperAdminPage() {
                                         Super Admin
                                     </h1>
                                     <p className="text-[10px] md:text-xs text-stone-500 font-medium tracking-wide">
-                                        v1.2.0 • <span className="text-green-600 flex-inline items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 motion-safe:animate-pulse inline-block" aria-hidden="true"></span>Online</span>
+                                        v1.2.0 • <span className="text-green-700 flex-inline items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 motion-safe:animate-pulse inline-block" aria-hidden="true"></span>Online</span>
                                     </p>
                                 </div>
                             </div>
@@ -285,7 +287,7 @@ export default function SuperAdminPage() {
                                     whitespace-nowrap rounded-t-lg select-none
                                     ${activeTab === tab.id
                                         ? 'text-charcoal'
-                                        : 'text-stone-500 hover:text-stone-700 hover:bg-stone-50/50'
+                                        : 'text-grey-mid hover:text-stone-700 hover:bg-stone-50/50'
                                     }
                                 `}
                             >

@@ -14,6 +14,7 @@ import { getUserMessage } from '@/utils/userMessages';
 import { trackFunnel, describeError, markInOnboarding } from '@/utils/funnel';
 import AddToHomeScreenPrompt from '@/components/AddToHomeScreenPrompt';
 import { generateInviteCode } from '@/utils/secureToken';
+import PageTitle from '@/components/PageTitle';
 
 type OnboardingStep = 'welcome' | 'house' | 'invite' | 'finish';
 
@@ -556,6 +557,7 @@ export default function OnboardingPage() {
 
     return (
         <div className="min-h-screen bg-bone flex items-center justify-center p-6">
+            <PageTitle title="Uppsetning" />
             <div className="w-full max-w-3xl">
                 {/* Progress */}
                 <div className="mb-12">
@@ -671,7 +673,7 @@ export default function OnboardingPage() {
                                                     <div className="flex items-center gap-3">
                                                         {suggestion.source === 'hms' ? (
                                                             <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                                                                <CheckCircle className="w-4 h-4 text-green-600" aria-hidden="true" />
+                                                                <CheckCircle className="w-4 h-4 text-green-700" aria-hidden="true" />
                                                             </div>
                                                         ) : (
                                                             <div className="w-6 h-6 bg-stone-100 rounded-full flex items-center justify-center">

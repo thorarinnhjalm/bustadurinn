@@ -59,7 +59,7 @@ export default function ContactForm() {
             <div role="status">
                 {status === 'success' && (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-                        <CheckCircle aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        <CheckCircle aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-0.5" />
                         <div>
                             <p className="font-medium text-green-900">Skilaboð send!</p>
                             <p className="text-sm text-green-700 mt-1">Við svörum innan sólarhrings.</p>

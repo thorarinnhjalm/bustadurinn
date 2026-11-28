@@ -22,7 +22,7 @@ export default function AnalyticsTab({ stats, subTab: analyticsSubTab, onSubTabC
                     onClick={() => setAnalyticsSubTab('bi')}
                     className={`px-4 py-2 text-sm font-medium transition-colors ${analyticsSubTab === 'bi'
                         ? 'text-charcoal border-b-2 border-amber'
-                        : 'text-stone-500 hover:text-stone-700'
+                        : 'text-grey-mid hover:text-stone-700'
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -36,7 +36,7 @@ export default function AnalyticsTab({ stats, subTab: analyticsSubTab, onSubTabC
                     onClick={() => setAnalyticsSubTab('analytics')}
                     className={`px-4 py-2 text-sm font-medium transition-colors ${analyticsSubTab === 'analytics'
                         ? 'text-charcoal border-b-2 border-amber'
-                        : 'text-stone-500 hover:text-stone-700'
+                        : 'text-grey-mid hover:text-stone-700'
                         }`}
                 >
                     <div className="flex items-center gap-2">

@@ -19,7 +19,7 @@ export default function RecentSignups({ users, expandedUid: expandedSignupUid, o
                 <Users className="w-5 h-5 text-blue-600" />
                 Nýskráningar (síðustu 24 klst)
             </h3>
-            <div className="overflow-x-auto">
+            <div role="region" tabIndex={0} aria-label="Nýskráningar síðustu 24 klukkustundir (flettu til hliðar)" className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                     <caption className="sr-only">Nýskráningar síðustu 24 klukkustundir</caption>
                     <thead>
@@ -56,7 +56,7 @@ export default function RecentSignups({ users, expandedUid: expandedSignupUid, o
                                                 type="button"
                                                 onClick={() => setExpandedSignupUid(expanded ? null : user.uid)}
                                                 aria-expanded={expanded}
-                                                aria-label={`Sýna skref notanda ${user.name || user.email}`}
+                                                aria-label={`${createdDate.toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit' })}: sýna skref notanda ${user.name || user.email}`}
                                                 title="Smelltu til að sjá skrefin"
                                                 className="flex items-center gap-1 after:absolute after:inset-0 after:content-['']"
                                             >

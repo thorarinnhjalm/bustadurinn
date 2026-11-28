@@ -31,7 +31,7 @@ export default function BookingSuccessDialog({ showSuccess, successBooking, onCl
                     {/* Success Icon */}
                     <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 mb-4">
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 relative" aria-hidden="true">
-                            <Check className="w-10 h-10 text-green-600" strokeWidth={3} />
+                            <Check className="w-10 h-10 text-green-700" strokeWidth={3} />
                             <div className="absolute inset-0 rounded-full bg-green-400 motion-safe:animate-ping opacity-20"></div>
                         </div>
                         <p className="text-stone-600">

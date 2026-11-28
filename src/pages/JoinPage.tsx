@@ -297,15 +297,15 @@ export default function JoinPage() {
                             <h4 className="font-semibold text-charcoal mb-3 text-sm">Sem meðeigandi getur þú:</h4>
                             <ul className="space-y-2 text-sm text-grey-dark">
                                 <li className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" aria-hidden="true" />
+                                    <CheckCircle className="w-4 h-4 text-green-700 flex-shrink-0" aria-hidden="true" />
                                     <span>Bóka helgar og dvalir</span>
                                 </li>
                                 <li className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" aria-hidden="true" />
+                                    <CheckCircle className="w-4 h-4 text-green-700 flex-shrink-0" aria-hidden="true" />
                                     <span>Skrá útgjöld og sjá fjármál</span>
                                 </li>
                                 <li className="flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" aria-hidden="true" />
+                                    <CheckCircle className="w-4 h-4 text-green-700 flex-shrink-0" aria-hidden="true" />
                                     <span>Bæta við verkefnum og listum</span>
                                 </li>
                                 <li className="flex items-center gap-2">

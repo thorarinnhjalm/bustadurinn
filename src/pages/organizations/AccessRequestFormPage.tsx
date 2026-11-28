@@ -164,7 +164,7 @@ export default function AccessRequestFormPage() {
                     description="Beiðni þín hefur verið móttekin"
                 />
                 <div role="status" className="card max-w-md text-center">
-                    <CheckCircle aria-hidden="true" className="w-16 h-16 mx-auto mb-4 text-green-600" />
+                    <CheckCircle aria-hidden="true" className="w-16 h-16 mx-auto mb-4 text-green-700" />
                     <h1 className="text-2xl font-serif mb-4">Beiðni móttekin!</h1>
                     <p className="text-grey-dark mb-6">
                         Þakka þér fyrir að sækja um aðgang að sumarhúsum {organization.name}.
