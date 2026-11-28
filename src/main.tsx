@@ -11,7 +11,8 @@ import UpdateBanner from './components/UpdateBanner'
 
 // Initialize Sentry
 // Initialize Sentry only if DSN is present
-const dsn = import.meta.env.VITE_SENTRY_DSN;
+// Never report from the local emulator e2e build.
+const dsn = import.meta.env.VITE_USE_EMULATORS === 'true' ? undefined : import.meta.env.VITE_SENTRY_DSN;
 if (dsn) {
   Sentry.init({
     dsn: dsn,

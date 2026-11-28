@@ -23,6 +23,7 @@
     "migrate-admin-rbac": "node scripts/migrate-admin-rbac.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:e2e:emulator": "playwright test -c playwright.emulator.config.ts",
     "test:rules": "firebase emulators:exec --only firestore,storage --project demo-bustadurinn \"vitest run --config vitest.rules.config.ts\""
   },
   "dependencies": {

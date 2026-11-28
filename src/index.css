@@ -213,6 +213,13 @@
   .link:hover {
     @apply text-amber-ink;
   }
+
+  /* amber-ink is the dark amber for LIGHT backgrounds (it is unreadable on charcoal):
+     links on dark surfaces hover to the bright amber instead. :where() keeps the
+     specificity equal to a:hover, so explicit hover:text-* utilities still win. */
+  :where(.bg-charcoal, .bg-stone-900, .bg-stone-800, .bg-black, .bg-\[\#1a1a1a\]) a:hover {
+    @apply text-amber;
+  }
 }
 
 /* =============================================================================

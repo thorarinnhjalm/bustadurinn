@@ -35,3 +35,9 @@ gsc-key.json
 # Playwright
 playwright-report/
 test-results/
+
+# Emulator e2e suite
+test-results-emulator/
+tests/e2e-emulator/screenshots/
+*-debug.log
+firebase-export-*/

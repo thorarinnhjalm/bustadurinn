@@ -513,8 +513,8 @@ export default function SandboxPage() {
 
                             <div className="flex-1">
                                 <p className="text-amber text-xs font-bold uppercase tracking-widest mb-1">Einfaldara líf í sumar</p>
-                                <h2 className="text-lg font-serif font-bold text-white mb-0">Prófaðu kerfið frítt í 30 daga</h2>
-                                <p className="text-stone-400 text-xs mt-1">Bættu við fjölskyldunni og sjáðu hvort þetta hentar ykkur. Engin skuldbinding.</p>
+                                <h2 className="text-lg font-serif font-bold text-white mb-0">Prófaðu kerfið — ókeypis og án skuldbindinga</h2>
+                                <p className="text-stone-400 text-xs mt-1">Bættu við fjölskyldunni og sjáðu hvort þetta hentar ykkur.</p>
                             </div>
 
                             <Link

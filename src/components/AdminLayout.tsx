@@ -88,7 +88,7 @@ export default function AdminLayout({
                 {/* Logo / Header (Desktop only) */}
                 <div className="p-6 border-b border-stone-800 hidden md:block">
                     <h1 className="text-lg font-mono font-bold text-amber">STJÓRNBORÐ</h1>
-                    <p className="text-xs text-stone-500 mt-1">Bústaðurinn Kerfisstjórn</p>
+                    <p className="text-xs text-stone-400 mt-1">Bústaðurinn Kerfisstjórn</p>
                 </div>
 
                 {/* Header Actions / House Switcher */}
@@ -96,7 +96,7 @@ export default function AdminLayout({
                     {/* If user has houses, list them */}
                     {userHouses.length > 0 ? (
                         <div className="space-y-2">
-                            <p className="text-[10px] uppercase tracking-wider text-stone-500 font-bold px-1">Mín Hús</p>
+                            <p className="text-[10px] uppercase tracking-wider text-stone-400 font-bold px-1">Mín Hús</p>
                             {userHouses.map(house => (
                                 <button
                                     type="button"
@@ -147,7 +147,7 @@ export default function AdminLayout({
 
                 {/* System Status */}
                 <div className="px-4 py-3 border-t border-stone-800">
-                    <p className="text-xs text-stone-500 uppercase tracking-wider mb-3">Ástand Kerfis</p>
+                    <p className="text-xs text-stone-400 uppercase tracking-wider mb-3">Ástand Kerfis</p>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2 text-xs">
                             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -166,7 +166,7 @@ export default function AdminLayout({
 
                 {/* Footer */}
                 <div className="p-4 border-t border-stone-800">
-                    <div className="flex items-center gap-2 text-xs text-stone-500">
+                    <div className="flex items-center gap-2 text-xs text-stone-400">
                         <Database className="w-4 h-4" aria-hidden="true" />
                         <span className="font-mono">v1.0</span>
                     </div>

@@ -1079,7 +1079,7 @@ const UserDashboard = () => {
                                         </div>
 
                                         <h4 className="text-4xl font-serif text-white mb-6 tracking-tight">
-                                            {finances.balance.toLocaleString('is-IS')} <span className="text-xl text-stone-500 font-sans font-normal">kr.</span>
+                                            {finances.balance.toLocaleString('is-IS')} <span className="text-xl text-stone-300 font-sans font-normal">kr.</span>
                                         </h4>
 
                                         {budgetPlan ? (

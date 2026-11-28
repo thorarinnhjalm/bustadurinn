@@ -886,7 +886,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, allEnt
                 </div>
             </div>
 
-            <div className="col-span-1 md:col-span-2 card">
+            <div className="col-span-1 md:col-span-2 card p-4 md:p-8">
                 <div className="flex justify-between items-center mb-6 gap-3 flex-wrap">
                     <div className="flex items-center gap-4 flex-wrap">
                         <h3 className="text-xl font-serif">Bókhald {selectedYear}</h3>

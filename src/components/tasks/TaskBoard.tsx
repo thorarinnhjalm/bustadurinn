@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 
+import { Trash2 } from 'lucide-react';
 import type { Task, TaskStatus } from '@/types/models';
 
 interface TaskBoardProps {
@@ -87,7 +88,7 @@ export default function TaskBoard({ tasks, onStatusChange, onDelete }: TaskBoard
                                         className="text-grey-mid hover:text-red-500 transition-colors p-1 -mr-2 -mt-2"
                                     >
                                         <span className="sr-only">Eyða verkefni: {task.title}</span>
-                                        <div aria-hidden="true" className="w-4 h-4 rounded-full border-2 border-current" />
+                                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                                     </button>
                                 </div>
 

@@ -151,7 +151,7 @@ export default function Modal({
                     className={
                         hideTitle
                             ? 'sr-only'
-                            : 'font-serif text-xl font-semibold text-charcoal mb-0 pr-2'
+                            : 'font-serif text-xl font-semibold text-inherit mb-0 pr-2'
                     }
                 >
                     {title}

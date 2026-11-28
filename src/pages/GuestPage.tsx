@@ -28,6 +28,7 @@ export default function GuestPage() {
     const [copied, setCopied] = useState('');
     const [weather, setWeather] = useState<{ temp: number | string, condition: string }>({ temp: '—', condition: 'Hleður...' });
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [showRules, setShowRules] = useState(false);
     const [sending, setSending] = useState(false);
     const [formStatus, setFormStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -352,13 +353,26 @@ export default function GuestPage() {
                         </a>
                     )}
 
-                    {guides.map(guide => (
-                        <button type="button" key={guide.id} className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 hover:border-[#e8b058] transition-all group text-left">
+                    {guides.map(guide => guide.id === 'rules' ? (
+                        // The house rules tile opens the rules text; amenity tiles below are informational only.
+                        <button
+                            type="button"
+                            key={guide.id}
+                            onClick={() => setShowRules(true)}
+                            className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 hover:border-[#e8b058] transition-all group text-left"
+                        >
                             <div className="w-10 h-10 rounded-full bg-stone-50 text-[#1a1a1a] flex items-center justify-center mb-3 group-hover:bg-[#1a1a1a] group-hover:text-white transition-colors">
                                 {guide.icon}
                             </div>
                             <span className="font-bold text-sm text-[#1a1a1a]">{guide.title}</span>
                         </button>
+                    ) : (
+                        <div key={guide.id} className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 text-left">
+                            <div className="w-10 h-10 rounded-full bg-stone-50 text-[#1a1a1a] flex items-center justify-center mb-3">
+                                {guide.icon}
+                            </div>
+                            <span className="font-bold text-sm text-[#1a1a1a]">{guide.title}</span>
+                        </div>
                     ))}
                 </section>
 
@@ -477,6 +491,11 @@ export default function GuestPage() {
 
             </main>
 
+            {/* House rules */}
+            <Modal open={showRules} onClose={() => setShowRules(false)} title="Húsreglur" size="md">
+                <p className="text-sm text-stone-700 whitespace-pre-line leading-relaxed">{data?.house_rules}</p>
+            </Modal>
+
             {/* Image lightbox */}
             <Modal
                 open={selectedImage !== null}
@@ -484,6 +503,7 @@ export default function GuestPage() {
                 title="Mynd í fullri stærð"
                 hideTitle
                 size="full"
+                className="!bg-black !text-white"
                 bodyClassName="flex items-center justify-center !p-4"
             >
                 {selectedImage && (

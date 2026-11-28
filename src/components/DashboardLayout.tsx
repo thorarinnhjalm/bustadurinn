@@ -76,19 +76,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="min-h-screen bg-[#FDFCF8] text-[#1a1a1a] font-sans pb-24 md:pb-0">
             {/* --- TOP NAVIGATION (Mobile & Desktop) --- */}
             <nav aria-label="Efri valmynd" className="fixed top-0 w-full bg-[#FDFCF8]/90 backdrop-blur-md border-b border-stone-100 z-50 px-4 h-16 flex items-center justify-between max-w-5xl mx-auto left-0 right-0">
-                <div className="flex items-center gap-2 relative">
+                <div className="flex items-center gap-2 relative min-w-0">
                     {currentHouse ? (
                         <button
                             type="button"
                             onClick={() => setShowHouseSwitcher(!showHouseSwitcher)}
                             aria-expanded={userHouses.length > 1 ? showHouseSwitcher : undefined}
                             aria-controls={userHouses.length > 1 ? houseSwitcherId : undefined}
-                            className="flex items-center gap-2 hover:bg-stone-50 px-2 py-1 rounded-lg transition-colors group"
+                            className="flex items-center gap-2 hover:bg-stone-50 px-2 py-1 rounded-lg transition-colors group min-w-0"
                         >
                             <div className="text-[#1a1a1a]">
                                 <CabinLogo size={20} />
                             </div>
-                            <span className="font-serif font-bold text-lg tracking-tight">{currentHouse.name}</span>
+                            <span className="font-serif font-bold text-lg tracking-tight truncate">{currentHouse.name}</span>
                             {userHouses.length > 1 && (
                                 <ChevronDown size={16} aria-hidden="true" className={`text-stone-500 group-hover:text-amber-ink transition-transform ${showHouseSwitcher ? 'rotate-180' : ''} `} />
                             )}
@@ -142,7 +142,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         </div>
                     )}
                 </div>
-                <div className="flex items-center gap-4 relative">
+                <div className="flex items-center gap-4 relative shrink-0">
                     {isAdmin && (
                         <Link
                             to="/super-admin"
@@ -161,7 +161,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Link
                         to="/"
                         onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
-                        className={`transition-colors ${isActivePath('/') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
+                        className={`hidden md:flex transition-colors ${isActivePath('/') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Heim"
                         aria-label="Heim"
                         aria-current={isActivePath('/') ? 'page' : undefined}
@@ -171,7 +171,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Link
                         to="/calendar"
                         onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
-                        className={`transition-colors ${isActivePath('/calendar') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
+                        className={`hidden md:flex transition-colors ${isActivePath('/calendar') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Dagatal"
                         aria-label="Dagatal"
                         aria-current={isActivePath('/calendar') ? 'page' : undefined}
@@ -181,7 +181,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Link
                         to="/tasks"
                         onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
-                        className={`transition-colors ${isActivePath('/tasks') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
+                        className={`hidden md:flex transition-colors ${isActivePath('/tasks') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Verkefni"
                         aria-label="Verkefni"
                         aria-current={isActivePath('/tasks') ? 'page' : undefined}
@@ -191,7 +191,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Link
                         to="/arbok"
                         onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
-                        className={`transition-colors ${isActivePath('/arbok') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
+                        className={`flex transition-colors ${isActivePath('/arbok') ? 'text-amber-ink' : 'text-stone-500 hover:text-amber-ink'}`}
                         title="Árbók"
                         aria-label="Árbók"
                         aria-current={isActivePath('/arbok') ? 'page' : undefined}

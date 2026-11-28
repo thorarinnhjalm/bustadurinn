@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
     X, ChevronRight, CheckCircle,
     Calendar, CheckSquare, Wallet,
     Home
 } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
 
 interface WalkthroughProps {
     onClose: () => void;
@@ -63,27 +64,21 @@ export default function Walkthrough({ onClose }: WalkthroughProps) {
         onClose();
     };
 
-    // Escape dismisses the walkthrough (same as "Sleppa kynningu")
-    useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                localStorage.setItem('has_seen_walkthrough', 'true');
-                onClose();
-            }
-        };
-        document.addEventListener('keydown', onKeyDown);
-        return () => document.removeEventListener('keydown', onKeyDown);
-    }, [onClose]);
-
     const step = STEPS[currentStep];
 
+    // The walkthrough covers the whole page and blocks it, so it is a real modal
+    // dialog: focus is trapped, Escape dismisses it (same as "Sleppa kynningu").
     return (
-        <div
-            role="region"
-            aria-label="Kynning á Bústaðnum"
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-charcoal/80 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in duration-300"
+        <Modal
+            open
+            onClose={complete}
+            title="Kynning á Bústaðnum"
+            hideTitle
+            showCloseButton={false}
+            size="md"
+            bodyClassName="!p-0"
         >
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative motion-safe:animate-in motion-safe:zoom-in-95 duration-300">
+            <div className="w-full overflow-hidden relative">
                 {/* Close Button */}
                 <button
                     type="button"
@@ -158,6 +153,6 @@ export default function Walkthrough({ onClose }: WalkthroughProps) {
                     </div>
                 </div>
             </div>
-        </div>
+        </Modal>
     );
 }

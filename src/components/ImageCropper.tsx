@@ -132,6 +132,7 @@ export default function ImageCropper({
             onClose={onCancel}
             title="Klippa mynd"
             size="full"
+            className="!bg-black !text-white"
             bodyClassName="!p-0"
             footer={
                 <div className="flex gap-3 w-full">
@@ -163,7 +164,7 @@ export default function ImageCropper({
                 </div>
             }
         >
-            <div className="flex flex-col bg-black/90">
+            <div className="flex flex-col bg-black">
                 <div className="relative h-[55vh]">
                     <Cropper
                         image={image}

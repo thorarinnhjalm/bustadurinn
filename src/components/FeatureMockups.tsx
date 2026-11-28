@@ -144,7 +144,7 @@ export const FinanceMockup = () => (
             </div>
 
             <div className="text-5xl font-serif font-bold mb-2">
-                145.200 <span className="text-2xl font-sans font-normal text-stone-500">kr.</span>
+                145.200 <span className="text-2xl font-sans font-normal text-stone-300">kr.</span>
             </div>
             <p className="text-stone-400 text-sm mb-12">Staða á reikningi í dag</p>
 
@@ -330,7 +330,7 @@ export const MultiHouseMockup = () => (
             </div>
 
             <div className="flex justify-center mt-4">
-                <div className="text-stone-500 text-xs font-bold flex items-center gap-2">
+                <div className="text-stone-400 text-xs font-bold flex items-center gap-2">
                     <Plus size={14} /> Bæta við nýju húsi
                 </div>
             </div>

@@ -132,11 +132,15 @@ export default function FAQPage() {
                                     role="region"
                                     aria-labelledby={`faq-q-${index}`}
                                     inert={openIndex !== index}
-                                    className={`overflow-hidden transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                                    // grid-rows 0fr -> 1fr animates to the content's real height, so long
+                                    // answers are never clipped (a fixed max-h cap cut them off on phones)
+                                    className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${openIndex === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                                         }`}
                                 >
-                                    <div className="p-6 pt-0 text-grey-dark leading-relaxed border-t border-grey-warm/50 bg-bone/30">
-                                        {faq.a}
+                                    <div className="overflow-hidden min-h-0">
+                                        <div className="p-6 pt-0 text-grey-dark leading-relaxed border-t border-grey-warm/50 bg-bone/30">
+                                            {faq.a}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

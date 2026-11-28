@@ -82,6 +82,7 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
             title="Forskoðun gestasíðu"
             hideTitle
             size="full"
+            className="!bg-charcoal"
             bodyClassName="!p-0 bg-[#FDFCF8]"
         >
             <div className="flex flex-col">

@@ -174,6 +174,19 @@ Security rules (`firestore.rules`, `storage.rules`) have their own suite in `tes
 
 E2E tests use Playwright (Chromium only). Tests live in `tests/e2e/`. The dev server must be running on `http://127.0.0.1:5173` before running E2E tests.
 
+**Emulator e2e suite** (`tests/e2e-emulator/`, config `playwright.emulator.config.ts`): drives the real app in Chromium against the Firebase emulators (Auth/Firestore/Storage, loading the real `firestore.rules`/`storage.rules`) as a normal, non-admin user, at 1280x800 (`desktop` project) and 390x844 (`mobile` project, specs tagged `@mobile`). Nothing talks to the real Firebase project or the production API: every `/api/*` call is answered by a mock in `tests/e2e-emulator/support/fixtures.ts` (an un-mocked `/api` call, a request to a real host, an uncaught page error, a `console.error` or a Firestore `permission-denied` fails the test), third parties are blocked, and data is seeded through the emulators' REST endpoints (`support/seed.ts`). The client only connects to the emulators when built with `VITE_USE_EMULATORS=true` (`src/config/firebase.ts`, `src/lib/firebase.ts`); production builds without the flag contain no emulator hosts. Three terminals:
+```bash
+# 1. emulators (the sandbox proxy vars break emulator-to-emulator calls, so unset them)
+env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy -u GLOBAL_AGENT_HTTP_PROXY -u GLOBAL_AGENT_HTTPS_PROXY \
+  npx firebase emulators:start --only auth,firestore,storage --project demo-bustadurinn
+# 2. dev server on the emulators (port 5197; /api is mocked by the tests, never reaches production)
+VITE_USE_EMULATORS=true npx vite --port 5197 --host 127.0.0.1
+# 3. the suite (screenshots land in the git-ignored tests/e2e-emulator/screenshots/)
+npm run test:e2e:emulator            # add `-- -g finance` or `--project=mobile` to narrow
+```
+Set `PW_CHROMIUM_PATH` if the Chromium pinned by `@playwright/test` is not installed (the config falls back to `/opt/pw-browsers/chromium`). The API handlers that change data (join-house, leave-house, remove-member, transfer-manager, guestbook-entry) are simulated against the emulator by the mock, not run for real.
+
+
 ## Deployment
 
 Vercel Pro, auto-deploys from `main` branch. SPA fallback configured — all non-`/api` routes rewrite to `index.html`. Security headers (HSTS, CSP, X-Frame-Options) set in `vercel.json`.
