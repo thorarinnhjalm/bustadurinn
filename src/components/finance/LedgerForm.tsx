@@ -93,7 +93,7 @@ export default function LedgerForm({ onSave, onCancel, budgetCategories = [], in
                     aria-pressed={type !== 'expense'}
                     onClick={() => setType('income')}
                     className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${type !== 'expense'
-                        ? 'bg-green-600 text-white shadow-sm'
+                        ? 'bg-green-700 text-white shadow-sm'
                         : 'text-grey-mid hover:text-charcoal'
                         }`}
                 >

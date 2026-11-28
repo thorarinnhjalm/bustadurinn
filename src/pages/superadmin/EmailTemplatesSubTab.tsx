@@ -210,7 +210,7 @@ export default function EmailTemplatesSubTab({
                                                 <CheckCircle className="w-3 h-3" /> Virkt
                                             </span>
                                         ) : (
-                                            <span className="bg-stone-100 text-stone-500 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                            <span className="bg-stone-100 text-grey-mid text-xs px-2 py-1 rounded-full flex items-center gap-1">
                                                 <XCircle className="w-3 h-3" /> Óvirkt
                                             </span>
                                         )}

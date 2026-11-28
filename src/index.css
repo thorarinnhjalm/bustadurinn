@@ -705,3 +705,8 @@ dialog::backdrop {
     cursor: pointer;
   }
 }
+
+/* react-big-calendar greys the days of the neighbouring months with #999 on #e6e6e6 (2.3:1) */
+.rbc-month-view .rbc-off-range {
+  color: #5c5852;
+}

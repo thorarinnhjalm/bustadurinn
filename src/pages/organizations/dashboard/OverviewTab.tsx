@@ -200,7 +200,7 @@ export default function OverviewTab({
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => onApproveAccess(request.id)}
-                                        className="btn btn-sm bg-green-600 hover:bg-green-700 text-white"
+                                        className="btn btn-sm bg-green-700 hover:bg-green-800 text-white"
                                     >
                                         <CheckCircle aria-hidden="true" className="w-4 h-4" />
                                         Samþykkja

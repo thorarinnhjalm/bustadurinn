@@ -25,6 +25,7 @@ import BookingSuccessDialog from './calendar/BookingSuccessDialog';
 import { useBookings } from './calendar/useBookings';
 import { useBookingForm } from './calendar/useBookingForm';
 import type { BookingEvent, CalendarView } from './calendar/calendarTypes';
+import PageTitle from '@/components/PageTitle';
 
 export default function CalendarPage() {
     const { user: currentUser } = useEffectiveUser();
@@ -137,6 +138,7 @@ export default function CalendarPage() {
 
     return (
         <main className="min-h-screen bg-bone">
+            <PageTitle title="Bókunardagatal" />
             {/* Header */}
             <div className="bg-white border-b border-grey-warm relative md:sticky md:top-0 z-30 shadow-sm">
                 <div className="container mx-auto px-6 py-6">
@@ -176,7 +178,7 @@ export default function CalendarPage() {
                         onClick={() => setView('month')}
                         className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${view === 'month'
                             ? 'bg-white text-charcoal shadow-sm'
-                            : 'text-stone-500 hover:text-stone-700'
+                            : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         Mánuður
@@ -187,7 +189,7 @@ export default function CalendarPage() {
                         onClick={() => setView('agenda')}
                         className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all ${view === 'agenda'
                             ? 'bg-white text-charcoal shadow-sm'
-                            : 'text-stone-500 hover:text-stone-700'
+                            : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         Listi
@@ -234,15 +236,15 @@ export default function CalendarPage() {
                         <span className="text-sm text-grey-dark">{bookingTypeLabels[language].personal}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded bg-green-500" aria-hidden="true"></div>
+                        <div className="w-4 h-4 rounded bg-emerald-700" aria-hidden="true"></div>
                         <span className="text-sm text-grey-dark">{bookingTypeLabels[language].rental}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded bg-red-500" aria-hidden="true"></div>
+                        <div className="w-4 h-4 rounded bg-red-600" aria-hidden="true"></div>
                         <span className="text-sm text-grey-dark">{bookingTypeLabels[language].maintenance}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded bg-indigo-500" aria-hidden="true"></div>
+                        <div className="w-4 h-4 rounded bg-indigo-600" aria-hidden="true"></div>
                         <span className="text-sm text-grey-dark">{bookingTypeLabels[language].guest}</span>
                     </div>
                     <div className="flex items-center gap-2">

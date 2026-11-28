@@ -112,7 +112,6 @@ export default function SEO({
 
             {/* Language */}
             <meta httpEquiv="content-language" content="is" />
-            <html lang="is" />
 
             {/* Organization Schema — renders on every page */}
             <script type="application/ld+json">

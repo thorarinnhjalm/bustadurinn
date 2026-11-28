@@ -111,15 +111,15 @@ export default function UppsetningPage() {
                                 <h3 className="text-2xl font-bold mb-2">Hvað þarftu:</h3>
                                 <ul className="space-y-2 text-grey-dark">
                                     <li className="flex items-center gap-2">
-                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-700" />
                                         <span>Netfang</span>
                                     </li>
                                     <li className="flex items-center gap-2">
-                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-700" />
                                         <span>Lykilorð (að minnsta kosti 6 stafir)</span>
                                     </li>
                                     <li className="flex items-center gap-2">
-                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-700" />
                                         <span>Nafn þitt</span>
                                     </li>
                                 </ul>
@@ -158,15 +158,15 @@ export default function UppsetningPage() {
                                 <h3 className="text-2xl font-bold mb-2">Upplýsingar um húsið:</h3>
                                 <ul className="space-y-2 text-grey-dark">
                                     <li className="flex items-start gap-2">
-                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-700 mt-1 flex-shrink-0" />
                                         <span><strong>Nafn:</strong> T.d. "Sumarbústaður Jóns" eða "Hús okkar í Hvalfirði"</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-700 mt-1 flex-shrink-0" />
                                         <span><strong>Heimilisfang</strong> (valfrjálst): Gott til að hafa skráð</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
+                                        <CheckCircle aria-hidden="true" className="w-4 h-4 text-green-700 mt-1 flex-shrink-0" />
                                         <span><strong>Mynd</strong> (valfrjálst): Hlaða upp mynd af húsinu</span>
                                     </li>
                                 </ul>
@@ -262,7 +262,7 @@ export default function UppsetningPage() {
                     {/* Step 5 - Done */}
                     <div className="bg-gradient-to-br from-green-50 to-white rounded-xl p-8 shadow-sm border-2 border-green-200">
                         <div className="flex items-start gap-6">
-                            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-green-600 text-white font-bold text-2xl flex items-center justify-center">
+                            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-green-700 text-white font-bold text-2xl flex items-center justify-center">
                                 ✓
                             </div>
                             <div className="flex-1">
@@ -274,17 +274,17 @@ export default function UppsetningPage() {
 
                                 <div className="grid md:grid-cols-3 gap-4">
                                     <div className="bg-white rounded-lg p-4 text-center">
-                                        <HomeIcon aria-hidden="true" className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                                        <HomeIcon aria-hidden="true" className="w-8 h-8 text-green-700 mx-auto mb-2" />
                                         <h3 className="font-bold text-sm mb-0">Bókun</h3>
                                         <p className="text-xs text-grey-mid mt-1">Skipulagðu dvöl</p>
                                     </div>
                                     <div className="bg-white rounded-lg p-4 text-center">
-                                        <Settings aria-hidden="true" className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                                        <Settings aria-hidden="true" className="w-8 h-8 text-green-700 mx-auto mb-2" />
                                         <h3 className="font-bold text-sm mb-0">Hússjóður</h3>
                                         <p className="text-xs text-grey-mid mt-1">Haltu utan um kostnað</p>
                                     </div>
                                     <div className="bg-white rounded-lg p-4 text-center">
-                                        <CheckCircle aria-hidden="true" className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                                        <CheckCircle aria-hidden="true" className="w-8 h-8 text-green-700 mx-auto mb-2" />
                                         <h3 className="font-bold text-sm mb-0">Verkefni</h3>
                                         <p className="text-xs text-grey-mid mt-1">Skipulagðu viðhald</p>
                                     </div>

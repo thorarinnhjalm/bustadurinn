@@ -13,7 +13,7 @@ export default function MembersTab({ members }: { members: OrganizationMember[] 
                 </div>
             ) : (
                 <div className="card">
-                    <div className="overflow-x-auto">
+                    <div role="region" tabIndex={0} aria-label="Starfsmenn félagsins (flettu til hliðar)" className="overflow-x-auto">
                         <table className="w-full">
                             <caption className="sr-only">Starfsmenn félagsins</caption>
                             <thead>

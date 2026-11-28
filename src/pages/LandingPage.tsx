@@ -243,7 +243,7 @@ export default function LandingPage() {
                                                 </div>
 
                                                 {/* Task Card */}
-                                                <div className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 opacity-60">
+                                                <div className="bg-white p-4 rounded-xl shadow-sm border border-stone-100">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center">
                                                             <CheckCircle size={14} className="text-stone-400" />
@@ -267,7 +267,7 @@ export default function LandingPage() {
                                 {/* Floating Badges - Outside Phone */}
                                 <div className="absolute -right-12 top-24 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/50 motion-safe:animate-float w-56 z-20">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                                        <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
                                             <CheckCircle2 size={20} />
                                         </div>
                                         <div>
@@ -488,7 +488,7 @@ export default function LandingPage() {
                                                     <div className="text-xs text-stone-500">{item.job}</div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-1 text-xs font-bold text-amber">
+                                            <div className="flex items-center gap-1 text-xs font-bold text-amber-ink">
                                                 <Sparkles className="w-3 h-3 fill-current" /> {item.stars}
                                             </div>
                                         </div>
@@ -555,7 +555,7 @@ export default function LandingPage() {
                                                 <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-stone-400"><Calendar size={14} /></div>
                                             </div>
                                         </div>
-                                        <div className="text-amber text-xs font-bold uppercase tracking-widest mb-1">Góðan daginn</div>
+                                        <div className="text-amber-ink text-xs font-bold uppercase tracking-widest mb-1">Góðan daginn</div>
                                         <div className="text-2xl font-serif font-bold text-[#1a1a1a]">Fjölskyldan</div>
                                         <div className="flex gap-2 mt-2 text-xs font-medium text-stone-500">
                                             <span className="flex items-center gap-1"><Calendar size={12} className="text-amber" /> 12°C</span>
@@ -584,7 +584,7 @@ export default function LandingPage() {
                                         <div>
                                             <div className="flex justify-between items-center mb-2">
                                                 <h5 className="font-serif font-bold text-[#1a1a1a]">Verkefni</h5>
-                                                <span className="text-[10px] text-amber font-bold">Sjá öll</span>
+                                                <span className="text-[10px] text-amber-ink font-bold">Sjá öll</span>
                                             </div>
                                             <div className="bg-white rounded-xl border border-stone-100 p-1 divide-y divide-stone-50">
                                                 <div className="flex items-center gap-3 p-3">
@@ -728,7 +728,7 @@ export default function LandingPage() {
                                 </li>
                             </ul>
 
-                            <Link to="/signup" className="btn btn-primary bg-amber w-full py-4 text-lg shadow-lg shadow-amber/20 border-0">
+                            <Link to="/signup" className="btn btn-primary bg-amber text-charcoal w-full py-4 text-lg shadow-lg shadow-amber/20 border-0">
                                 Stofna ókeypis aðgang
                             </Link>
                         </div>

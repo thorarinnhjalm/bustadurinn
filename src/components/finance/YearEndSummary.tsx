@@ -41,7 +41,7 @@ export default function YearEndSummary({ year, entries, ownerIds, members, membe
                 <div className="grid grid-cols-3 gap-4 p-4 bg-bone/50 rounded-lg mb-6">
                     <div>
                         <div className="text-xs text-grey-mid mb-1">Tekjur alls</div>
-                        <div className="font-bold text-green-600">+{formatKr(totalIncome)}</div>
+                        <div className="font-bold text-green-700">+{formatKr(totalIncome)}</div>
                     </div>
                     <div>
                         <div className="text-xs text-grey-mid mb-1">Gjöld alls</div>
@@ -49,7 +49,7 @@ export default function YearEndSummary({ year, entries, ownerIds, members, membe
                     </div>
                     <div>
                         <div className="text-xs text-grey-mid mb-1">Nettóstaða</div>
-                        <div className={`font-bold ${net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`font-bold ${net >= 0 ? 'text-green-700' : 'text-red-600'}`}>
                             {net >= 0 ? '+' : ''}{formatKr(net)}
                         </div>
                     </div>
@@ -58,7 +58,7 @@ export default function YearEndSummary({ year, entries, ownerIds, members, membe
                 {ownerIds.length === 0 && rows.length === 0 ? (
                     <p className="text-sm text-grey-mid">Engir eigendur skráðir.</p>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <div role="region" tabIndex={0} aria-label="Ársyfirlit eftir eigendum (flettu til hliðar)" className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
                             <caption className="sr-only">Ársyfirlit {year} eftir eigendum</caption>
                             <thead className="text-xs text-grey-mid uppercase border-b border-grey-warm">
@@ -77,7 +77,7 @@ export default function YearEndSummary({ year, entries, ownerIds, members, membe
                                         <td className="py-3 text-right text-grey-mid">{row.sharePercent.toFixed(0)}%</td>
                                         <td className="py-3 text-right text-grey-mid">{formatKr(row.shareAmount)}</td>
                                         <td className="py-3 text-right text-grey-mid">{formatKr(row.paidAmount)}</td>
-                                        <td className={`py-3 text-right pr-2 font-medium ${row.difference > 0 ? 'text-green-600' : row.difference < 0 ? 'text-red-600' : 'text-grey-mid'
+                                        <td className={`py-3 text-right pr-2 font-medium ${row.difference > 0 ? 'text-green-700' : row.difference < 0 ? 'text-red-600' : 'text-grey-mid'
                                             }`}>
                                             {row.difference === 0
                                                 ? '—'

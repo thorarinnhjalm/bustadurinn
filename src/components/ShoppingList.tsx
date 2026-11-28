@@ -48,7 +48,7 @@ export default function ShoppingList({ items, onToggle, onDelete, onAdd }: Shopp
                         </span>
                     </button>
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] text-grey-mid bg-stone-100 px-1.5 py-0.5 rounded">
                             {item.added_by_name}
                         </span>
                         <button

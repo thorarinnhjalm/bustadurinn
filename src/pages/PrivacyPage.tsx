@@ -114,7 +114,7 @@ export default function PrivacyPage() {
                     <h2>9. Hafa samband</h2>
                     <p>
                         Ef þú hefur spurningar um þessa persónuverndarstefnu, hafðu samband við okkur á{' '}
-                        <a href="mailto:hallo@bustadurinn.is" className="text-amber-ink hover:underline">
+                        <a href="mailto:hallo@bustadurinn.is" className="text-amber-ink underline underline-offset-2">
                             hallo@bustadurinn.is
                         </a>
                     </p>

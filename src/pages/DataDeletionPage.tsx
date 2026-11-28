@@ -65,7 +65,7 @@ export default function DataDeletionPage() {
                     </p>
                     <p>
                         <strong>Netfang:</strong>{' '}
-                        <a href="mailto:hallo@bustadurinn.is" className="text-amber-ink hover:underline">
+                        <a href="mailto:hallo@bustadurinn.is" className="text-amber-ink underline underline-offset-2">
                             hallo@bustadurinn.is
                         </a>
                     </p>
@@ -108,14 +108,14 @@ export default function DataDeletionPage() {
                     <p>
                         Ef þú hefur spurningar um eyðingu gagna eða persónuverndarstefnu okkar,
                         hafðu samband við okkur á{' '}
-                        <a href="mailto:hallo@bustadurinn.is" className="text-amber-ink hover:underline">
+                        <a href="mailto:hallo@bustadurinn.is" className="text-amber-ink underline underline-offset-2">
                             hallo@bustadurinn.is
                         </a>
                     </p>
 
                     <p className="text-sm text-stone-500 mt-8">
                         Sjá einnig:{' '}
-                        <Link to="/privacy" className="text-amber-ink hover:underline">
+                        <Link to="/privacy" className="text-amber-ink underline underline-offset-2">
                             Persónuverndarstefna
                         </Link>
                     </p>

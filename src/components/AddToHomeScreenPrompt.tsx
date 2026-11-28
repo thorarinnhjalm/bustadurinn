@@ -94,7 +94,7 @@ export default function AddToHomeScreenPrompt({ houseName, onDismiss }: AddToHom
                         <div className="space-y-4 mb-6">
                             <div className="bg-bone p-4 rounded-lg text-left">
                                 <h3 className="font-semibold text-charcoal mb-3 flex items-center gap-2">
-                                    <span className="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                                    <span className="bg-green-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
                                     Opnaðu valmynd
                                 </h3>
                                 <div className="flex items-center gap-3 text-sm text-grey-dark">
@@ -107,11 +107,11 @@ export default function AddToHomeScreenPrompt({ houseName, onDismiss }: AddToHom
 
                             <div className="bg-bone p-4 rounded-lg text-left">
                                 <h3 className="font-semibold text-charcoal mb-3 flex items-center gap-2">
-                                    <span className="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
+                                    <span className="bg-green-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
                                     Veldu "Install App" / "Add to Home screen"
                                 </h3>
                                 <div className="flex items-center gap-3 text-sm text-grey-dark">
-                                    <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                                    <div className="w-8 h-8 bg-green-700 rounded-lg flex items-center justify-center">
                                         <Download className="w-5 h-5 text-white" />
                                     </div>
                                     <span>Smelltu á "Install" eða "Add to Home screen"</span>

@@ -151,7 +151,7 @@ export default function BookingWeatherCard({
                                     <span className="text-stone-700 font-medium">{road.route}</span>
                                     <span className={`text-xs font-semibold ${road.severity === 'high' ? 'text-red-600' :
                                         road.severity === 'medium' ? 'text-amber-600' :
-                                            'text-green-600'
+                                            'text-green-700'
                                         }`}>
                                         {road.description}
                                     </span>

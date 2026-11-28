@@ -69,7 +69,7 @@ export default function AnalyticsDashboard() {
                             type="button"
                             aria-pressed={period === p}
                             onClick={() => setPeriod(p)}
-                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${period === p ? 'bg-white shadow text-charcoal' : 'text-stone-500 hover:text-stone-700'
+                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${period === p ? 'bg-white shadow text-charcoal' : 'text-grey-mid hover:text-stone-700'
                                 }`}
                         >
                             {p === '7d' ? '7 dagar' : p === '30d' ? '30 dagar' : '90 dagar'}
@@ -190,7 +190,7 @@ export default function AnalyticsDashboard() {
                             <MetricCard
                                 label="CTR (Smellihlutfall)"
                                 value={`${searchData.ctr?.toFixed(1) || '0'}%`}
-                                icon={<TrendingUp className="w-5 h-5 text-green-600" aria-hidden="true" />}
+                                icon={<TrendingUp className="w-5 h-5 text-green-700" aria-hidden="true" />}
                             />
                             <MetricCard
                                 label="Meðal Staða"
@@ -205,7 +205,7 @@ export default function AnalyticsDashboard() {
                             <Search className="w-4 h-4 text-stone-400" aria-hidden="true" /> Vinsælustu leitarorð
                         </h3>
                         {searchData.topQueries && searchData.topQueries.length > 0 ? (
-                            <div className="overflow-x-auto">
+                            <div role="region" tabIndex={0} aria-label="Vinsælustu leitarorð (flettu til hliðar)" className="overflow-x-auto">
                                 <table className="w-full text-sm text-left">
                                     <caption className="sr-only">Vinsælustu leitarorð í Google Search</caption>
                                     <thead className="text-xs text-stone-500 uppercase bg-stone-50">
@@ -249,7 +249,7 @@ function MetricCard({ label, value, icon, trend }: { label: string, value: strin
             </div>
             <div className="flex items-end justify-between">
                 <span className="text-2xl font-bold text-charcoal">{value}</span>
-                {trend && <span className="text-[10px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded-full">{trend}</span>}
+                {trend && <span className="text-[10px] text-green-700 font-bold bg-green-50 px-1.5 py-0.5 rounded-full">{trend}</span>}
             </div>
         </div>
     );

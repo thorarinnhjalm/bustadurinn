@@ -413,7 +413,7 @@ export default function GuestsTab({
                                     onClick={() => setEditLang('is')}
                                     className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${editLang === 'is'
                                         ? 'bg-white text-charcoal shadow-sm'
-                                        : 'text-stone-500 hover:text-stone-700'
+                                        : 'text-grey-mid hover:text-stone-700'
                                         }`}
                                 >
                                     🇮🇸 Íslenska
@@ -424,7 +424,7 @@ export default function GuestsTab({
                                     onClick={() => setEditLang('en')}
                                     className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${editLang === 'en'
                                         ? 'bg-white text-charcoal shadow-sm'
-                                        : 'text-stone-500 hover:text-stone-700'
+                                        : 'text-grey-mid hover:text-stone-700'
                                         }`}
                                 >
                                     🇬🇧 English

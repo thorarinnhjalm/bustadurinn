@@ -154,7 +154,7 @@ const SandboxFinance = ({ onUnlockRequest }: { onUnlockRequest: (feature: string
                 {/* Stats placeholder */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-200 flex flex-col justify-center">
                     <p className="text-sm text-grey-mid">Tekjur (Jan)</p>
-                    <p className="text-xl font-bold text-green-600">+150.000 kr.</p>
+                    <p className="text-xl font-bold text-green-700">+150.000 kr.</p>
                     <div className="h-4"></div>
                     <p className="text-sm text-grey-mid">Gjöld (Jan)</p>
                     <p className="text-xl font-bold text-red-500">-39.500 kr.</p>
@@ -170,7 +170,7 @@ const SandboxFinance = ({ onUnlockRequest }: { onUnlockRequest: (feature: string
                     {entries.map(entry => (
                         <div key={entry.id} className="p-4 hover:bg-stone-50 transition-colors flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${entry.type === 'income' ? 'bg-green-100 text-green-600' : 'bg-red-50 text-red-500'
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${entry.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'
                                     }`}>
                                     <DollarSign aria-hidden="true" className="w-5 h-5" />
                                 </div>
@@ -179,7 +179,7 @@ const SandboxFinance = ({ onUnlockRequest }: { onUnlockRequest: (feature: string
                                     <p className="text-xs text-stone-500">{entry.date} • {entry.category}</p>
                                 </div>
                             </div>
-                            <span className={`font-mono font-medium ${entry.type === 'income' ? 'text-green-600' : 'text-charcoal'
+                            <span className={`font-mono font-medium ${entry.type === 'income' ? 'text-green-700' : 'text-charcoal'
                                 }`}>
                                 {entry.amount > 0 ? '+' : ''}{entry.amount.toLocaleString('is-IS')} kr
                             </span>

@@ -84,19 +84,19 @@ export default function FjarmalPage() {
                             <h3 className="text-xl font-bold mb-4">Tegundir framlaga:</h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Föst mánaðarleg innborgun:</strong> Hver eigandi greiðir sömu upphæð í hverjum mánuði
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Árleg innborgun:</strong> Öll innborgun fer fram einu sinni á ári
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Innborganir eftir þörfum:</strong> Þegar stór verkefni koma upp biðja eigendur um innborgun
                                     </div>
@@ -195,19 +195,19 @@ export default function FjarmalPage() {
                             <h3 className="text-xl font-bold mb-4">Hvað er hægt að skrá:</h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Útgjöld:</strong> Skráðu upphæð, dagsetningu og flokk (t.d. rafmagn, viðhald, tryggingar)
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Tekjur:</strong> Innborganir frá eigendum eða útleigutekjur
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
-                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                                    <CheckSquare aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong>Skipta kostnaði:</strong> Ef margir eigendur greiða saman fyrir eitthvað, skráðu hverjir tóku þátt og upphæðin skiptist jafnt milli þeirra
                                     </div>

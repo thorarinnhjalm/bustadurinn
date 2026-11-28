@@ -44,7 +44,7 @@ const STEPS = [
         title: 'Allt klárt!',
         description: 'Þú ert tilbúin(n). Skoðaðu Árbókina í lok árs fyrir yfirlit yfir dvöl og minningar. Ef þú þarft að breyta stillingum eða bjóða fleirum, kíktu þá í Stillingar.',
         icon: CheckCircle,
-        color: 'bg-green-100 text-green-600'
+        color: 'bg-green-100 text-green-700'
     }
 ];
 

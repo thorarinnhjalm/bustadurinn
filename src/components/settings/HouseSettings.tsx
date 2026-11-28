@@ -556,10 +556,10 @@ export default function HouseSettings({
                                     type="button"
                                     onClick={() => setEditLang('is')}
                                     aria-pressed={editLang === 'is'}
-                                    aria-label="Íslenska"
+                                    aria-label="Ís, íslenska"
                                     className={`px-3 py-1.5 rounded text-xs font-bold transition-all ${editLang === 'is'
                                             ? 'bg-white text-charcoal shadow-sm'
-                                            : 'text-stone-500 hover:text-stone-700'
+                                            : 'text-grey-mid hover:text-stone-700'
                                         }`}
                                 >
                                     Ís
@@ -568,10 +568,10 @@ export default function HouseSettings({
                                     type="button"
                                     onClick={() => setEditLang('en')}
                                     aria-pressed={editLang === 'en'}
-                                    aria-label="Enska"
+                                    aria-label="En, enska"
                                     className={`px-3 py-1.5 rounded text-xs font-bold transition-all ${editLang === 'en'
                                             ? 'bg-white text-charcoal shadow-sm'
-                                            : 'text-stone-500 hover:text-stone-700'
+                                            : 'text-grey-mid hover:text-stone-700'
                                         }`}
                                 >
                                     En

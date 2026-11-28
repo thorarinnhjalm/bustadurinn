@@ -70,7 +70,7 @@ export default function AccessRequestsTab({ accessRequests, onApproveAccess, onD
                                     <div className="flex flex-wrap gap-2 sm:ml-4">
                                         <button
                                             onClick={() => onApproveAccess(request.id)}
-                                            className="btn bg-green-600 hover:bg-green-700 text-white"
+                                            className="btn bg-green-700 hover:bg-green-800 text-white"
                                         >
                                             <CheckCircle aria-hidden="true" className="w-5 h-5" />
                                             Samþykkja

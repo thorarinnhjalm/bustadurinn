@@ -44,7 +44,7 @@ export default function NewsletterSubTab({ stats, setStats }: NewsletterSubTabPr
                         key: 'source',
                         label: 'Uppruni',
                         render: (row) => (
-                            <span className="text-xs bg-stone-100 text-stone-500 px-2 py-0.5 rounded">
+                            <span className="text-xs bg-stone-100 text-grey-mid px-2 py-0.5 rounded">
                                 {row.source || '/'}
                             </span>
                         )

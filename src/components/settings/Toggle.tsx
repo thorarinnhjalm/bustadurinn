@@ -31,7 +31,7 @@ export default function Toggle({ label, description, checked, onChange, disabled
                 e.stopPropagation();
                 onChange(!checked);
             }}
-            className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-2 ${checked ? 'bg-amber' : 'bg-stone-200'} ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-2 ${checked ? 'bg-amber' : 'bg-stone-200'} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
         >
             <span
                 aria-hidden="true"
@@ -42,7 +42,7 @@ export default function Toggle({ label, description, checked, onChange, disabled
 
     if (variant === 'row') {
         return (
-            <div className={`flex items-start justify-between py-2 ${disabled ? 'opacity-50' : ''}`}>
+            <div className={`flex items-start justify-between py-2`}>
                 <div className="flex-1 mr-4">
                     <p id={labelId} className="text-sm font-bold text-charcoal">{label}</p>
                     <p id={descId} className="text-xs text-stone-500">{description}</p>
@@ -57,7 +57,7 @@ export default function Toggle({ label, description, checked, onChange, disabled
             className={`flex items-start justify-between p-4 rounded-xl border transition-all ${checked
                 ? 'bg-amber/5 border-amber/20'
                 : 'bg-stone-50 border-stone-100'
-                } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
             onClick={() => !disabled && onChange(!checked)}
         >
             <div className="flex-1 mr-4">

@@ -26,6 +26,7 @@ import MembersTab from './settings/MembersTab';
 import GuestsTab from './settings/GuestsTab';
 import GuestbookTab from './settings/GuestbookTab';
 import ProfileTab from './settings/ProfileTab';
+import PageTitle from '@/components/PageTitle';
 
 export default function SettingsPage() {
     const navigate = useNavigate();
@@ -78,6 +79,7 @@ export default function SettingsPage() {
 
     return (
         <div className="min-h-screen bg-bone pb-24">
+            <PageTitle title="Stillingar" />
             {/* Header */}
             <div className="bg-white border-b border-grey-warm">
                 <div className="container mx-auto px-6 py-6">

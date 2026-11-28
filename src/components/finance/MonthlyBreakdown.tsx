@@ -109,7 +109,7 @@ export default function MonthlyBreakdown({ budgetItems }: MonthlyBreakdownProps)
                     <div className="grid grid-cols-3 gap-4 p-4 bg-bone/50 rounded-lg">
                         <div>
                             <div className="text-xs text-grey-mid mb-1">Tekjur alls</div>
-                            <div className="font-bold text-green-600">
+                            <div className="font-bold text-green-700">
                                 +{Math.round(totalIncome).toLocaleString()} kr.
                             </div>
                         </div>
@@ -121,7 +121,7 @@ export default function MonthlyBreakdown({ budgetItems }: MonthlyBreakdownProps)
                         </div>
                         <div>
                             <div className="text-xs text-grey-mid mb-1">Staða í lok árs</div>
-                            <div className={`font-bold ${yearEndBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            <div className={`font-bold ${yearEndBalance >= 0 ? 'text-green-700' : 'text-red-600'}`}>
                                 {Math.round(yearEndBalance).toLocaleString()} kr.
                             </div>
                         </div>
@@ -139,7 +139,7 @@ export default function MonthlyBreakdown({ budgetItems }: MonthlyBreakdownProps)
                                 <div role="rowheader" className="font-medium text-charcoal">
                                     {data.month}
                                 </div>
-                                <div role="cell" className="text-right text-green-600">
+                                <div role="cell" className="text-right text-green-700">
                                     +{Math.round(data.income).toLocaleString()}
                                 </div>
                                 <div role="cell" className="text-right text-red-600">
@@ -148,8 +148,8 @@ export default function MonthlyBreakdown({ budgetItems }: MonthlyBreakdownProps)
                                 <div role="cell" className="text-right font-medium flex items-center justify-end gap-1">
                                     {data.net >= 0 ? (
                                         <>
-                                            <TrendingUp className="w-3 h-3 text-green-600" aria-hidden="true" />
-                                            <span className="text-green-600">+{Math.round(data.net).toLocaleString()}</span>
+                                            <TrendingUp className="w-3 h-3 text-green-700" aria-hidden="true" />
+                                            <span className="text-green-700">+{Math.round(data.net).toLocaleString()}</span>
                                         </>
                                     ) : (
                                         <>

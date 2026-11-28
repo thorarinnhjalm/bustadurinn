@@ -28,6 +28,7 @@ import ShoppingCard from './dashboard/ShoppingCard';
 import InventorySection from './dashboard/InventorySection';
 import TasksCard from './dashboard/TasksCard';
 import BookingDetailDialog from './dashboard/BookingDetailDialog';
+import PageTitle from '@/components/PageTitle';
 
 const UserDashboard = () => {
     const navigate = useNavigate();
@@ -143,6 +144,7 @@ const UserDashboard = () => {
 
     return (
         <DashboardLayout>
+            <PageTitle title="Stjórnborð" />
             {/* --- HERO IMAGE & STATUS --- */}
             <DashboardHero
                 currentHouse={currentHouse}

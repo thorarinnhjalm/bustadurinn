@@ -258,7 +258,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                                                 className={`w-full text-left p-4 hover:bg-stone-50 cursor-pointer transition-colors relative flex gap-3 ${!notif.read ? 'bg-amber/5' : ''}`}
                                             >
                                                 {!notif.read && <div aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-1 bg-amber"></div>}
-                                                <div aria-hidden="true" className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.type === 'booking' ? 'bg-green-100 text-green-600' :
+                                                <div aria-hidden="true" className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.type === 'booking' ? 'bg-green-100 text-green-700' :
                                                     notif.type === 'task' ? 'bg-blue-100 text-blue-600' :
                                                         notif.type === 'join_request' ? 'bg-purple-100 text-purple-600' :
                                                             'bg-amber-100 text-amber-ink'
@@ -287,7 +287,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Link
                         to="/settings?tab=profile"
                         onClick={() => { setShowHouseSwitcher(false); setShowNotifications(false); }}
-                        aria-label="Prófíllinn minn"
+                        aria-label={`${currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}, prófíllinn minn`}
                         className="w-8 h-8 bg-[#1a1a1a] rounded-full flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:bg-stone-800"
                     >
                         {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'ME'}

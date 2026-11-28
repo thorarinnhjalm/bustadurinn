@@ -29,7 +29,7 @@ export default function DataTab({ stats, setStats, actionLoading, setActionLoadi
                         onClick={() => setDataSubTab('houses')}
                         className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'houses'
                             ? 'text-charcoal border-b-2 border-amber'
-                            : 'text-stone-500 hover:text-stone-700'
+                            : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export default function DataTab({ stats, setStats, actionLoading, setActionLoadi
                         onClick={() => setDataSubTab('users')}
                         className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'users'
                             ? 'text-charcoal border-b-2 border-amber'
-                            : 'text-stone-500 hover:text-stone-700'
+                            : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ export default function DataTab({ stats, setStats, actionLoading, setActionLoadi
                         onClick={() => setDataSubTab('organizations')}
                         className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'organizations'
                             ? 'text-charcoal border-b-2 border-amber'
-                            : 'text-stone-500 hover:text-stone-700'
+                            : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         <div className="flex items-center gap-2">
@@ -71,7 +71,7 @@ export default function DataTab({ stats, setStats, actionLoading, setActionLoadi
                         onClick={() => setDataSubTab('providers')}
                         className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${dataSubTab === 'providers'
                             ? 'text-charcoal border-b-2 border-amber'
-                            : 'text-stone-500 hover:text-stone-700'
+                            : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         <div className="flex items-center gap-2">

@@ -351,7 +351,7 @@ export default function FeaturesPage() {
                                             <ul className="space-y-2">
                                                 {feature.benefits.map((benefit, i) => (
                                                     <li key={i} className="flex items-start gap-2">
-                                                        <CheckCircle2 aria-hidden="true" className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                                        <CheckCircle2 aria-hidden="true" className="w-5 h-5 text-green-700 flex-shrink-0 mt-0.5" />
                                                         <span className="text-grey-dark">{benefit}</span>
                                                     </li>
                                                 ))}

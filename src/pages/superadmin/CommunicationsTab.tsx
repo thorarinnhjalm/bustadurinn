@@ -44,7 +44,7 @@ export default function CommunicationsTab({
                         onClick={() => setCommunicationsSubTab('contacts')}
                         className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'contacts'
                             ? 'text-charcoal border-b-2 border-amber'
-                            : 'text-stone-500 hover:text-stone-700'
+                            : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         <div className="flex items-center gap-2">
@@ -58,7 +58,7 @@ export default function CommunicationsTab({
                         onClick={() => setCommunicationsSubTab('emails')}
                         className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'emails'
                             ? 'text-charcoal border-b-2 border-amber'
-                            : 'text-stone-500 hover:text-stone-700'
+                            : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         <div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ export default function CommunicationsTab({
                         onClick={() => setCommunicationsSubTab('newsletter')}
                         className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'newsletter'
                             ? 'text-charcoal border-b-2 border-amber'
-                            : 'text-stone-500 hover:text-stone-700'
+                            : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         <div className="flex items-center gap-2">
@@ -86,7 +86,7 @@ export default function CommunicationsTab({
                         onClick={() => setCommunicationsSubTab('feedback')}
                         className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${communicationsSubTab === 'feedback'
                             ? 'text-charcoal border-b-2 border-amber'
-                            : 'text-stone-500 hover:text-stone-700'
+                            : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         <div className="flex items-center gap-2">

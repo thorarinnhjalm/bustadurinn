@@ -518,7 +518,7 @@ export default function LoginPage() {
                             <button
                                 type="button"
                                 onClick={handleFacebookLogin}
-                                className="btn bg-[#1877F2] text-white hover:bg-[#166FE5] w-full flex items-center justify-center gap-2"
+                                className="btn bg-[#1565c0] text-white hover:bg-[#0d47a1] w-full flex items-center justify-center gap-2"
                                 disabled={isLoading}
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

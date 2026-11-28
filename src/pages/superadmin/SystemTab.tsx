@@ -87,7 +87,7 @@ export default function SystemTab({
                         onClick={() => setSystemSubTab('audit')}
                         className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${systemSubTab === 'audit'
                             ? 'text-charcoal border-b-2 border-amber'
-                            : 'text-stone-500 hover:text-stone-700'
+                            : 'text-grey-mid hover:text-stone-700'
                             }`}
                     >
                         <div className="flex items-center gap-2">

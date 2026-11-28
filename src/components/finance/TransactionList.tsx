@@ -26,7 +26,7 @@ export default function TransactionList({ entries, onDelete, onEdit, currentUser
     );
 
     return (
-        <div className="overflow-x-auto">
+        <div role="region" tabIndex={0} aria-label="Færslur í bókhaldi (flettu til hliðar)" className="overflow-x-auto">
             <table className="w-full text-left">
                 <caption className="sr-only">Færslur í bókhaldi</caption>
                 <thead className="text-xs text-grey-mid uppercase border-b border-grey-warm">
@@ -65,7 +65,7 @@ export default function TransactionList({ entries, onDelete, onEdit, currentUser
                                         <div className="sm:hidden text-xs font-normal text-grey-mid mt-0.5 [overflow-wrap:anywhere]">
                                             {entry.description}
                                             {entry.paid_by_name && (
-                                                <span className="block opacity-60">Skráð af: {entry.paid_by_name}</span>
+                                                <span className="block">Skráð af: {entry.paid_by_name}</span>
                                             )}
                                         </div>
                                     )}
@@ -73,12 +73,12 @@ export default function TransactionList({ entries, onDelete, onEdit, currentUser
                                 <td className="py-3 text-sm text-grey-mid hidden sm:table-cell">
                                     {entry.description}
                                     {entry.paid_by_name && (
-                                        <span className="text-xs opacity-60 block">
+                                        <span className="text-xs block">
                                             Skráð af: {entry.paid_by_name}
                                         </span>
                                     )}
                                 </td>
-                                <td className={`py-3 text-sm font-bold text-right whitespace-nowrap ${isExpense ? 'text-charcoal' : 'text-green-600'
+                                <td className={`py-3 text-sm font-bold text-right whitespace-nowrap ${isExpense ? 'text-charcoal' : 'text-green-700'
                                     }`}>
                                     <span className="sr-only">{isExpense ? 'Útgjöld: ' : 'Tekjur: '}</span>
                                     {isExpense ? '- ' : '+ '}

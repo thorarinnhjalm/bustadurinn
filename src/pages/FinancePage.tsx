@@ -57,6 +57,7 @@ import {
     resolvePaidByName,
     validateAmount
 } from '@/components/finance/ledgerUtils';
+import PageTitle from '@/components/PageTitle';
 
 type Tab = 'budget' | 'ledger' | 'summary';
 
@@ -236,6 +237,7 @@ export default function FinancePage() {
 
     return (
         <main className="min-h-screen bg-bone p-6 pb-24">
+            <PageTitle title="Hússjóður" />
             {/* Header */}
             <div className="max-w-5xl mx-auto mb-8">
                 <Link
@@ -256,7 +258,7 @@ export default function FinancePage() {
                             to="/settings?tab=house"
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${house?.privacy_hide_finances
                                 ? 'bg-amber/10 text-amber-700 border-amber/20 hover:bg-amber/20'
-                                : 'bg-stone-100 text-stone-500 border-stone-200 hover:bg-stone-200'
+                                : 'bg-stone-100 text-grey-mid border-stone-200 hover:bg-stone-200'
                                 }`}
                         >
                             {house?.privacy_hide_finances ? (
@@ -558,7 +560,7 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
                         <PiggyBank className="w-5 h-5 sm:w-6 sm:h-6 text-amber" aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-base sm:text-lg font-medium opacity-90 mb-1">Rekstraráætlun {currentYear}</h2>
+                        <h2 className="text-base sm:text-lg font-medium text-white opacity-90 mb-1">Rekstraráætlun {currentYear}</h2>
                         <div className="text-2xl sm:text-3xl font-serif font-bold">
                             {netPosition >= 0 ? '+' : ''}{netPosition.toLocaleString()} kr.
                         </div>
@@ -636,7 +638,7 @@ function BudgetView({ houseId, currentUserId, house, entries, loading, isManager
                                                 {item.category}
                                             </div>
                                             {itemType === 'income' && (
-                                                <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">
+                                                <span className="text-xs bg-green-700 text-white px-2 py-0.5 rounded">
                                                     Tekjur
                                                 </span>
                                             )}
@@ -867,7 +869,7 @@ function LedgerView({ houseId, currentUserId, isManager, currentUserName, allEnt
                         <Wallet className="w-6 h-6 text-amber" aria-hidden="true" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-medium opacity-90">Staða sjóðsins</h2>
+                        <h2 className="text-lg font-medium text-white opacity-90">Staða sjóðsins</h2>
                         <div className="text-3xl font-serif font-bold mt-1">
                             {fund.balance.toLocaleString()} kr.
                         </div>
