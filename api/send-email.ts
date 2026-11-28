@@ -205,7 +205,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                             <h2 style="color: #4a4642;">{title}</h2>
                             <p style="font-size: 16px; color: #1c1917; line-height: 1.6;">{message}</p>
                             <div style="margin-top: 24px; text-align: center;">
-                                <a href="{actionUrl}" style="background-color: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Skoða nánar</a>
+                                <a href="{actionUrl}" style="background-color: #e8b058; color: #1a1a1a; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Skoða nánar</a>
                             </div>
                         </div>
                     `,
@@ -277,7 +277,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .feature-box { background: #f5f5f0; border-left: 4px solid #e8b058; padding: 20px; margin: 20px 0; border-radius: 8px; }
         .feature-box h3 { margin: 0 0 10px 0; color: #1a1a1a; font-size: 16px; }
         .feature-box p { margin: 0; color: #666; font-size: 14px; }
-        .button { display: inline-block; background: #e8b058; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 10px 0; text-align: center; }
+        .button { display: inline-block; background: #e8b058; color: #1a1a1a; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 10px 0; text-align: center; }
         .footer { background: #f5f5f0; padding: 30px; text-align: center; font-size: 13px; color: #666; }
         .divider { height: 1px; background: #e0e0e0; margin: 30px 0; }
     </style>
@@ -330,7 +330,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
         .content { padding: 40px 30px; }
         .greeting { font-size: 18px; color: #333; margin-bottom: 20px; }
-        .button { display: inline-block; background: #e8b058; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; text-align: center; width: 100%; box-sizing: border-box; }
+        .button { display: inline-block; background: #e8b058; color: #1a1a1a; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; text-align: center; width: 100%; box-sizing: border-box; }
         .footer { background: #f5f5f0; padding: 30px; text-align: center; font-size: 13px; color: #666; }
     </style>
 </head>

@@ -174,7 +174,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                                     webpush: {
                                         notification: {
                                             icon: 'https://bustadurinn.is/logo.png',
-                                            badge: 'https://bustadurinn.is/icon-192x192.png',
+                                            badge: 'https://bustadurinn.is/badge-96.png',
                                         },
                                         fcmOptions: { link: 'https://bustadurinn.is/calendar' },
                                     },

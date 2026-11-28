@@ -81,7 +81,7 @@ onBackgroundMessage(messaging, (payload) => {
     const notificationOptions = {
         body: payload.notification?.body,
         icon: '/logo.png',
-        badge: '/icon-192x192.png',
+        badge: '/badge-96.png',
         data: payload.data,
     };
 

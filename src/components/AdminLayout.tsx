@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import type { House } from '@/types/models';
+import BrandLogo from '@/components/BrandLogo';
 
 interface AdminLayoutProps {
     children: ReactNode;
@@ -53,8 +54,9 @@ export default function AdminLayout({
         <div className="flex h-screen bg-stone-50 overflow-hidden">
             {/* Mobile Header */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-charcoal text-bone flex items-center justify-between px-4 z-40 border-b border-stone-800">
-                <div>
-                    <h1 className="text-lg font-mono font-bold text-amber">STJÓRNBORÐ</h1>
+                <div className="flex items-center gap-3">
+                    <BrandLogo size="sm" className="text-white" />
+                    <span className="text-[10px] bg-amber/20 text-amber px-2 py-0.5 rounded uppercase tracking-wider font-semibold">Kerfisstjórn</span>
                 </div>
                 <button
                     type="button"
@@ -87,8 +89,10 @@ export default function AdminLayout({
             `}>
                 {/* Logo / Header (Desktop only) */}
                 <div className="p-6 border-b border-stone-800 hidden md:block">
-                    <h1 className="text-lg font-mono font-bold text-amber">STJÓRNBORÐ</h1>
-                    <p className="text-xs text-stone-400 mt-1">Bústaðurinn Kerfisstjórn</p>
+                    <BrandLogo size="md" className="text-white" />
+                    <div className="mt-2 text-[10px] bg-amber/20 text-amber inline-block px-2 py-0.5 rounded uppercase tracking-wider font-semibold">
+                        Kerfisstjórn
+                    </div>
                 </div>
 
                 {/* Header Actions / House Switcher */}

@@ -43,7 +43,7 @@ export default function EmailTemplatesSubTab({
                 html_content: `
 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1c1917;">
     <div style="background-color: #f5f5f4; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
-        <h1 style="color: #d97706; margin: 0; font-family: serif;">Bústaðurinn.is</h1>
+        <h1 style="color: #1a1a1a; margin: 0; font-family: Georgia, serif;">Bústaðurinn.is</h1>
     </div>
 
     <div style="padding: 32px; border: 1px solid #e7e5e4; border-top: none; border-radius: 0 0 8px 8px;">
@@ -54,7 +54,7 @@ export default function EmailTemplatesSubTab({
         </p>
 
         <div style="text-align: center; margin: 32px 0;">
-            <a href="https://www.bustadurinn.is/dashboard" style="background-color: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+            <a href="https://www.bustadurinn.is/dashboard" style="background-color: #e8b058; color: #1a1a1a; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
                 Fara á stjórnborð
             </a>
         </div>
@@ -87,7 +87,7 @@ export default function EmailTemplatesSubTab({
         .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
         .content { padding: 40px 30px; }
         .greeting { font-size: 18px; color: #333; margin-bottom: 20px; }
-        .button { display: inline-block; background: #e8b058; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; text-align: center; width: 100%; box-sizing: border-box; }
+        .button { display: inline-block; background: #e8b058; color: #1a1a1a; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; text-align: center; width: 100%; box-sizing: border-box; }
         .footer { background: #f5f5f0; padding: 30px; text-align: center; font-size: 13px; color: #666; }
     </style>
 </head>

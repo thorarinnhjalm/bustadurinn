@@ -90,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
         .content { padding: 40px 30px; }
         .greeting { font-size: 18px; color: #333; margin-bottom: 20px; }
-        .button { display: inline-block; background: #e8b058; color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; text-align: center; width: 100%; box-sizing: border-box; }
+        .button { display: inline-block; background: #e8b058; color: #1a1a1a; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; text-align: center; width: 100%; box-sizing: border-box; }
         .footer { background: #f5f5f0; padding: 30px; text-align: center; font-size: 13px; color: #666; }
     </style>
 </head>

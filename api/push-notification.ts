@@ -97,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             webpush: {
                 notification: {
                     icon: `${SITE_ORIGIN}/logo.png`,
-                    badge: `${SITE_ORIGIN}/icon-192x192.png`,
+                    badge: `${SITE_ORIGIN}/badge-96.png`,
                 },
                 fcmOptions: { link: safeLink },
             },
