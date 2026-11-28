@@ -464,7 +464,7 @@ export default function SandboxPage() {
                     </div>
 
                     {/* View Rendering */}
-                    <div className="max-w-7xl mx-auto h-full pb-32">
+                    <div className="max-w-7xl mx-auto h-full pb-8">
                         {activeTab === 'calendar' && <SandboxCalendar onUnlockRequest={handleUnlockRequest} />}
                         {activeTab === 'finance' && <SandboxFinance onUnlockRequest={handleUnlockRequest} />}
                         {activeTab === 'tasks' && <SandboxTasks onUnlockRequest={handleUnlockRequest} />}
@@ -505,26 +505,26 @@ export default function SandboxPage() {
                             Þetta er sýnishorn af kerfinu. Ef þú stofnar ókeypis aðgang núna geturðu byrjað á að leika þér með kerfið sjálft fyrir þinn bústað.
                         </p>
                     </Modal>
+                </div>
 
-                    {/* Conversion Footer Banner */}
-                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-auto md:min-w-[500px] z-50">
-                        <div className="bg-charcoal text-white p-4 md:p-6 rounded-2xl shadow-2xl border border-amber/30 flex flex-col md:flex-row items-center gap-4 md:gap-8 overflow-hidden relative">
-                            {/* Accent Glow */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber/10 blur-3xl -z-10"></div>
-
-                            <div className="flex-1">
-                                <p className="text-amber text-xs font-bold uppercase tracking-widest mb-1">Einfaldara líf í sumar</p>
-                                <h2 className="text-lg font-serif font-bold text-white mb-0">Prófaðu kerfið — ókeypis og án skuldbindinga</h2>
-                                <p className="text-stone-400 text-xs mt-1">Bættu við fjölskyldunni og sjáðu hvort þetta hentar ykkur.</p>
-                            </div>
-
-                            <Link
-                                to="/signup"
-                                className="w-full md:w-auto btn bg-amber text-charcoal hover:bg-amber-dark font-bold px-8 py-3 rounded-xl shadow-[0_0_20px_rgba(232,176,88,0.3)] transition-all transform motion-safe:hover:scale-105 border-0"
-                            >
-                                Stofna ókeypis aðgang
-                            </Link>
+                {/* Conversion bar: docked under the scroll area so it never covers the content.
+                    The desktop right padding keeps the button clear of the floating feedback widget (hidden on mobile). */}
+                <div className="shrink-0 bg-charcoal text-white border-t border-amber/30 px-4 md:pl-8 md:pr-28 py-3">
+                    <div className="max-w-7xl mx-auto flex items-center gap-4 md:gap-8">
+                        <div className="flex-1 min-w-0">
+                            <p className="hidden md:block text-amber text-xs font-bold uppercase tracking-widest mb-0.5">Einfaldara líf í sumar</p>
+                            <h2 className="text-sm md:text-base font-serif font-semibold text-white mb-0">
+                                Prófaðu kerfið — ókeypis og án skuldbindinga
+                            </h2>
                         </div>
+
+                        <Link
+                            to="/signup"
+                            className="btn bg-amber text-charcoal hover:bg-amber-dark font-semibold px-4 md:px-6 py-2.5 border-0"
+                        >
+                            <span className="md:hidden">Stofna aðgang</span>
+                            <span className="hidden md:inline">Stofna ókeypis aðgang</span>
+                        </Link>
                     </div>
                 </div>
 
