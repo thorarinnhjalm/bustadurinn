@@ -20,6 +20,7 @@ import { trackFunnel, describeError } from '@/utils/funnel';
 import { logger } from '@/utils/logger';
 import { getUserMessage } from '@/utils/userMessages';
 import { safeRedirect } from '@/utils/safeRedirect';
+import BrandLogo from '@/components/BrandLogo';
 
 // Checks super_admin role in Firestore by UID (distinct from rbac.ts isSuperAdmin which takes a role string)
 async function checkIsSuperAdmin(uid: string): Promise<boolean> {
@@ -322,7 +323,7 @@ export default function LoginPage() {
             />
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-serif mb-2">Bústaðurinn.is</h1>
+                    <h1 className="mb-3"><BrandLogo size="xl" /></h1>
                     <p className="text-grey-mid">Innskráning</p>
                 </div>
 

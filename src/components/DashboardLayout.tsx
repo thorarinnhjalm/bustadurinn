@@ -14,14 +14,8 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { format } from 'date-fns';
 import { is } from 'date-fns/locale';
 import QuickHelpModal from '@/components/QuickHelpModal';
-
-// A-Frame Lógóið okkar
-const CabinLogo = ({ size = 24, className = "" }: { size?: number, className?: string }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-        <path d="M12 2L2 22H22L12 2Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M12 15V22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-);
+import Logo from '@/components/Logo';
+import BrandLogo from '@/components/BrandLogo';
 
 // Every icon in the top bar is the same 40px touch target on one centre line.
 const ICON_BTN = 'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md transition-colors';
@@ -89,7 +83,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                             className="flex items-center gap-2 hover:bg-stone-50 px-2 py-1 rounded-lg transition-colors group min-w-0 max-w-full"
                         >
                             <div className="text-[#1a1a1a]">
-                                <CabinLogo size={20} />
+                                <Logo size={20} decorative />
                             </div>
                             <span className="font-serif font-bold text-lg tracking-tight truncate">{currentHouse.name}</span>
                             {userHouses.length > 1 && (
@@ -97,11 +91,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                             )}
                         </button>
                     ) : (
-                        <div className="flex items-center gap-2 px-2 py-1">
-                            <div className="text-[#1a1a1a]">
-                                <CabinLogo size={20} />
-                            </div>
-                            <span className="font-serif font-bold text-lg tracking-tight">Bústaðurinn.is</span>
+                        <div className="flex items-center px-2 py-1">
+                            <BrandLogo size="sm" />
                         </div>
                     )}
 

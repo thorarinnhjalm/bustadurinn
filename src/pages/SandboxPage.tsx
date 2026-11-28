@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import Modal from '@/components/ui/Modal';
+import BrandLogo from '@/components/BrandLogo';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addDays } from 'date-fns';
 import { is } from 'date-fns/locale';
@@ -382,7 +383,7 @@ export default function SandboxPage() {
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full max-md:invisible md:translate-x-0'}
             `}>
                 <div className="p-6">
-                    <p className="text-2xl font-serif text-amber italic tracking-wide">bústaðurinn</p>
+                    <BrandLogo size="md" className="text-white" />
                     <div className="mt-2 text-[10px] bg-amber/20 text-amber inline-block px-2 py-0.5 rounded uppercase tracking-wider font-semibold">
                         Prufu-hamur
                     </div>

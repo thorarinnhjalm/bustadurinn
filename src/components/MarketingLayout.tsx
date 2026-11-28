@@ -1,5 +1,5 @@
 import { useLocation, Link } from 'react-router-dom';
-import Logo from '@/components/Logo';
+import BrandLogo from '@/components/BrandLogo';
 import SEO from '@/components/SEO';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { useState, useEffect, useRef } from 'react';
@@ -74,9 +74,8 @@ export default function MarketingLayout({
 
             <header className="fixed top-0 left-0 right-0 bg-bone/95 backdrop-blur-md z-[100] border-b border-grey-warm h-20 flex items-center">
                 <nav aria-label="Aðalvalmynd" className="container mx-auto px-6 flex justify-between items-center relative">
-                    <Link to="/" className="flex items-center gap-2 z-[110]">
-                        <Logo size={28} className="text-charcoal" />
-                        <span className="text-xl font-serif font-bold tracking-tight">Bústaðurinn.is</span>
+                    <Link to="/" className="flex items-center z-[110]">
+                        <BrandLogo size="md" />
                     </Link>
 
                     {/* Desktop Navigation */}
@@ -165,9 +164,8 @@ export default function MarketingLayout({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20 items-start text-left">
                         {/* Company Info */}
                         <div className="space-y-6">
-                            <Link to="/" className="flex items-center gap-3">
-                                <Logo size={32} className="text-white" />
-                                <span className="text-2xl font-serif font-bold text-white tracking-tight">Bústaðurinn.is</span>
+                            <Link to="/" className="inline-flex items-center">
+                                <BrandLogo size="lg" className="text-white" />
                             </Link>
                             <p className="text-stone-100 max-w-sm text-lg leading-relaxed opacity-95">
                                 Við færum utanumhald sumarhússins úr flóknum Excel skjölum yfir í fágað og nútímalegt viðmót.

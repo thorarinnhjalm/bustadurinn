@@ -4,15 +4,9 @@ import { fetchWeather } from '@/utils/weather';
 import type { House } from '@/types/models';
 import Modal from '@/components/ui/Modal';
 import { logger } from '@/utils/logger';
+import Logo from '@/components/Logo';
 
 // A-Frame Logo
-const CabinLogo = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-        <path d="M12 2L2 22H22L12 2Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M12 15V22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-);
-
 interface GuestPreviewModalProps {
     house: House;
     isOpen: boolean;
@@ -111,7 +105,7 @@ export default function GuestPreviewModal({ house, isOpen, onClose }: GuestPrevi
                         <div className="relative z-10">
                             <div className="flex justify-between items-center mb-8">
                                 <div className="flex items-center gap-2 text-[#e8b058] bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-sm">
-                                    <CabinLogo size={20} />
+                                    <Logo size={20} decorative />
                                     <span className="font-serif font-bold tracking-tight text-white text-sm">{houseName}</span>
                                 </div>
                                 <button type="button" aria-label="Deila" className="bg-black/30 backdrop-blur-md p-2 rounded-full hover:bg-black/40 transition-colors text-white border border-white/10">

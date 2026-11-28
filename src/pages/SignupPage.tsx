@@ -18,6 +18,7 @@ import { useSearchParams } from 'react-router-dom';
 import { analytics } from '@/utils/analytics';
 import { trackFunnel, describeError, redactPath } from '@/utils/funnel';
 import { safeRedirect } from '@/utils/safeRedirect';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function SignupPage() {
     const navigate = useNavigate();
@@ -279,7 +280,7 @@ export default function SignupPage() {
             />
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-serif mb-2">Bústaðurinn.is</h1>
+                    <h1 className="mb-3"><BrandLogo size="xl" /></h1>
                     <p className="text-grey-mid">Búa til aðgang</p>
                 </div>
 
